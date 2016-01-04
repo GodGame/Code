@@ -2,5 +2,5 @@
 
 int main()
 {
-	printf("¾È³ç");
+	printf("¾È³çddd");
 }
