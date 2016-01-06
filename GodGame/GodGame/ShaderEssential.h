@@ -33,10 +33,10 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	
 	void SetTexture(int index, ID3D11ShaderResourceView * m_pSceneSRV);
-	void SetLightSRV(ID3D11ShaderResourceView * pSRV)
-	{
-		m_pd3dShadowSrv = pSRV;
-	}
+	void SetInfoTextures(ID3D11DeviceContext *pd3dDeviceContext);
+	void UpdateShaders(ID3D11DeviceContext *pd3dDeviceContext);
+
+	void SetLightSRV(ID3D11ShaderResourceView * pSRV) { m_pd3dShadowSrv = pSRV; }
 	void SetDrawOption(int iOpt) { m_iDrawOption = iOpt; }
 	int GetDrawOption() { return m_iDrawOption; }
 };

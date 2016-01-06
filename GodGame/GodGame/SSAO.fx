@@ -2,7 +2,6 @@
 
 Texture2D gtxtSSAO	   : register(t25);
 
-
 struct SSAO_PSIN
 {
 	float4 posH			: SV_POSITION;
@@ -39,6 +38,8 @@ float OcclusionFunction(float distZ)
 		// 차폐도를 1에서 0으로 선형 감소
 		occlusion = saturate((gOcclusionFadeEnd - distZ) / fadeLength);
 	}
+	else
+		occlusion = 1.0f;
 	return occlusion;
 }
 
@@ -63,13 +64,9 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 	int3 uvm = int3(input.posH.xy, 0);	// (u, v, level)
 	float4 normal = gtxtNormal.Load(uvm);
 
-	if (normal.z == 0.0)
-		discard;
-	return float4(normal.wwww);
 	// 완전한 시야공간 위치 (x, y, z) 재구축
 	// 우선 p = t * input.ToFarPlane을 만족하는 t를 구한다.
 	// p.z = t * input.ToFarPlane.z ==> t = p.z / input.ToFarPlane.z
-
 	float3 p = (normal.w / input.ToFarPlane.z) * input.ToFarPlane;
 
 	// 무작위 벡터를 추출해서 [0, 1] -> [-1, 1] 매핑
@@ -90,21 +87,23 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 
 		// p주변에서 차폐 반지름 이내의 무작위 점 q를 선택한다.
 		float3 q = p + flip * gOcclusionRadius * offset;
-
+		//return float4(p, 1);
 		// q를 투영해서 투영 텍스쳐 좌표를 구한다.
 		float4 ProjQ = mul(float4(q, 1.0f), gViewToTexSpace);
-		ProjQ /= ProjQ.w;
+		//float fDepth = (ProjQ.w * gfDepthFar);
+		ProjQ /= (ProjQ.w);// *gfDepthFar);
+		//return float4(ProjQ);//float4(ProjQ.x / 1280, ProjQ.y / 960, 0, 0);
 
 		// 시점에서 q로의 반직선에서 시점에 가장 가까운 픽셀의 깊이를 구한다.
 		// (이것은 q의 깊이는 아니다. q는 그냥 p 근처의 임의 점이며, 장면 물체가 아닌 빈공간에 있는 점일 수 있다.)
 		// 가장 가까운 깊이는 깊이 맵에서 추출한다
-		float rz = gtxtNormal.Load(int3(ProjQ.xy, 0));
-		
+		float4 rz = gtxtNormal.Load(int3(ProjQ.xy, 0));
+		//return rz;
 		// 완전한 시야 공간 위치 r = (rx, ry, rz)를 재구축한다.
 		// r은 q를 지나는 반직선에 있으므로, r = t * q를 만족하는 t가 존재한다.
 		// r.z = t*q.z ==> t = r.z / q.z
 		float3 r = (rz / q.z) * q;;;
-
+		//return float4(r, 1);
 		/* 
 		r이 p를 가리는지 판정.
 		   내적 dot(n, normalize(r - p))는 잠재적 차폐점 r이 평면 plane(p, n) 앞쪽으로 얼마나 앞에 있는지를 나타낸다.
@@ -116,8 +115,8 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 		*/
 		float distZ = p.z - r.z;
 		float dp = max(dot(normal.xyz, normalize(r - p)), 0.0f);
-		float occlusion = dp * OcclusionFunction(distZ);
-
+		float occlusion = /*dp */ 1 * OcclusionFunction(distZ);
+		return occlusion;
 		occlusionSum += occlusion;
 	}
 	occlusionSum /= NUM_SSAO_OFFSET;

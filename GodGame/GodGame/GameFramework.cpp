@@ -179,7 +179,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 		case MRT_POS:
-			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
+			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;// DXGI_FORMAT_R32G32B32A32_SINT;
 			break;
 		case MRT_DIFFUSE:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_B5G5R5A1_UNORM;// DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -801,11 +801,16 @@ void CGameFramework::FrameAdvance()
 	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 #endif
 	//if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, m_pCamera);
-	m_pd3dDeviceContext->PSSetShaderResources(17, 5, m_ppd3dMRTView);
-	
+	ID3D11ShaderResourceView * pNullPtr[] = { nullptr, nullptr, nullptr,nullptr, nullptr, nullptr };
+	m_pd3dDeviceContext->PSSetShaderResources(16, 6, pNullPtr);
+
+
+	//m_pSceneShader->UpdateShaders(m_pd3dDeviceContext);
+
 	float color[] = { 0.5f, 0.3f, 0.2, 1.0 };
 	m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dSSAOTargetView, color);
 	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
+	m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_ppd3dMRTView[MRT_NORMAL]);	
 	m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
 
 	m_pScene->UpdateLights(m_pd3dDeviceContext);
@@ -830,8 +835,6 @@ void CGameFramework::FrameAdvance()
 
 void CGameFramework::UpdateShadowResource()
 {
-	ID3D11ShaderResourceView * pNullPtr[] = { nullptr, nullptr, nullptr,nullptr, nullptr, nullptr };
-	m_pd3dDeviceContext->PSSetShaderResources(0, 6, pNullPtr);
 #ifdef PCF
 	m_pd3dDeviceContext->PSSetSamplers(PS_SLOT_SHADOWSAMPLE + 1, 1, &m_pd3dShadowSamplerState);
 #else

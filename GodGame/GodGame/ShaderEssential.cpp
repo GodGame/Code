@@ -84,7 +84,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	//SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
 	if (m_iDrawOption == 0)
 	{
-		m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
+		UpdateShaders(pd3dDeviceContext);
 	}
 	else if (m_iDrawOption == 1)
 	{
@@ -99,9 +99,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	}
 	else
 	{
-		m_pInfoScene->SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
-		pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
-		m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
+		SetInfoTextures(pd3dDeviceContext);
 	}
 	m_pMesh->Render(pd3dDeviceContext, uRenderState);
 }
@@ -109,6 +107,18 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 void CSceneShader::SetTexture(int index, ID3D11ShaderResourceView * m_pSceneSRV)
 {
 	m_pInfoScene->SetTexture(index, m_pSceneSRV);
+}
+
+void CSceneShader::SetInfoTextures(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	m_pInfoScene->SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
+	pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
+	m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
+}
+
+void CSceneShader::UpdateShaders(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 }
 
 
@@ -630,9 +640,9 @@ void CSSAOShader::BuildSSAO(ID3D11Device * pd3dDevice)
 {
 	float aspect = (float)FRAME_BUFFER_WIDTH / (float)FRAME_BUFFER_HEIGHT;
 	float farZ = 1000.0f;
-	float halfHeight = farZ * tanf(0.5f * 60.0f);
+	float halfHeight = farZ * tanf(XMConvertToRadians(0.5f * 60.0f));
 	float halfWidth = aspect * halfHeight;
-
+	
 	m_ssao.m_gFrustumCorners[0] = XMFLOAT4(-halfWidth, -halfHeight, farZ, 0.0f);
 	m_ssao.m_gFrustumCorners[1] = XMFLOAT4(-halfWidth, +halfHeight, farZ, 0.0f);
 	m_ssao.m_gFrustumCorners[2] = XMFLOAT4(+halfWidth, -halfHeight, farZ, 0.0f);
@@ -684,8 +694,8 @@ void CSSAOShader::CreateShaderVariable(ID3D11Device * pd3dDevice)
 
 void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
 {
-	float fw = FRAME_BUFFER_WIDTH * 0.5f;
-	float fh = FRAME_BUFFER_HEIGHT * 0.5f;
+	float fw = 0.5f; //FRAME_BUFFER_WIDTH * 0.5f;
+	float fh = 0.5f; //FRAME_BUFFER_HEIGHT * 0.5f;
 	static const XMMATRIX T(
 		+fw, 0.0f, 0.0f, 0.0f,
 		0.0f, -fh, 0.0f, 0.0f,
