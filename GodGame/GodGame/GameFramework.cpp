@@ -41,7 +41,9 @@ CGameFramework::CGameFramework()
 	m_pd3dShadowSamplerState = nullptr;
 	m_pd3dShadowRS = nullptr;
 	m_pd3dNormalRS = nullptr;
+	m_pd3dSSAOTargetView = nullptr;
 
+	m_pSSAOShader = nullptr;
 	m_uRenderState = 0;
 
 	Chae::XMFloat4x4Identity(&m_xmf44ShadowMap);
@@ -101,15 +103,17 @@ void CGameFramework::OnDestroy()
 	}
 #endif
 
+	if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
+
 	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
-
 
 	if (m_pd3ddsvShadowMap) m_pd3ddsvShadowMap->Release();
 	if (m_pd3dsrvShadowMap) m_pd3dsrvShadowMap->Release();
 	if (m_pd3dcbShadowMap) m_pd3dcbShadowMap->Release();
 
 	if (m_pd3dShadowSamplerState) m_pd3dShadowSamplerState->Release();
+
 }
 
 bool CGameFramework::CreateRenderTargetDepthStencilView()
@@ -189,7 +193,23 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 		if (FAILED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i]))) return false;
 		if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_ppd3dMRTView[i]))) return(false);
 		if (FAILED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i]))) return(false);
+
+		m_ppd3dMRTtx[i]->Release();
+		m_ppd3dMRTtx[i] = nullptr;
 	}
+	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	
+
+	ID3D11Texture2D * pdTx2D;
+	if (FAILED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D))) return false;
+	if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV))) return(false);
+	if (FAILED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView))) return(false);
+
+	TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "srv_rtvSSAO", 0);
+	m_pd3dSSAOSRV->Release();
+	pdTx2D->Release();
+	
+
 	//m_pd3dDeviceContext->OMSetRenderTargets(5, &m_pd3dRenderTargetView, m_pd3dDepthStencilView);
 
 	return(true);
@@ -307,7 +327,7 @@ void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	float zn = xmf3LightPos.z - fHalf, zf = xmf3LightPos.z + fHalf;
 
 	XMMATRIX xmtxShadowProj = XMMatrixOrthographicOffCenterLH(xl, xr, yb, yt, zn, zf);
-	XMMATRIX xmtxCoord
+	static const XMMATRIX xmtxCoord
 		(
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, -0.5f, 0.0f, 0.0f,
@@ -467,6 +487,7 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		{
 		case 'Q':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 0));
+			m_pSceneShader->SetTexture(0, m_pd3dsrvShadowMap);
 			break;
 		case 'W':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 1));
@@ -482,6 +503,10 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 			break;
 		case 'Y':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 5));
+			break;
+		case 'Z':
+			m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
+			m_pSceneShader->SetTexture(0, m_pd3dSSAOSRV/*TXMgr.GetShaderResourceView("srv_rtvSSAO")*/);
 			break;
 		//case 'P':
 		//	m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
@@ -610,7 +635,10 @@ void CGameFramework::BuildObjects()
 	m_pScene->SetCamera(m_pCamera);
 	m_pScene->SetPlayerShader(m_pPlayerShader);
 
-
+	m_pSSAOShader = new CSSAOShader();
+	m_pSSAOShader->CreateShaderVariable(m_pd3dDevice);
+	m_pSSAOShader->CreateShader(m_pd3dDevice);
+	m_pSSAOShader->BuildObjects(m_pd3dDevice);
 }
 
 void CGameFramework::InitilizeThreads()
@@ -663,9 +691,14 @@ void CGameFramework::ReleaseObjects()
 	if (m_pScene) m_pScene->ReleaseObjects();
 	if (m_pScene) delete m_pScene;
 
-	if (m_pPlayerShader) m_pPlayerShader->ReleaseObjects();
-	if (m_pPlayerShader) delete m_pPlayerShader;
-	//DeleteCriticalSection(&m_cs);
+
+	if (m_pSceneShader) m_pSceneShader->ReleaseObjects();
+	if (m_pSceneShader) delete m_pSceneShader;
+	m_pSceneShader = nullptr;
+
+	if (m_pSSAOShader) m_pSSAOShader->ReleaseObjects();
+	if (m_pSSAOShader) delete m_pSSAOShader;
+	m_pSSAOShader = nullptr;
 }
 
 void CGameFramework::ProcessInput()
@@ -780,6 +813,12 @@ void CGameFramework::FrameAdvance()
 	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 #endif
 	//if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, m_pCamera);
+	m_pd3dDeviceContext->PSSetShaderResources(17, 5, m_ppd3dMRTView);
+	
+	float color[] = { 0.5f, 0.3f, 0.2, 1.0 };
+	m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dSSAOTargetView, color);
+	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
+	m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
 
 	m_pScene->UpdateLights(m_pd3dDeviceContext);
 	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[0], nullptr);

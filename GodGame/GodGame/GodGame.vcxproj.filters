@@ -143,7 +143,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="SSAO.fx" />
     <FxCompile Include="Define.fx">
       <Filter>Effects</Filter>
     </FxCompile>
@@ -157,6 +156,9 @@
       <Filter>Effects</Filter>
     </FxCompile>
     <FxCompile Include="Shadow.fx">
+      <Filter>Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="SSAO.fx">
       <Filter>Effects</Filter>
     </FxCompile>
   </ItemGroup>

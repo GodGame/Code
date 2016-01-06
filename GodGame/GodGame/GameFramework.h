@@ -56,8 +56,12 @@ private:
 	ID3D11DeviceContext *m_pd3dDeviceContext;
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
 	
+	ID3D11ShaderResourceView * m_pd3dSSAOSRV;
+	CSSAOShader * m_pSSAOShader;
 	CSceneShader * m_pSceneShader;
 	ID3D11RenderTargetView *m_ppd3dRenderTargetView[NUM_MRT];
+	ID3D11RenderTargetView *m_pd3dSSAOTargetView;
+
 	ID3D11ShaderResourceView *m_ppd3dMRTView[NUM_MRT];
 	ID3D11Texture2D * m_ppd3dMRTtx[NUM_MRT];
 

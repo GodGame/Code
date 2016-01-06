@@ -9,6 +9,10 @@
 #define VS_SLOT_CAMERAPOS		0x02
 #define SLOT_DISPLACEMENT		0x03
 
+#define SLOT_RANDOM1D			9
+#define SLOT_SSAO_SCREEN		25
+#define SLOT_CB_SSAO			6
+
 #define	PS_SLOT_COLOR				0x00
 
 //조명과 재질을 설정하기 위한 상수 버퍼의 슬롯 번호를 정의한다. 

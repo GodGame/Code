@@ -1,6 +1,14 @@
 #pragma once
 #include "ShaderType.h"
 
+#define NUM_SSAO_OFFSET 14
+struct CB_SSAO_INFO
+{
+	XMFLOAT4X4 m_gViewToTexSpace; // 투영 행렬 * 텍스쳐 행렬
+	XMFLOAT4 m_gOffsetVectors[NUM_SSAO_OFFSET];
+	XMFLOAT4 m_gFrustumCorners[4];
+};
+
 class CSceneShader : public CTexturedShader
 {
 	CTexture * m_pTexture;
@@ -33,7 +41,7 @@ public:
 	int GetDrawOption() { return m_iDrawOption; }
 };
 
-class CShadowShader : public CShader
+class CShadowShader : public CTexturedShader
 {
 public:
 	CShadowShader();
@@ -42,6 +50,25 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+};
+
+class CSSAOShader : public CShader
+{
+	CMesh * m_pMesh;
+	ID3D11Buffer *  m_pd3dcbSSAOInfo;
+	CB_SSAO_INFO m_ssao;
+	ID3D11ShaderResourceView * m_pd3dSRVSSAO;
+public:
+	CSSAOShader();
+	virtual ~CSSAOShader();
+
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+
+	void BuildSSAO(ID3D11Device *pd3dDevice);
+	void CreateShaderVariable(ID3D11Device *pd3dDevice);
+	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera * pCamera);
 };
 
 class CPlayerShader : public CTexturedIlluminatedShader

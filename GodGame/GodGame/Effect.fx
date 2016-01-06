@@ -18,10 +18,6 @@ float4 InfoScreen(PS_SCENE_INPUT input) : SV_Target
 	{
 		color.xyz /= 2000.0f;
 	}
-	else
-	{
-		color.rgb = color.www;
-	}
 	return color;
 }
 
@@ -181,7 +177,7 @@ PS_MRT_OUT PSTexturedColor(VS_TEXTURED_COLOR_OUTPUT input)
 //		fShadowFactor = 1.0f;
 
 	PS_MRT_OUT output;
-	output.vNormal = float4(1, 1, 1, input.position.z);
+	output.vNormal = float4(1, 1, 1, input.position.w * gfDepthFar);
 	output.vPos = float4(input.posW, 1.0f);
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 0.0f/*fShadowFactor*/);
 	output.vSpec = gMaterial.m_cSpecular;
@@ -281,7 +277,7 @@ PS_MRT_OUT PSTexturedLightingColor(VS_TEXTURED_LIGHTING_COLOR_OUTPUT input)
 	//fShadowFactor = CalcOneShadowFactor(gsShadow, gtxtShadowMap, input.shadowPos, fShadowFactor);
 
 	PS_MRT_OUT output;
-	output.vNormal = float4(input.normalW, input.position.z);
+	output.vNormal = float4(input.normalW, input.position.w * gfDepthFar);
 	output.vPos = float4(input.positionW, 1.0f);
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
 	output.vSpec = gMaterial.m_cSpecular;
@@ -349,7 +345,7 @@ PS_MRT_OUT PSSplatTexturedLightingColor(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT 
 	
 	PS_MRT_OUT output;
 
-	output.vNormal = float4(input.normalW, input.position.z);
+	output.vNormal = float4(input.normalW, input.position.w * gfDepthFar);
 	output.vPos = float4(input.positionW, 1.0f);
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
 	output.vSpec = gMaterial.m_cSpecular;

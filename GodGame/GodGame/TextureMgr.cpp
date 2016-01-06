@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "MyInline.h"
 #include "TextureMgr.h"
 
 
@@ -75,14 +76,24 @@ void CTexture::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext)
 	}
 }
 
-void CTexture::UpdateTextureShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, int nIndex, int nSlot)
+void CTexture::UpdateTextureShaderVariable(ID3D11DeviceContext *pd3dDeviceContext)
 {
-	pd3dDeviceContext->PSSetShaderResources(nSlot, 1, &m_ppd3dsrvTextures[nIndex]);
+	if (m_uTextureSet & SET_SHADER_VS) pd3dDeviceContext->VSSetShaderResources(m_nTextureStartSlot, m_nTextures, m_ppd3dsrvTextures);
+	if (m_uTextureSet & SET_SHADER_PS) pd3dDeviceContext->PSSetShaderResources(m_nTextureStartSlot, m_nTextures, m_ppd3dsrvTextures);
+	if (m_uTextureSet & SET_SHADER_HS) pd3dDeviceContext->HSSetShaderResources(m_nTextureStartSlot, m_nTextures, m_ppd3dsrvTextures);
+	if (m_uTextureSet & SET_SHADER_DS) pd3dDeviceContext->DSSetShaderResources(m_nTextureStartSlot, m_nTextures, m_ppd3dsrvTextures);
+	if (m_uTextureSet & SET_SHADER_GS) pd3dDeviceContext->GSSetShaderResources(m_nTextureStartSlot, m_nTextures, m_ppd3dsrvTextures);
+	if (m_uTextureSet & SET_SHADER_CS) pd3dDeviceContext->CSSetShaderResources(m_nTextureStartSlot, m_nTextures, m_ppd3dsrvTextures);
 }
 
-void CTexture::UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, int nIndex, int nSlot)
+void CTexture::UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContext)
 {
-	pd3dDeviceContext->PSSetSamplers(nSlot, 1, &m_ppd3dSamplerStates[nIndex]);
+	if (m_uTextureSet & SET_SHADER_VS) pd3dDeviceContext->VSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
+	if (m_uTextureSet & SET_SHADER_PS) pd3dDeviceContext->PSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
+	if (m_uTextureSet & SET_SHADER_HS) pd3dDeviceContext->HSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
+	if (m_uTextureSet & SET_SHADER_DS) pd3dDeviceContext->DSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
+	if (m_uTextureSet & SET_SHADER_GS) pd3dDeviceContext->GSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
+	if (m_uTextureSet & SET_SHADER_CS) pd3dDeviceContext->CSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
 }
 
 
@@ -96,8 +107,7 @@ CTextureMgr::~CTextureMgr()
 {
 	for (auto it = m_vpTextureArray.begin(); it != m_vpTextureArray.end(); ++it)
 	{
-		if(it->second) 
-			it->second->Release();
+		it->second->Release();
 	}
 }
 
@@ -170,20 +180,28 @@ void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
 	pd3dSamplerState->Release();
 
-
+	pd3dsrvTexture = CTextureMgr::CreateRandomTexture1DSRV(pd3dDevice);
+	InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
+	pd3dsrvTexture->Release();
 }
 
 void CTextureMgr::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, string name)
 {
-	if (m_vpTextureArray[name]) m_vpTextureArray[name]->UpdateShaderVariable(pd3dDeviceContext);
+	CTexture * pTexture = m_vpTextureArray[name];
+	if (pTexture)
+	{
+		if(pTexture->IsSampler() && pTexture->IsSRV()) pTexture->UpdateShaderVariable(pd3dDeviceContext);
+		else if (pTexture->IsSRV()) pTexture->UpdateTextureShaderVariable(pd3dDeviceContext);
+		else if (pTexture->IsSampler()) pTexture->UpdateSamplerShaderVariable(pd3dDeviceContext);
+	}
 }
 
 bool CTextureMgr::InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, string name, UINT uSlotNum, SETSHADER nSetInfo)
 {
 	if (nullptr == pSRV) return false;
 
-	CTexture * pTexture = new CTexture(1, 0, 0, 0, nSetInfo);
-	pTexture->SetTexture(uSlotNum, pSRV);
+	CTexture * pTexture = new CTexture(1, 0, uSlotNum, 0, nSetInfo);
+	pTexture->SetTexture(0, pSRV);
 	m_vpTextureArray[name] = pTexture;
 	return true;
 }
@@ -192,8 +210,8 @@ bool CTextureMgr::InsertSamplerState(ID3D11SamplerState * pSamplerState, string 
 {
 	if (nullptr == pSamplerState) return false;
 
-	CTexture * pTexture = new CTexture(0, 1 , 0, 0, nSetInfo);
-	pTexture->SetSampler(uSlotNum, pSamplerState);
+	CTexture * pTexture = new CTexture(0, 1, 0, uSlotNum, nSetInfo);
+	pTexture->SetSampler(0, pSamplerState);
 	m_vpTextureArray[name] = pTexture;
 	return true;
 }
@@ -202,4 +220,32 @@ void CTextureMgr::EraseTexture(string name)
 {
 	if(m_vpTextureArray[name]) m_vpTextureArray[name]->Release();
 	m_vpTextureArray[name] = nullptr;
+}
+
+ID3D11ShaderResourceView * CTextureMgr::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)
+{
+	XMFLOAT4 RandomValue[1024];
+	for (int i = 0; i < 1024; ++i)
+		RandomValue[i] = XMFLOAT4(Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f));
+	D3D11_SUBRESOURCE_DATA d3dSubresourceData;
+	d3dSubresourceData.pSysMem = RandomValue;
+	d3dSubresourceData.SysMemPitch = sizeof(XMFLOAT4) * 1024;
+	d3dSubresourceData.SysMemSlicePitch = 0;
+
+	D3D11_TEXTURE1D_DESC d3dTextureDesc;
+	ZeroMemory(&d3dTextureDesc, sizeof(D3D11_TEXTURE1D_DESC));
+	d3dTextureDesc.Width = 1024;
+	d3dTextureDesc.MipLevels = 1;
+	d3dTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	d3dTextureDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	d3dTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	d3dTextureDesc.ArraySize = 1;
+
+	ID3D11Texture1D * pd3dTexture;
+	pd3dDevice->CreateTexture1D(&d3dTextureDesc, &d3dSubresourceData, &pd3dTexture);
+
+	ID3D11ShaderResourceView * pd3dsrvTexutre;
+	pd3dDevice->CreateShaderResourceView(pd3dTexture, nullptr, &pd3dsrvTexutre);
+	pd3dTexture->Release();
+	return(pd3dsrvTexutre);
 }

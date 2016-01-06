@@ -92,6 +92,11 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 		pd3dDeviceContext->PSSetShader(m_pd3dLightPS, nullptr, 0);
 		m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
 	}
+	else if (m_iDrawOption < 0)
+	{
+		pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
+		m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
+	}
 	else
 	{
 		m_pInfoScene->SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
@@ -555,6 +560,8 @@ void CSkyBoxShader::RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMA
 	m_ppObjects[0]->RenderReflected(pd3dDeviceContext, xmtxReflect, pCamera);
 }
 
+
+
 CShadowShader::CShadowShader()
 {
 
@@ -574,4 +581,130 @@ void CShadowShader::BuildObjects(ID3D11Device * pd3dDevice)
 
 void CShadowShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
+}
+
+CSSAOShader::CSSAOShader()
+{
+	m_pMesh = nullptr;
+	m_pd3dSRVSSAO = nullptr;
+	ZeroMemory(&m_ssao, sizeof(m_ssao));
+}
+
+CSSAOShader::~CSSAOShader()
+{
+	if(m_pd3dSRVSSAO) m_pd3dSRVSSAO->Release();
+}
+
+void CSSAOShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputElements);
+	CreateVertexShaderFromFile(pd3dDevice, L"SSAO.fx", "VSSCeneSpaceAmbient", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"SSAO.fx", "PSSCeneSpaceAmbient", "ps_5_0", &m_pd3dPixelShader);
+}
+
+void CSSAOShader::BuildObjects(ID3D11Device * pd3dDevice)
+{
+	BuildSSAO(pd3dDevice);
+
+	CPlaneMesh * pMesh = new CPlaneMesh(pd3dDevice, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+	m_pMesh = pMesh;
+
+}
+
+void CSSAOShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	OnPrepareRender(pd3dDeviceContext);
+	UpdateShaderVariable(pd3dDeviceContext, pCamera);
+	TXMgr.UpdateShaderVariable(pd3dDeviceContext, "srv_random1d");
+	//TXMgr.UpdateShaderVariable(pd3dDeviceContext, "srv_rtvSSAO");
+
+	m_pMesh->Render(pd3dDeviceContext, uRenderState);
+}
+
+void CSSAOShader::BuildSSAO(ID3D11Device * pd3dDevice)
+{
+	float aspect = (float)FRAME_BUFFER_WIDTH / (float)FRAME_BUFFER_HEIGHT;
+	float farZ = 1000.0f;
+	float halfHeight = farZ * tanf(0.5f * 60.0f);
+	float halfWidth = aspect * halfHeight;
+
+	m_ssao.m_gFrustumCorners[0] = XMFLOAT4(-halfWidth, -halfHeight, farZ, 0.0f);
+	m_ssao.m_gFrustumCorners[1] = XMFLOAT4(-halfWidth, +halfHeight, farZ, 0.0f);
+	m_ssao.m_gFrustumCorners[2] = XMFLOAT4(+halfWidth, -halfHeight, farZ, 0.0f);
+	m_ssao.m_gFrustumCorners[3] = XMFLOAT4(+halfWidth, +halfHeight, farZ, 0.0f);
+
+	int index = 0;
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(+1.0f, +1.0f, +1.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(-1.0f, -1.0f, -1.0f, 0.0f);
+
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(-1.0f, +1.0f, +1.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(+1.0f, -1.0f, -1.0f, 0.0f);
+
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(+1.0f, +1.0f, -1.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(-1.0f, -1.0f, +1.0f, 0.0f);
+
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(-1.0f, +1.0f, -1.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(+1.0f, -1.0f, +1.0f, 0.0f);
+
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(-1.0f, 0.0f, 0.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(+1.0f, 0.0f, 0.0f, 0.0f);
+
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(0.0f, -1.0f, 0.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(0.0f, +1.0f, 0.0f, 0.0f);
+
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(0.0f, 0.0f, -1.0f, 0.0f);
+	m_ssao.m_gOffsetVectors[index++] = XMFLOAT4(0.0f, 0.0f, +1.0f, 0.0f);
+
+	for (int i = 0; i < NUM_SSAO_OFFSET; ++i)
+	{
+		float s = Chae::RandomFloat(0.25, 1.0);
+
+		XMVECTOR v = s * XMVector4Normalize(XMLoadFloat4(&m_ssao.m_gOffsetVectors[i]));
+		XMStoreFloat4(&m_ssao.m_gOffsetVectors[i], v);
+	}
+}
+
+void CSSAOShader::CreateShaderVariable(ID3D11Device * pd3dDevice)
+{
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DYNAMIC;
+	bd.ByteWidth = sizeof(CB_SSAO_INFO);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	HRESULT hr = pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbSSAOInfo);
+	if (FAILED(hr))
+		printf("오류입니다!!");
+}
+
+void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
+{
+	float fw = FRAME_BUFFER_WIDTH * 0.5f;
+	float fh = FRAME_BUFFER_HEIGHT * 0.5f;
+	static const XMMATRIX T(
+		+fw, 0.0f, 0.0f, 0.0f,
+		0.0f, -fh, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		+fw, +fh, 0.0f, 1.0f);
+
+	XMMATRIX VP = XMLoadFloat4x4(&pCamera->GetViewProjectionMatrix());// camera.Proj();
+	XMMATRIX PT = XMMatrixMultiply(VP, T);
+	XMStoreFloat4x4(&m_ssao.m_gViewToTexSpace, PT);
+
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dcbSSAOInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	CB_SSAO_INFO *pcbSSAO = (CB_SSAO_INFO *)d3dMappedResource.pData;
+	memcpy(pcbSSAO->m_gFrustumCorners, m_ssao.m_gFrustumCorners, sizeof(m_ssao.m_gFrustumCorners));
+	memcpy(pcbSSAO->m_gOffsetVectors, m_ssao.m_gOffsetVectors, sizeof(m_ssao.m_gOffsetVectors));
+	Chae::XMFloat4x4Transpose(&pcbSSAO->m_gViewToTexSpace, &m_ssao.m_gViewToTexSpace);
+	pd3dDeviceContext->Unmap(m_pd3dcbSSAOInfo, 0);
+
+	//상수 버퍼를 디바이스의 슬롯(VS_SLOT_WORLD_MATRIX)에 연결한다.
+	pd3dDeviceContext->VSSetConstantBuffers(SLOT_CB_SSAO, 1, &m_pd3dcbSSAOInfo);
+	pd3dDeviceContext->PSSetConstantBuffers(SLOT_CB_SSAO, 1, &m_pd3dcbSSAOInfo);
 }

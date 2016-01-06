@@ -257,7 +257,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 		switch (wParam)
 		{
 		case 'Z':
-			((CParticleShader*)m_ppShaders[3])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
+			//((CParticleShader*)m_ppShaders[3])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
 			break;
 		}
 		break;

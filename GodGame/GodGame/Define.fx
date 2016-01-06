@@ -20,7 +20,6 @@ Texture2D gtxtNormal   : register(t21);
 Texture2DArray gTextureArray : register(t10);
 
 
-
 #include "Light.fx"
 
 #define  MRT_NUM	5
@@ -30,6 +29,9 @@ cbuffer cbViewProjectionMatrix : register(b0)
 {
 	matrix gmtxView;
 	matrix gmtxViewProjection;
+
+	static float gfCameraFar = 2000.0f;
+	static float gfDepthFar = 0.001f;
 };
 
 //월드 변환 행렬을 위한 쉐이더 변수를 선언한다(슬롯 1을 사용). 

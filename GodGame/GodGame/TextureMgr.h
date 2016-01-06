@@ -51,14 +51,18 @@ public:
 	//텍스쳐 리소스와 샘플러 상태 객체에 대한 쉐이더 변수를 변경한다.
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 	//텍스쳐 리소스에 대한 쉐이더 변수를 변경한다.
-	void UpdateTextureShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, int nIndex = 0, int nSlot = 0);
+	void UpdateTextureShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 	//샘플러 상태 객체에 대한 쉐이더 변수를 변경한다.
-	void UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, int nIndex = 0, int nSlot = 0);
+	void UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 
+public:
 	ID3D11ShaderResourceView * GetSRV(int index) {return m_ppd3dsrvTextures[index];}
 	ID3D11SamplerState * GetSampler(int index) { return m_ppd3dSamplerStates[index]; }
 	ID3D11ShaderResourceView ** GetSRVList(void) { return m_ppd3dsrvTextures; }
 	ID3D11SamplerState ** GetSamplerList(void) { return m_ppd3dSamplerStates; }
+
+	bool IsSampler() { return m_nSamplers > 0; }
+	bool IsSRV() { return m_nTextures > 0; }
 
 	static ID3D11ShaderResourceView * CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, UINT nTextures);
 };
@@ -82,6 +86,7 @@ public:
 
 	void EraseTexture(string name);
 
+
 	CTexture * GetTexture(string name);
 	ID3D11ShaderResourceView * GetShaderResourceView(string name)
 	{
@@ -94,8 +99,9 @@ public:
 
 public:
 	void BuildResources(ID3D11Device *pd3dDevice);
-
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, string name);
+
+	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
 };
 
 #define TXMgr CTextureMgr::GetInstance()
