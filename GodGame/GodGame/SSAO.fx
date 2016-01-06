@@ -103,7 +103,7 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 		// 완전한 시야 공간 위치 r = (rx, ry, rz)를 재구축한다.
 		// r은 q를 지나는 반직선에 있으므로, r = t * q를 만족하는 t가 존재한다.
 		// r.z = t*q.z ==> t = r.z / q.z
-		float3 r = (rz / q.z) * q;
+		float3 r = (rz / q.z) * q;;;
 
 		/* 
 		r이 p를 가리는지 판정.
