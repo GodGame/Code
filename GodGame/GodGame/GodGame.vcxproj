@@ -162,6 +162,7 @@
     <ClInclude Include="GodGame.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshType.h" />
+    <ClInclude Include="MgrType.h" />
     <ClInclude Include="MyInline.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Player.h" />

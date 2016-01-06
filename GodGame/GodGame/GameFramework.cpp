@@ -62,9 +62,14 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	m_hInstance = hInstance;
 	m_hWnd = hMainWnd;
 
+
 	//Direct3D 디바이스, 디바이스 컨텍스트, 스왑 체인 등을 생성하는 함수를 호출한다. 
 	if (!CreateDirect3DDisplay()) return(false);
 
+	TXMgr.BuildResources(m_pd3dDevice);
+
+	if (!CreateRenderTargetDepthStencilView()) return(false);
+	if (!CreateShadowDevice()) return false;
 	//렌더링할 객체(게임 월드 객체)를 생성한다. 
 	BuildObjects();
 
@@ -122,13 +127,13 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	//스왑 체인의 첫 번째 후면버퍼 인터페이스를 가져온다. 
 	ID3D11Texture2D *pd3dBackBuffer;
 	//스왑 체인의 첫 번째 후면버퍼에 대한 렌더 타겟 뷰를 생성한다.
-	if (FAILED(hResult = m_pDXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *)&pd3dBackBuffer))) return(false);
+	assert(SUCCEEDED(hResult = m_pDXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *)&pd3dBackBuffer)));
 	
 	D3D11_RENDER_TARGET_VIEW_DESC d3dRTVDesc;
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	d3dRTVDesc.Texture2D.MipSlice = 0;
 	d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	if (FAILED(hResult = m_pd3dDevice->CreateRenderTargetView(pd3dBackBuffer, &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE]))) return(false);
+	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pd3dBackBuffer, &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE])));
 	if (pd3dBackBuffer) pd3dBackBuffer->Release();
 
 	D3D11_TEXTURE2D_DESC d3d2DBufferDesc;
@@ -144,8 +149,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	d3d2DBufferDesc.CPUAccessFlags = 0;
 	d3d2DBufferDesc.MiscFlags = 0;
-	if (FAILED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_pd3dDepthStencilBuffer/*m_ppd3dMRTtx[MRT_DEPTH]*/))) return(false);
-	//if (FAILED(hResult = m_pd3dDevice->CreateTexture2D(&d3dDepthStencilBufferDesc, nullptr, &m_pd3dDepthStencilBuffer))) return(false);
+	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_pd3dDepthStencilBuffer/*m_ppd3dMRTtx[MRT_DEPTH]*/)));
 
 	//생성한 깊이 버퍼(Depth Buffer)에 대한 뷰를 생성한다.
 	D3D11_DEPTH_STENCIL_VIEW_DESC d3dViewDesc;
@@ -153,7 +157,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3dViewDesc.Format = DXGI_FORMAT_D32_FLOAT;//d3d2DBufferDesc.Format;
 	d3dViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	d3dViewDesc.Texture2D.MipSlice = 0;
-	if (FAILED(hResult = m_pd3dDevice->CreateDepthStencilView(m_pd3dDepthStencilBuffer, &d3dViewDesc, &m_pd3dDepthStencilView))) return(false);
+	assert(SUCCEEDED((hResult = m_pd3dDevice->CreateDepthStencilView(m_pd3dDepthStencilBuffer, &d3dViewDesc, &m_pd3dDepthStencilView))));
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
 	ZeroMemory(&d3dSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
@@ -190,9 +194,9 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		}
 
-		if (FAILED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i]))) return false;
-		if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_ppd3dMRTView[i]))) return(false);
-		if (FAILED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i]))) return(false);
+		assert(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i])));
+		assert(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_ppd3dMRTView[i])));
+		assert(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i])));
 
 		m_ppd3dMRTtx[i]->Release();
 		m_ppd3dMRTtx[i] = nullptr;
@@ -201,9 +205,9 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	
 
 	ID3D11Texture2D * pdTx2D;
-	if (FAILED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D))) return false;
-	if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV))) return(false);
-	if (FAILED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView))) return(false);
+	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
+	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV)));
+	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView)));
 
 	TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "srv_rtvSSAO", 0);
 	m_pd3dSSAOSRV->Release();
@@ -229,24 +233,22 @@ bool CGameFramework::CreateShadowDevice()
 	desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	desc.CPUAccessFlags = desc.MiscFlags = 0;
 
+	HRESULT hr;
 	ID3D11Texture2D * pd3dShadowMap = nullptr;
-	HRESULT hr = m_pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap);
-	if (FAILED(hr)) return(false);
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap)));
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC d3dDSVDesc;
 	d3dDSVDesc.Flags = d3dDSVDesc.Texture2D.MipSlice = 0;
 	d3dDSVDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	d3dDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; 
-	hr = m_pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3ddsvShadowMap);
-	if (FAILED(hr)) return false;
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3ddsvShadowMap)));
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
 	d3dSRVDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 	d3dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	d3dSRVDesc.Texture2D.MipLevels = desc.MipLevels;
 	d3dSRVDesc.Texture2D.MostDetailedMip = 0;
-	hr = m_pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dsrvShadowMap);
-	if (FAILED(hr)) return false;
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dsrvShadowMap)));
 
 	//pd3dShadowMap->Release();
 
@@ -263,43 +265,31 @@ bool CGameFramework::CreateShadowDevice()
 	d3dBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT4X4);
-	hr = m_pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbShadowMap);
-	if (FAILED(hr)) return false;
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbShadowMap)));
 
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
 #define PCF
 #ifdef PCF
-	d3dSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-	d3dSamplerDesc.MaxAnisotropy = 1;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;//D3D11_COMPARISON_NEVER;
+	m_pd3dShadowSamplerState = TXMgr.GetSamplerState("scs_point_border");
 #else
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MaxAnisotropy = 1;
+	m_pd3dShadowSamplerState = TXMgr.GetSamplerState("ss_point_border");
 #endif
-	hr = m_pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &m_pd3dShadowSamplerState);
-	if (FAILED(hr)) 
-		return false;
+	if (nullptr == m_pd3dShadowSamplerState) assert(E_FAIL);
+
+	m_pd3dShadowSamplerState->AddRef();
 
 	D3D11_RASTERIZER_DESC d3dRSDesc;
 	ZeroMemory(&d3dRSDesc, sizeof(D3D11_RASTERIZER_DESC));
 	d3dRSDesc.FillMode = D3D11_FILL_SOLID;
 	d3dRSDesc.CullMode = D3D11_CULL_NONE;
 	d3dRSDesc.DepthClipEnable = true;
-	hr = m_pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dNormalRS);
-	if (FAILED(hr)) return false;	
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dNormalRS)));
+
 	d3dRSDesc.CullMode = D3D11_CULL_NONE;
 	d3dRSDesc.FrontCounterClockwise = false;
 	d3dRSDesc.DepthBias = 5000;
 	d3dRSDesc.DepthBiasClamp = 0.0f;
 	d3dRSDesc.SlopeScaledDepthBias = 2.0f;
-	hr = m_pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dShadowRS);
-	if (FAILED(hr)) return false;
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dShadowRS)));
 
 	return true;
 }
@@ -446,8 +436,6 @@ bool CGameFramework::CreateDirect3DDisplay()
 	if (!m_pDXGISwapChain || !m_pd3dDevice || !m_pd3dDeviceContext) return(false);
 	//디바이스가 생성되면 렌더 타겟 뷰를 생성하기 위해 CreateRenderTargetView() 함수를 호출한다. 
 	//렌더 타겟 뷰를 생성하는 함수를 호출한다.
-	if (!CreateRenderTargetDepthStencilView()) return(false);
-	if (!CreateShadowDevice()) return false;
 
 	return(true);
 }

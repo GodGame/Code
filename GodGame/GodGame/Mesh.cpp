@@ -477,7 +477,7 @@ void CSkyBoxMesh::OnChangeSkyBoxTextures(ID3D11Device *pd3dDevice, int nIndex)
 	pd3dsrvTexture->Release();
 #endif
 #ifdef SKYBOX_CUBE
-
+	
 	_TCHAR pstrTextureNames[128];
 	_stprintf_s(pstrTextureNames, _T("../Assets/Image/SkyBox/SkyBox_%d.dds"), nIndex, 128);
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;

@@ -2,6 +2,7 @@
 #ifndef __TXMGR
 #define __TXMGR
 
+#include "MgrType.h"
 
 typedef UINT SETSHADER;
 #define SET_SHADER_NONE 0
@@ -68,46 +69,30 @@ public:
 };
 
 
-
-class CTextureMgr
+class CTextureMgr : public CMgr<CTexture>
 {
 private:
 	CTextureMgr();
-	~CTextureMgr();
-
-	map<string, CTexture*> m_vpTextureArray;
-//	vector<CTexture*> m_vpTextureArray;
+	virtual ~CTextureMgr();
 
 public:
 	static CTextureMgr& GetInstance();
-	bool InsertTexture(CTexture * pTexture, string name);
 	bool InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, string name, UINT uSlotNum, SETSHADER nSetInfo = SET_SHADER_PS);
 	bool InsertSamplerState(ID3D11SamplerState * pSamplerState, string name, UINT uSlotNum, SETSHADER nSetInfo = SET_SHADER_PS);
 
-	void EraseTexture(string name);
-
-
-	CTexture * GetTexture(string name);
-	ID3D11ShaderResourceView * GetShaderResourceView(string name)
-	{
-		return m_vpTextureArray[name]->GetSRV(0);
-	}
-	ID3D11SamplerState * GetSamplerState(string name)
-	{
-		return m_vpTextureArray[name]->GetSampler(0);
-	}
+	ID3D11ShaderResourceView * GetShaderResourceView(string name) { return m_mpList[name]->GetSRV(0);}
+	ID3D11SamplerState * GetSamplerState(string name) { return m_mpList[name]->GetSampler(0);}
 
 public:
 	void BuildResources(ID3D11Device *pd3dDevice);
+	void BuildSamplers(ID3D11Device *pd3dDevice);
+	void BuildTextures(ID3D11Device *pd3dDevice);
+
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, string name);
 
 	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
 };
 
 #define TXMgr CTextureMgr::GetInstance()
-#define TXList CTextureMgr::eTxList
-
-
-
 
 #endif

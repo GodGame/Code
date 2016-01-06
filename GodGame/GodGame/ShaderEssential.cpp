@@ -131,10 +131,10 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	CTexture *pBrickTexture = new CTexture(1, 1, 0, 0);
-	pBrickTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_brick2_jpg"));
+	pBrickTexture->SetTexture(0,  TXMgr.GetShaderResourceView("srv_brick2_jpg"));
 	pBrickTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 	
-	TXMgr.InsertTexture(pBrickTexture, "PlayerTexture");
+	TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
 
 	CMaterial *pPlayerMaterial = new CMaterial();
 	pPlayerMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);

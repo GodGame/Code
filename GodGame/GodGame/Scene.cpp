@@ -32,8 +32,6 @@ CScene::~CScene()
 
 void CScene::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader)
 {
-	TXMgr.BuildResources(pd3dDevice);
-
 	HRESULT hr;
 
 	//텍스쳐 맵핑에 사용할 샘플러 상태 객체를 생성한다.

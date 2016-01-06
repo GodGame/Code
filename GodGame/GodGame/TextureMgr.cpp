@@ -96,19 +96,94 @@ void CTexture::UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 	if (m_uTextureSet & SET_SHADER_CS) pd3dDeviceContext->CSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
 }
 
-
-
-CTextureMgr::CTextureMgr()
+ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, UINT nTextures)
 {
+	D3DX11_IMAGE_LOAD_INFO d3dxImageLoadInfo;
+	d3dxImageLoadInfo.Width = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.Height = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.Depth = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.FirstMipLevel = 0;
+	d3dxImageLoadInfo.MipLevels = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.Usage = D3D11_USAGE_STAGING;
+	d3dxImageLoadInfo.BindFlags = 0;
+	d3dxImageLoadInfo.CpuAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+	d3dxImageLoadInfo.MiscFlags = 0;
+	d3dxImageLoadInfo.Format = DXGI_FORMAT_FROM_FILE; //DXGI_FORMAT_R8G8B8A8_UNORM
+	d3dxImageLoadInfo.Filter = D3DX11_FILTER_NONE;
+	d3dxImageLoadInfo.MipFilter = D3DX11_FILTER_LINEAR;
+	d3dxImageLoadInfo.pSrcInfo = 0;
+
+	ID3D11Texture2D **ppd3dTextures = new ID3D11Texture2D*[nTextures];
+	_TCHAR pstrTextureName[80];
+	for (UINT i = 0; i < nTextures; i++) {
+		_stprintf_s(pstrTextureName, 80, _T("%s%02d.png"), ppstrFilePaths, i + 1);
+		D3DX11CreateTextureFromFile(pd3dDevice, pstrTextureName, &d3dxImageLoadInfo, 0, (ID3D11Resource **)&ppd3dTextures[i], 0);
+	}
+	D3D11_TEXTURE2D_DESC d3dTexure2DDesc;
+	ppd3dTextures[0]->GetDesc(&d3dTexure2DDesc);
+
+	D3D11_TEXTURE2D_DESC d3dTexture2DArrayDesc;
+	d3dTexture2DArrayDesc.Width = d3dTexure2DDesc.Width;
+	d3dTexture2DArrayDesc.Height = d3dTexure2DDesc.Height;
+	d3dTexture2DArrayDesc.MipLevels = d3dTexure2DDesc.MipLevels;
+	d3dTexture2DArrayDesc.ArraySize = nTextures;
+	d3dTexture2DArrayDesc.Format = d3dTexure2DDesc.Format;
+	d3dTexture2DArrayDesc.SampleDesc.Count = 1;
+	d3dTexture2DArrayDesc.SampleDesc.Quality = 0;
+	d3dTexture2DArrayDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dTexture2DArrayDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	d3dTexture2DArrayDesc.CPUAccessFlags = 0;
+	d3dTexture2DArrayDesc.MiscFlags = 0;
+
+	ID3D11Texture2D *pd3dTexture2DArray;
+	pd3dDevice->CreateTexture2D(&d3dTexture2DArrayDesc, 0, &pd3dTexture2DArray);
+
+	ID3D11DeviceContext *pd3dDeviceContext;
+	pd3dDevice->GetImmediateContext(&pd3dDeviceContext);
+
+	D3D11_MAPPED_SUBRESOURCE d3dMappedTexture2D;
+	for (UINT t = 0; t < nTextures; t++)
+	{
+		for (UINT m = 0; m < d3dTexure2DDesc.MipLevels; m++)
+		{
+			pd3dDeviceContext->Map(ppd3dTextures[t], m, D3D11_MAP_READ, 0, &d3dMappedTexture2D);
+			pd3dDeviceContext->UpdateSubresource(pd3dTexture2DArray, D3D11CalcSubresource(m, t, d3dTexure2DDesc.MipLevels), 0, d3dMappedTexture2D.pData, d3dMappedTexture2D.RowPitch, d3dMappedTexture2D.DepthPitch);
+			pd3dDeviceContext->Unmap(ppd3dTextures[t], m);
+		}
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC d3dTextureSRVDesc;
+	ZeroMemory(&d3dTextureSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+	d3dTextureSRVDesc.Format = d3dTexture2DArrayDesc.Format;
+	d3dTextureSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	d3dTextureSRVDesc.Texture2DArray.MostDetailedMip = 0;
+	d3dTextureSRVDesc.Texture2DArray.MipLevels = d3dTexture2DArrayDesc.MipLevels;
+	d3dTextureSRVDesc.Texture2DArray.FirstArraySlice = 0;
+	d3dTextureSRVDesc.Texture2DArray.ArraySize = nTextures;
+
+	ID3D11ShaderResourceView *pd3dsrvTextureArray;
+	pd3dDevice->CreateShaderResourceView(pd3dTexture2DArray, &d3dTextureSRVDesc, &pd3dsrvTextureArray);
+
+	if (pd3dTexture2DArray) pd3dTexture2DArray->Release();
+
+	for (UINT i = 0; i < nTextures; i++) if (ppd3dTextures[i]) ppd3dTextures[i]->Release();
+	delete[] ppd3dTextures;
+
+	if (pd3dDeviceContext) pd3dDeviceContext->Release();
+
+	return(pd3dsrvTextureArray);
 }
 
 
+
+
+
+CTextureMgr::CTextureMgr() : CMgr<CTexture>()
+{
+}
+
 CTextureMgr::~CTextureMgr()
 {
-	for (auto it = m_vpTextureArray.begin(); it != m_vpTextureArray.end(); ++it)
-	{
-		it->second->Release();
-	}
 }
 
 CTextureMgr & CTextureMgr::GetInstance()
@@ -118,76 +193,89 @@ CTextureMgr & CTextureMgr::GetInstance()
 	// TODO: 여기에 반환 구문을 삽입합니다.
 }
 
-bool CTextureMgr::InsertTexture(CTexture * pTexture, string name)
-{
-	if (nullptr == pTexture)
-	{
-		printf("텍스쳐가 존재하지 않습니다.");
-		return false;
-	}
-
-	if (m_vpTextureArray[name])
-	{
-		m_vpTextureArray[name]->Release();
-		m_vpTextureArray[name] = pTexture;
-	}
-	else
-	{
-		m_vpTextureArray[name] = pTexture;
-	}
-
-	pTexture->AddRef();
-
-	return true;
-}
-
-CTexture * CTextureMgr::GetTexture(string name)
-{
-	return m_vpTextureArray[name];
-}
-
 void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
 {
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
-	InsertSamplerState(pd3dSamplerState, "ss_linear_wrap", 0);
-	pd3dSamplerState->Release();
-
+	BuildSamplers(pd3dDevice);
+	BuildTextures(pd3dDevice);
 
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	if (FAILED(hr)) printf("오류");
-
-	InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
-	pd3dsrvTexture->Release();
-
-
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-	InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
-	pd3dSamplerState->Release();
-
 	pd3dsrvTexture = CTextureMgr::CreateRandomTexture1DSRV(pd3dDevice);
 	InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
 	pd3dsrvTexture->Release();
 }
 
+void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
+{
+	HRESULT hr;
+	ID3D11SamplerState *pd3dSamplerState = nullptr;
+	D3D11_SAMPLER_DESC d3dSamplerDesc;
+	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
+	{
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		d3dSamplerDesc.MinLOD = 0;
+		d3dSamplerDesc.MaxLOD = 0;
+
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		assert(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "ss_linear_wrap", 0);
+		pd3dSamplerState->Release();
+	}
+	{
+		d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		assert(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
+		pd3dSamplerState->Release();
+	}
+	{
+		ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
+		d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+		d3dSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+		d3dSamplerDesc.MaxAnisotropy = 1;
+		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;//D3D11_COMPARISON_NEVER;
+
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		assert(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "scs_point_border", 0);
+		pd3dSamplerState->Release();
+	}
+	{
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		d3dSamplerDesc.MaxAnisotropy = 1;
+
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		assert(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "ss_point_border", 0);
+		pd3dSamplerState->Release();
+	}
+}
+
+void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
+{
+	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	assert(SUCCEEDED(hr));
+
+	InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
+	pd3dsrvTexture->Release();
+
+
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CTextureMgr::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, string name)
 {
-	CTexture * pTexture = m_vpTextureArray[name];
+	CTexture * pTexture = m_mpList[name];
 	if (pTexture)
 	{
 		if(pTexture->IsSampler() && pTexture->IsSRV()) pTexture->UpdateShaderVariable(pd3dDeviceContext);
@@ -202,7 +290,7 @@ bool CTextureMgr::InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, stri
 
 	CTexture * pTexture = new CTexture(1, 0, uSlotNum, 0, nSetInfo);
 	pTexture->SetTexture(0, pSRV);
-	m_vpTextureArray[name] = pTexture;
+	m_mpList[name] = pTexture;
 	return true;
 }
 
@@ -212,14 +300,8 @@ bool CTextureMgr::InsertSamplerState(ID3D11SamplerState * pSamplerState, string 
 
 	CTexture * pTexture = new CTexture(0, 1, 0, uSlotNum, nSetInfo);
 	pTexture->SetSampler(0, pSamplerState);
-	m_vpTextureArray[name] = pTexture;
+	m_mpList[name] = pTexture;
 	return true;
-}
-
-void CTextureMgr::EraseTexture(string name)
-{
-	if(m_vpTextureArray[name]) m_vpTextureArray[name]->Release();
-	m_vpTextureArray[name] = nullptr;
 }
 
 ID3D11ShaderResourceView * CTextureMgr::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)

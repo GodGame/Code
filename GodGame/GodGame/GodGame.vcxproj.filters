@@ -13,120 +13,138 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{f488baa0-1606-4ade-94eb-b329046335d4}</UniqueIdentifier>
+    <Filter Include="Fixed">
+      <UniqueIdentifier>{cdce977f-3d60-4c40-ade4-d2f7d2bec838}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Mesh">
-      <UniqueIdentifier>{0f1c05f1-ce27-4e1c-a82c-37d36862a433}</UniqueIdentifier>
+    <Filter Include="StaticGlobal">
+      <UniqueIdentifier>{e91c1f1f-163c-4798-992e-19505e1d7d9d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Common">
-      <UniqueIdentifier>{832504e1-6321-4dd6-bc71-16abb5451646}</UniqueIdentifier>
+    <Filter Include="StaticGlobal\0_Effects">
+      <UniqueIdentifier>{5933e275-bd33-4e46-bfa9-462280a7204e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Scene">
-      <UniqueIdentifier>{2e9ae3ed-29a8-4501-99bc-1392016dfa05}</UniqueIdentifier>
+    <Filter Include="StaticGlobal\1_Common">
+      <UniqueIdentifier>{9d6d465a-c86b-4378-b9f2-80aa71ba71ca}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Effects">
-      <UniqueIdentifier>{2ce069c2-bc20-45cd-843e-e81f790b197a}</UniqueIdentifier>
+    <Filter Include="StaticGlobal\2_Managers">
+      <UniqueIdentifier>{f0558bf3-1d51-4b7a-8882-bea4a9979d3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LocalDynamic">
+      <UniqueIdentifier>{a54ccc23-d8ca-4044-8012-f74ceef6559e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LocalDynamic\3_Scenes">
+      <UniqueIdentifier>{9d426cc7-0510-4173-87cc-539c574b9372}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LocalDynamic\4_Shaders">
+      <UniqueIdentifier>{df0396e9-47a3-474f-b779-2fa127ce0a28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LocalDynamic\5_ObjectsAndCamera">
+      <UniqueIdentifier>{c654119a-4951-4246-89c5-e71ae7645a54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LocalDynamic\6_Meshes">
+      <UniqueIdentifier>{f1fc6fa5-5ff9-43a3-9b99-633e6cbd4d7f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="targetver.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="GodGame.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderEssential.h">
-      <Filter>Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderList.h">
-      <Filter>Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="ShaderType.h">
-      <Filter>Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Mesh</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshType.h">
-      <Filter>Mesh</Filter>
-    </ClInclude>
     <ClInclude Include="GameFramework.h">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\1_Common</Filter>
     </ClInclude>
     <ClInclude Include="MyInline.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Timer.h">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\1_Common</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\1_Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>StaticGlobal\1_Common</Filter>
+    </ClInclude>
+    <ClInclude Include="MgrType.h">
+      <Filter>StaticGlobal\2_Managers</Filter>
     </ClInclude>
     <ClInclude Include="TextureMgr.h">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\2_Managers</Filter>
     </ClInclude>
     <ClInclude Include="Scene.h">
-      <Filter>Scene</Filter>
+      <Filter>LocalDynamic\3_Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderType.h">
+      <Filter>LocalDynamic\4_Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderEssential.h">
+      <Filter>LocalDynamic\4_Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderList.h">
+      <Filter>LocalDynamic\4_Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>LocalDynamic\5_ObjectsAndCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>LocalDynamic\5_ObjectsAndCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>LocalDynamic\5_ObjectsAndCamera</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshType.h">
+      <Filter>LocalDynamic\6_Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>LocalDynamic\6_Meshes</Filter>
+    </ClInclude>
+    <ClInclude Include="GodGame.h">
+      <Filter>Fixed</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Fixed</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Fixed</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Fixed</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Object.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Timer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderEssential.cpp">
-      <Filter>Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderList.cpp">
-      <Filter>Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderType.cpp">
-      <Filter>Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshType.cpp">
-      <Filter>Mesh</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Mesh</Filter>
-    </ClCompile>
     <ClCompile Include="GameFramework.cpp">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\1_Common</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\1_Common</Filter>
     </ClCompile>
     <ClCompile Include="TextureMgr.cpp">
-      <Filter>Common</Filter>
+      <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
-      <Filter>Scene</Filter>
+      <Filter>LocalDynamic\3_Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderEssential.cpp">
+      <Filter>LocalDynamic\4_Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderList.cpp">
+      <Filter>LocalDynamic\4_Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderType.cpp">
+      <Filter>LocalDynamic\4_Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>LocalDynamic\5_ObjectsAndCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>LocalDynamic\5_ObjectsAndCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>LocalDynamic\5_ObjectsAndCamera</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>LocalDynamic\6_Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshType.cpp">
+      <Filter>LocalDynamic\6_Meshes</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Fixed</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Fixed</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -143,28 +161,28 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="SSAO.fx">
+      <Filter>StaticGlobal\0_Effects</Filter>
+    </FxCompile>
     <FxCompile Include="Define.fx">
-      <Filter>Effects</Filter>
+      <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
     <FxCompile Include="Effect.fx">
-      <Filter>Effects</Filter>
+      <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
     <FxCompile Include="Light.fx">
-      <Filter>Effects</Filter>
+      <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
     <FxCompile Include="Particle.fx">
-      <Filter>Effects</Filter>
+      <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
     <FxCompile Include="Shadow.fx">
-      <Filter>Effects</Filter>
-    </FxCompile>
-    <FxCompile Include="SSAO.fx">
-      <Filter>Effects</Filter>
+      <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt">
-      <Filter>Effects</Filter>
+      <Filter>StaticGlobal\0_Effects</Filter>
     </None>
   </ItemGroup>
 </Project>
