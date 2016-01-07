@@ -53,33 +53,16 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 
 	m_pMesh = new CPlaneMesh(pd3dDevice, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
 	m_pTexture = new CTexture(NUM_MRT - 1, 1, 17, 0, SET_SHADER_PS);
 	m_pInfoScene = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 
-	//m_pTexture->SetTexture(0, nullptr);
-	m_pTexture->SetSampler(0, pd3dSamplerState);
-	for (int i = 1; i < NUM_MRT; ++i)
-		m_pTexture->SetTexture(i - 1, ppd3dMrtSrv[i]);
+	for (int i = 1; i < NUM_MRT; ++i) m_pTexture->SetTexture(i - 1, ppd3dMrtSrv[i]);
 
-
-	pd3dSamplerState->Release();
 }
 
 void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera /*= nullptr*/)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	printf("Opt: %d \n", m_iDrawOption);
 	//SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
 	if (m_iDrawOption == 0)
@@ -175,7 +158,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	//XMFLOAT3 pos = m_ppObjects[0]->GetPosition();
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
 	//3인칭 카메라일 때 플레이어를 렌더링한다.
@@ -237,15 +220,6 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-
-	//ID3D11SamplerState *pd3dSamplerState = nullptr;
-	//D3D11_SAMPLER_DESC d3dSamplerDesc;
-	//ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-
-
-	//ID3D11SamplerState *pd3dSplatSamplerState = nullptr;
-
-
 	m_nLayerNumber = 1;
 	m_pptxLayerMap = new CTexture *[m_nLayerNumber];
 
@@ -303,21 +277,6 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	delete[] ppd3dsrvHeight;
 	delete[] ppd3dsrvTexture;
 #else
-	//d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	//d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	//d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	//d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	//d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	//d3dSamplerDesc.MinLOD = 0;
-	//d3dSamplerDesc.MaxLOD = 0;
-	//pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
-
-	//d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	//d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	//d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	//pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSplatSamplerState);
-
 	wchar_t ** ppTextureName, **ppAlphaName;
 	ppTextureName = new wchar_t *[m_nLayerNumber];
 	ppAlphaName = new wchar_t *[m_nLayerNumber];
@@ -361,8 +320,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
 	XMFLOAT3 xv3Scale(8.0f, 2.0f, 8.0f);
 	/*지형을 높이 맵 이미지 파일을 사용하여 생성한다. 높이 맵 이미지의 크기는 가로x세로(257x257)이고 격자 메쉬의 크기는 가로x세로(17x17)이다.
-	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.
-	*/
+	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
 
 	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), 257, 257, 257, 257, xv3Scale);
 
@@ -377,7 +335,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 }
 void CTerrainShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	//float pBlendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	//pd3dDeviceContext->OMSetBlendState(m_pd3dSplatBlendState, pBlendFactor, 0xffffffff);
@@ -504,7 +462,7 @@ void CWaterShader::SetBlendState(ID3D11Device *pd3dDevice)
 
 void CWaterShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	float pBlendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	pd3dDeviceContext->OMSetBlendState(m_pd3dWaterBlendState, pBlendFactor, 0xffffffff);
@@ -557,19 +515,10 @@ void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	CShader::OnPrepareRender(pd3dDeviceContext);
+	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	m_ppObjects[0]->Render(pd3dDeviceContext, uRenderState, pCamera);
 }
-
-
-void CSkyBoxShader::RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera)
-{
-	CShader::OnPrepareRender(pd3dDeviceContext);
-
-	m_ppObjects[0]->RenderReflected(pd3dDeviceContext, xmtxReflect, pCamera);
-}
-
 
 
 CShadowShader::CShadowShader()
@@ -628,7 +577,7 @@ void CSSAOShader::BuildObjects(ID3D11Device * pd3dDevice)
 
 void CSSAOShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	UpdateShaderVariable(pd3dDeviceContext, pCamera);
 	TXMgr.UpdateShaderVariable(pd3dDeviceContext, "srv_random1d");
 	//TXMgr.UpdateShaderVariable(pd3dDeviceContext, "srv_rtvSSAO");

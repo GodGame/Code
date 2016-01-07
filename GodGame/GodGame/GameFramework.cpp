@@ -66,7 +66,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	//Direct3D 디바이스, 디바이스 컨텍스트, 스왑 체인 등을 생성하는 함수를 호출한다. 
 	if (!CreateDirect3DDisplay()) return(false);
 
-	TXMgr.BuildResources(m_pd3dDevice);
+	CManagers::BuildManagers(m_pd3dDevice);
 
 	if (!CreateRenderTargetDepthStencilView()) return(false);
 	if (!CreateShadowDevice()) return false;
@@ -333,8 +333,9 @@ void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	//cout << m_xmf44ShadowMap._31 << "," << m_xmf44ShadowMap._32 << "," << m_xmf44ShadowMap._33 << "," << m_xmf44ShadowMap._34 << endl;
 	//cout << m_xmf44ShadowMap._41 <<","<< m_xmf44ShadowMap._42 << ","<< m_xmf44ShadowMap._43 << "," << m_xmf44ShadowMap._44 << endl;
 
-	m_uRenderState = 1;
+	m_uRenderState = NOT_PSUPDATE;
 	m_pCamera->UpdateShaderVariables(m_pd3dDeviceContext, m_xmf44ShadowVP, m_xmf44ShadowVP/*xmf44LightViewProj*/);
+	m_pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
 	m_pd3dDeviceContext->RSSetState(m_pd3dShadowRS);
 	m_pd3dDeviceContext->RSSetViewports(1, &m_d3dxShadowMapViewport);
 
@@ -348,17 +349,17 @@ void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 
 
 //#ifdef _THREAD
-//	for (int i = 1; i < 4; ++i)
+//	for (int i = 1; i < 3; ++i)
 //	{
 //		::SetEvent(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
 //	}
-//	::WaitForMultipleObjects(3, &m_hRenderingEndEvents[1], TRUE, INFINITE);
+//	::WaitForMultipleObjects(2, &m_hRenderingEndEvents[1], TRUE, INFINITE);
 //#endif
-//
+//	ID3D11RenderTargetView* renderTargets[1] = { 0 };
+//	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, m_pd3ddsvShadowMap);
+//	m_pd3dDeviceContext->ClearDepthStencilView(m_pd3ddsvShadowMap, D3D11_CLEAR_DEPTH, 1.0f, 0);
 //#ifdef _THREAD
-//	//if (m_pd3dDepthStencilView) m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-//
-//	for (int i = 1; i < 4; ++i)
+//	for (int i = 1; i < 3; ++i)
 //	{
 //		m_pd3dDeviceContext->ExecuteCommandList(m_pRenderingThreadInfo[i].m_pd3dCommandList, TRUE);
 //		m_pRenderingThreadInfo[i].m_pd3dCommandList->Release();
@@ -369,7 +370,7 @@ void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 
 	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 	m_pd3dDeviceContext->RSSetState(nullptr);
-	m_uRenderState = 0;
+	m_uRenderState = NULL;
 
 	m_pSceneShader->SetLightSRV(m_pd3dsrvShadowMap);
 	m_pCamera->SetViewport(m_pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
@@ -592,8 +593,6 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	return(0);
 }
 
-
-
 void CGameFramework::BuildObjects()
 {
 	CShader::CreateShaderVariables(m_pd3dDevice);
@@ -650,7 +649,6 @@ void CGameFramework::InitilizeThreads()
 		m_pRenderingThreadInfo[i].m_pd3dDepthStencilView = m_pd3dDepthStencilView;
 		m_pRenderingThreadInfo[i].m_ppd3dRenderTargetView = m_ppd3dRenderTargetView;
 		m_pRenderingThreadInfo[i].m_puRenderState = &m_uRenderState;
-		m_pRenderingThreadInfo[i].m_pExtra = (void*)this;
 		m_hRenderingEndEvents[i] = m_pRenderingThreadInfo[i].m_hRenderingEndEvent;
 		// 디퍼드 컨텍스트 생성
 		m_pd3dDevice->CreateDeferredContext(0, &m_pRenderingThreadInfo[i].m_pd3dDeferredContext);
@@ -804,11 +802,9 @@ void CGameFramework::FrameAdvance()
 	ID3D11ShaderResourceView * pNullPtr[] = { nullptr, nullptr, nullptr,nullptr, nullptr, nullptr };
 	m_pd3dDeviceContext->PSSetShaderResources(16, 6, pNullPtr);
 
-
 	//m_pSceneShader->UpdateShaders(m_pd3dDeviceContext);
 
-	float color[] = { 0.5f, 0.3f, 0.2, 1.0 };
-	m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dSSAOTargetView, color);
+//	m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dSSAOTargetView, color);
 	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
 	m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_ppd3dMRTView[MRT_NORMAL]);	
 	m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
@@ -867,8 +863,6 @@ UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter)
 	RenderInfo.pRenderState = pRenderingThreadInfo->m_puRenderState;
 
 	if (NUM_THREAD == 1) RenderInfo.ThreadID = -1;
-
-	CGameFramework * pFramework = (CGameFramework*)pRenderingThreadInfo->m_pExtra;
 
 	pd3dDeferredContext->OMSetDepthStencilState(nullptr, 1);
 	while (true)

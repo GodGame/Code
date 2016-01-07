@@ -3,16 +3,6 @@
 #include "Object.h"
 #include "Shader.h"
 
-CMaterial::CMaterial()
-{
-	m_nReferences = 0;
-	m_uMaterialSet = SET_SHADER_NONE;
-}
-
-CMaterial::~CMaterial()
-{
-}
-
 //////////////////////////////////////////////////////////////////////////
 
 CGameObject::CGameObject(int nMeshes)
@@ -130,39 +120,6 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 	}
 }
 
-void CGameObject::RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera)
-{
-	XMFLOAT4X4 d3dmtxRefleccted;// = m_xmf44World;
-	//XMFLOAT4X4Multiply(&d3dmtxRefleccted, &m_xmf44World, xmtxReflect);
-	//Chae::XMFloat4x4Mul(&d3dmtxRefleccted, &m_xmf44World, xmtxReflect);
-	XMStoreFloat4x4(&d3dmtxRefleccted, XMMatrixMultiply(XMLoadFloat4x4(&m_xmf44World), *xmtxReflect));
-
-	CShader::UpdateShaderVariable(pd3dDeviceContext, &d3dmtxRefleccted);
-	//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
-	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
-	//객체의 텍스쳐를 쉐이더 변수에 설정(연결)한다.
-	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
-
-
-	if (m_ppMeshes)
-	{
-		for (int i = 0; i < m_nMeshes; i++)
-		{
-			if (m_ppMeshes[i])
-			{
-				bool bIsVisible = true;
-				if (pCamera)		// 필요할까?
-				{
-					AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
-					bcBoundingCube.Update(&d3dmtxRefleccted);
-					bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
-				}
-				if (bIsVisible) 
-					m_ppMeshes[i]->RenderReflected(pd3dDeviceContext, 0);
-			}
-		}
-	}
-}
 void CGameObject::SetPosition(float x, float y, float z)
 {
 	m_xmf44World._41 = x;

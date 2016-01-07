@@ -94,6 +94,15 @@
     <ClInclude Include="Shader.h">
       <Filter>LocalDynamic\4_Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="SlotList.h">
+      <Filter>StaticGlobal\1_Common</Filter>
+    </ClInclude>
+    <ClInclude Include="StatesMgr.h">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="MgrList.h">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">

@@ -85,14 +85,8 @@ void CMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
 	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, m_ppd3dVertexBuffers, m_pnVertexStrides, m_pnVertexOffsets);
 	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
 	pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-	if (uRenderState == 0)
-	{
-		pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
-	}
-	else
-	{
-		pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
-	}
+	if (!(uRenderState & RS_SHADOWMAP)) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
+
 	if (m_pd3dIndexBuffer)
 	{
 		pd3dDeviceContext->DrawIndexed(m_nIndices, m_nStartIndex, m_nBaseVertex);
@@ -101,19 +95,7 @@ void CMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
 		pd3dDeviceContext->Draw(m_nVertices, m_nStartVertex);
 
 }
-void CMesh::RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
-{
-	//메쉬의 정점은 여러 개의 정점 버퍼로 표현된다.
-	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, m_ppd3dVertexBuffers, m_pnVertexStrides, m_pnVertexOffsets);
-	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
-	pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-	//pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
 
-	if (m_pd3dIndexBuffer)
-		pd3dDeviceContext->DrawIndexed(m_nIndices, m_nStartIndex, m_nBaseVertex);
-	else
-		pd3dDeviceContext->Draw(m_nVertices, m_nStartVertex);
-}
 void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, int nInstances, int nStartInstance)
 {
 	//인스턴싱의 경우 입력 조립기에 메쉬의 정점 버퍼와 인스턴스 정점 버퍼가 연결된다.
@@ -122,21 +104,6 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 	pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
 	if(uRenderState == 0 )
 		pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
-
-	//객체들의 인스턴스들을 렌더링한다. 
-	if (m_pd3dIndexBuffer)
-		pd3dDeviceContext->DrawIndexedInstanced(m_nIndices, nInstances, m_nStartIndex, m_nBaseVertex, nStartInstance);
-	else
-		pd3dDeviceContext->DrawInstanced(m_nVertices, nInstances, m_nStartVertex, nStartInstance);
-
-}
-void CMesh::RenderInstancedAndReflected(ID3D11DeviceContext *pd3dDeviceContext, int nInstances, int nStartInstance)
-{
-	//인스턴싱의 경우 입력 조립기에 메쉬의 정점 버퍼와 인스턴스 정점 버퍼가 연결된다.
-	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, m_ppd3dVertexBuffers, m_pnVertexStrides, m_pnVertexOffsets);
-	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
-	pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-	//pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
 
 	//객체들의 인스턴스들을 렌더링한다. 
 	if (m_pd3dIndexBuffer)

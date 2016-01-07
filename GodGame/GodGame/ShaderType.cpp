@@ -61,18 +61,20 @@ void CShader::AnimateObjects(float fTimeElapsed)
 		m_ppObjects[j]->Animate(fTimeElapsed);
 	}
 }
-void CShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext)
-{
+void CShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
+{	
+	if(!(uRenderState & NOT_PSUPDATE))
+		pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, nullptr, 0);
 	pd3dDeviceContext->IASetInputLayout(m_pd3dVertexLayout);
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
-	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, nullptr, 0);
+
 	pd3dDeviceContext->GSSetShader(m_pd3dGeometryShader, nullptr, 0);
 	pd3dDeviceContext->HSSetShader(m_pd3dHullShader, nullptr, 0);
 	pd3dDeviceContext->DSSetShader(m_pd3dDomainShader, nullptr, 0);
 }
 void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
@@ -86,20 +88,7 @@ void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 	}
 }
 
-void CShader::RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera)
-{
-	OnPrepareRender(pd3dDeviceContext);
 
-	for (int j = 0; j < m_nObjects; j++)
-	{
-		if (m_ppObjects[j])
-		{
-			//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
-			if (m_ppObjects[j]->IsVisible(pCamera))
-				m_ppObjects[j]->RenderReflected(pd3dDeviceContext, xmtxReflect, pCamera);
-		}
-	}
-}
 #pragma region CREATE_SHADER_FROM_FILE
 
 void CShader::CreateVertexShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11VertexShader **ppd3dVertexShader, D3D11_INPUT_ELEMENT_DESC *pd3dInputLayout, UINT nElements, ID3D11InputLayout **ppd3dVertexLayout)
@@ -591,9 +580,9 @@ void CNormalMapShader::CreateShader(ID3D11Device *pd3dDevice)
 	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CNormalMapShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext)
+void CNormalMapShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
 {	
-	CShader::OnPrepareRender(pd3dDeviceContext);
+	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
 	
 	UpdateBumpInfo(pd3dDeviceContext);
 }

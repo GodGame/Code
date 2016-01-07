@@ -50,9 +50,8 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void ReleaseObjects();
 	virtual void AnimateObjects(float fTimeElapsed);
-	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext);
+	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	virtual void RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera = nullptr);
 	virtual CGameObject * GetObj(int num = 0);
 #ifdef PICKING
 	virtual CGameObject *PickObjectByRayIntersection(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxView, MESHINTERSECTINFO *pd3dxIntersectInfo);
@@ -150,7 +149,7 @@ public:
 	virtual ~CNormalMapShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext);
+	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	
 	void UpdateBumpInfo(ID3D11DeviceContext *pd3dDeviceContext, SETSHADER setInfo = ( SET_SHADER_DS | SET_SHADER_PS ));
 };

@@ -132,7 +132,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain
 
 void CInstancingShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 
@@ -177,59 +177,6 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRen
 	//pCubeMesh->RenderInstanced(pd3dDeviceContext, nCubeInstances, 0);
 }
 
-void CInstancingShader::RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera)
-{
-	OnPrepareRender(pd3dDeviceContext);
-	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
-	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
-
-	XMMATRIX mtxReflectedAndTransposed;
-	//XMMATRIX mtxReflectMatrix = XMLoadFloat4x4(xmtxReflect);
-	XMMATRIX mtxWorldMatrix;
-
-	int nCubeObjects = m_nObjects;
-
-	int nCubeInstances = 0;
-	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dDeviceContext->Map(m_pd3dCubeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	VS_VB_INSTANCE *pnSphereInstances = (VS_VB_INSTANCE *)d3dMappedResource.pData;
-	for (int j = 0; j < nCubeObjects; j++)
-	{
-		if (m_ppObjects[j])
-		{
-			if (m_ppObjects[j]->IsVisible(pCamera))
-			{
-				mtxWorldMatrix = XMLoadFloat4x4(&m_ppObjects[j]->m_xmf44World);
-				mtxReflectedAndTransposed = XMMatrixMultiplyTranspose(mtxWorldMatrix, *xmtxReflect);
-				XMStoreFloat4x4(&pnSphereInstances[nCubeInstances++].m_d3dxTransform, mtxReflectedAndTransposed);
-				//XMFLOAT4X4Multiply(&d3dmtxRefleccted, &m_ppObjects[j]->m_xmf44World, xmtxReflect);
-				//XMFLOAT4X4Transpose(&pnSphereInstances[nSphereInstances++].m_d3dxTransform, &d3dmtxRefleccted);
-			}
-		}
-	}
-	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
-
-	CMesh *pSphereMesh = m_ppObjects[0]->GetMesh();
-	pSphereMesh->RenderInstancedAndReflected(pd3dDeviceContext, nCubeInstances, 0);
-
-	//int nCubeInstances = 0;
-	//pd3dDeviceContext->Map(m_pd3dCubeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	//VS_VB_INSTANCE *pCubeInstances = (VS_VB_INSTANCE *)d3dMappedResource.pData;
-	//for (int j = nSphereObjects; j < m_nObjects; j++)
-	//{
-	//	if (m_ppObjects[j])
-	//	{
-	//		if (m_ppObjects[j]->IsVisible(pCamera))
-	//		{
-	//			XMFLOAT4X4Transpose(&pCubeInstances[nCubeInstances++].m_d3dxTransform, &m_ppObjects[j]->m_xmf44World);
-	//		}
-	//	}
-	//}
-	//pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
-
-	//CMesh *pCubeMesh = m_ppObjects[m_nObjects - 1]->GetMesh();
-	//pCubeMesh->RenderInstanced(pd3dDeviceContext, nCubeInstances, 0);
-}
 #pragma endregion
 
 #pragma region BillboardShader
@@ -326,7 +273,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 
 void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 	//	pCamera->UpdateCameraPositionCBBuffer(pd3dDeviceContext);
@@ -507,7 +454,7 @@ void CStaticShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	//pd3dDeviceContext->PSSetShaderResources(0, 0, nullptr);
 	//pd3dDeviceContext->PSSetSamplers(0, 0, nullptr);
 
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
@@ -633,7 +580,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
@@ -787,7 +734,7 @@ void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 
 void CNormalShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	CNormalMapShader::OnPrepareRender(pd3dDeviceContext);
+	CNormalMapShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);

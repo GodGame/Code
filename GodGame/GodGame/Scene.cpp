@@ -84,31 +84,10 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader)
 	m_ppShaders[1]->BuildObjects(pd3dDevice);
 
 	//재질을 생성한다.
-	CMaterial *pRedMaterial = new CMaterial();
-	pRedMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	pRedMaterial->m_Material.m_xcAmbient = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	pRedMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
-	pRedMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	CMaterial *pGreenMaterial = new CMaterial();
-	pGreenMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	pGreenMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	pGreenMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 3.0f);
-	pGreenMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	CMaterial *pBlueMaterial = new CMaterial();
-	pBlueMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-	pBlueMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-	pBlueMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
-	pBlueMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-
-	CMaterial *pWhiteMaterial = new CMaterial();
-	pWhiteMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	pWhiteMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	pWhiteMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
-	pWhiteMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-
-
+	CMaterial *pRedMaterial = MaterialMgr.GetObjects("Red");
+	CMaterial *pGreenMaterial = MaterialMgr.GetObjects("Green");
+	CMaterial *pBlueMaterial = MaterialMgr.GetObjects("Blue");
+	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
 
 	CStaticShader *pStaticObjectsShader = new CStaticShader();
 	pStaticObjectsShader->CreateShader(pd3dDevice);

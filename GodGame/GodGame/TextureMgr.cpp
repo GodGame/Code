@@ -331,3 +331,65 @@ ID3D11ShaderResourceView * CTextureMgr::CreateRandomTexture1DSRV(ID3D11Device * 
 	pd3dTexture->Release();
 	return(pd3dsrvTexutre);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+CMaterial::CMaterial()
+{
+	m_nReferences = 0;
+	m_uMaterialSet = SET_SHADER_NONE;
+}
+
+CMaterial::~CMaterial()
+{
+}
+
+
+
+CMaterialMgr::CMaterialMgr() : CMgr<CMaterial>()
+{
+
+}
+
+CMaterialMgr::~CMaterialMgr()
+{
+
+}
+
+
+CMaterialMgr & CMaterialMgr::GetInstance()
+{
+	static CMaterialMgr instance;
+	return instance;
+}
+
+void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
+{
+	//재질을 생성한다.
+	CMaterial *pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	InsertObject(pMaterial, "Red");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	InsertObject(pMaterial, "Green");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	InsertObject(pMaterial, "Blue");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	InsertObject(pMaterial, "White");
+}

@@ -134,10 +134,8 @@ public:
 
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
-	virtual void RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	//인스턴싱을 사용하여 렌더링한다. 
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState,int nInstances = 0, int nStartInstance = 0);
-	virtual void RenderInstancedAndReflected(ID3D11DeviceContext *pd3dDeviceContext, int nInstances = 0, int nStartInstance = 0);
 };
 
 class CMeshDiffused : public CMesh

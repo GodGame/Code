@@ -284,8 +284,6 @@ void CTerrainPartMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	CMesh::Render(pd3dDeviceContext, uRenderState);
 }
 
-#define SKYBOX_CUBE
-
 CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshTextured(pd3dDevice)
 {
 	//스카이 박스는 6개의 면(사각형), 사각형은 정점 4개, 그러므로 24개의 정점이 필요하다.
@@ -423,12 +421,8 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	d3dSamplerDesc.MaxLOD = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 
-
-#ifdef SKYBOX_CUBE
 	m_pSkyboxTexture = new CTexture(1, 1, PS_SLOT_CUBE_TEXTURE, PS_SLOT_CUBE_SAMPLER_STATE);
-#else
-	m_pSkyboxTexture = new CTexture(6, 1, 0, 0);
-#endif
+
 	m_pSkyboxTexture->SetSampler(0, pd3dSamplerState);
 	pd3dSamplerState->Release();
 	m_pSkyboxTexture->AddRef();
@@ -446,51 +440,17 @@ CSkyBoxMesh::~CSkyBoxMesh()
 
 void CSkyBoxMesh::OnChangeSkyBoxTextures(ID3D11Device *pd3dDevice, int nIndex)
 {
-
-#ifdef SKYBOX
-	//6개의 스카이 박스 텍스쳐를 생성하여 CTexture 객체에 연결한다.
-	_TCHAR pstrTextureName[80];
-	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	_stprintf_s(pstrTextureName, _T("../Assets/Image/SkyBox/SkyBox_Front_%d.jpg"), nIndex, 80);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureName, nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	m_pSkyboxTexture->SetTexture(0, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
-	_stprintf_s(pstrTextureName, _T("../Assets/Image/SkyBox/SkyBox_Back_%d.jpg"), nIndex, 80);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureName, nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	m_pSkyboxTexture->SetTexture(1, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
-	_stprintf_s(pstrTextureName, _T("../Assets/Image/SkyBox/SkyBox_Left_%d.jpg"), nIndex, 80);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureName, nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	m_pSkyboxTexture->SetTexture(2, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
-	_stprintf_s(pstrTextureName, _T("../Assets/Image/SkyBox/SkyBox_Right_%d.jpg"), nIndex, 80);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureName, nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	m_pSkyboxTexture->SetTexture(3, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
-	_stprintf_s(pstrTextureName, _T("../Assets/Image/SkyBox/SkyBox_Top_%d.jpg"), nIndex, 80);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureName, nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	m_pSkyboxTexture->SetTexture(4, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
-	_stprintf_s(pstrTextureName, _T("../Assets/Image/SkyBox/SkyBox_Bottom_%d.jpg"), nIndex, 80);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureName, nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	m_pSkyboxTexture->SetTexture(5, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
-#endif
-#ifdef SKYBOX_CUBE
-	
 	_TCHAR pstrTextureNames[128];
 	_stprintf_s(pstrTextureNames, _T("../Assets/Image/SkyBox/SkyBox_%d.dds"), nIndex, 128);
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, pstrTextureNames, nullptr, nullptr, &pd3dsrvTexture, nullptr);
 	m_pSkyboxTexture->SetTexture(0, pd3dsrvTexture); 
 	pd3dsrvTexture->Release();
-#endif // SKYBOX_CUBE
 
 }
 
 void CSkyBoxMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
 {
-#ifdef SKYBOX_CUBE
 	//CMesh::Render(pd3dDeviceContext);
 	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, m_ppd3dVertexBuffers, m_pnVertexStrides, m_pnVertexOffsets);
 	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
@@ -510,25 +470,6 @@ void CSkyBoxMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 	}
 
 	pd3dDeviceContext->OMSetDepthStencilState(nullptr, 1);
-#else
-	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, m_ppd3dVertexBuffers, m_pnVertexStrides, m_pnVertexOffsets);
-	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
-	pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-
-	//스카이 박스를 그리기 위한 샘플러 상태 객체와 깊이 스텐실 상태 객체를 설정한다.
-	m_pSkyboxTexture->UpdateSamplerShaderVariable(pd3dDeviceContext, 0, 0);
-	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dDepthStencilState, 1);
-
-	//스카이 박스의 6개 면(사각형)을 순서대로 그린다.
-	for (int i = 0; i < 6; i++)
-	{
-		//스카이 박스의 각 면(사각형)을 그릴 때 사용할 텍스쳐를 설정한다.
-		m_pSkyboxTexture->UpdateTextureShaderVariable(pd3dDeviceContext, i, 0);
-		pd3dDeviceContext->DrawIndexed(4, 0, i * 4);
-	}
-
-	pd3dDeviceContext->OMSetDepthStencilState(nullptr, 1);
-#endif
 }
 
 

@@ -29,7 +29,6 @@ struct RenderingThreadInfo
 	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
 	ID3D11RenderTargetView ** m_ppd3dRenderTargetView;
 	//int		m_nShaders;
-	void * m_pExtra;
 	CScene * m_pScene;
 	CPlayer * m_pPlayer;
 	UINT * m_puRenderState;
