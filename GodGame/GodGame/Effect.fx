@@ -36,7 +36,7 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	float3 pos = gtxtPos.Load(uvm).xyz;
 	float4 diffuse = gtxtDiffuse.Load(uvm);
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = gtxtTxColor.Load(uvm);
+	float4 txColor = GammaToneMapping(gtxtTxColor.Load(uvm));
 
 	if (diffuse.a == 0.0)
 	{
