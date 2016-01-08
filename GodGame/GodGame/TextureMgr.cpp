@@ -190,7 +190,6 @@ CTextureMgr & CTextureMgr::GetInstance()
 {
 	static CTextureMgr instance;
 	return instance;
-	// TODO: 여기에 반환 구문을 삽입합니다.
 }
 
 void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
