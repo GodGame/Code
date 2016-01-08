@@ -421,7 +421,7 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	d3dSamplerDesc.MaxLOD = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 
-	m_pSkyboxTexture = new CTexture(1, 1, PS_SLOT_CUBE_TEXTURE, PS_SLOT_CUBE_SAMPLER_STATE);
+	m_pSkyboxTexture = new CTexture(1, 1, TX_SLOT_CUBE_TEXTURE, SS_SLOT_CUBE_SAMPLER_STATE);
 
 	m_pSkyboxTexture->SetSampler(0, pd3dSamplerState);
 	pd3dSamplerState->Release();

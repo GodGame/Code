@@ -223,7 +223,7 @@ void CScene::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS
 	LIGHTS *pcbLight = (LIGHTS *)d3dMappedResource.pData;
 	memcpy(pcbLight, pLights, sizeof(LIGHTS));
 	pd3dDeviceContext->Unmap(m_pd3dcbLights, 0);
-	pd3dDeviceContext->PSSetConstantBuffers(PS_SLOT_LIGHT, 1, &m_pd3dcbLights);
+	pd3dDeviceContext->PSSetConstantBuffers(CB_PS_SLOT_LIGHT, 1, &m_pd3dcbLights);
 }
 
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)

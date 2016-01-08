@@ -39,7 +39,7 @@ void CPlayer::CreateShaderVariables(ID3D11Device *pd3dDevice)
 void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	//플레이어의 현재 카메라의 UpdateShaderVariables() 멤버 함수를 호출한다.
-	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext, m_pCamera->GetViewProjectionMatrix(), m_pCamera->GetViewMatrix());
+	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext, m_pCamera->GetViewProjectionMatrix());
 	printf("Player : %0.2f %0.2f %0.2f \n", m_xmf44World._41, m_xmf44World._42, m_xmf44World._43);
 }
 
@@ -352,7 +352,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 		m_pCamera = OnChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, nCurrentCameraMode);
 		m_pCamera->SetTimeLag(0.0f);
 		m_pCamera->SetOffset(XMFLOAT3(0.0f, 20.0f, 0.0f));
-		m_pCamera->GenerateProjectionMatrix(1.01f, 2000.0f, ASPECT_RATIO, 60.0f);
+		m_pCamera->GenerateProjectionMatrix(1.01f, 1000.0f, ASPECT_RATIO, 60.0f);
 		break;
 	case SPACESHIP_CAMERA:
 		SetFriction(125.0f);
@@ -363,7 +363,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 		m_pCamera = OnChangeCamera(pd3dDevice, SPACESHIP_CAMERA, nCurrentCameraMode);
 		m_pCamera->SetTimeLag(0.0f);
 		m_pCamera->SetOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		m_pCamera->GenerateProjectionMatrix(1.01f, 2000.0f, ASPECT_RATIO, 60.0f);
+		m_pCamera->GenerateProjectionMatrix(1.01f, 1000.0f, ASPECT_RATIO, 60.0f);
 		break;
 	case THIRD_PERSON_CAMERA:
 		SetFriction(250.0f);
@@ -374,7 +374,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 		m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
 		m_pCamera->SetTimeLag(0.25f);
 		m_pCamera->SetOffset(XMFLOAT3(0.0f, 20.0f, -50.0f));
-		m_pCamera->GenerateProjectionMatrix(1.01f, 2000.0f, ASPECT_RATIO, 60.0f);
+		m_pCamera->GenerateProjectionMatrix(1.01f, 1000.0f, ASPECT_RATIO, 60.0f);
 		break;
 	default:
 		break;

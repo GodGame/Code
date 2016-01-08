@@ -71,9 +71,13 @@ public:
 
 class CTextureMgr : public CMgr<CTexture>
 {
+//#define SLOT_TOTAL 64//128
+
 private:
 	CTextureMgr();
 	virtual ~CTextureMgr();
+
+	//ID3D11ShaderResourceView * m_pd3dSRVSlotList[SLOT_TOTAL];
 
 public:
 	static CTextureMgr& GetInstance();
@@ -82,6 +86,8 @@ public:
 
 	ID3D11ShaderResourceView * GetShaderResourceView(string name) { return m_mpList[name]->GetSRV(0);}
 	ID3D11SamplerState * GetSamplerState(string name) { return m_mpList[name]->GetSampler(0);}
+
+	//void RegisterSRVSlot(ID3D11ShaderResourceView UINT nSlot)
 
 public:
 	virtual void BuildResources(ID3D11Device *pd3dDevice);

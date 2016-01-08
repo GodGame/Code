@@ -7,6 +7,7 @@
 #define _WITH_THETA_PHI_CONES
 //#define _WITH_REFLECT
 
+
 //재질을 위한 구조체를 선언한다.
 struct MATERIAL
 {
@@ -399,4 +400,16 @@ float3 NoStripAverageVertexNormal()
 {
 	float3 result = float3(0, 0, 0);
 	return result;
+}
+
+float4 LinearToneMapping(float4 LinearColor)
+{
+	return (LinearColor * (6.2 * LinearColor + 0.5)) / (LinearColor * (6.2 * LinearColor + 1.7) + 0.06);
+}
+
+float4 GammaToneMapping(float4 GammaColor)
+{
+	float4 color = max(0, pow(GammaColor, 2.2) - 0.004);
+	color = (color * (6.2 * color + 0.5)) / (color * (6.2 * color + 1.7) + 0.06);
+	return color;
 }

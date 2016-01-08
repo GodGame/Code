@@ -172,32 +172,22 @@ void CCamera::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbCameraPos);
 }
 
-void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmf44ViewProj, XMFLOAT4X4 & xmtxView)
+void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmf44ViewProj)
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	/*상수 버퍼의 메모리 주소를 가져와서 카메라 변환 행렬과 투영 변환 행렬을 복사한다. 쉐이더에서 행렬의 행과 열이 바뀌는 것에 주의하라.*/
 	pd3dDeviceContext->Map(m_pd3dcbCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_CB_VIEWPROJECTION *pcbViewProjection = (VS_CB_VIEWPROJECTION *)d3dMappedResource.pData;
-	Chae::XMFloat4x4Transpose(&pcbViewProjection->m_xmf44ViewProjection, &xmf44ViewProj);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
-	Chae::XMFloat4x4Transpose(&pcbViewProjection->m_xmf44View, &xmtxView);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
+	XMFLOAT3 xmPos = GetPosition();
+	pcbViewProjection->m_xf3CameraPos = XMFLOAT4(xmPos.x, xmPos.y, xmPos.z, 1.0f);
+	Chae::XMFloat4x4Transpose(&pcbViewProjection->m_xmf44View, &xmf44ViewProj);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
 	pd3dDeviceContext->Unmap(m_pd3dcbCamera, 0);
 
 	//상수 버퍼를 슬롯(VS_SLOT_CAMERA)에 설정한다.
-	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
-	pd3dDeviceContext->GSSetConstantBuffers(VS_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
-	pd3dDeviceContext->HSSetConstantBuffers(VS_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
-	pd3dDeviceContext->DSSetConstantBuffers(VS_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
-
-	XMFLOAT3 xmPos = GetPosition();
-	pd3dDeviceContext->Map(m_pd3dcbCameraPos, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	VS_CB_CAMERAPOS *pcbCameraPos = (VS_CB_CAMERAPOS *)d3dMappedResource.pData;
-	pcbCameraPos->m_xf3CameraPos = XMFLOAT4(xmPos.x, xmPos.y, xmPos.z, 1.0f);
-	pd3dDeviceContext->Unmap(m_pd3dcbCameraPos, 0);
-	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_CAMERAPOS, 1, &m_pd3dcbCameraPos);
-	pd3dDeviceContext->HSSetConstantBuffers(VS_SLOT_CAMERAPOS, 1, &m_pd3dcbCameraPos);
-	pd3dDeviceContext->DSSetConstantBuffers(VS_SLOT_CAMERAPOS, 1, &m_pd3dcbCameraPos);
-	pd3dDeviceContext->GSSetConstantBuffers(VS_SLOT_CAMERAPOS, 1, &m_pd3dcbCameraPos);
-
+	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
+	pd3dDeviceContext->GSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
+	pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
+	pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
 }
 
 void CCamera::UpdateCameraPositionCBBuffer(ID3D11DeviceContext *pd3dDeviceContext)

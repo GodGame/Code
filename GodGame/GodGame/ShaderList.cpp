@@ -243,7 +243,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 
 
 
-	m_pTexture = new CTexture(1, 1, PS_SLOT_TEXTURE_ARRAY, 0);
+	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0);
 	// 크기 동일
 	ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
 	//HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Tree01.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
@@ -319,7 +319,7 @@ void CBillboardShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceConte
 	//pd3dDeviceContext->Map(m_pd3dcbCameraPos, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	//VS_CB_CAMERAPOS *pcbViewProjection = (VS_CB_CAMERAPOS *)d3dMappedResource.pData;
 	//pd3dDeviceContext->Unmap(m_pd3dcbCameraPos, 0);
-	//pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_CAMERAPOS, 1, &m_pd3dcbCameraPos);
+	//pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_CAMERAPOS, 1, &m_pd3dcbCameraPos);
 
 	////월드 변환 행렬을 상수 버퍼에 복사한다.
 	//D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -328,8 +328,8 @@ void CBillboardShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceConte
 	//Chae::XMFloat4x4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld); //XMFLOAT4X4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld);
 	//pd3dDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
 
-	////상수 버퍼를 디바이스의 슬롯(VS_SLOT_WORLD_MATRIX)에 연결한다.
-	//pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	////상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
+	//pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
 
 void CBillboardShader::AnimateObjects(float fTimeElapsed)
@@ -550,7 +550,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 
 
-	m_pTexture = new CTexture(1, 1, PS_SLOT_TEXTURE_ARRAY, 0);
+	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0);
 	ID3D11ShaderResourceView * pd3dsrvArray;
 	//ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
 	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Ceiling_01.jpg"), nullptr, nullptr, &pd3dsrvArray, nullptr);
@@ -973,7 +973,7 @@ void CParticleShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 	//cout << pcbParticle->m_fTime << "// " << pcbParticle->m_fTimeStep << "// " << pcbParticle->m_vParticleEmitPos.x << ", " << pcbParticle->m_vParticleEmitPos.y << ", "<< pcbParticle->m_vParticleEmitPos.z << endl;
 	pd3dDeviceContext->Unmap(m_pd3dcbGameInfo, 0);
 
-	//상수 버퍼를 디바이스의 슬롯(VS_SLOT_WORLD_MATRIX)에 연결한다.
+	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
 	pd3dDeviceContext->VSSetConstantBuffers(0x04, 1, &m_pd3dcbGameInfo);
 	pd3dDeviceContext->GSSetConstantBuffers(0x04, 1, &m_pd3dcbGameInfo);
 }

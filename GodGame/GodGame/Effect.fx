@@ -36,24 +36,32 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	float3 pos = gtxtPos.Load(uvm).xyz;
 	float4 diffuse = gtxtDiffuse.Load(uvm);
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = gtxtTxColor.Load(uvm);
+	float4 txColor = GammaToneMapping(gtxtTxColor.Load(uvm));
 
+	float4 color;
 	if (diffuse.a == 0.0)
 	{
-		return 0.8 * txColor;
+		return lerp(txColor, gFogColor, 0.9f);
 	}
+	else
+	{
+		//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
+		float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
 
-	//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
-	float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
-
-	float fShadowFactor = 0.3f;
+		float fShadowFactor = 0.3f;
 #ifdef SHADOW_PCF
-	fShadowFactor =	CalcShadowFactorByPCF(shadowPos);
+		fShadowFactor = CalcShadowFactorByPCF(shadowPos);
 #else
-	fShadowFactor =	CalcOneShadowFactor(shadowPos, fShadowFactor);
+		fShadowFactor = CalcOneShadowFactor(shadowPos, fShadowFactor);
 #endif
-	float4 color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
-	return color * txColor;
+		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
+		color *= txColor;
+	}
+	float distance = length(pos - gvCameraPosition.xyz);
+
+	float fogLerp = saturate((distance - gFogStart) / gFogRange);
+	// Blend the fog color and the lit color.
+	return lerp(color, gFogColor, fogLerp);
 }
 
 /*정점-쉐이더이다. 정점의 위치 벡터를 월드 변환, 카메라 변환, 투영 변환을 순서대로 수행한다. 이제 삼각형의 각 정점은 y-축으로의 회전을 나타내는 행렬에 따라 변환한다. 그러므로 삼각형은 회전하게 된다.*/

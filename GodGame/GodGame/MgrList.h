@@ -4,7 +4,7 @@
 #define __MGR_LIST
 
 #include "TextureMgr.h"
-#include "StatesMgr.h"
+#include "ShadowMgr.h"
 
 class CManagers
 {

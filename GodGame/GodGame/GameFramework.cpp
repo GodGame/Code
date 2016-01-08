@@ -33,9 +33,9 @@ CGameFramework::CGameFramework()
 	m_pSceneShader = nullptr;
 	_tcscpy_s(m_pszBuffer, _T("ChaeProject("));
 
+	m_pd3dStaticDSVShadowMap = m_pd3dDSVShadowMap = nullptr;
+	m_pd3dStaticSRVShadowMap = m_pd3dSRVShadowMap = nullptr;
 
-	m_pd3ddsvShadowMap = nullptr;
-	m_pd3dsrvShadowMap = nullptr;
 	ZeroMemory(&m_d3dxShadowMapViewport, sizeof(D3D11_VIEWPORT));
 	m_pd3dcbShadowMap = nullptr;
 	m_pd3dShadowSamplerState = nullptr;
@@ -113,8 +113,11 @@ void CGameFramework::OnDestroy()
 	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 
-	if (m_pd3ddsvShadowMap) m_pd3ddsvShadowMap->Release();
-	if (m_pd3dsrvShadowMap) m_pd3dsrvShadowMap->Release();
+	if (m_pd3dDSVShadowMap) m_pd3dDSVShadowMap->Release();
+	if (m_pd3dSRVShadowMap) m_pd3dSRVShadowMap->Release();
+	if (m_pd3dStaticDSVShadowMap) m_pd3dStaticDSVShadowMap->Release();
+	if (m_pd3dStaticSRVShadowMap) m_pd3dStaticSRVShadowMap->Release();
+
 	if (m_pd3dcbShadowMap) m_pd3dcbShadowMap->Release();
 
 	if (m_pd3dShadowSamplerState) m_pd3dShadowSamplerState->Release();
@@ -241,15 +244,21 @@ bool CGameFramework::CreateShadowDevice()
 	d3dDSVDesc.Flags = d3dDSVDesc.Texture2D.MipSlice = 0;
 	d3dDSVDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	d3dDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; 
-	assert(SUCCEEDED(hr = m_pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3ddsvShadowMap)));
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3dDSVShadowMap)));
+	
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
 	d3dSRVDesc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 	d3dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	d3dSRVDesc.Texture2D.MipLevels = desc.MipLevels;
 	d3dSRVDesc.Texture2D.MostDetailedMip = 0;
-	assert(SUCCEEDED(hr = m_pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dsrvShadowMap)));
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dSRVShadowMap)));
+	pd3dShadowMap->Release();
 
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap)));
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3dStaticDSVShadowMap)));
+	assert(SUCCEEDED(hr = m_pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dStaticSRVShadowMap)));
+	pd3dShadowMap->Release();
 	//pd3dShadowMap->Release();
 
 	m_d3dxShadowMapViewport.TopLeftX = 0.0f;
@@ -295,23 +304,24 @@ bool CGameFramework::CreateShadowDevice()
 }
 
 
-void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+void CGameFramework::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 {
 	// 방향성 광원은 위치 필요 없다.
 	//LIGHT * pLight = m_pScene->GetLight(2);
+	CHeightMapTerrain * pTerrain = m_pScene->GetTerrain();
+	float fHalf = pTerrain->GetWidth() * 0.5;
 
-	XMVECTOR xmvUp = XMVectorSet( 1, 0, 0, 0);
-	XMVECTOR xmvTarget = XMLoadFloat3(&m_pPlayer->GetPosition());
-	XMVECTOR xmvLightPos = xmvTarget + XMVectorSet(100.0, 100.0f, 0.0f, 0);
+	XMVECTOR xmvUp = XMVectorSet(1, 0, 0, 0);
+	XMVECTOR xmvTarget = XMVectorSet(fHalf - 1000, 0, fHalf, 0);// XMLoadFloat3(&m_pPlayer->GetPosition());
+	XMVECTOR xmvLightPos = XMVectorSet(fHalf, fHalf, fHalf, 0);
 
 	XMMATRIX xmtxShadowView = XMMatrixLookAtLH(xmvLightPos, xmvTarget, xmvUp);
 	xmvLightPos = XMVector3TransformCoord(xmvLightPos, xmtxShadowView);
-	CHeightMapTerrain * pTerrain = m_pScene->GetTerrain();
-	
+
 	XMFLOAT3 xmf3LightPos;
 	XMStoreFloat3(&xmf3LightPos, xmvLightPos);
-	
-	float fHalf = pTerrain->GetWidth() * 0.5f;
+
+
 	float xl = xmf3LightPos.x - fHalf, xr = xmf3LightPos.x + fHalf;
 	float yb = xmf3LightPos.y - fHalf, yt = xmf3LightPos.y + fHalf;
 	float zn = xmf3LightPos.z - fHalf, zf = xmf3LightPos.z + fHalf;
@@ -319,34 +329,58 @@ void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	XMMATRIX xmtxShadowProj = XMMatrixOrthographicOffCenterLH(xl, xr, yb, yt, zn, zf);
 	static const XMMATRIX xmtxCoord
 		(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.0f, 1.0f
-		);
+			0.5f, 0.0f, 0.0f, 0.0f,
+			0.0f, -0.5f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.5f, 0.5f, 0.0f, 1.0f		
+			);
 	XMMATRIX xmtxShadowMap = xmtxShadowView * xmtxShadowProj * xmtxCoord;
 	XMStoreFloat4x4(&m_xmf44ShadowMap, xmtxShadowMap);
 
 	XMStoreFloat4x4(&m_xmf44ShadowVP, (xmtxShadowView * xmtxShadowProj));
-	//cout << m_xmf44ShadowMap._11 << "," << m_xmf44ShadowMap._12 << "," << m_xmf44ShadowMap._13 << "," << m_xmf44ShadowMap._14 << endl;
-	//cout << m_xmf44ShadowMap._21 << "," << m_xmf44ShadowMap._22 << "," << m_xmf44ShadowMap._23 << "," << m_xmf44ShadowMap._24 << endl;
-	//cout << m_xmf44ShadowMap._31 << "," << m_xmf44ShadowMap._32 << "," << m_xmf44ShadowMap._33 << "," << m_xmf44ShadowMap._34 << endl;
-	//cout << m_xmf44ShadowMap._41 <<","<< m_xmf44ShadowMap._42 << ","<< m_xmf44ShadowMap._43 << "," << m_xmf44ShadowMap._44 << endl;
+
 
 	m_uRenderState = NOT_PSUPDATE;
-	m_pCamera->UpdateShaderVariables(m_pd3dDeviceContext, m_xmf44ShadowVP, m_xmf44ShadowVP/*xmf44LightViewProj*/);
+	m_pCamera->UpdateShaderVariables(m_pd3dDeviceContext, m_xmf44ShadowVP/*xmf44LightViewProj*/);
 	m_pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
 	m_pd3dDeviceContext->RSSetState(m_pd3dShadowRS);
 	m_pd3dDeviceContext->RSSetViewports(1, &m_d3dxShadowMapViewport);
 
 	ID3D11RenderTargetView* renderTargets[1] = { 0 };
-	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, m_pd3ddsvShadowMap);
-	m_pd3dDeviceContext->ClearDepthStencilView(m_pd3ddsvShadowMap, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, m_pd3dStaticDSVShadowMap);
+	m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dStaticDSVShadowMap, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	(*m_pScene->GetShader(1))->Render(m_pd3dDeviceContext, m_uRenderState, nullptr);
-	m_pPlayerShader->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
-	(*m_pScene->GetShader(2))->Render(m_pd3dDeviceContext, m_uRenderState, nullptr);
+	(*m_pScene->GetShader(1))->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
 
+	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+	m_pd3dDeviceContext->RSSetState(nullptr);
+	m_uRenderState = NULL;
+
+	m_pSceneShader->SetLightSRV(m_pd3dStaticSRVShadowMap);
+	//m_pCamera->SetViewport(m_pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+
+	UpdateStaticShadowResource();
+}
+
+void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CShader*ShaderList[], int nShaders)
+{
+
+	m_uRenderState = NOT_PSUPDATE;
+	m_pCamera->UpdateShaderVariables(m_pd3dDeviceContext, m_xmf44ShadowVP/*xmf44LightViewProj*/);
+	m_pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
+	m_pd3dDeviceContext->RSSetState(m_pd3dShadowRS);
+	m_pd3dDeviceContext->RSSetViewports(1, &m_d3dxShadowMapViewport);
+
+	ID3D11RenderTargetView* renderTargets[1] = { 0 };
+	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, m_pd3dDSVShadowMap);
+	m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDSVShadowMap, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	for (int i = 0; i < nShaders; ++i)
+		ShaderList[i]->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
+
+	//(*m_pScene->GetShader(1))->Render(m_pd3dDeviceContext, m_uRenderState, nullptr);
+	//m_pPlayerShader->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
+	//(*m_pScene->GetShader(2))->Render(m_pd3dDeviceContext, m_uRenderState, nullptr);
 
 //#ifdef _THREAD
 //	for (int i = 1; i < 3; ++i)
@@ -372,7 +406,7 @@ void CGameFramework::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	m_pd3dDeviceContext->RSSetState(nullptr);
 	m_uRenderState = NULL;
 
-	m_pSceneShader->SetLightSRV(m_pd3dsrvShadowMap);
+	m_pSceneShader->SetLightSRV(m_pd3dStaticSRVShadowMap);
 	m_pCamera->SetViewport(m_pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 }
 
@@ -476,10 +510,10 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		{
 		case 'Q':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 0));
-			m_pSceneShader->SetTexture(0, m_pd3dsrvShadowMap);
 			break;
 		case 'W':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 1));
+			m_pSceneShader->SetTexture(0, m_pd3dSRVShadowMap);
 			break;
 		case 'E':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 2));
@@ -626,6 +660,8 @@ void CGameFramework::BuildObjects()
 	m_pSSAOShader->CreateShaderVariable(m_pd3dDevice);
 	m_pSSAOShader->CreateShader(m_pd3dDevice);
 	m_pSSAOShader->BuildObjects(m_pd3dDevice);
+
+	BuildStaticShadowMap(m_pd3dDeviceContext);
 }
 
 void CGameFramework::InitilizeThreads()
@@ -752,7 +788,9 @@ void CGameFramework::FrameAdvance()
 	//게임 객체의 애니메이션을 처리하기 위한 AnimateObjects() 함수를 호출한다.  
 	AnimateObjects();
 
-	OnCreateShadowMap(m_pd3dDeviceContext);
+	//BuildStaticShadowMap(m_pd3dDeviceContext);
+	CShader* shaderList[] = { m_pPlayerShader, *m_pScene->GetShader(2) };
+	OnCreateShadowMap(m_pd3dDeviceContext, shaderList, 2);
 	//UpdateShadowResource();
 
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };	//렌더 타겟 뷰를 채우기 위한 색상을 설정한다.  
@@ -799,8 +837,8 @@ void CGameFramework::FrameAdvance()
 	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 #endif
 	//if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, m_pCamera);
-	ID3D11ShaderResourceView * pNullPtr[] = { nullptr, nullptr, nullptr,nullptr, nullptr, nullptr };
-	m_pd3dDeviceContext->PSSetShaderResources(16, 6, pNullPtr);
+	//ID3D11ShaderResourceView * pNullPtr[] = { nullptr, nullptr, nullptr,nullptr, nullptr, nullptr };
+	//m_pd3dDeviceContext->PSSetShaderResources(16, 6, pNullPtr);
 
 	//m_pSceneShader->UpdateShaders(m_pd3dDeviceContext);
 
@@ -831,12 +869,17 @@ void CGameFramework::FrameAdvance()
 
 void CGameFramework::UpdateShadowResource()
 {
+	m_pd3dDeviceContext->PSSetShaderResources(TX_SLOT_SHADOWMAP, 1, &m_pd3dSRVShadowMap);
+}
+
+void CGameFramework::UpdateStaticShadowResource()
+{
 #ifdef PCF
-	m_pd3dDeviceContext->PSSetSamplers(PS_SLOT_SHADOWSAMPLE + 1, 1, &m_pd3dShadowSamplerState);
+	m_pd3dDeviceContext->PSSetSamplers(SS_SLOT_SHADOWSAMPLE + 1, 1, &m_pd3dShadowSamplerState);
 #else
-	m_pd3dDeviceContext->PSSetSamplers(PS_SLOT_SHADOWSAMPLE, 1, &m_pd3dShadowSamplerState);
+	m_pd3dDeviceContext->PSSetSamplers(SS_SLOT_SHADOWSAMPLE, 1, &m_pd3dShadowSamplerState);
 #endif
-	m_pd3dDeviceContext->PSSetShaderResources(PS_SLOT_SHADOWMAP, 1, &m_pd3dsrvShadowMap);
+	m_pd3dDeviceContext->PSSetShaderResources(TX_SLOT_STATIC_SHADOW, 1, &m_pd3dStaticSRVShadowMap);
 
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	m_pd3dDeviceContext->Map(m_pd3dcbShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
@@ -844,10 +887,7 @@ void CGameFramework::UpdateShadowResource()
 	Chae::XMFloat4x4Transpose(pd3dxmtxShadowTransform, &m_xmf44ShadowMap);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
 	m_pd3dDeviceContext->Unmap(m_pd3dcbShadowMap, 0);
 
-	//m_pd3dDeviceContext->VSSetConstantBuffers(SLOT_SHADOWMAP, 1, &m_pd3dcbShadowMap);
-	m_pd3dDeviceContext->PSSetConstantBuffers(SLOT_SHADOWMAP, 1, &m_pd3dcbShadowMap);
-
-	//m_pd3dDeviceContext->DSSetConstantBuffers(SLOT_SHADOWMAP, 1, &m_pd3dcbShadowMap);
+	m_pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SHADOWMAP, 1, &m_pd3dcbShadowMap);
 }
 
 UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter)

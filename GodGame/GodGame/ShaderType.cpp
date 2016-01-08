@@ -250,10 +250,10 @@ void CShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	Chae::XMFloat4x4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld); //XMFLOAT4X4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld);
 	pd3dDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
 
-	//상수 버퍼를 디바이스의 슬롯(VS_SLOT_WORLD_MATRIX)에 연결한다.
-	pd3dDeviceContext->VSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
-	//pd3dDeviceContext->HSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
-	pd3dDeviceContext->DSSetConstantBuffers(VS_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
+	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	//pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
 
 void CShader::ReleaseShaderVariables()
@@ -363,7 +363,7 @@ void CIlluminatedShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceCon
 	MATERIAL *pcbMaterial = (MATERIAL *)d3dMappedResource.pData;
 	memcpy(pcbMaterial, pMaterial, sizeof(MATERIAL));
 	pd3dDeviceContext->Unmap(m_pd3dcbMaterial, 0);
-	pd3dDeviceContext->PSSetConstantBuffers(PS_SLOT_MATERIAL, 1, &m_pd3dcbMaterial);
+	pd3dDeviceContext->PSSetConstantBuffers(CB_PS_SLOT_MATERIAL, 1, &m_pd3dcbMaterial);
 }
 #pragma endregion Illuminated
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -600,8 +600,8 @@ void CNormalMapShader::UpdateBumpInfo(ID3D11DeviceContext *pd3dDeviceContext, SE
 	pd3dDeviceContext->Unmap(m_pd3dcbBump, 0);
 
 	//상수 버퍼를 슬롯(VS_SLOT_CAMERA)에 설정한다.
-	if (setInfo & SET_SHADER_VS) pd3dDeviceContext->VSSetConstantBuffers(SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
-	if (setInfo & SET_SHADER_GS) pd3dDeviceContext->GSSetConstantBuffers(SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
-	if (setInfo & SET_SHADER_HS) pd3dDeviceContext->HSSetConstantBuffers(SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
-	if (setInfo & SET_SHADER_DS) pd3dDeviceContext->DSSetConstantBuffers(SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
+	if (setInfo & SET_SHADER_VS) pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
+	if (setInfo & SET_SHADER_GS) pd3dDeviceContext->GSSetConstantBuffers(CB_SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
+	if (setInfo & SET_SHADER_HS) pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
+	if (setInfo & SET_SHADER_DS) pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_DISPLACEMENT, 1, &m_pd3dcbBump);
 }

@@ -200,7 +200,7 @@ void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
 
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	pd3dsrvTexture = CTextureMgr::CreateRandomTexture1DSRV(pd3dDevice);
-	InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
+	InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", TX_SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
 	pd3dsrvTexture->Release();
 }
 

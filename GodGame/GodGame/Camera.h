@@ -10,7 +10,7 @@
 struct VS_CB_VIEWPROJECTION
 {
 	XMFLOAT4X4  m_xmf44View;
-	XMFLOAT4X4	m_xmf44ViewProjection;
+	XMFLOAT4  m_xf3CameraPos;
 };
 
 struct VS_CB_CAMERAPOS
@@ -92,7 +92,7 @@ public:
 	void MakeViewProjectionMatrix();
 	//상수 버퍼를 생성하고 내용을 갱신하는 멤버 함수를 선언한다.
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxViewProj, XMFLOAT4X4 & xmtxView);
+	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxViewProj);
 //	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
 	void UpdateCameraPositionCBBuffer(ID3D11DeviceContext *pd3dDeviceContext);
 	

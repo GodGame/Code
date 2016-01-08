@@ -224,22 +224,6 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	m_pptxLayerMap = new CTexture *[m_nLayerNumber];
 
 #ifdef TS_TERRAIN
-	//D3D11_FILTER_MIN_MAG_MIP_LINEAR 
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	//d3dSamplerDesc.MaxAnisotropy = 4;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSplatSamplerState);
-
 	wchar_t  **ppHeigtName, ** ppTextureName;
 	ppTextureName = new wchar_t *[m_nLayerNumber];
 	ppHeigtName = new wchar_t *[m_nLayerNumber];
@@ -262,16 +246,14 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	{
 		D3DX11CreateShaderResourceViewFromFile(pd3dDevice, ppHeigtName[fileIndex], nullptr, nullptr, &ppd3dsrvHeight[fileIndex], nullptr);
 		m_pptxLayerMap[fileIndex]->SetTexture(0, ppd3dsrvHeight[fileIndex]);
-		m_pptxLayerMap[fileIndex]->SetSampler(0, pd3dSamplerState);
+		m_pptxLayerMap[fileIndex]->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 		ppd3dsrvHeight[fileIndex]->Release();
 
 		D3DX11CreateShaderResourceViewFromFile(pd3dDevice, ppTextureName[fileIndex], nullptr, nullptr, &ppd3dsrvTexture[fileIndex], nullptr);
 		m_pptxLayerMap[fileIndex]->SetTexture(1, ppd3dsrvTexture[fileIndex]);
-		m_pptxLayerMap[fileIndex]->SetSampler(1, pd3dSplatSamplerState);
+		m_pptxLayerMap[fileIndex]->SetSampler(1, TXMgr.GetSamplerState("ss_linear_clamp"));
 		ppd3dsrvTexture[fileIndex]->Release();
 	}
-	pd3dSamplerState->Release();
-	pd3dSplatSamplerState->Release();
 
 	delete[] ppTextureName;
 	delete[] ppd3dsrvHeight;
@@ -663,7 +645,7 @@ void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	Chae::XMFloat4x4Transpose(&pcbSSAO->m_gViewToTexSpace, &m_ssao.m_gViewToTexSpace);
 	pd3dDeviceContext->Unmap(m_pd3dcbSSAOInfo, 0);
 
-	//상수 버퍼를 디바이스의 슬롯(VS_SLOT_WORLD_MATRIX)에 연결한다.
-	pd3dDeviceContext->VSSetConstantBuffers(SLOT_CB_SSAO, 1, &m_pd3dcbSSAOInfo);
-	pd3dDeviceContext->PSSetConstantBuffers(SLOT_CB_SSAO, 1, &m_pd3dcbSSAOInfo);
+	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
+	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
+	pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 }

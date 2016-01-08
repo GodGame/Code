@@ -68,8 +68,12 @@ private:
 	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
 
 private:	//Shadow Manage
-	ID3D11DepthStencilView * m_pd3ddsvShadowMap;
-	ID3D11ShaderResourceView * m_pd3dsrvShadowMap;
+	ID3D11DepthStencilView * m_pd3dDSVShadowMap;
+	ID3D11ShaderResourceView * m_pd3dSRVShadowMap;
+
+	ID3D11DepthStencilView * m_pd3dStaticDSVShadowMap;
+	ID3D11ShaderResourceView * m_pd3dStaticSRVShadowMap;
+
 	D3D11_VIEWPORT m_d3dxShadowMapViewport;
 	ID3D11Buffer * m_pd3dcbShadowMap;
 
@@ -82,7 +86,8 @@ private:	//Shadow Manage
 	UINT m_uRenderState;
 
 public:
-	void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
+	void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
+	void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CShader*ShaderList[], int nShaders);
 
 private:
 	int		m_iDrawOption;
@@ -121,6 +126,7 @@ public:
 	void FrameAdvance();
 
 	void UpdateShadowResource();
+	void UpdateStaticShadowResource();
 
 	//윈도우의 메시지(키보드, 마우스 입력)를 처리하는 함수이다. 
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

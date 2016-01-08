@@ -42,7 +42,7 @@ using namespace DirectX;
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 
-#include <d3d9types.h>
+//#include <d3d9types.h>
 
 #include <Mmsystem.h>
 #include <math.h>

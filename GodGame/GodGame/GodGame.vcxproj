@@ -161,7 +161,7 @@
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="GodGame.h" />
     <ClInclude Include="MgrList.h" />
-    <ClInclude Include="StatesMgr.h" />
+    <ClInclude Include="ShadowMgr.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshType.h" />
     <ClInclude Include="MgrType.h" />
