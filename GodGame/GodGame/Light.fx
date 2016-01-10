@@ -254,11 +254,10 @@ LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera, float4 vD
 }
 
 //점 조명의 효과를 계산하는 함수이다.
-LIGHTEDCOLOR PointLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera, float4 vDiffuse, float4 vSpec)
+LIGHTEDCOLOR PointLight(int i, float3 vToLight, float3 vNormal, float3 vToCamera, float4 vDiffuse, float4 vSpec)
 {
 	LIGHTEDCOLOR output = (LIGHTEDCOLOR)0;
 
-	float3 vToLight = gLights[i].m_vPosition - vPosition;
 	float fDistance = length(vToLight);
 	//조명까지의 거리가 조명의 유효거리보다 작을 때만 조명의 영향을 계산한다.
 	if (fDistance <= gLights[i].m_fRange)
@@ -296,11 +295,11 @@ LIGHTEDCOLOR PointLight(int i, float3 vPosition, float3 vNormal, float3 vToCamer
 }
 
 //스팟 조명의 효과를 계산하는 함수이다.
-LIGHTEDCOLOR SpotLight(int i, float3 vPosition, float3 vNormal, float3 vToCamera, float4 vDiffuse, float4 vSpec)
+LIGHTEDCOLOR SpotLight(int i, float3 vToLight, float3 vNormal, float3 vToCamera, float4 vDiffuse, float4 vSpec)
 {
 	LIGHTEDCOLOR output = (LIGHTEDCOLOR)0;
-	float3 vToLight = gLights[i].m_vPosition - vPosition;
-		float fDistance = length(vToLight);
+
+	float fDistance = length(vToLight);
 	//조명까지의 거리가 조명의 유효거리보다 작을 때만 조명의 영향을 계산한다.
 	if (fDistance <= gLights[i].m_fRange)
 	{
@@ -354,6 +353,30 @@ float4 HemisphericLight(float3 vNormal, float3 vPos)
 	//return (0.9f * lerp(cGround, cModel, dot(vNormal, vFromSky) * 0.5f + 0.5f));
 	return (0.9f * lerp(cGround, cModel, dot(-vNormal, fromCamera) * 0.5f + 0.5f));
 }
+
+float CookTorrenceSF(float3 vNormal,float3 vToCamera, float3 vToLight, float fm, float fFRI)
+{
+	float3 N = normalize(vNormal);
+	float3 L = normalize(vToLight);
+	float3 E = normalize(vToCamera);
+	float3 H = normalize(vToLight + vToCamera);
+
+	float NH = saturate(dot(N, H));
+	float EH = saturate(dot(E, H));
+	float NE = saturate(dot(N, E));
+	float NL = saturate(dot(N, L));
+	
+	float NH2 = NH * NH;
+	float m2 = fm * fm;
+
+	float D = (0.25f * m2 * NH2 * NH2) * (exp(-((1 - NH2) / (m2 * NH2))));
+	float G = min(1.0f, min((2 * NH * NL) / EH, (2 * NH * NE) / EH));
+	float F = fFRI + (1 - fFRI) * pow((1 - NE), 5.0f);
+	float fSF = (F * D * G) / (3.1415926535 * NL * NE);
+
+	return fSF;
+}
+
 float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 {
 	int i;
@@ -370,6 +393,10 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 		//활성화된 조명에 대하여 조명의 영향을 계산한다.
 		if (gLights[i].m_bEnable == 1.0f)
 		{
+			float3 vToLight = gLights[i].m_vPosition - vPos;
+			vSpec.w = CookTorrenceSF(vNormal, vToCamera, vToLight, 0.85f, 0.01f);
+			vSpec.w = max(255, vSpec.w);
+
 			//조명의 유형에 따라 조명의 영향을 계산한다.
 			if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
 			{
@@ -378,18 +405,19 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 			}
 			if (gLights[i].m_nType == POINT_LIGHT)
 			{
-				LightedColor = PointLight(i, vPos, vNormal, vToCamera, vDiffuse, vSpec);
-				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular  * fShadowFactor);
+				LightedColor = PointLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
+				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
 			}
 			if (gLights[i].m_nType == SPOT_LIGHT)
 			{
-				LightedColor = SpotLight(i, vPos, vNormal, vToCamera, vDiffuse, vSpec);
+				LightedColor = SpotLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
 				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  + LightedColor.m_cSpecular );
 			}
 		}
 	}
 	//글로벌 주변 조명의 영향을 최종 색상에 더한다.
-	cColor += (gcLightGlobalAmbient  * HemisphericLight( vNormal, vPos)/*gAmbient*/ );//gMaterial.m_cAmbient);
+	cColor += (gcLightGlobalAmbient  /** HemisphericLight( vNormal, vPos)*//*gAmbient*/ );//gMaterial.m_cAmbient);
+	//cColor *= HemisphericLight(vNormal, vPos);
 	//최종 색상의 알파값은 재질의 디퓨즈 색상의 알파값으로 설정한다.
 	//cColor.a = gMaterial.m_cDiffuse.a;
 	return(cColor);

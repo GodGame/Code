@@ -1,6 +1,6 @@
 #pragma once
-#
-#include "Mesh.h"
+
+//#include "Mesh.h"
 
 #define FIRST_PERSON_CAMERA	0x01
 #define SPACESHIP_CAMERA	0x02

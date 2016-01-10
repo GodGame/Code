@@ -147,6 +147,9 @@
     <ClCompile Include="Timer.cpp">
       <Filter>Fixed</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMgr.cpp">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GodGame.rc">

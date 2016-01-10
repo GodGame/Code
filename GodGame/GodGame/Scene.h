@@ -102,5 +102,5 @@ public:
 	LIGHT * GetLight(int index) { return &m_pLights->m_pLights[index]; }
 
 	//static DWORD WINAPI RenderThread(LPVOID lpParameter);
-	CShader ** GetShader(int index){ return &m_ppShaders[index]; }
+	CShader * GetShader(int index){ return m_ppShaders[index]; }
 };

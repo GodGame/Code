@@ -87,9 +87,7 @@ VS_INSTANCED_COLOR_OUTPUT VSInstancedDiffusedColor(VS_INSTANCED_COLOR_INPUT inpu
 
 float4 PS(VS_OUTPUT input) : SV_Target
 {
-	//return input.color;
 	return (1.0f, 1.0f, 1.0f, 0.0f);
-	//return gcColor;    // Yellow, with Alpha = 1
 }
 
 float4 PSInstancedDiffusedColor(VS_INSTANCED_COLOR_OUTPUT input) : SV_Target

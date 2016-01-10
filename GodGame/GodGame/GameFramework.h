@@ -67,27 +67,13 @@ private:
 	ID3D11Texture2D	* m_pd3dDepthStencilBuffer;
 	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
 
-private:	//Shadow Manage
-	ID3D11DepthStencilView * m_pd3dDSVShadowMap;
-	ID3D11ShaderResourceView * m_pd3dSRVShadowMap;
-
-	ID3D11DepthStencilView * m_pd3dStaticDSVShadowMap;
-	ID3D11ShaderResourceView * m_pd3dStaticSRVShadowMap;
-
-	D3D11_VIEWPORT m_d3dxShadowMapViewport;
-	ID3D11Buffer * m_pd3dcbShadowMap;
-
-	XMFLOAT4X4 m_xmf44ShadowMap;
-	XMFLOAT4X4 m_xmf44ShadowVP;
-	ID3D11SamplerState * m_pd3dShadowSamplerState;
-	ID3D11RasterizerState * m_pd3dShadowRS;
-	ID3D11RasterizerState * m_pd3dNormalRS;
+private:	
 
 	UINT m_uRenderState;
 
 public:
-	void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
-	void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CShader*ShaderList[], int nShaders);
+	void BuildStaticShadowMap();
+	void OnCreateShadowMap(CShader*ShaderList[], int nShaders);
 
 private:
 	int		m_iDrawOption;
@@ -115,7 +101,6 @@ public:
 	//디바이스, 스왑 체인, 디바이스 컨텍스트, 디바이스와 관련된 뷰를 생성하는 함수이다. 
 	bool CreateRenderTargetDepthStencilView();;
 	bool CreateDirect3DDisplay();
-	bool CreateShadowDevice();
 	//렌더링할 메쉬, 객체를 생성하고 소멸하는 함수이다. 
 	void BuildObjects();
 	void ReleaseObjects();
@@ -124,9 +109,6 @@ public:
 	void ProcessInput();
 	void AnimateObjects();
 	void FrameAdvance();
-
-	void UpdateShadowResource();
-	void UpdateStaticShadowResource();
 
 	//윈도우의 메시지(키보드, 마우스 입력)를 처리하는 함수이다. 
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

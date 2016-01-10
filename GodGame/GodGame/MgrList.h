@@ -13,6 +13,7 @@ public:
 	{
 		TXMgr.BuildResources(pd3dDevice);
 		MaterialMgr.BuildResources(pd3dDevice);
+		ShadowMgr.CreateShadowDevice(pd3dDevice);;
 	}
 };
 

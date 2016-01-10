@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ShaderEssential.h"
 #include "MyInline.h"
+#include "Player.h"
 #include <D3Dcompiler.h>
 
 

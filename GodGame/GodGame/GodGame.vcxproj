@@ -192,6 +192,7 @@
     <ClCompile Include="ShaderEssential.cpp" />
     <ClCompile Include="ShaderList.cpp" />
     <ClCompile Include="ShaderType.cpp" />
+    <ClCompile Include="ShadowMgr.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
