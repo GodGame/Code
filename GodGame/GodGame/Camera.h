@@ -19,7 +19,7 @@ struct VS_CB_CAMERAPOS
 };
 
 class CPlayer;
-
+class AABB;
 class CCamera
 {
 public:

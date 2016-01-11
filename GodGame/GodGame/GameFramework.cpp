@@ -215,7 +215,7 @@ void CGameFramework::BuildStaticShadowMap()
 	m_uRenderState = NULL;
 
 	pSdwMgr->UpdateStaticShadowResource(m_pd3dDeviceContext);
-	m_pSceneShader->SetLightSRV(TXMgr.GetShaderResourceView("srv_ShaodwMap"));
+	m_pSceneShader->SetLightSRV(TXMgr.GetShaderResourceView("srv_StaticShaodwMap"));
 }
 
 void CGameFramework::OnCreateShadowMap(CShader*ShaderList[], int nShaders)
