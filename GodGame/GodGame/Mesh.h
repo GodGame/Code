@@ -40,8 +40,6 @@ public:
 	virtual XMFLOAT4 OnGetColor(int x, int z, void *pContext);
 };
 
-
-
 class CTerrainPartMesh : public CMesh
 {
 protected:

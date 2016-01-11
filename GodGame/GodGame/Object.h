@@ -8,7 +8,6 @@
 #define DIR_DOWN	0x20
 
 
-#include "Mesh.h"
 #include "Camera.h"
 #include "MgrList.h"
 

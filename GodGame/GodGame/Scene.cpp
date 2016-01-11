@@ -116,7 +116,7 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader)
 	//pWaterShader->BuildObjects(pd3dDevice, nullptr);
 	//m_ppShaders[4] = pWaterShader;
 
-	//m_ppShaders[3] = pSceneShader;
+	m_ppShaders[3] = pSceneShader;
 
 	//	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
@@ -290,13 +290,14 @@ void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRender
 #ifdef _THREAD
 	int index = pRenderInfo->ThreadID;
 
-	//if (index == m_nShaders - 1)
-	//{
-//
-	//	UpdateLights(pd3dDeviceContext);
-	//	pd3dDeviceContext->OMSetRenderTargets(1, &(pRenderInfo->ppd3dMrtRTV[0]), nullptr);
-	//}
 	if (index == m_nShaders - 1)
+	{
+		UpdateLights(pd3dDeviceContext);
+		pd3dDeviceContext->OMSetRenderTargets(1, &(pRenderInfo->ppd3dMrtRTV[0]), nullptr);
+		ShadowMgr.UpdateStaticShadowResource(pd3dDeviceContext);
+		ShadowMgr.UpdateDynamicShadowResource(pd3dDeviceContext);
+	}
+	if (index == m_nShaders - 2)
 	{			
 		m_pPlayerShader->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
 	}

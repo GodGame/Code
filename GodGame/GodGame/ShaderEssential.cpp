@@ -64,7 +64,7 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera /*= nullptr*/)
 {
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
-	printf("Opt: %d \n", m_iDrawOption);
+	//printf("Opt: %d \n", m_iDrawOption);
 	//SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
 	if (m_iDrawOption == 0)
 	{
@@ -172,7 +172,6 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 #pragma endregion PlayerShader
 
 
-
 CTerrainShader::CTerrainShader() : CSplatLightingShader()
 {
 	m_nLayerNumber = 0;
@@ -239,7 +238,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	ppd3dsrvTexture = new ID3D11ShaderResourceView *[m_nLayerNumber];
 	ppd3dsrvHeight = new ID3D11ShaderResourceView *[m_nLayerNumber];
 
-	ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_6.jpg");
+	ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_2.jpg");
 
 	ppHeigtName[0] = _T("../Assets/Image/Terrain/HeightMap.jpg");
 
@@ -247,12 +246,12 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	{
 		D3DX11CreateShaderResourceViewFromFile(pd3dDevice, ppHeigtName[fileIndex], nullptr, nullptr, &ppd3dsrvHeight[fileIndex], nullptr);
 		m_pptxLayerMap[fileIndex]->SetTexture(0, ppd3dsrvHeight[fileIndex]);
-		m_pptxLayerMap[fileIndex]->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		m_pptxLayerMap[fileIndex]->SetSampler(0, TXMgr.GetSamplerState("ss_linear_clamp"));
 		ppd3dsrvHeight[fileIndex]->Release();
 
 		D3DX11CreateShaderResourceViewFromFile(pd3dDevice, ppTextureName[fileIndex], nullptr, nullptr, &ppd3dsrvTexture[fileIndex], nullptr);
 		m_pptxLayerMap[fileIndex]->SetTexture(1, ppd3dsrvTexture[fileIndex]);
-		m_pptxLayerMap[fileIndex]->SetSampler(1, TXMgr.GetSamplerState("ss_linear_clamp"));
+		m_pptxLayerMap[fileIndex]->SetSampler(1, TXMgr.GetSamplerState("ss_linear_wrap"));
 		ppd3dsrvTexture[fileIndex]->Release();
 	}
 

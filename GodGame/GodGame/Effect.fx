@@ -57,6 +57,7 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
 		color *= txColor;
 	}
+	
 	float distance = length(pos - gvCameraPosition.xyz);
 
 	float fogLerp = saturate((distance - gFogStart) / gFogRange);
@@ -826,7 +827,7 @@ DETAIL_TERRAIN DSTerrain(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation,
 	output.posW.y = gtxtTexture.SampleLevel(gSamplerState, output.tex, 0).r * gHegiht;
 	output.posH = mul(float4(output.posW, 1.0f), gmtxViewProjection);
 #ifdef DSNORMAL
-	output.normalW =output.posW;
+	output.normalW = output.posW;
 #endif
 	return output;
 }
@@ -849,28 +850,26 @@ PS_MRT_OUT PSTerrain(DETAIL_TERRAIN input)
 	Tex[top]   = input.tex + float2(0.0f, -TexelV);
 
 	float  Height[4];
-	Height[0] = gtxtTexture.SampleLevel(gSamplerState, Tex[0], 0).r;
-	Height[1] = gtxtTexture.SampleLevel(gSamplerState, Tex[1], 0).r;
-	Height[2] = gtxtTexture.SampleLevel(gSamplerState, Tex[2], 0).r;
-	Height[3] = gtxtTexture.SampleLevel(gSamplerState, Tex[3], 0).r;
+	Height[0] = gtxtTexture.SampleLevel(gSamplerState, Tex[0], 0).r * gWorldCell;
+	Height[1] = gtxtTexture.SampleLevel(gSamplerState, Tex[1], 0).r * gWorldCell;
+	Height[2] = gtxtTexture.SampleLevel(gSamplerState, Tex[2], 0).r * gWorldCell;
+	Height[3] = gtxtTexture.SampleLevel(gSamplerState, Tex[3], 0).r * gWorldCell;
 
-	float3 tangent = normalize(float3(2.0f * gWorldCell, Height[right] - Height[left], 0.0f));
-	float3 bitangent = normalize(float3(0.0f, Height[bot] - Height[top], -2.0f * gWorldCell));
+	float3 tangent = normalize(float3(gWorldCell, Height[right] - Height[left], 0.0f));
+	float3 bitangent = normalize(float3(0.0f, Height[bot] - Height[top], -gWorldCell));
 	float3 normalW = cross(tangent, bitangent);
 
 #else
-#ifdef DSNORMAL
-	float3 normalW = normalize(input.normalW);
-#endif
+	//float3 normalW = normalize(input.normalW);
 #endif
 	//float4 cIllumination = Lighting(input.posW, normalW);
 	float4 cTexture = gtxtDetailTexture.Sample(gDetailSamplerState, input.texDetail);
 	float4 cEntire = gtxtDetailTexture.Sample(gSamplerState, input.tex);
 
 	PS_MRT_OUT output;
-	output.vNormal = float4(normalW, 1.0);
+	output.vNormal = float4(normalW, input.posH.w * gfDepthFar);
 	output.vPos = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1);
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0);
 	output.vSpec = gMaterial.m_cSpecular;
 	output.vTxColor = (cTexture * cEntire);
 	return (output);

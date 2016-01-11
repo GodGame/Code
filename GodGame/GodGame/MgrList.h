@@ -5,6 +5,7 @@
 
 #include "TextureMgr.h"
 #include "ShadowMgr.h"
+#include "CollisionMgr.h"
 
 class CManagers
 {

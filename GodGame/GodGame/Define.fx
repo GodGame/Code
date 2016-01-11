@@ -43,9 +43,9 @@ cbuffer cbWorldMatrix : register(b1)
 
 cbuffer cbTerrain
 {
-	static int gWorldCell = 128;
+	static int gWorldCell = 256;
 	static int gHegiht = 512;
-	static float gCameraMax = 1000.0f;
+	static float gCameraMax = 500.0f;
 	static float gCameraMin = 20.0f;
 
 	static float gScaleHeight = 32.0f;
@@ -468,7 +468,7 @@ float CalculateTessFactor(float3 p)
 {
 	float fDistToCamera = distance(p, gf3CameraPos);
 	float s = saturate((fDistToCamera - gCameraMin) / (gCameraMax - gCameraMin));
-	return pow(2, lerp(8.0f, 2.0f, s));
+	return pow(2, lerp(6.0f, 2.0f, s));
 }
 
 #define PSNORMAL
