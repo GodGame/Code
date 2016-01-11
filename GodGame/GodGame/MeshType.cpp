@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "MeshType.h"
 #include "MyInline.h"
+#include "CollisionMgr.h"
 
 CMesh::CMesh(ID3D11Device *pd3dDevice)
 {

@@ -478,7 +478,6 @@ void CGameFramework::BuildObjects()
 	CShader::CreateShaderVariables(m_pd3dDevice);
 	CIlluminatedShader::CreateShaderVariables(m_pd3dDevice);
 
-
 	m_pSceneShader = new CSceneShader();
 	m_pSceneShader->CreateShader(m_pd3dDevice);
 	m_pSceneShader->BuildObjects(m_pd3dDevice, m_ppd3dMRTView, m_iDrawOption);
@@ -645,9 +644,9 @@ void CGameFramework::FrameAdvance()
 	{
 		if (m_ppd3dRenderTargetView[i]) m_pd3dDeviceContext->ClearRenderTargetView(m_ppd3dRenderTargetView[i], fClearColor);
 	}
-
 	if (m_pd3dDepthStencilView) m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+	//ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
 #ifdef _THREAD
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
@@ -682,13 +681,13 @@ void CGameFramework::FrameAdvance()
 	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 #endif
 
-	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
-	m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_ppd3dMRTView[MRT_NORMAL]);	
-	m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
+	//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
+	//m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_ppd3dMRTView[MRT_NORMAL]);	
+	//m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
 
-	m_pScene->UpdateLights(m_pd3dDeviceContext);
-	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[0], nullptr);
-	ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
+	//m_pScene->UpdateLights(m_pd3dDeviceContext);
+	//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[0], nullptr);
+	//m_pSceneShader->Render(m_pd3dDeviceContext, NULL);
 
 	//if (m_iDrawOption >= 0)
 	//{
@@ -696,7 +695,7 @@ void CGameFramework::FrameAdvance()
 	//	m_pSceneShader->SetTexture(0, m_ppd3dMRTView[m_iDrawOption]);
 	//}
 	//m_pCamera->SetViewport(m_pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-	m_pSceneShader->Render(m_pd3dDeviceContext, NULL);
+	
 
 
 	//스왑 체인의 후면버퍼의 내용이 디스플레이에 출력되도록 프리젠트한다.  

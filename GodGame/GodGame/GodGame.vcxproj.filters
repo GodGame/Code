@@ -103,6 +103,9 @@
     <ClInclude Include="ShadowMgr.h">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClInclude>
+    <ClInclude Include="CollisionMgr.h">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -148,6 +151,9 @@
       <Filter>Fixed</Filter>
     </ClCompile>
     <ClCompile Include="ShadowMgr.cpp">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionMgr.cpp">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
   </ItemGroup>
