@@ -1077,6 +1077,79 @@ CPlaneMesh::~CPlaneMesh()
 }
 
 
+CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, wchar_t * tMeshName, float xScale, float yScale, float zScale) : CMeshTexturedIlluminated(pd3dDevice)
+{
+	int nReadBytes;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	FILE * pFile = NULL;
+	::_wfopen_s(&pFile, tMeshName, L"rb, ccs=UNICODE");
+
+
+	//정점 개수
+	nReadBytes = ::fread(&m_nVertices, sizeof(UINT), 1, pFile);
+
+	V3T2 * pNotNorm = new V3T2[m_nVertices];
+	m_pxv3Positions = new XMFLOAT3[m_nVertices];
+	m_xmf3Normal = new XMFLOAT3[m_nVertices];
+	m_xmf2TexCoords = new XMFLOAT2[m_nVertices];
+
+	nReadBytes = ::fread(pNotNorm, sizeof(V3T2), m_nVertices, pFile);
+	::fclose(pFile);
+
+	for (int i = 0; i < m_nVertices; ++i)
+	{
+		pNotNorm[i].xmf3Pos.x *= xScale;
+		pNotNorm[i].xmf3Pos.y *= yScale;
+		pNotNorm[i].xmf3Pos.z *= zScale;
+		
+		m_pxv3Positions[i] = pNotNorm[i].xmf3Pos;
+		m_xmf3Normal[i] = m_pxv3Positions[i];
+		Chae::XMFloat3Normalize(&m_xmf3Normal[i]);
+		m_xmf2TexCoords[i] = pNotNorm[i].xmf2Tex;
+	}
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	//정점벡터 버퍼
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = m_pxv3Positions;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
+
+	//법선벡터 버퍼 생성
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferData.pSysMem = m_xmf3Normal;
+	//CalculateVertexNormal(pdxvNormal); // 계산
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
+
+	// 텍스쳐 좌표 생성
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
+	d3dBufferData.pSysMem = m_xmf3Normal;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
+
+	ID3D11Buffer *pd3dBuffers[3] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer };
+	UINT pnBufferStrides[3] = { sizeof(XMFLOAT3), sizeof(XMFLOAT3), sizeof(XMFLOAT2) };
+	UINT pnBufferOffsets[3] = { 0, 0, 0 };
+	AssembleToVertexBuffer(3, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+
+	delete [] pNotNorm;
+	delete [] m_xmf3Normal;
+	delete [] m_xmf2TexCoords;
+
+	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-xScale * 10, -yScale * 10, -zScale * 10);
+	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+xScale * 10, +yScale * 10, +zScale * 10);
+}
+
+CLoadMeshByChae::~CLoadMeshByChae()
+{
+}
+
 
 CLoadMesh::CLoadMesh(ID3D11Device *pd3dDevice, wchar_t * tMeshName) : CMeshTexturedIlluminated(pd3dDevice)
 {
@@ -1109,10 +1182,11 @@ CLoadMesh::CLoadMesh(ID3D11Device *pd3dDevice, wchar_t * tMeshName) : CMeshTextu
 	nReadBytes = ::fread(m_pnIndices, sizeof(UINT), m_nIndices, pFile);
 	::fclose(pFile);
 }
+
 CLoadMesh::~CLoadMesh()
 {
-
 }
+
 CLoadMeshCommon::CLoadMeshCommon(ID3D11Device *pd3dDevice, wchar_t * tMeshName, float xScale, float yScale, float zScale) : CLoadMesh(pd3dDevice, tMeshName)
 {
 	D3D11_BUFFER_DESC d3dBufferDesc;

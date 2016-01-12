@@ -270,7 +270,28 @@ protected:
 	ID3D11Buffer *m_pd3dDetailTexCoordBuffer;
 };
 
+struct V3T2
+{
+	XMFLOAT3 xmf3Pos;
+	XMFLOAT2 xmf2Tex;
+};
 
+struct V3N3T3
+{
+	XMFLOAT3 xmf3Pos;
+	XMFLOAT3 xmf3Normal;
+	XMFLOAT2 xmf2Tex;
+};
+
+class CLoadMeshByChae : public CMeshTexturedIlluminated
+{
+protected:
+	XMFLOAT3 * m_xmf3Normal;
+	XMFLOAT2 * m_xmf2TexCoords;
+public:
+	CLoadMeshByChae(ID3D11Device *pd3dDevice, wchar_t * tMeshName, float xScale = 1.0f, float yScale = 1.0f, float zScale = 1.0f);
+	virtual ~CLoadMeshByChae();
+};
 
 class CLoadMesh : public CMeshTexturedIlluminated
 {

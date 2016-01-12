@@ -87,8 +87,6 @@ void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 		}
 	}
 }
-
-
 #pragma region CREATE_SHADER_FROM_FILE
 
 void CShader::CreateVertexShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11VertexShader **ppd3dVertexShader, D3D11_INPUT_ELEMENT_DESC *pd3dInputLayout, UINT nElements, ID3D11InputLayout **ppd3dVertexLayout)
