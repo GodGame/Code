@@ -1075,3 +1075,112 @@ CPlaneMesh::~CPlaneMesh()
 {
 
 }
+
+
+
+CLoadMesh::CLoadMesh(ID3D11Device *pd3dDevice, wchar_t * tMeshName) : CMeshTexturedIlluminated(pd3dDevice)
+{
+	int nReadBytes;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	FILE * pFile = NULL;
+	::_wfopen_s(&pFile, tMeshName, L"rb, ccs=UNICODE");
+
+	//정점 개수
+	nReadBytes = ::fread(&m_nVertices, sizeof(UINT), 1, pFile);
+
+	//위치 벡터
+	m_pxv3Positions = new XMFLOAT3[m_nVertices];
+	nReadBytes = ::fread(m_pxv3Positions, sizeof(XMFLOAT3), m_nVertices, pFile);
+
+	//법선벡터 정보
+	m_xmf3Normal = new XMFLOAT3[m_nVertices];
+	nReadBytes = ::fread(m_xmf3Normal, sizeof(XMFLOAT3), m_nVertices, pFile);
+
+	//텍스처 좌표 입력
+	m_xmf2TexCoords = new XMFLOAT2[m_nVertices];
+	nReadBytes = ::fread(m_xmf2TexCoords, sizeof(XMFLOAT2), m_nVertices, pFile);
+
+	// 인덱스 개수
+	nReadBytes = ::fread(&m_nIndices, sizeof(UINT), 1, pFile);
+
+	// 인덱스 정보
+	m_pnIndices = new UINT[m_nIndices];
+	nReadBytes = ::fread(m_pnIndices, sizeof(UINT), m_nIndices, pFile);
+	::fclose(pFile);
+}
+CLoadMesh::~CLoadMesh()
+{
+
+}
+CLoadMeshCommon::CLoadMeshCommon(ID3D11Device *pd3dDevice, wchar_t * tMeshName, float xScale, float yScale, float zScale) : CLoadMesh(pd3dDevice, tMeshName)
+{
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+
+	float min[3], max[3], temp[3];
+	min[0] = max[0] = m_pxv3Positions[0].x *= xScale;
+	min[1] = max[1] = m_pxv3Positions[0].y *= yScale;
+	min[2] = max[2] = m_pxv3Positions[0].z *= zScale;
+
+	for (int i = 1; i < m_nVertices; ++i) {
+		temp[0] = m_pxv3Positions[i].x *= xScale;
+		temp[1] = m_pxv3Positions[i].y *= yScale;
+		temp[2] = m_pxv3Positions[i].z *= zScale;
+
+		for (int j = 0; j < 3; ++j) {
+			min[j] > temp[j] ? min[j] = temp[j] : (max[j] < temp[j] ? max[j] = temp[j] : void(0));
+		}
+	}
+
+	//정점벡터 버퍼
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = m_pxv3Positions;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
+
+	//법선벡터 버퍼 생성
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferData.pSysMem = m_xmf3Normal;
+	//CalculateVertexNormal(pdxvNormal); // 계산
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
+
+	// 텍스쳐 좌표 생성
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
+	d3dBufferData.pSysMem = m_xmf3Normal;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
+
+	//정점은 위치 벡터, 법선 벡터, 텍스쳐 좌표를 갖는다.
+	ID3D11Buffer *pd3dBuffers[3] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer };
+	UINT pnBufferStrides[3] = { sizeof(XMFLOAT3), sizeof(XMFLOAT3), sizeof(XMFLOAT2) };
+	UINT pnBufferOffsets[3] = { 0, 0, 0 };
+	AssembleToVertexBuffer(3, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+
+
+	if (m_pd3dTexCoordBuffer) delete[] m_pd3dTexCoordBuffer;
+	if (m_pd3dNormalBuffer) delete[] m_pd3dNormalBuffer;
+
+
+	// 인덱스 버퍼 생성
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(UINT)* m_nIndices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = m_pnIndices;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
+
+	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(min[0], min[1], min[2]);
+	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(max[0], max[1], max[2]);
+}
+
+CLoadMeshCommon::~CLoadMeshCommon()
+{
+}

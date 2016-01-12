@@ -269,3 +269,22 @@ protected:
 	ID3D11Buffer *m_pd3dTexCoordBuffer;
 	ID3D11Buffer *m_pd3dDetailTexCoordBuffer;
 };
+
+
+
+class CLoadMesh : public CMeshTexturedIlluminated
+{
+protected:
+	XMFLOAT3 * m_xmf3Normal;
+	XMFLOAT2 * m_xmf2TexCoords;
+public:
+	CLoadMesh(ID3D11Device *pd3dDevice, wchar_t * tMeshName);
+	virtual ~CLoadMesh();
+};
+
+class CLoadMeshCommon : public CLoadMesh
+{
+public:
+	CLoadMeshCommon(ID3D11Device *pd3dDevice, wchar_t * tMeshName, float xScale = 1.0f, float yScale = 1.0f, float zScale = 1.0f);
+	virtual ~CLoadMeshCommon();
+};
