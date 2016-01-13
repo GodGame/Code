@@ -559,9 +559,9 @@ void CGameFramework::ReleaseObjects()
 	if (m_pScene) delete m_pScene;
 
 
-	if (m_pSceneShader) m_pSceneShader->ReleaseObjects();
-	if (m_pSceneShader) delete m_pSceneShader;
-	m_pSceneShader = nullptr;
+	//if (m_pSceneShader) m_pSceneShader->ReleaseObjects();
+	//if (m_pSceneShader) delete m_pSceneShader;
+	//m_pSceneShader = nullptr;
 
 	if (m_pSSAOShader) m_pSSAOShader->ReleaseObjects();
 	if (m_pSSAOShader) delete m_pSSAOShader;

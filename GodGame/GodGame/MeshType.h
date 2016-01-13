@@ -276,7 +276,7 @@ struct V3T2
 	XMFLOAT2 xmf2Tex;
 };
 
-struct V3N3T3
+struct V3N3T2
 {
 	XMFLOAT3 xmf3Pos;
 	XMFLOAT3 xmf3Normal;
@@ -289,8 +289,9 @@ protected:
 	XMFLOAT3 * m_xmf3Normal;
 	XMFLOAT2 * m_xmf2TexCoords;
 public:
-	CLoadMeshByChae(ID3D11Device *pd3dDevice, wchar_t * tMeshName, float xScale = 1.0f, float yScale = 1.0f, float zScale = 1.0f);
+	CLoadMeshByChae(ID3D11Device *pd3dDevice, char * tMeshName, float xScale = 1.0f, float yScale = 1.0f, float zScale = 1.0f);
 	virtual ~CLoadMeshByChae();
+	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };
 
 class CLoadMesh : public CMeshTexturedIlluminated
@@ -301,6 +302,7 @@ protected:
 public:
 	CLoadMesh(ID3D11Device *pd3dDevice, wchar_t * tMeshName);
 	virtual ~CLoadMesh();
+
 };
 
 class CLoadMeshCommon : public CLoadMesh

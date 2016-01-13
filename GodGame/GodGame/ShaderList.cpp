@@ -400,42 +400,29 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	///////////////////////////////////////////////////
 
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	CTexture *pWallTexture = new CTexture(1, 1, 0, 0, SET_SHADER_PS);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Wall_02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	if (FAILED(hr)) printf("오류");
-	pWallTexture->SetTexture(0, pd3dsrvTexture);
-	pWallTexture->SetSampler(0, pd3dSamplerState);
+
+	CTexture *pSwordTexture = new CTexture(1, 1, 0, 0);
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/bridge.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	assert(SUCCEEDED(hr));
+
+	pSwordTexture->SetTexture(0, pd3dsrvTexture);
+	pSwordTexture->SetSampler(0, pd3dSamplerState);
 	pd3dsrvTexture->Release();
-	pd3dSamplerState->Release();
 
-	//CTexture *pStoneTexture = new CTexture(1, 1, 0, 0);
-	//hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Stone02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	//if (FAILED(hr)) printf("오류");
-	//pStoneTexture->SetTexture(0, pd3dsrvTexture);
-	//pStoneTexture->SetSampler(0, pd3dSamplerState);
-	//pd3dsrvTexture->Release();
-
-	//CTexture *pWoodTexture = new CTexture(1, 1, 0, 0);
-	//hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Wood03.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	//if (FAILED(hr)) printf("오류");
-	//pWoodTexture->SetTexture(0, pd3dsrvTexture);
-	//pWoodTexture->SetSampler(0, pd3dSamplerState);
-	//pd3dsrvTexture->Release();
-
-	CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/bridge.chae"), 0.2f, 0.2f, 0.2f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
 	//CCubeMeshTexturedIlluminated *pBezierMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
 
 	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	CRotatingObject *pObject = nullptr;
+	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
 	{
-		pObject = new CRotatingObject(1);
+		pObject = new CGameObject(1);
 		pObject->SetMesh(pCubeMesh);
-		pObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
-		pObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
-		pObject->SetTexture(pWallTexture);
+	//	pObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
+	//	pObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
+		pObject->SetTexture(pSwordTexture);
 		pObject->SetMaterial(pMaterial);
 		m_ppObjects[i] = pObject;
 	}

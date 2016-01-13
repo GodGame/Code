@@ -50,7 +50,9 @@ void CShader::ReleaseObjects()
 {
 	if (m_ppObjects)
 	{
-		for (int j = 0; j < m_nObjects; j++) if (m_ppObjects[j]) delete m_ppObjects[j];
+		for (int j = 0; j < m_nObjects; j++) 
+			if (m_ppObjects[j]) 
+				delete m_ppObjects[j];
 		delete[] m_ppObjects;
 	}
 }
