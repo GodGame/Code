@@ -21,10 +21,10 @@ cbuffer cbPerFrame : register(b6)
 cbuffer ssaobuffer
 {
 	// 차폐판정
-	float gOcclusionRadius = 0.5f;
-	float gOcclusionFadeStart = 0.2f;
-	float gOcclusionFadeEnd = 2.0f;
-	float gSurfaceEpsilon = 0.05f;
+	static float gOcclusionRadius = 0.5f;
+	static float gOcclusionFadeStart = 0.1f;
+	static float gOcclusionFadeEnd = 1.0f;
+	static float gSurfaceEpsilon = 0.01f;
 };
 // 표본점 q가 p를 얼마나 가리는지를 distZ(깊이 차이)로 계산
 float OcclusionFunction(float distZ)
@@ -38,8 +38,8 @@ float OcclusionFunction(float distZ)
 		// 차폐도를 1에서 0으로 선형 감소
 		occlusion = saturate((gOcclusionFadeEnd - distZ) / fadeLength);
 	}
-	else
-		occlusion = 1.0f;
+	//else
+	//	occlusion = 1.0f;
 	return occlusion;
 }
 
@@ -68,9 +68,10 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 	// 우선 p = t * input.ToFarPlane을 만족하는 t를 구한다.
 	// p.z = t * input.ToFarPlane.z ==> t = p.z / input.ToFarPlane.z
 	float3 p = (normal.w / input.ToFarPlane.z) * input.ToFarPlane;
-
+	//return p.xxx
 	// 무작위 벡터를 추출해서 [0, 1] -> [-1, 1] 매핑
-	float3 randVec = 2.0f * gtxtRandom.SampleLevel(gSamplerState, 4.0f * input.Tex, 0.0f).rgb - 1.0f;
+	float3 randVec = gtxtRandom.SampleLevel(gSamplerState, 4.0f * input.Tex, 0.0f).rgb;
+	randVec = normalize(randVec);
 
 	float occlusionSum = 0.0f;
 	// p 주변의 이웃 표본점들을 n방향 반구에서 추출한다.
@@ -90,19 +91,22 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 		//return float4(p, 1);
 		// q를 투영해서 투영 텍스쳐 좌표를 구한다.
 		float4 ProjQ = mul(float4(q, 1.0f), gViewToTexSpace);
+		//ProjQ /= (ProjQ.w);// *gfDepthFar);
 		//float fDepth = (ProjQ.w * gfDepthFar);
-		ProjQ /= (ProjQ.w);// *gfDepthFar);
-		//return float4(ProjQ);//float4(ProjQ.x / 1280, ProjQ.y / 960, 0, 0);
+		//return float4(ProjQ.xyxy);//float4(ProjQ.x / 1280, ProjQ.y / 960, 0, 0);
 
 		// 시점에서 q로의 반직선에서 시점에 가장 가까운 픽셀의 깊이를 구한다.
 		// (이것은 q의 깊이는 아니다. q는 그냥 p 근처의 임의 점이며, 장면 물체가 아닌 빈공간에 있는 점일 수 있다.)
 		// 가장 가까운 깊이는 깊이 맵에서 추출한다
-		float4 rz = gtxtNormal.Load(int3(ProjQ.xy, 0));
+		float rz = gtxtNormal.Load(int3(ProjQ.xy, 0)).a;
+		//occlusionSum += rz;
+		//continue;
 		//return rz;
 		// 완전한 시야 공간 위치 r = (rx, ry, rz)를 재구축한다.
 		// r은 q를 지나는 반직선에 있으므로, r = t * q를 만족하는 t가 존재한다.
 		// r.z = t*q.z ==> t = r.z / q.z
-		float3 r = (rz / q.z) * q;;;
+		float3 r = (rz / q.z) * q;
+
 		//return float4(r, 1);
 		/* 
 		r이 p를 가리는지 판정.
@@ -115,8 +119,8 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 		*/
 		float distZ = p.z - r.z;
 		float dp = max(dot(normal.xyz, normalize(r - p)), 0.0f);
-		float occlusion = /*dp */ 1 * OcclusionFunction(distZ);
-		return occlusion;
+		float occlusion = dp * OcclusionFunction(distZ);
+		//return occlusion;
 		occlusionSum += occlusion;
 	}
 	occlusionSum /= NUM_SSAO_OFFSET;

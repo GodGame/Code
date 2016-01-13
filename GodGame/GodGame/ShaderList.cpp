@@ -402,14 +402,14 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 
 	CTexture *pSwordTexture = new CTexture(1, 1, 0, 0);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/bridge.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
 	assert(SUCCEEDED(hr));
 
 	pSwordTexture->SetTexture(0, pd3dsrvTexture);
 	pSwordTexture->SetSampler(0, pd3dSamplerState);
 	pd3dsrvTexture->Release();
 
-	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/bridge.chae"), 0.2f, 0.2f, 0.2f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+	CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 20, 20, 20);//new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/bridge.chae"), 0.2f, 0.2f, 0.2f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
 	//CCubeMeshTexturedIlluminated *pBezierMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
 
 	m_nObjects = 2;

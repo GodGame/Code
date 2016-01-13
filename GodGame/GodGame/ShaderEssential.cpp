@@ -603,7 +603,8 @@ void CSSAOShader::BuildSSAO(ID3D11Device * pd3dDevice)
 
 	for (int i = 0; i < NUM_SSAO_OFFSET; ++i)
 	{
-		float s = Chae::RandomFloat(0.25, 1.0);
+		int iMinus = i%2 ? -1 : 1;
+		float s = Chae::RandomFloat(0.0, 0.8) + 0.2f; //iMinus + (0.2 * iMinus);
 
 		XMVECTOR v = s * XMVector4Normalize(XMLoadFloat4(&m_ssao.m_gOffsetVectors[i]));
 		XMStoreFloat4(&m_ssao.m_gOffsetVectors[i], v);
@@ -625,8 +626,8 @@ void CSSAOShader::CreateShaderVariable(ID3D11Device * pd3dDevice)
 
 void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
 {
-	float fw = 0.5f; //FRAME_BUFFER_WIDTH * 0.5f;
-	float fh = 0.5f; //FRAME_BUFFER_HEIGHT * 0.5f;
+	float fw = FRAME_BUFFER_WIDTH * 0.5f;
+	float fh = FRAME_BUFFER_HEIGHT * 0.5f;
 	static const XMMATRIX T(
 		+fw, 0.0f, 0.0f, 0.0f,
 		0.0f, -fh, 0.0f, 0.0f,

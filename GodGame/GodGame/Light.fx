@@ -395,7 +395,7 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 		{
 			float3 vToLight = gLights[i].m_vPosition - vPos;
 			vSpec.w = CookTorrenceSF(vNormal, vToCamera, vToLight, 0.85f, 0.01f);
-			vSpec.w = max(255, vSpec.w);
+			vSpec.w = max(0.2, vSpec.w);
 
 			//조명의 유형에 따라 조명의 영향을 계산한다.
 			if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
