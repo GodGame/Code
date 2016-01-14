@@ -55,13 +55,13 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 
 	HRESULT hr;
 	ID3D11Texture2D * pd3dShadowMap = nullptr;
-	assert(SUCCEEDED(hr = pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap)));
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC d3dDSVDesc;
 	d3dDSVDesc.Flags = d3dDSVDesc.Texture2D.MipSlice = 0;
 	d3dDSVDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	d3dDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	assert(SUCCEEDED(hr = pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3dDSVShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3dDSVShadowMap)));
 
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
@@ -69,12 +69,12 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 	d3dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	d3dSRVDesc.Texture2D.MipLevels = desc.MipLevels;
 	d3dSRVDesc.Texture2D.MostDetailedMip = 0;
-	assert(SUCCEEDED(hr = pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dSRVShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dSRVShadowMap)));
 	pd3dShadowMap->Release();
 
-	assert(SUCCEEDED(hr = pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap)));
-	assert(SUCCEEDED(hr = pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3dStaticDSVShadowMap)));
-	assert(SUCCEEDED(hr = pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dStaticSRVShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateTexture2D(&desc, nullptr, &pd3dShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateDepthStencilView(pd3dShadowMap, &d3dDSVDesc, &m_pd3dStaticDSVShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateShaderResourceView(pd3dShadowMap, &d3dSRVDesc, &m_pd3dStaticSRVShadowMap)));
 	pd3dShadowMap->Release();
 	
 	TXMgr.InsertShaderResourceView(m_pd3dSRVShadowMap, "srv_ShaodwMap", 0, SET_SHADER_PS);
@@ -93,7 +93,7 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 	d3dBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT4X4);
-	assert(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbShadowMap)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbShadowMap)));
 
 #define PCF
 #ifdef PCF
@@ -101,7 +101,7 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 #else
 	m_pd3dShadowSamplerState = TXMgr.GetSamplerState("ss_point_border");
 #endif
-	if (nullptr == m_pd3dShadowSamplerState) assert(E_FAIL);
+	if (nullptr == m_pd3dShadowSamplerState) ASSERT(E_FAIL);
 
 	m_pd3dShadowSamplerState->AddRef();
 
@@ -110,14 +110,14 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 	d3dRSDesc.FillMode = D3D11_FILL_SOLID;
 	d3dRSDesc.CullMode = D3D11_CULL_NONE;
 	d3dRSDesc.DepthClipEnable = true;
-	assert(SUCCEEDED(hr = pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dNormalRS)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dNormalRS)));
 
 	d3dRSDesc.CullMode = D3D11_CULL_NONE;
 	d3dRSDesc.FrontCounterClockwise = false;
 	d3dRSDesc.DepthBias = SHADOW_DEPTH_BIAS;
 	d3dRSDesc.DepthBiasClamp = 0.0f;
 	d3dRSDesc.SlopeScaledDepthBias = 2.0f;
-	assert(SUCCEEDED(hr = pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dShadowRS)));
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dShadowRS)));
 }
 
 void CShadowMgr::BuildShadowMap(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT3 & Target, XMFLOAT3 & LightPos, float fHalf)

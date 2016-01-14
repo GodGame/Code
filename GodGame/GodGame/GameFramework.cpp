@@ -101,15 +101,15 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 {
 	HRESULT hResult = S_OK;
 	//스왑 체인의 첫 번째 후면버퍼 인터페이스를 가져온다. 
-	ID3D11Texture2D *pd3dBackBuffer;
+	ID3D11Texture2D *pd3dBackBuffer = nullptr;
 	//스왑 체인의 첫 번째 후면버퍼에 대한 렌더 타겟 뷰를 생성한다.
-	assert(SUCCEEDED(hResult = m_pDXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *)&pd3dBackBuffer)));
+	ASSERT(SUCCEEDED(hResult = m_pDXGISwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *)&pd3dBackBuffer)));
 	
 	D3D11_RENDER_TARGET_VIEW_DESC d3dRTVDesc;
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	d3dRTVDesc.Texture2D.MipSlice = 0;
 	d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pd3dBackBuffer, &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pd3dBackBuffer, &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE])));
 	if (pd3dBackBuffer) pd3dBackBuffer->Release();
 
 	D3D11_TEXTURE2D_DESC d3d2DBufferDesc;
@@ -125,7 +125,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	d3d2DBufferDesc.CPUAccessFlags = 0;
 	d3d2DBufferDesc.MiscFlags = 0;
-	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_pd3dDepthStencilBuffer/*m_ppd3dMRTtx[MRT_DEPTH]*/)));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_pd3dDepthStencilBuffer/*m_ppd3dMRTtx[MRT_DEPTH]*/)));
 
 	//생성한 깊이 버퍼(Depth Buffer)에 대한 뷰를 생성한다.
 	D3D11_DEPTH_STENCIL_VIEW_DESC d3dViewDesc;
@@ -133,7 +133,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3dViewDesc.Format = DXGI_FORMAT_D32_FLOAT;//d3d2DBufferDesc.Format;
 	d3dViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	d3dViewDesc.Texture2D.MipSlice = 0;
-	assert(SUCCEEDED((hResult = m_pd3dDevice->CreateDepthStencilView(m_pd3dDepthStencilBuffer, &d3dViewDesc, &m_pd3dDepthStencilView))));
+	ASSERT(SUCCEEDED((hResult = m_pd3dDevice->CreateDepthStencilView(m_pd3dDepthStencilBuffer, &d3dViewDesc, &m_pd3dDepthStencilView))));
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
 	ZeroMemory(&d3dSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
@@ -170,20 +170,23 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		}
 
-		assert(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i])));
-		assert(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_ppd3dMRTView[i])));
-		assert(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i])));
+		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i])));
+		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_ppd3dMRTView[i])));
+		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i])));
 
-		m_ppd3dMRTtx[i]->Release();
-		m_ppd3dMRTtx[i] = nullptr;
+		if (m_ppd3dMRTtx[i]) 
+		{
+			m_ppd3dMRTtx[i]->Release();
+			m_ppd3dMRTtx[i] = nullptr;
+		}
 	}
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	
 
-	ID3D11Texture2D * pdTx2D;
-	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
-	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV)));
-	assert(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView)));
+	ID3D11Texture2D * pdTx2D = nullptr;
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV)));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView)));
 
 	TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "srv_rtvSSAO", 0);
 	m_pd3dSSAOSRV->Release();

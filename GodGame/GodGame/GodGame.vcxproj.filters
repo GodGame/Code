@@ -192,7 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt">
-      <Filter>StaticGlobal\0_Effects</Filter>
+      <Filter>StaticGlobal</Filter>
     </None>
   </ItemGroup>
 </Project>

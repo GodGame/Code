@@ -719,20 +719,20 @@ CNormalCube::CNormalCube(ID3D11Device *pd3dDevice, float fWidth, float fHeight) 
 	float fx = fWidth*0.5f, fy = fHeight*0.5f, fz = 1;
 
 	m_pxv3Positions = new XMFLOAT3[m_nVertices];
-	CNormalMapVertex * pNormalMap = new CNormalMapVertex[m_nVertices];
+	NormalMapVertex * pNormalMap = new NormalMapVertex[m_nVertices];
 	int i = 0;
 
 	//직육면체의 각 면(삼각형 2개)에 하나의 텍스쳐 이미지 전체가 맵핑되도록 텍스쳐 좌표를 설정한다.
-	pNormalMap[0] = { m_pxv3Positions[0] = XMFLOAT3(-fx, +fy, 0), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) };
-	pNormalMap[1] = { m_pxv3Positions[1] = XMFLOAT3(+fx, +fy, 0), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) };
-	pNormalMap[2] = { m_pxv3Positions[2] = XMFLOAT3(-fx, -fy, 0), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) };
+	pNormalMap[0] = { m_pxv3Positions[0] = XMFLOAT3(-fx, +fy, 0), XMFLOAT2(0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f)};
+	pNormalMap[1] = { m_pxv3Positions[1] = XMFLOAT3(+fx, +fy, 0), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f)};
+	pNormalMap[2] = { m_pxv3Positions[2] = XMFLOAT3(-fx, -fy, 0), XMFLOAT2(0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f)};
 	//pNormalMap[3] = { m_pxv3Positions[3] = XMFLOAT3(+fx, +fy, 0), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) };
-	pNormalMap[3] = { m_pxv3Positions[3] = XMFLOAT3(+fx, -fy, 0), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) };
+	pNormalMap[3] = { m_pxv3Positions[3] = XMFLOAT3(+fx, -fy, 0), XMFLOAT2(1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f)};
 	//pNormalMap[5] = { m_pxv3Positions[5] = XMFLOAT3(-fx, -fy, 0), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) };
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	d3dBufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-	d3dBufferDesc.ByteWidth = sizeof(CNormalMapVertex)* m_nVertices;		// 1개를 의미
+	d3dBufferDesc.ByteWidth = sizeof(NormalMapVertex)* m_nVertices;		// 1개를 의미
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 	d3dBufferDesc.MiscFlags = 0;
@@ -742,7 +742,7 @@ CNormalCube::CNormalCube(ID3D11Device *pd3dDevice, float fWidth, float fHeight) 
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
 
 	ID3D11Buffer *pd3dBuffers[1] = { m_pd3dPositionBuffer };
-	UINT pnBufferStrides[1] = { sizeof(CNormalMapVertex) };
+	UINT pnBufferStrides[1] = { sizeof(NormalMapVertex) };
 	UINT pnBufferOffsets[1] = { 0 };
 	AssembleToVertexBuffer(1, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
 

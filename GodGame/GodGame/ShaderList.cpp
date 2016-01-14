@@ -353,28 +353,28 @@ CStaticShader::~CStaticShader()
 
 void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
 {
-	//D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
-	//{
-	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	//};
-	//UINT nElements = ARRAYSIZE(d3dInputLayout);
-
-	//CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSBezier", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	//CreateHullShaderFromFile(pd3dDevice, L"Effect.fx", "HSBezier", "hs_5_0", &m_pd3dHullShader);
-	//CreateDomainShaderFromFile(pd3dDevice, L"Effect.fx", "DSBezier", "ds_5_0", &m_pd3dDomainShader);
-	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSBezier", "ps_5_0", &m_pd3dPixelShader);
-	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
-	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
-	CreateShaderVariables(pd3dDevice);
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+
+	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
+
+	//D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	//{
+	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	//};
+	//UINT nElements = ARRAYSIZE(d3dInputElements);
+	//CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	//CreateShaderVariables(pd3dDevice);
 }
 
 void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
@@ -385,35 +385,37 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	//m_pTexture = pTexture;
 	//if (pTexture) pTexture->AddRef();
 
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
-	///////////////////////////////////////////////////
-
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 
-	CTexture *pSwordTexture = new CTexture(1, 1, 0, 0);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	assert(SUCCEEDED(hr));
-
+	CTexture *pSwordTexture = new CTexture(3, 1, 0, 0);
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_d.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	ASSERT(SUCCEEDED(hr));
 	pSwordTexture->SetTexture(0, pd3dsrvTexture);
-	pSwordTexture->SetSampler(0, pd3dSamplerState);
 	pd3dsrvTexture->Release();
 
-	CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 20, 20, 20);//new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/bridge.chae"), 0.2f, 0.2f, 0.2f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
-	//CCubeMeshTexturedIlluminated *pBezierMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
+	hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_n.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	ASSERT(SUCCEEDED(hr));
+	pSwordTexture->SetTexture(1, pd3dsrvTexture);
+	pd3dsrvTexture->Release();
 
-	m_nObjects = 2;
+	hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_s.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	ASSERT(SUCCEEDED(hr));
+	pSwordTexture->SetTexture(2, pd3dsrvTexture);
+	pd3dsrvTexture->Release();
+
+	pSwordTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 4.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+	//CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
+
+	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
+
+	//CMaterial * pMat = new CMaterial();
+	//pMat->m_Material.m_xcAmbient = { 1.0f, 1.0f, 1.0f, 1.0f };
+	//pMat->m_Material.m_xcDiffuse = { 0.64f, 0.64f, 0.64f, 0.64f };
+	//pMat->m_Material.m_xcSpecular = { 0.5f, 0.5f, 0.5f, 0.5f };
+	//pMat->m_Material.m_xcEmissive = { 0.0f, 0.0f, 0.0f, 0.0 };
 
 	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
@@ -427,8 +429,8 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 		m_ppObjects[i] = pObject;
 	}
 
-	m_ppObjects[0]->SetPosition(1105, 200, 250);
-	m_ppObjects[1]->SetPosition(1085, 170, 260);
+	m_ppObjects[0]->SetPosition(1085, 170, 260);//(1105, 200, 250);
+	//m_ppObjects[1]->SetPosition(1085, 170, 260);
 	//m_ppObjects[2]->SetPosition(1115, 170, 265);
 	//m_ppObjects[3]->SetPosition(1100, 170, 255);
 	//m_ppObjects[4]->SetPosition(1140, 170, 265);

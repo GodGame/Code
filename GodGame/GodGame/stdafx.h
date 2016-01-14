@@ -51,8 +51,15 @@ using namespace DirectX;
 #include <vector>
 #include <map>
 #include <time.h>
-using namespace std;
+//#include <ASSERT.h>
 
+#ifdef _DEBUG
+#define ASSERT(x) assert(x) 
+#else
+#define ASSERT(x) x
+#endif
+
+using namespace std;
 
 
 #endif

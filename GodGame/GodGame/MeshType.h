@@ -21,13 +21,20 @@ struct CTexture2Vertex
 	XMFLOAT3 m_xv3Position;
 	XMFLOAT2 m_xv2Tex;
 };
-
-struct CNormalMapVertex
+struct V3N3T2
 {
-	XMFLOAT3 m_xv3Position;
-	XMFLOAT3 m_xv3Normal;
-	XMFLOAT3 m_xv3Tangent;
-	XMFLOAT2 m_xv2Tex;
+	XMFLOAT3 xmf3Pos;
+	XMFLOAT3 xmf3Normal;
+	XMFLOAT2 xmf2Tex;
+};
+
+
+struct NormalMapVertex
+{
+	XMFLOAT3 xmf3Pos;
+	XMFLOAT2 xmf2Tex;
+	XMFLOAT3 xmf3Normal;
+	XMFLOAT3 xmf3Tangent;
 };
 
 class CVertex
@@ -210,7 +217,6 @@ protected:
 	ID3D11Buffer *m_pd3dTexCoordBuffer;
 };
 
-
 class CMeshSplatTexturedIlluminated : public CMeshIlluminated
 {
 public:
@@ -270,26 +276,11 @@ protected:
 	ID3D11Buffer *m_pd3dDetailTexCoordBuffer;
 };
 
-struct V3T2
-{
-	XMFLOAT3 xmf3Pos;
-	XMFLOAT2 xmf2Tex;
-};
-
-struct V3N3T2
-{
-	XMFLOAT3 xmf3Pos;
-	XMFLOAT3 xmf3Normal;
-	XMFLOAT2 xmf2Tex;
-};
 
 class CLoadMeshByChae : public CMeshTexturedIlluminated
 {
-protected:
-	XMFLOAT3 * m_xmf3Normal;
-	XMFLOAT2 * m_xmf2TexCoords;
 public:
-	CLoadMeshByChae(ID3D11Device *pd3dDevice, char * tMeshName, float xScale = 1.0f, float yScale = 1.0f, float zScale = 1.0f);
+	CLoadMeshByChae(ID3D11Device *pd3dDevice, char * tMeshName, float fScale = 1.0f);
 	virtual ~CLoadMeshByChae();
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };

@@ -9,6 +9,7 @@ SamplerState gDetailSamplerState : register(s1);
 TextureCube gtxtSkyBox : register(t2);
 SamplerState gssSkyBox : register(s2);
 
+Texture2D gtxtSFTexture : register(t2);
 
 //Texture2D gtxtResult   : register(t16);
 Texture2D gtxtTxColor  : register(t17);
@@ -489,17 +490,17 @@ struct DETAIL_TERRAIN
 struct MODEL_NORMALMAP
 {
 	float3 pos : POSITION;
+	float2 tex : TEXCOORD;
 	float3 normal : NORMAL;
 	float3 tangent : TANGENT;
-	float2 tex : TEXCOORD;
 };
 
 struct WORLD_NORMALMAP
 {
 	float3 posW : POSITION;
+	float2 tex : TEXCOORD;
 	float3 normalW : NORMAL;
 	float3 tangentW : TANGENT;
-	float2 tex : TEXCOORD;
 };
 
 struct PS_WORLD_NORMALMAP

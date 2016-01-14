@@ -219,7 +219,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.MaxLOD = 0;
 
 		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		assert(SUCCEEDED(hr));
+		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_wrap", 0);
 		pd3dSamplerState->Release();
 	}
@@ -229,7 +229,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 
 		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		assert(SUCCEEDED(hr));
+		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
 		pd3dSamplerState->Release();
 	}
@@ -243,7 +243,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;//D3D11_COMPARISON_NEVER;
 
 		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		assert(SUCCEEDED(hr));
+		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "scs_point_border", 0);
 		pd3dSamplerState->Release();
 	}
@@ -253,7 +253,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.MaxAnisotropy = 1;
 
 		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		assert(SUCCEEDED(hr));
+		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_point_border", 0);
 		pd3dSamplerState->Release();
 	}
@@ -263,7 +263,7 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 {
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	assert(SUCCEEDED(hr));
+	ASSERT(SUCCEEDED(hr));
 
 	InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
 	pd3dsrvTexture->Release();

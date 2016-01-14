@@ -1077,10 +1077,10 @@ CPlaneMesh::~CPlaneMesh()
 }
 
 
-CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, float xScale, float yScale, float zScale) : CMeshTexturedIlluminated(pd3dDevice)
+CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, float fScale) : CMeshTexturedIlluminated(pd3dDevice)
 {
 	int nReadBytes;
-	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	//D3D11_PRIMITIVE_TOPOLOGY_
 
 	FILE * pFile = NULL;
@@ -1090,21 +1090,21 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 	//정점 개수
 	nReadBytes = ::fread(&m_nVertices, sizeof(size_t), 1, pFile);
 
-	V3N3T2 * pChaeInfo = new V3N3T2[m_nVertices];
+	NormalMapVertex * pChaeInfo = new NormalMapVertex[m_nVertices];
 	m_pxv3Positions = new XMFLOAT3[m_nVertices];
-	m_xmf3Normal = new XMFLOAT3[m_nVertices];
-	m_xmf2TexCoords = new XMFLOAT2[m_nVertices];
 
-	nReadBytes = ::fread(&pChaeInfo[0], sizeof(V3N3T2), m_nVertices, pFile);
+	nReadBytes = ::fread(&pChaeInfo[0], sizeof(NormalMapVertex), m_nVertices, pFile);
 
 	nReadBytes = ::fread(&m_nIndices, sizeof(size_t), 1, pFile);
 	m_pnIndices = new UINT[m_nIndices];
-	::fread(&m_pnIndices[0], sizeof(UINT), m_nIndices, pFile);
+	nReadBytes = ::fread(m_pnIndices, sizeof(UINT), m_nIndices, pFile);
 	::fclose(pFile);
 
+	XMFLOAT3 min{ FLT_MAX, FLT_MAX , FLT_MAX }, max{ FLT_MIN, FLT_MIN, FLT_MIN };
 
-	XMVECTOR xmvScale = XMVectorSet(xScale, yScale, zScale, 1);
-	XMMATRIX xmtxRotate = XMMatrixRotationX(90);
+
+	XMVECTOR xmvScale = XMVectorSet(fScale, fScale, fScale, 1);
+	XMMATRIX xmtxRotate = XMMatrixIdentity();// XMMatrixRotationX(90);
 
 	for (int i = 0; i < m_nVertices; ++i)
 	{
@@ -1113,50 +1113,41 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 		xmvPos = XMVector3TransformCoord(xmvPos, xmtxRotate);
 
 		XMStoreFloat3(&m_pxv3Positions[i], xmvPos);
-		XMStoreFloat3(&m_xmf3Normal[i], XMVector3Normalize( xmvPos ));
+		XMStoreFloat3(&pChaeInfo[i].xmf3Pos, xmvPos);
 
-		//m_pxv3Positions[i] = pNotNorm[i].xmf3Pos;
-		//m_xmf3Normal[i] = pChaeInfo[i].xmf3Normal;
-		//Chae::XMFloat3Normalize(&m_xmf3Normal[i]);
-		m_xmf2TexCoords[i] = pChaeInfo[i].xmf2Tex;
+		min.x < m_pxv3Positions[i].x ? min.x = m_pxv3Positions[i].x : NULL;
+		min.y < m_pxv3Positions[i].y ? min.y = m_pxv3Positions[i].y : NULL;
+		min.z < m_pxv3Positions[i].z ? min.z = m_pxv3Positions[i].z : NULL;
+
+		max.x > m_pxv3Positions[i].x ? max.x = m_pxv3Positions[i].x : NULL;
+		max.y > m_pxv3Positions[i].y ? max.y = m_pxv3Positions[i].y : NULL;
+		max.z > m_pxv3Positions[i].z ? max.z = m_pxv3Positions[i].z : NULL;
+
+//		pChaeInfo[i].xmf3Normal = pChaeInfo[i].xmf3Normal;
 	}
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferDesc.ByteWidth = sizeof(NormalMapVertex) * m_nVertices;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 
-	//정점벡터 버퍼
+
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = m_pxv3Positions;
+	d3dBufferData.pSysMem = pChaeInfo;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
 
-	//법선벡터 버퍼 생성
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
-	d3dBufferData.pSysMem = m_xmf3Normal;
-	//CalculateVertexNormal(pdxvNormal); // 계산
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
-
-	// 텍스쳐 좌표 생성
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
-	d3dBufferData.pSysMem = m_xmf2TexCoords;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
-
-	ID3D11Buffer *pd3dBuffers[3] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer };
-	UINT pnBufferStrides[3] = { sizeof(XMFLOAT3), sizeof(XMFLOAT3), sizeof(XMFLOAT2) };
-	UINT pnBufferOffsets[3] = { 0, 0, 0 };
-	AssembleToVertexBuffer(3, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+	ID3D11Buffer *pd3dBuffers[1] = { m_pd3dPositionBuffer};
+	UINT pnBufferStrides[1] = { sizeof(NormalMapVertex)};
+	UINT pnBufferOffsets[1] = { 0 };
+	AssembleToVertexBuffer(1, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
 
 	delete [] pChaeInfo;
-	delete [] m_xmf3Normal;
-	delete [] m_xmf2TexCoords;
 
-	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-xScale * 10, -yScale * 10, -zScale * 10);
-	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+xScale * 10, +yScale * 10, +zScale * 10);
-
+	m_bcBoundingCube.m_xv3Minimum = min;
+	m_bcBoundingCube.m_xv3Maximum = max;
 
 
 	// 인덱스 버퍼 생성
@@ -1166,9 +1157,10 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 	d3dBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 
-	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = m_pnIndices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
+
+	m_nStartIndex = 0;
 
 	CreateRasterizerState(pd3dDevice);
 }
@@ -1185,7 +1177,7 @@ void CLoadMeshByChae::CreateRasterizerState(ID3D11Device *pd3dDevice)
 	//래스터라이저 단계에서 컬링(은면 제거)을 하지 않도록 래스터라이저 상태를 생성한다.
 	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
 	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;//WIREFRAME;
-	d3dRasterizerDesc.DepthClipEnable = true;
+	d3dRasterizerDesc.DepthClipEnable = false;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
 
