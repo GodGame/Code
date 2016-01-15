@@ -156,6 +156,9 @@
     <ClCompile Include="CollisionMgr.cpp">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
+    <ClCompile Include="CollisionPartitionTree.cpp">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GodGame.rc">
