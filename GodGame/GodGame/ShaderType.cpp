@@ -30,6 +30,7 @@ CShader::CShader()
 	m_pd3dGeometryShader = nullptr;
 	m_pd3dHullShader = nullptr;
 	m_pd3dDomainShader = nullptr;
+	//m_p3dComputeShader = nullptr;
 }
 
 CShader::~CShader()
@@ -40,6 +41,7 @@ CShader::~CShader()
 	if (m_pd3dGeometryShader) m_pd3dGeometryShader->Release();
 	if (m_pd3dHullShader) m_pd3dHullShader->Release();
 	if (m_pd3dDomainShader) m_pd3dDomainShader->Release();
+	//if (m_p3dComputeShader) m_p3dComputeShader->Release();
 }
 
 void CShader::BuildObjects(ID3D11Device *pd3dDevice)
@@ -73,6 +75,7 @@ void CShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	pd3dDeviceContext->GSSetShader(m_pd3dGeometryShader, nullptr, 0);
 	pd3dDeviceContext->HSSetShader(m_pd3dHullShader, nullptr, 0);
 	pd3dDeviceContext->DSSetShader(m_pd3dDomainShader, nullptr, 0);
+	//pd3dDeviceContext->CSSetShader(m_p3dComputeShader, nullptr, 0);
 }
 void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
@@ -202,6 +205,24 @@ void CShader::CreateDomainShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFil
 		if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dDomainShaderBlob, &pd3dErrorBlob, nullptr)))
 		{
 			pd3dDevice->CreateDomainShader(pd3dDomainShaderBlob->GetBufferPointer(), pd3dDomainShaderBlob->GetBufferSize(), nullptr, ppd3dDomainShader);
+			pd3dDomainShaderBlob->Release();
+		}
+	}
+}
+void CShader::CreateComputeShaderFromFile(ID3D11Device * pd3dDevice, WCHAR * pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11ComputeShader ** ppd3dComputeShader)
+{
+	{
+		HRESULT hResult;
+
+		DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if defined(DEBUG) || defined(_DEBUG)
+		dwShaderFlags |= D3DCOMPILE_DEBUG;
+#endif
+
+		ID3DBlob *pd3dDomainShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
+		if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dDomainShaderBlob, &pd3dErrorBlob, nullptr)))
+		{
+			pd3dDevice->CreateComputeShader(pd3dDomainShaderBlob->GetBufferPointer(), pd3dDomainShaderBlob->GetBufferSize(), nullptr, ppd3dComputeShader);
 			pd3dDomainShaderBlob->Release();
 		}
 	}

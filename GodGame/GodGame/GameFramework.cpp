@@ -12,7 +12,7 @@ CGameFramework::CGameFramework()
 	for (int i = 0; i < NUM_MRT; ++i)
 	{
 		m_ppd3dRenderTargetView[i] = nullptr;
-		m_ppd3dMRTView[i] = nullptr;
+		m_pd3dMRTSRV[i] = nullptr;
 		m_ppd3dMRTtx[i] = nullptr;
 	}
 	m_pd3dDepthStencilBuffer = nullptr;
@@ -25,6 +25,11 @@ CGameFramework::CGameFramework()
 	m_nRenderThreads = 0;
 
 	m_pRenderingThreadInfo = nullptr;
+	//m_pd3dPostProcessing = nullptr;
+	m_pd3dPostSRV[1] = m_pd3dPostSRV[0] = nullptr;
+	m_pd3dPostUAV[1] = m_pd3dPostUAV[0] = nullptr;
+
+	m_pd3dBackRenderTargetView = nullptr;
 
 	m_pScene = nullptr;
 	m_pPlayer = nullptr;
@@ -70,11 +75,13 @@ void CGameFramework::OnDestroy()
 	for (int i = 0; i < NUM_MRT; ++i)
 	{
 		if (m_ppd3dRenderTargetView[i]) m_ppd3dRenderTargetView[i]->Release();
-		if (m_ppd3dMRTView[i]) m_ppd3dMRTView[i]->Release();
+		if (m_pd3dMRTSRV[i]) m_pd3dMRTSRV[i]->Release();
 		if (m_ppd3dMRTtx[i]) m_ppd3dMRTtx[i]->Release();
+		//if (m_pd3dMRTUAV[i]) m_pd3dMRTUAV[i]->Release();
 	}
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
 	if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();
+
 
 	if (m_pDXGISwapChain) m_pDXGISwapChain->Release();
 	if (m_pd3dDeviceContext) m_pd3dDeviceContext->Release();
@@ -90,9 +97,14 @@ void CGameFramework::OnDestroy()
 		//::_endthreadex(m_pRenderingThreadInfo[i].m_hRenderingThread[i]);
 	}
 #endif
-
+	if (m_pd3dBackRenderTargetView) m_pd3dBackRenderTargetView->Release();
+	//if (m_pd3dPostProcessing) m_pd3dPostProcessing->Release();
 	if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
-
+	
+	for (int i = 0; i < 2; ++i) {
+		if (m_pd3dPostSRV[i]) m_pd3dPostSRV[i]->Release();
+		if (m_pd3dPostUAV[i]) m_pd3dPostUAV[i]->Release();
+	}
 	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
@@ -109,7 +121,8 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	d3dRTVDesc.Texture2D.MipSlice = 0;
 	d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pd3dBackBuffer, &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE])));
+
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pd3dBackBuffer, &d3dRTVDesc, &m_pd3dBackRenderTargetView)));
 	if (pd3dBackBuffer) pd3dBackBuffer->Release();
 
 	D3D11_TEXTURE2D_DESC d3d2DBufferDesc;
@@ -122,7 +135,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3d2DBufferDesc.SampleDesc.Count = 1;
 	d3d2DBufferDesc.SampleDesc.Quality = 0;
 	d3d2DBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3d2DBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;// | D3D11_BIND_SHADER_RESOURCE;
 	d3d2DBufferDesc.CPUAccessFlags = 0;
 	d3d2DBufferDesc.MiscFlags = 0;
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_pd3dDepthStencilBuffer/*m_ppd3dMRTtx[MRT_DEPTH]*/)));
@@ -140,28 +153,64 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	d3dSRVDesc.Texture2D.MipLevels = 1;
 	d3dSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
-	//if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_DEPTH], &d3dSRVDesc, &m_ppd3dMRTView[MRT_DEPTH]))) 
+	//if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_DEPTH], &d3dSRVDesc, &m_pd3dMRTSRV[MRT_DEPTH]))) 
 	//	return(false);
 
-	d3d2DBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC d3dUAVDesc;
+	ZeroMemory(&d3dUAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	d3dUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+	d3dUAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	d3dUAVDesc.Texture2D.MipSlice = 0;
+
+	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
+	//d3d2DBufferDesc.Width = m_nWndClientWidth * 0.5f;
+	//d3d2DBufferDesc.Height = m_nWndClientHeight * 0.5f;
+		
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dPostSRV[0])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[0], &d3dUAVDesc, &m_pd3dPostUAV[0])));
+	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
+
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dPostSRV[1])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[0], &d3dUAVDesc, &m_pd3dPostUAV[1])));
+	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
+	
+	d3d2DBufferDesc.Width = m_nWndClientWidth;
+	d3d2DBufferDesc.Height = m_nWndClientHeight;
+	//d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[MRT_SCENE])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_SCENE], &d3dSRVDesc, &m_pd3dMRTSRV[MRT_SCENE])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[MRT_SCENE], &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE])));
+//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[MRT_SCENE], &d3dUAVDesc, &m_pd3dPostUAV[1])));
+	if (m_ppd3dMRTtx[MRT_SCENE]) m_ppd3dMRTtx[MRT_SCENE]->Release();
+
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+	//ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
+	//ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dMRTSRV[0])));
+
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;// | D3D11_BIND_UNORDERED_ACCESS;
 //	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.5f;
 //	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.5f;
+
+
 	for (int i = 1; i < NUM_MRT; ++i)
 	{
 		//d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		switch (i)
 		{
 		case MRT_TXCOLOR:
+		case MRT_DIFFUSE:
+		case MRT_SPEC:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 		case MRT_POS:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;// DXGI_FORMAT_R32G32B32A32_SINT;
-			break;
-		case MRT_DIFFUSE:
-			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_B5G5R5A1_UNORM;// DXGI_FORMAT_R8G8B8A8_UNORM;
-			break;
-		case MRT_SPEC:
-			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 		case MRT_NORMAL:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
@@ -171,8 +220,9 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 		}
 
 		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i])));
-		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_ppd3dMRTView[i])));
+		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_pd3dMRTSRV[i])));
 		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i])));
+//		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[i], &d3dUAVDesc, &m_pd3dMRTUAV[i])));
 
 		if (m_ppd3dMRTtx[i]) 
 		{
@@ -376,9 +426,9 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case 'Y':
 			m_pSceneShader->SetDrawOption((m_iDrawOption = 5));
 			break;
-		case 'Z':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
-			m_pSceneShader->SetTexture(0, m_pd3dSSAOSRV/*TXMgr.GetShaderResourceView("srv_rtvSSAO")*/);
+//		case 'Z':
+//			m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
+//			m_pSceneShader->SetTexture(0, m_pd3dSSAOSRV/*TXMgr.GetShaderResourceView("srv_rtvSSAO")*/);
 			break;
 		//case 'P':
 		//	m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
@@ -436,7 +486,7 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	//				for (int i = 0; i < NUM_MRT; ++i)
 	//				{
 	//					if (m_ppd3dRenderTargetView[i]) m_ppd3dRenderTargetView[i]->Release();
-	//					if (m_ppd3dMRTView[i]) m_ppd3dMRTView[i]->Release();
+	//					if (m_pd3dMRTSRV[i]) m_pd3dMRTSRV[i]->Release();
 	//					if (m_ppd3dMRTtx[i]) m_ppd3dMRTtx[i]->Release();
 	//				}
 	//				if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
@@ -483,7 +533,8 @@ void CGameFramework::BuildObjects()
 
 	m_pSceneShader = new CSceneShader();
 	m_pSceneShader->CreateShader(m_pd3dDevice);
-	m_pSceneShader->BuildObjects(m_pd3dDevice, m_ppd3dMRTView, m_iDrawOption);
+	m_pSceneShader->BuildObjects(m_pd3dDevice, m_pd3dMRTSRV, m_iDrawOption, m_pd3dBackRenderTargetView);
+	m_pSceneShader->SetPostView(m_pd3dPostSRV, m_pd3dPostUAV);
 
 	m_pScene = new CScene();
 	//m_pScene->SetRenderTarget(m_pd3dRenderTargetView);
@@ -504,11 +555,12 @@ void CGameFramework::BuildObjects()
 	m_pScene->SetCamera(m_pCamera);
 	m_pScene->SetPlayerShader(m_pPlayerShader);
 
-	m_pSSAOShader = new CSSAOShader();
-	m_pSSAOShader->CreateShaderVariable(m_pd3dDevice);
-	m_pSSAOShader->CreateShader(m_pd3dDevice);
-	m_pSSAOShader->BuildObjects(m_pd3dDevice);
+//	m_pSSAOShader = new CSSAOShader();
+//	m_pSSAOShader->CreateShaderVariable(m_pd3dDevice);
+//	m_pSSAOShader->CreateShader(m_pd3dDevice);
+//	m_pSSAOShader->BuildObjects(m_pd3dDevice);
 
+	m_pSceneShader->CreateConstantBuffer(m_pd3dDevice, m_pd3dDeviceContext);
 	BuildStaticShadowMap();
 }
 
@@ -640,9 +692,11 @@ void CGameFramework::FrameAdvance()
 	CShader* shaderList[] = { m_pPlayerShader, m_pScene->GetShader(2) };
 	OnCreateShadowMap(shaderList, 2);
 
-	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1.0f };	//렌더 타겟 뷰를 채우기 위한 색상을 설정한다.  
+	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.0f };	//렌더 타겟 뷰를 채우기 위한 색상을 설정한다.  
 	/* 렌더 타겟 뷰를 fClearColor[] 색상으로 채운다. 즉, 렌더 타겟 뷰에 연결된 스왑 체인의 첫 번째 후면버퍼를 fClearColor[] 색상으로 지운다. */
 	m_pd3dDeviceContext->OMSetRenderTargets(NUM_MRT -1, &m_ppd3dRenderTargetView[1], m_pd3dDepthStencilView);
+	m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dBackRenderTargetView, fClearColor);
+
 	for (int i = 0; i < NUM_MRT; ++i)
 	{
 		if (m_ppd3dRenderTargetView[i]) m_pd3dDeviceContext->ClearRenderTargetView(m_ppd3dRenderTargetView[i], fClearColor);
@@ -684,18 +738,20 @@ void CGameFramework::FrameAdvance()
 	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 #endif
 
-	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
-	m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_ppd3dMRTView[MRT_NORMAL]);	
-	m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
+	//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
+	//m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_pd3dMRTSRV[MRT_NORMAL]);	
+	//m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
+
+
 
 	m_pScene->UpdateLights(m_pd3dDeviceContext);
-	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[0], nullptr);
-	m_pSceneShader->Render(m_pd3dDeviceContext, NULL);
+	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);
+	m_pSceneShader->Render(m_pd3dDeviceContext, 0, m_pCamera);
 
 	//if (m_iDrawOption >= 0)
 	//{
 	//	printf("opt : %d \n", m_iDrawOption);
-	//	m_pSceneShader->SetTexture(0, m_ppd3dMRTView[m_iDrawOption]);
+	//	m_pSceneShader->SetTexture(0, m_pd3dMRTSRV[m_iDrawOption]);
 	//}
 	//m_pCamera->SetViewport(m_pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 	

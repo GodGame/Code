@@ -1,69 +1,6 @@
 #include "Define.fx"
 #include "Shadow.fx"
 
-PS_SCENE_INPUT VSScreen(VS_SCENE_INPUT input)
-{
-	PS_SCENE_INPUT output;
-	output.pos = float4(input.pos, 1);
-	output.tex = input.tex;
-
-	return output;
-}
-
-float4 InfoScreen(PS_SCENE_INPUT input) : SV_Target
-{
-	int3 uvm = int3(input.pos.xy, 0);
-	float4 color = gtxtTexture.Load(uvm);
-	if (color.x > 100.0f)
-	{
-		color.xyz /= 2000.0f;
-	}
-	return color;
-}
-
-float4 LightScreen(PS_SCENE_INPUT input) : SV_Target
-{
-	int3 uvm = int3(input.pos.xy, 0);
-	float color = gtxtTexture.Load(uvm);
-	return float4(color.xxx, 0.0);
-}
-
-
-float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
-{
-	int3 uvm = int3(input.pos.xy, 0);	// (u, v, level)
-	float4 normal = gtxtNormal.Load(uvm);
-	float3 pos = gtxtPos.Load(uvm).xyz;
-	float4 diffuse = gtxtDiffuse.Load(uvm);
-	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = /*GammaToneMapping(*/gtxtTxColor.Load(uvm);
-
-	float4 color;
-	if (diffuse.a == 0.0)
-	{
-		return lerp(txColor, gFogColor, 0.9f);
-	}
-	else
-	{
-		//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
-		float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
-
-		float fShadowFactor = 0.3f;
-#ifdef SHADOW_PCF
-		fShadowFactor = CalcShadowFactorByPCF(shadowPos);
-#else
-		fShadowFactor = CalcOneShadowFactor(shadowPos, fShadowFactor);
-#endif
-		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
-		color *= txColor;
-	}
-	
-	float distance = length(pos - gvCameraPosition.xyz);
-
-	float fogLerp = saturate((distance - gFogStart) / gFogRange);
-	// Blend the fog color and the lit color.
-	return lerp(color, gFogColor, fogLerp);
-}
 
 /*정점-쉐이더이다. 정점의 위치 벡터를 월드 변환, 카메라 변환, 투영 변환을 순서대로 수행한다. 이제 삼각형의 각 정점은 y-축으로의 회전을 나타내는 행렬에 따라 변환한다. 그러므로 삼각형은 회전하게 된다.*/
 VS_OUTPUT VS(VS_INPUT input)
@@ -214,7 +151,7 @@ PS_MRT_OUT PSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_Target
 	output.vPos = float4(input.positionL, 1);
 	output.vDiffuse = float4(1, 1, 1, 0);// cColor;
 	output.vSpec = gMaterial.m_cSpecular;
-	output.vTxColor = cColor;
+	output.vTxColor = float4(cColor.xyz, 0);
 	return(output);
 }
 
@@ -345,7 +282,7 @@ PS_MRT_OUT PSSplatTexturedLightingColor(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT 
 		discard;
 	
 	float4 cTexColor = gtxtTexture.Sample(gSamplerState, input.texCoordBase);
-	//float4 cEntityColor = gtxtTexture.Sample(gDetailSamplerState, input.texCoordAlpha);
+	float4 cEntityColor = gtxtSlpatDetail.Sample(gSamplerState, input.texCoordAlpha);
 
 	//float fShadowFactor = 0.3f;
 	//fShadowFactor =	CalcOneShadowFactor(gsShadow, gtxtShadowMap, input.shadowPos, fShadowFactor);
@@ -356,7 +293,7 @@ PS_MRT_OUT PSSplatTexturedLightingColor(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT 
 	output.vPos = float4(input.positionW, 1.0f);
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
 	output.vSpec = gMaterial.m_cSpecular;
-	output.vTxColor = cTexColor;// *cEntityColor;
+	output.vTxColor = 0.7f * cTexColor + 0.7 * cEntityColor;
 
 	return output;
 }

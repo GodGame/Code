@@ -37,6 +37,7 @@ public:
 		D3D11_SO_DECLARATION_ENTRY * pSODeclaration, UINT NumEntries, UINT *pBufferStrides, UINT NumStrides, UINT RasterizedStream);
 	void CreateHullShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11HullShader **ppd3dHullShader);
 	void CreateDomainShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11DomainShader **ppd3dDomainShader);
+	void CreateComputeShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11ComputeShader **ppd3dComputeShader);
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
@@ -63,7 +64,7 @@ protected:
 	ID3D11GeometryShader * m_pd3dGeometryShader;
 	ID3D11HullShader	 * m_pd3dHullShader;
 	ID3D11DomainShader   * m_pd3dDomainShader;
-
+	//ID3D11ComputeShader  * m_p3dComputeShader;
 protected:
 
 	//쉐이더 객체가 게임 객체들의 리스트를 가진다.

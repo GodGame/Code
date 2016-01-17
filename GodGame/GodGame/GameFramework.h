@@ -58,10 +58,20 @@ private:
 	ID3D11ShaderResourceView * m_pd3dSSAOSRV;
 	CSSAOShader * m_pSSAOShader;
 	CSceneShader * m_pSceneShader;
+
+	ID3D11RenderTargetView *m_pd3dBackRenderTargetView;
+
 	ID3D11RenderTargetView *m_ppd3dRenderTargetView[NUM_MRT];
 	ID3D11RenderTargetView *m_pd3dSSAOTargetView;
+	//ID3D11RenderTargetView *m_pd3dPostProcessing;
 
-	ID3D11ShaderResourceView *m_ppd3dMRTView[NUM_MRT];
+	ID3D11ShaderResourceView *m_pd3dMRTSRV[NUM_MRT];
+
+	ID3D11ShaderResourceView *m_pd3dPostSRV[2];
+	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
+
+
+
 	ID3D11Texture2D * m_ppd3dMRTtx[NUM_MRT];
 
 	ID3D11Texture2D	* m_pd3dDepthStencilBuffer;

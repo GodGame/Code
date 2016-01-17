@@ -224,6 +224,14 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		pd3dSamplerState->Release();
 	}
 	{
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		ASSERT(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "ss_point_wrap", 0);
+		pd3dSamplerState->Release();
+	}
+	{
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -231,6 +239,13 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
+		pd3dSamplerState->Release();
+	}
+	{
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		ASSERT(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "ss_point_clamp", 0);
 		pd3dSamplerState->Release();
 	}
 	{

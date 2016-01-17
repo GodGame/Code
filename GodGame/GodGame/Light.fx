@@ -249,7 +249,7 @@ LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera, float4 vD
 		}
 		output.m_cDiffuse = float4(vDiffuse.rgb, 1) * (gLights[i].m_cDiffuse * fDiffuseFactor);
 	}
-	output.m_cAmbient = gAmbient * gLights[i].m_cAmbient;
+	output.m_cAmbient = gLights[i].m_cAmbient; // gAmbient *
 	return(output);
 }
 
@@ -388,7 +388,7 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
 
 	float4 cColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	for (i = 0; i < MAX_LIGHTS; i++)
+	for (i = 1; i < MAX_LIGHTS; i++)
 	{
 		//활성화된 조명에 대하여 조명의 영향을 계산한다.
 		if (gLights[i].m_bEnable == 1.0f)
@@ -399,11 +399,11 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 			vSpec.w = 255.0f;
 
 			//조명의 유형에 따라 조명의 영향을 계산한다.
-			if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
-			{
-				LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
-				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
-			}
+			//if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
+			//{
+			//	LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
+			//	cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
+			//}
 			if (gLights[i].m_nType == POINT_LIGHT)
 			{
 				LightedColor = PointLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
@@ -424,6 +424,23 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 	return(cColor);
 }
 
+float4 DirectLighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
+{
+	float4 vDiffuse = vDiff;
+	float fShadowFactor = vDiff.a;
+	float4 vSpec = float4(vSpecular.xyz, vSpecular.w * 255.0f);
+	float3 vCameraPosition = float3(gvCameraPosition.x, gvCameraPosition.y, gvCameraPosition.z);
+	float3 vToCamera = normalize(vCameraPosition - vPos);
+	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
+
+	float4 cColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	LightedColor = DirectionalLight(0, vNormal, vToCamera, vDiffuse, vSpec);
+	cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
+
+	return cColor;
+}
+
 
 float3 NoStripAverageVertexNormal()
 {
@@ -431,7 +448,7 @@ float3 NoStripAverageVertexNormal()
 	return result;
 }
 
-float4 LinearToneMapping(float4 LinearColor)
+float4 ToneMapping(float4 LinearColor)
 {
 	return (LinearColor * (6.2 * LinearColor + 0.5)) / (LinearColor * (6.2 * LinearColor + 1.7) + 0.06);
 }
@@ -441,4 +458,67 @@ float4 GammaToneMapping(float4 GammaColor)
 	float4 color = max(0, pow(GammaColor, 2.2) - 0.004);
 	color = (color * (6.2 * color + 0.5)) / (color * (6.2 * color + 1.7) + 0.06);
 	return color;
+}
+
+static const float  MIDDLE_GRAY = 0.72f;
+static const float  LUM_WHITE = 1.5f;
+static const float  BRIGHT_THRESHOLD = 0.5f;
+
+
+float3 ColorToLum(float3 fColor)
+{
+	const float3x3 RGBtoXYZ = {
+		0.5141364, 0.3238786, 0.16036376,
+		0.265068, 0.67023428, 0.06409157,
+		0.0241188, 0.1228178, 0.84442666
+	};
+
+	//const float3x3 RGBtoXYZ = {
+	//	0.4124, 0.3576, 0.1805,
+	//	0.2126, 0.7152, 0.7222,
+	//	0.0193, 0.1192, 0.9505
+	//};
+
+	float3 XYZ = mul(RGBtoXYZ, fColor);
+
+	float3 Yxy;
+	Yxy.r = XYZ.g;
+	//x = X / (X + Y + Z)
+	//y = X / (X + Y + Z)
+
+	float temp = dot(float3(1.0f, 1.0f, 1.0f), XYZ.rgb);
+	Yxy.gb = XYZ.rg / temp;
+
+	return Yxy;
+}
+
+float3 ToneMappingByLum(float3 fLum)
+{
+	float3 Yxy = fLum;
+	float LumScaled = fLum.r * MIDDLE_GRAY / (fLum.x + 0.001f);
+	Yxy.r = (LumScaled * (1.0f + LumScaled / LUM_WHITE)) / (1.0f + LumScaled);
+	return Yxy;
+}
+
+float3 LumToColor(float3 fLum)
+{
+	float3 XYZ;
+	// Tone
+	XYZ.r = fLum.r * fLum.g / fLum.b;
+	XYZ.g = fLum.r;
+	XYZ.b = fLum.r * (1 - fLum.g - fLum.b) / fLum.b;
+
+	const float3x3 XYZtoRGB = {
+		2.5651, -1.1665, -0.3986,
+		-1.0217, 1.9777, 0.0439,
+		0.0753, -0.2543, 1.1892
+	};
+
+	//const float3x3 XYZtoRGB = {
+	//	3.2405, -1.5371, -0.4985,
+	//	-0.9693, 1.8760, 0.0416,
+	//	0.0556, -0.2040, 1.0572
+	//};
+
+	return mul(XYZtoRGB, XYZ);
 }

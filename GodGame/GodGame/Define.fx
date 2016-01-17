@@ -6,6 +6,8 @@ SamplerState gSamplerState : register(s0);
 Texture2D gtxtDetailTexture : register(t1);
 SamplerState gDetailSamplerState : register(s1);
 
+Texture2D gtxtSlpatDetail : register(t2);
+
 TextureCube gtxtSkyBox : register(t2);
 SamplerState gssSkyBox : register(s2);
 
@@ -21,6 +23,8 @@ Texture1D gtxtRandom : register(t22);
 
 Texture2DArray gTextureArray : register(t10);
 
+#define	FRAME_BUFFER_WIDTH		1280
+#define	FRAME_BUFFER_HEIGHT		960
 
 #include "Light.fx"
 
@@ -56,7 +60,7 @@ cbuffer cbFixed
 {
 	static float  gFogStart = 20.0f;
 	static float  gFogRange = 400.0f;
-	static float4 gFogColor = float4(0.6, 0.6, 0.6, 0.6);
+	static float4 gFogColor = float4(0.4, 0.4, 0.4, 0.0);
 	static float2 gvQuadTexCoord[4] = { float2(1.0f, 1.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(0.0f, 0.0f) };
 
 };

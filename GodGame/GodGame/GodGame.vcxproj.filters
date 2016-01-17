@@ -35,6 +35,9 @@
     <Filter Include="LocalDynamic\6_Meshes">
       <UniqueIdentifier>{f1fc6fa5-5ff9-43a3-9b99-633e6cbd4d7f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="StaticGlobal\0_Effects\PostProcessing">
+      <UniqueIdentifier>{693e6bac-0997-4ba5-a448-a19097711bf7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameFramework.h">
@@ -174,9 +177,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="SSAO.fx">
-      <Filter>StaticGlobal\0_Effects</Filter>
-    </FxCompile>
     <FxCompile Include="Define.fx">
       <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
@@ -191,6 +191,21 @@
     </FxCompile>
     <FxCompile Include="Shadow.fx">
       <Filter>StaticGlobal\0_Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="Post.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="BlurAndBloom.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Reduce.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="SSAO.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Final.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
