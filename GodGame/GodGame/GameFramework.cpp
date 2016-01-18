@@ -28,6 +28,8 @@ CGameFramework::CGameFramework()
 	//m_pd3dPostProcessing = nullptr;
 	m_pd3dPostSRV[1] = m_pd3dPostSRV[0] = nullptr;
 	m_pd3dPostUAV[1] = m_pd3dPostUAV[0] = nullptr;
+	m_pd3dBloom4x4SRV = nullptr;
+	m_pd3dBloom4x4RTV = nullptr;
 
 	m_pd3dBackRenderTargetView = nullptr;
 
@@ -105,6 +107,10 @@ void CGameFramework::OnDestroy()
 		if (m_pd3dPostSRV[i]) m_pd3dPostSRV[i]->Release();
 		if (m_pd3dPostUAV[i]) m_pd3dPostUAV[i]->Release();
 	}
+
+	if (m_pd3dBloom4x4SRV) m_pd3dBloom4x4SRV->Release();
+	if (m_pd3dBloom4x4RTV) m_pd3dBloom4x4RTV->Release();
+
 	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
@@ -178,11 +184,20 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[0], &d3dUAVDesc, &m_pd3dPostUAV[1])));
 	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
 	
+	d3d2DBufferDesc.Width = m_nWndClientWidth * 0.25f;
+	d3d2DBufferDesc.Height = m_nWndClientHeight * 0.25f;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dBloom4x4SRV)));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[0], &d3dRTVDesc, &m_pd3dBloom4x4RTV)));
+	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
+
+
 	d3d2DBufferDesc.Width = m_nWndClientWidth;
 	d3d2DBufferDesc.Height = m_nWndClientHeight;
 	//d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 
-	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[MRT_SCENE])));
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_SCENE], &d3dSRVDesc, &m_pd3dMRTSRV[MRT_SCENE])));
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[MRT_SCENE], &d3dRTVDesc, &m_ppd3dRenderTargetView[MRT_SCENE])));
@@ -535,6 +550,7 @@ void CGameFramework::BuildObjects()
 	m_pSceneShader->CreateShader(m_pd3dDevice);
 	m_pSceneShader->BuildObjects(m_pd3dDevice, m_pd3dMRTSRV, m_iDrawOption, m_pd3dBackRenderTargetView);
 	m_pSceneShader->SetPostView(m_pd3dPostSRV, m_pd3dPostUAV);
+	m_pSceneShader->SetBloomScaled(m_pd3dBloom4x4RTV, m_pd3dBloom4x4SRV);
 
 	m_pScene = new CScene();
 	//m_pScene->SetRenderTarget(m_pd3dRenderTargetView);

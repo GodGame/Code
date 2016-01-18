@@ -2,6 +2,10 @@
 #include "Define.fx"
 #include "Shadow.fx"
 
+cbuffer cbPS : register(b0)
+{
+	uint4    g_param;
+};
 
 PS_SCENE_INPUT VSScreen(VS_SCENE_INPUT input)
 {
@@ -38,14 +42,13 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	float3 pos = gtxtPos.Load(uvm).xyz;
 	float4 diffuse = gtxtDiffuse.Load(uvm);
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = pow(gtxtTxColor.Load(uvm), 2.2);//GammaToneMapping(gtxtTxColor.Load(uvm));
+	float4 txColor = /*pow(*/gtxtTxColor.Load(uvm)/*, 2.2)*/;//GammaToneMapping(gtxtTxColor.Load(uvm));
 
 	float fLightingAmount = 0;
 	float4 color;
 	if (diffuse.a == 0.0)
 	{
 		color = lerp(txColor, gFogColor, 0.9f);
-		return color;// ColorToLum(color).rgbr;
 	}
 	else
 	{
@@ -71,14 +74,23 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 		//color = GammaToneMapping(color);
 		//color.a = fLightingAmount;
 		//color = pow(color, 2.2);
+		float distance = length(pos - gvCameraPosition.xyz);
+
+		float fogLerp = saturate((distance - gFogStart) / gFogRange);
+		// Blend the fog color and the lit color.
+		color = lerp(color, gFogColor, fogLerp);
 	}
 
-	float distance = length(pos - gvCameraPosition.xyz);
-
-	float fogLerp = saturate((distance - gFogStart) / gFogRange);
-	// Blend the fog color and the lit color.
-	float4 rgb = lerp(color, gFogColor, fogLerp);
 	//rgb.a = fLightingAmount;
-	return rgb;//ColorToLum(rgb).rgbr;//float4(LumToColor(ColorToLum(rgb)), 1);
+	return ColorToLum(color).rgbr;//float4(LumToColor(ColorToLum(rgb)), 1);
 }
+
+float4 DumpMap(PS_SCENE_INPUT input) : SV_Target
+{
+	float2 Tex = float2((float)input.pos.x / (float)g_param.x, (float)input.pos.y / (float)g_param.y);
+	return gtxtTexture.Sample(gSamplerState, Tex);
+}
+
+
+
 

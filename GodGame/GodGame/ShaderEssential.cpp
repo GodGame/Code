@@ -28,11 +28,16 @@ CSceneShader::CSceneShader() : CTexturedShader()
 	m_pd3dPSFinal = nullptr;
 	m_pd3dPSOther = nullptr;
 	m_pInfoScene = nullptr;
+	m_pd3dPSDump = nullptr;
+
+	m_pd3dBloom4x4RTV = nullptr;
+	m_pd3dBloom4x4SRV = nullptr;
 
 	m_pd3dShadowSrv = nullptr;
 	m_pd3dLightPS = nullptr;
 
 	m_pd3dComputeVertBlur = m_pd3dComputeHorzBlur = nullptr;
+	m_pd3dComputeVertBloom = m_pd3dComputeHorzBloom = nullptr;
 	m_pd3dBackRTV = nullptr;
 
 	m_pd3dCBComputeInfo = m_pd3dCBWeight = nullptr;
@@ -55,13 +60,22 @@ CSceneShader::~CSceneShader()
 	if (m_pMesh) m_pMesh->Release();
 	if (m_pTexture) m_pTexture->Release();
 	if (m_pd3dDepthStencilState) m_pd3dDepthStencilState->Release();
+
 	if (m_pd3dPSOther) m_pd3dPSOther->Release();
 	if (m_pd3dShadowSrv) m_pd3dShadowSrv->Release();
 	if (m_pd3dLightPS) m_pd3dLightPS->Release();
+
+	if (m_pd3dPSDump)m_pd3dPSDump->Release();
 	if (m_pd3dPSFinal) m_pd3dPSFinal->Release();
+
+	if (m_pd3dBloom4x4RTV) m_pd3dBloom4x4RTV->Release();
+	if (m_pd3dBloom4x4SRV) m_pd3dBloom4x4SRV->Release();
 
 	if (m_pd3dComputeHorzBlur) m_pd3dComputeHorzBlur->Release();
 	if (m_pd3dComputeVertBlur) m_pd3dComputeVertBlur->Release();
+	if (m_pd3dComputeVertBloom) m_pd3dComputeVertBloom->Release();
+	if (m_pd3dComputeHorzBloom) m_pd3dComputeHorzBloom->Release();
+
 	for (int i = 0; i < 2; ++i)
 	{
 		if (m_pd3dPostSRV[i]) m_pd3dPostSRV[i]->Release();
@@ -91,10 +105,14 @@ void CSceneShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "PSScreen", "ps_5_0", &m_pd3dPixelShader);
 	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "InfoScreen", "ps_5_0", &m_pd3dPSOther);
 	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "LightScreen", "ps_5_0", &m_pd3dLightPS);
-	CreatePixelShaderFromFile(pd3dDevice, L"Final.fx", "PSFinalPass", "ps_5_0", &m_pd3dPSFinal);
 
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "HorizonBlur", "cs_5_0", &m_pd3dComputeHorzBlur);
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "VerticalBlur", "cs_5_0", &m_pd3dComputeVertBlur);
+	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "DumpMap", "ps_5_0", &m_pd3dPSDump);
+	CreatePixelShaderFromFile(pd3dDevice, L"Final.fx", "PSFinalPass", "ps_5_0", &m_pd3dPSFinal);
+	
+	//CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "HorizonBlur", "cs_5_0", &m_pd3dComputeHorzBlur);
+	//CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "VerticalBlur", "cs_5_0", &m_pd3dComputeVertBlur);
+	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "HorizonBloom", "cs_5_0", &m_pd3dComputeHorzBloom);
+	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "VerticalBloom", "cs_5_0", &m_pd3dComputeVertBloom);
 
 	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "LumCompression", "cs_5_0", &m_csReduce.m_pd3dComputeShader);
 	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "ReduceToSingle", "cs_5_0", &m_pd3dCSReduceToSingle);
@@ -190,7 +208,7 @@ void CSceneShader::CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	D3D11_BUFFER_DESC desc;
 	ZeroMemory(&desc, sizeof(D3D11_BUFFER_DESC));
 	desc.Usage = D3D11_USAGE_DYNAMIC;
-	desc.ByteWidth = sizeof(m_cbWeights);
+	desc.ByteWidth = sizeof(CB_WEIGHT);
 	desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;// 0;
 	HRESULT hr = pd3dDevice->CreateBuffer(&desc, nullptr, &m_pd3dCBWeight);
@@ -207,23 +225,27 @@ void CSceneShader::CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceC
 void CSceneShader::UpdateShaderReosurces(ID3D11DeviceContext * pd3dDeviceContext)
 {
 	float fSigma = 0.5f;
-	float fSum = 0.0f, f2Sigma = 2.0f * fSigma * fSigma;
+	float fSum = 0.0f, f2Sigma = 10.0f * fSigma * fSigma;
 
-	//float fWeight[11];
+	//m_cbWeights.fWeight[11] = m_fInverseToneTex;
+	float fWeight;
 	for (int i = 0; i < 5; ++i)
 	{
-		m_cbWeights.fWeight[i] = 1.25f * ::GaussianDistribution((float)i, 0, fSigma);
+		fWeight = 1.25f * ::GaussianDistribution((float)i, 0, fSigma);
+		m_cbWeights.fWeight[i] = XMFLOAT4(fWeight, fWeight, fWeight, 0.0f);
 		//fSum += m_cbWeights.fWeight[i];
 	}
+	::GaussianDistribution(0, 0, fSigma);
+	m_cbWeights.fWeight[5] = XMFLOAT4(fWeight, fWeight, fWeight, 0.0f);
 
-	m_cbWeights.fWeight[6] = ::GaussianDistribution(0, 0, fSigma);
-
-	for (int i = 7; i < 12; ++i)
+	for (int i = 6; i < 11; ++i)
 	{
-		m_cbWeights.fWeight[i] = m_cbWeights.fWeight[11 - i];//1.25f * ::GaussianDistribution((float)i, 0, fSigma);
+		m_cbWeights.fWeight[i] = m_cbWeights.fWeight[10 - i];//1.25f * ::GaussianDistribution((float)i, 0, fSigma);
 		//fSum += m_cbWeights.fWeight[i];
 	}
 
+//	float weights[]{ 0.05f, 0.05f, 0.1f, 0.1f, 0.1f, 0.2f, 0.1f, 0.1f, 0.1f, 0.05f, 0.05f };
+//	memcpy(m_cbWeights.fWeight, weights, sizeof(float) * 11);
 	//for (int i = 12; i < 16; ++i)
 	//{
 	//	m_cbWeights.fWeight[i] = 0.0f;
@@ -237,7 +259,7 @@ void CSceneShader::UpdateShaderReosurces(ID3D11DeviceContext * pd3dDeviceContext
 	pd3dDeviceContext->Map(m_pd3dCBWeight, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	memcpy(d3dMappedResource.pData, &m_cbWeights, sizeof(CB_WEIGHT) );
 	pd3dDeviceContext->Unmap(m_pd3dCBWeight, 0);
-	pd3dDeviceContext->CSSetConstantBuffers(1, 1, &m_pd3dCBWeight);
+	pd3dDeviceContext->CSSetConstantBuffers(SLOT_CS_CB_WEIGHT, 1, &m_pd3dCBWeight);
 }
 
 
@@ -275,14 +297,25 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	//SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
 	if (m_iDrawOption == 0) {
 		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
-		FinalRender(pd3dDeviceContext, uRenderState, pCamera);
+		FinalRender(pd3dDeviceContext, nullptr, uRenderState, pCamera);
+	}
+	else if (m_iDrawOption == 1)
+	{
+		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
+		Blooming(pd3dDeviceContext, uRenderState, pCamera);
+		DumpMap(pd3dDeviceContext, m_csBloom.m_pd3dSRVArray[1], m_pd3dBloom4x4RTV, 
+			FRAME_BUFFER_WIDTH * 0.25f, FRAME_BUFFER_HEIGHT * 0.25f, pCamera);
+		FinalRender(pd3dDeviceContext, m_pd3dBloom4x4SRV, uRenderState, pCamera);
 	}
 	else
 	{
+		//pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
 		pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
 
 		SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
-		m_pInfoScene->SetTexture(0, m_pd3dPostSRV[0]);
+		m_pInfoScene->SetTexture(0, m_pd3dBloom4x4SRV);
+
+//		m_pInfoScene->SetTexture(0, m_pd3dPostSRV[0]);
 		pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
 		m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
 
@@ -290,8 +323,9 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	}
 }
 
-void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV, UINT uRenderState, CCamera * pCamera)
 {
+	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
 	//m_pInfoScene->SetTexture(0, m_pd3dPostSRV[0]);
 	//	pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
 	//m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
@@ -299,7 +333,8 @@ void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uRe
 	pd3dDeviceContext->PSSetShader(m_pd3dPSFinal, nullptr, 0);
 
 	
-	ID3D11ShaderResourceView* pShaderViews[3] = { m_ppd3dMrtSrv[0], m_csReduce.m_pd3dSRVArray[1], nullptr  };
+//	m_csBloom.m_pd3dSRVArray[1]
+	ID3D11ShaderResourceView* pShaderViews[3] = { m_ppd3dMrtSrv[0], m_csReduce.m_pd3dSRVArray[1], pBloomSRV };
 	ID3D11SamplerState * pSamplers[2] = { TXMgr.GetSamplerState("ss_point_clamp"),  TXMgr.GetSamplerState("ss_linear_clamp") };
 	CB_PS cbPS = { m_fInverseToneTex, m_fInverseToneTex, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
 	{
@@ -415,65 +450,128 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 
 void CSceneShader::SceneBlur(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
-	UINT cxGroup = (UINT)ceilf(FRAME_BUFFER_WIDTH / 256.0f);
-	UINT cyGroup = (UINT)ceilf(FRAME_BUFFER_HEIGHT / 480.0);
+	UINT cxGroup = (UINT)ceilf(FRAME_BUFFER_WIDTH  / 256.0f);
+	UINT cyGroup = (UINT)ceilf(FRAME_BUFFER_HEIGHT / 480.0f);
 
-	ID3D11ShaderResourceView * pd3dNullSRV[1] = { nullptr };
+	ID3D11ShaderResourceView * pd3dNullSRV[2] = { nullptr, nullptr };
 	ID3D11UnorderedAccessView * pd3dNullUAV[1] = { nullptr };
 	
+	CB_CS_BLOOM cbcs;
+	ZeroMemory(&cbcs, sizeof(CB_CS_BLOOM) ); //= XMFLOAT4(m_fInverseToneTex, 0, 0, 0);
+	cbcs.m_uOutputSize.x = cbcs.m_uInputSize.x = FRAME_BUFFER_WIDTH;
+	cbcs.m_uOutputSize.y = cbcs.m_uInputSize.y = FRAME_BUFFER_HEIGHT;
+	cbcs.m_fInverse = m_fInverseToneTex;
+	cbcs.m_fThreshold = 0.6f;
+
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dCBBloomInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	memcpy(d3dMappedResource.pData, &cbcs, sizeof(CB_CS_BLOOM) );
+	pd3dDeviceContext->Unmap(m_pd3dCBBloomInfo, 0);
+	pd3dDeviceContext->CSSetConstantBuffers(SLOT_CS_CB_BLOOM, 1, &m_pd3dCBBloomInfo);
+
 //	pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, 0.0f, 1.0f);
-	
+	ID3D11ShaderResourceView * pd3dSRVArray[] = { m_ppd3dMrtSrv[0],  nullptr };
 		for (int i = 0; i < 1; ++i)
 		{
 			pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBlur, nullptr, 0);
 			pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostUAV[0], nullptr);
-			pd3dDeviceContext->CSSetShaderResources(0, 1, m_ppd3dMrtSrv);
+			pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
 	
 			pd3dDeviceContext->Dispatch(cxGroup, FRAME_BUFFER_HEIGHT, 1);
 	
 			pd3dDeviceContext->CSSetShader(m_pd3dComputeVertBlur, nullptr, 0);
 			pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostUAV[1], nullptr);
-			pd3dDeviceContext->CSSetShaderResources(0, 1, &m_pd3dPostSRV[0]);
-	
+			pd3dSRVArray[0] = m_pd3dPostSRV[0];
+			pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
+
 			pd3dDeviceContext->Dispatch(FRAME_BUFFER_WIDTH, cyGroup, 1);
 	
 			pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
 			pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, pd3dNullUAV, nullptr);
-			pd3dDeviceContext->CSSetShaderResources(0, 1, pd3dNullSRV);
+			pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dNullSRV);
 		}
 	//	pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 
 }
 
-void CSceneShader::Blooming(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+void CSceneShader::Blooming(ID3D11DeviceContext * pd3dDeviceContext,  UINT uRenderState, CCamera * pCamera)
 {
+	UINT cxGroup = (UINT)ceilf(FRAME_BUFFER_WIDTH / 256.0f);
+	UINT cyGroup = (UINT)ceilf(FRAME_BUFFER_HEIGHT / 480.0f);
 
-	//CB_CS_BLOOM cbCS;
-	//cbCS.m_fInverse = 1.0f / (ToneMappingTexSize*ToneMappingTexSize);
-	//cbCS.m_uOutputwidth = FRAME_BUFFER_WIDTH / 8;
-	//cbCS.m_uInputSize[0] = FRAME_BUFFER_WIDTH;
-	//cbCS.m_uInputSize[1] = FRAME_BUFFER_HEIGHT;
+	ID3D11ShaderResourceView * pd3dNullSRV[2] = { nullptr, nullptr };
+	ID3D11UnorderedAccessView * pd3dNullUAV[1] = { nullptr };
 
-	//D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	//pd3dDeviceContext->Map(m_pd3dCBComputeInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	//memcpy(d3dMappedResource.pData, &cbCS, sizeof(CB_CS_BLOOM));
-	//pd3dDeviceContext->Unmap(m_pd3dCBComputeInfo, 0);
-	//
-	//pd3dDeviceContext->CSSetConstantBuffers(0, 1, &m_pd3dCBComputeInfo);
+	CB_CS_BLOOM cbcs;
+	ZeroMemory(&cbcs, sizeof(CB_CS_BLOOM)); //= XMFLOAT4(m_fInverseToneTex, 0, 0, 0);
+	cbcs.m_uOutputSize.x = cbcs.m_uInputSize.x = FRAME_BUFFER_WIDTH;
+	cbcs.m_uOutputSize.y = cbcs.m_uInputSize.y = FRAME_BUFFER_HEIGHT;
+	cbcs.m_fInverse = m_fInverseToneTex;
+	cbcs.m_fThreshold = 0.6f;
 
-	//ID3D11ShaderResourceView * pd3dNullSRV[1] = { nullptr };
-	//ID3D11UnorderedAccessView * pd3dNullUAV[1] = { nullptr };
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dCBBloomInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	memcpy(d3dMappedResource.pData, &cbcs, sizeof(CB_CS_BLOOM));
+	pd3dDeviceContext->Unmap(m_pd3dCBBloomInfo, 0);
+	pd3dDeviceContext->CSSetConstantBuffers(SLOT_CS_CB_BLOOM, 1, &m_pd3dCBBloomInfo);
+
+	//	pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, 0.0f, 1.0f);
+	ID3D11ShaderResourceView * pd3dSRVArray[] = { m_ppd3dMrtSrv[0], m_csReduce.m_pd3dSRVArray[1] };
+	for (int i = 0; i < 1; ++i)
+	{
+		
+		pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBloom, nullptr, 0);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_csBloom.m_pd3dUAVArray[0], nullptr);
+		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
+
+		pd3dDeviceContext->Dispatch(cxGroup, FRAME_BUFFER_HEIGHT, 1);
+		pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
+
+		pd3dDeviceContext->CSSetShader(m_pd3dComputeVertBloom, nullptr, 0);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_csBloom.m_pd3dUAVArray[1], nullptr);
+
+		pd3dSRVArray[0] = m_csBloom.m_pd3dSRVArray[0];
+		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
+
+		pd3dDeviceContext->Dispatch(FRAME_BUFFER_WIDTH, cyGroup, 1);
+
+		pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, pd3dNullUAV, nullptr);
+		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dNullSRV);
+	}
 
 
-	//pd3dDeviceContext->CSSetShader(m_csReduce.m_pd3dComputeShader, nullptr, 0);
-	//pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, &m_csReduce.m_pd3dUAVArray[0], nullptr);
-	//pd3dDeviceContext->CSSetShaderResources(0, 1, m_ppd3dMrtSrv);
 
-	//pd3dDeviceContext->Dispatch(int(ceil( (float)cbCS.m_uOutputwidth / (128 - 5 * 2))), dimy, 1);
+}
 
-	//pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
-	//pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, pd3dNullUAV, nullptr);
-	//pd3dDeviceContext->CSSetShaderResources(0, 1, pd3dNullSRV);
+void CSceneShader::DumpMap(ID3D11DeviceContext * pd3dDeviceContext, ID3D11ShaderResourceView * pSRVsource, ID3D11RenderTargetView * pRTVTarget, DWORD dFrameWidth, DWORD dFrameHeight, CCamera * pCamera)
+{
+	DWORD dWidth = dFrameWidth;
+	DWORD dHeight = dFrameHeight;
+
+	pCamera->SetViewport(pd3dDeviceContext, 0, 0, dWidth, dHeight, 0.0f, 1.0f);
+
+	ID3D11SamplerState * pSamplers[2] = { TXMgr.GetSamplerState("ss_point_clamp"),  TXMgr.GetSamplerState("ss_linear_clamp") };
+
+	pd3dDeviceContext->PSSetShader(m_pd3dPSDump, nullptr, 0);
+
+	CB_PS cbPS = { m_fInverseToneTex, m_fInverseToneTex, dWidth , dHeight };
+	{
+		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+		pd3dDeviceContext->Map(m_pd3dCBComputeInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		memcpy(d3dMappedResource.pData, &cbPS, sizeof(CB_PS));
+		pd3dDeviceContext->Unmap(m_pd3dCBComputeInfo, 0);
+		pd3dDeviceContext->PSSetConstantBuffers(0, 1, &m_pd3dCBComputeInfo);
+	}
+	pd3dDeviceContext->PSSetShaderResources(0, 1, &pSRVsource);
+	pd3dDeviceContext->PSSetSamplers(0, 2, pSamplers);
+	pd3dDeviceContext->OMSetRenderTargets(1, &pRTVTarget, nullptr);
+
+	m_pMesh->Render(pd3dDeviceContext, 0);
+
+	pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
+
+	pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 }
 
 void CSceneShader::SetPostView(ID3D11ShaderResourceView ** ppd3dPostSrv, ID3D11UnorderedAccessView ** ppd3dPostUav)
@@ -499,6 +597,17 @@ void CSceneShader::SetInfoTextures(ID3D11DeviceContext * pd3dDeviceContext)
 	m_pInfoScene->SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
 	pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
 	m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
+}
+
+void CSceneShader::SetBloomScaled(ID3D11RenderTargetView * pd3dRTV, ID3D11ShaderResourceView * pd3dSRV)
+{
+	if (m_pd3dBloom4x4RTV) m_pd3dBloom4x4RTV->Release();
+	m_pd3dBloom4x4RTV = pd3dRTV;
+	m_pd3dBloom4x4RTV->AddRef();
+
+	if (m_pd3dBloom4x4SRV) m_pd3dBloom4x4SRV->Release();
+	m_pd3dBloom4x4SRV = pd3dSRV;
+	m_pd3dBloom4x4SRV->AddRef();
 }
 
 void CSceneShader::UpdateShaders(ID3D11DeviceContext * pd3dDeviceContext)

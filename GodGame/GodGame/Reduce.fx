@@ -29,7 +29,7 @@ void LumCompression(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 		gtxtInput.Load(uint3(DTid.xy + uint2(0, Threadnums * gDispatchCalls.y), 0)) +
 		gtxtInput.Load(uint3(DTid.xy + uint2(Threadnums * gDispatchCalls.x, Threadnums * gDispatchCalls.y), 0));
 
-	accum[GI] = dot(s.rgb, float3(0.3, 0.3, 0.3)); //dot(s, LUM_VECTOR); //(s.a); //s.r; ////  // 
+	accum[GI] = s.r;// dot(s, LUM_VECTOR); //(s.a); //s.r; dot(s.rgb, float3(0.3, 0.3, 0.3)); //
 
 	GroupMemoryBarrierWithGroupSync();
 	if (GI < 32)

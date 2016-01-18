@@ -9,7 +9,6 @@ static float GaussianDistribution(float x, float y, float rho);
 static const int ToneMappingTexSize = (int)pow(4.0f, NUM_TONEMAP_TEXTURES - 1);
 #define NUM_BLOOM_TEXTURES 2
 
-
 struct CB_SSAO_INFO
 {
 	XMFLOAT4X4 m_gViewToTexSpace; // 투영 행렬 * 텍스쳐 행렬
@@ -30,14 +29,29 @@ struct CB_CS
 
 struct CB_CS_BLOOM
 {
-	UINT   m_uInputSize[2];
-	UINT    m_uOutputwidth;
-	float   m_fInverse;
+	XMFLOAT2   m_uInputSize;
+	XMFLOAT2   m_uOutputSize;
+	float  m_fInverse;
+	float  m_fThreshold;
+	XMFLOAT2 m_fExtra;
+	//XMFLOAT4  m_fParam;	// x = inverse
+	//UINT   m_uInputSize[2];
+	//UINT    m_uOutputwidth;
+	//float   m_fInverse;
 };
+#define SLOT_CS_CB_BLOOM 2 
 
 struct CB_WEIGHT
 {
-	float fWeight[12];
+	XMFLOAT4 fWeight[11];
+//	XMFLOAT4 fInoutSize;
+//	float fInverse;
+};
+#define SLOT_CS_CB_WEIGHT 1
+
+struct CB_CS_INOUT
+{
+
 };
 
 struct POST_CS
@@ -124,16 +138,21 @@ private:
 	ID3D11PixelShader * m_pd3dPSFinal;
 	ID3D11PixelShader * m_pd3dPSOther;
 	ID3D11PixelShader * m_pd3dLightPS;
-
+	ID3D11PixelShader * m_pd3dPSDump;
 
 	ID3D11ShaderResourceView * m_pd3dShadowSrv;
 
 	ID3D11RenderTargetView * m_pd3dBackRTV;
 	
+	ID3D11RenderTargetView * m_pd3dBloom4x4RTV;
+	ID3D11ShaderResourceView * m_pd3dBloom4x4SRV;
+
 	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
 	ID3D11ShaderResourceView * m_pd3dPostSRV[2];
 	ID3D11ComputeShader * m_pd3dComputeHorzBlur;
 	ID3D11ComputeShader * m_pd3dComputeVertBlur;
+	ID3D11ComputeShader * m_pd3dComputeHorzBloom;
+	ID3D11ComputeShader * m_pd3dComputeVertBloom;
 
 	ID3D11Buffer * m_pd3dCBComputeInfo;
 	ID3D11Buffer * m_pd3dComputeRead;
@@ -153,23 +172,28 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	
 public:
-	void FinalRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	void FinalRender(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV, UINT uRenderState, CCamera *pCamera = nullptr);
 	void MeasureLuminance(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	void SceneBlur(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	void Blooming(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	void DumpMap(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pSRVsource, ID3D11RenderTargetView * pRTVTarget, DWORD dFrameWidth, DWORD dFrameHeight, CCamera * pCamera);
 
+public:
 	void SetPostView(ID3D11ShaderResourceView ** ppd3dPostSrv, ID3D11UnorderedAccessView ** ppd3dPostUav);
 	void SetTexture(int index, ID3D11ShaderResourceView * m_pSceneSRV);
 	void SetInfoTextures(ID3D11DeviceContext *pd3dDeviceContext);
-	
 
-	void UpdateShaders(ID3D11DeviceContext *pd3dDeviceContext);
-	void CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
-	void UpdateShaderReosurces(ID3D11DeviceContext *pd3dDeviceContext);
+	void SetBloomScaled(ID3D11RenderTargetView * pd3dRTV, ID3D11ShaderResourceView * pd3dSRV);
 
 	void SetLightSRV(ID3D11ShaderResourceView * pSRV) { m_pd3dShadowSrv = pSRV; }
 	void SetDrawOption(int iOpt) { m_iDrawOption = iOpt; }
 	int GetDrawOption() { return m_iDrawOption; }
+
+public:
+	void UpdateShaders(ID3D11DeviceContext *pd3dDeviceContext);
+	void CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
+	void UpdateShaderReosurces(ID3D11DeviceContext *pd3dDeviceContext);
+
 };
 
 class CShadowShader : public CTexturedShader

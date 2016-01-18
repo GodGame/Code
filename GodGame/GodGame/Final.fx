@@ -20,7 +20,7 @@ struct PS_SCENE_INPUT
 };
 
 static float  MIDDLE_GRAY = 0.72f;
-static  float  LUM_WHITE = 1.5f;
+static float  LUM_WHITE = 1.5f;
 
 float4 ToneMapping(float4 LinearColor)
 {
@@ -55,13 +55,13 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	int3 uvm = int3(Input.pos.xy, 0);	// (u, v, level)
 	float2 Tex = float2((float)uvm.x / (float)g_param.z, (float)uvm.y / (float)g_param.w);
 
-	float4 vColor = tex.Sample(LinearSampler, Tex);
+	float4 vColor = tex.SampleLevel(LinearSampler, Tex, 0);
 	float fLum = lum[0] * g_param.x * 0.5f;
-	float3 vBloom = bloom.Sample(LinearSampler, Input.tex);
+	float3 vBloom = bloom.SampleLevel(LinearSampler, Tex, 0);
 	//return vColor;
 
 	// Tone mapping
-	//vColor = LumToColor(vColor).rgbr;
+	vColor = LumToColor(vColor).rgbr;
 	//return vColor;
 	vColor.rgb *= MIDDLE_GRAY / (fLum + 0.001f);
 	vColor.rgb *= (1.0f + vColor.rgb / LUM_WHITE);
@@ -73,8 +73,8 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	//float LumScaled = vColor.r * MIDDLE_GRAY / (fLumAdapted + 0.001f);
 	//vColor.r = (LumScaled * (1.0f + LumScaled / LUM_WHITE)) / (1.0f + LumScaled);
 
-	vColor.rgb += 0.6f * vBloom;
+	vColor.rgb += 0.6f * vBloom.r;
 //	vColor.a = 1.0f;
 
-	return  vColor;//vColor;
+	return vColor;//vColor;
 }
