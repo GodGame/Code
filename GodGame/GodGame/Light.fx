@@ -212,6 +212,7 @@ float4 Lighting(float3 vPosition, float3 vNormal)
 	}
 	//글로벌 주변 조명의 영향을 최종 색상에 더한다.
 	cColor += (gcLightGlobalAmbient * gMaterial.m_cAmbient);
+	
 	//최종 색상의 알파값은 재질의 디퓨즈 색상의 알파값으로 설정한다.
 	cColor.a = gMaterial.m_cDiffuse.a;
 	return(cColor);
@@ -458,67 +459,4 @@ float4 GammaToneMapping(float4 GammaColor)
 	float4 color = max(0, pow(GammaColor, 2.2) - 0.004);
 	color = (color * (6.2 * color + 0.5)) / (color * (6.2 * color + 1.7) + 0.06);
 	return color;
-}
-
-static const float  MIDDLE_GRAY = 0.72f;
-static const float  LUM_WHITE = 1.5f;
-static const float  BRIGHT_THRESHOLD = 0.5f;
-
-
-float3 ColorToLum(float3 fColor)
-{
-	const float3x3 RGBtoXYZ = {
-		0.5141364, 0.3238786, 0.16036376,
-		0.265068, 0.67023428, 0.06409157,
-		0.0241188, 0.1228178, 0.84442666
-	};
-
-	//const float3x3 RGBtoXYZ = {
-	//	0.4124, 0.3576, 0.1805,
-	//	0.2126, 0.7152, 0.7222,
-	//	0.0193, 0.1192, 0.9505
-	//};
-
-	float3 XYZ = mul(RGBtoXYZ, fColor);
-
-	float3 Yxy;
-	Yxy.r = XYZ.g;
-	//x = X / (X + Y + Z)
-	//y = X / (X + Y + Z)
-
-	float temp = dot(float3(1.0f, 1.0f, 1.0f), XYZ.rgb);
-	Yxy.gb = XYZ.rg / temp;
-
-	return Yxy;
-}
-
-float3 ToneMappingByLum(float3 fLum)
-{
-	float3 Yxy = fLum;
-	float LumScaled = fLum.r * MIDDLE_GRAY / (fLum.x + 0.001f);
-	Yxy.r = (LumScaled * (1.0f + LumScaled / LUM_WHITE)) / (1.0f + LumScaled);
-	return Yxy;
-}
-
-float3 LumToColor(float3 fLum)
-{
-	float3 XYZ;
-	// Tone
-	XYZ.r = fLum.r * fLum.g / fLum.b;
-	XYZ.g = fLum.r;
-	XYZ.b = fLum.r * (1 - fLum.g - fLum.b) / fLum.b;
-
-	const float3x3 XYZtoRGB = {
-		2.5651, -1.1665, -0.3986,
-		-1.0217, 1.9777, 0.0439,
-		0.0753, -0.2543, 1.1892
-	};
-
-	//const float3x3 XYZtoRGB = {
-	//	3.2405, -1.5371, -0.4985,
-	//	-0.9693, 1.8760, 0.0416,
-	//	0.0556, -0.2040, 1.0572
-	//};
-
-	return mul(XYZtoRGB, XYZ);
 }

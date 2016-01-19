@@ -184,8 +184,9 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[0], &d3dUAVDesc, &m_pd3dPostUAV[1])));
 	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
 	
-	d3d2DBufferDesc.Width = m_nWndClientWidth * 0.25f;
-	d3d2DBufferDesc.Height = m_nWndClientHeight * 0.25f;
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+	d3d2DBufferDesc.Width = m_nWndClientWidth * 0.125f;
+	d3d2DBufferDesc.Height = m_nWndClientHeight * 0.125f;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
@@ -196,6 +197,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 
 	d3d2DBufferDesc.Width = m_nWndClientWidth;
 	d3d2DBufferDesc.Height = m_nWndClientHeight;
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	//d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 
 	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[MRT_SCENE])));

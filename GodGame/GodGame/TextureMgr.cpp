@@ -231,6 +231,9 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		pd3dSamplerState->Release();
 	}
 	{
+//		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	}
+	{
 		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -402,8 +405,15 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 
 	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
-	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "White");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.8f, 0.7f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	InsertObject(pMaterial, "Terrain");
 }

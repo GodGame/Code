@@ -1,10 +1,11 @@
 
 #include "Define.fx"
 #include "Shadow.fx"
+#include "PostDefine.fx"
 
 cbuffer cbPS : register(b0)
 {
-	uint4    g_param;
+	float4    g_param; // : packoffset(c0);
 };
 
 PS_SCENE_INPUT VSScreen(VS_SCENE_INPUT input)
@@ -40,14 +41,15 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	int3 uvm = int3(input.pos.xy, 0);	// (u, v, level)
 	float4 normal = gtxtNormal.Load(uvm);
 	float3 pos = gtxtPos.Load(uvm).xyz;
-	float4 diffuse = gtxtDiffuse.Load(uvm);
+	float4 diffuse = pow(gtxtDiffuse.Load(uvm), 2.2);
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = /*pow(*/gtxtTxColor.Load(uvm)/*, 2.2)*/;//GammaToneMapping(gtxtTxColor.Load(uvm));
+	float4 txColor = pow(gtxtTxColor.Load(uvm), 2.2);//GammaToneMapping(gtxtTxColor.Load(uvm));
 
 	float fLightingAmount = 0;
 	float4 color;
 	if (diffuse.a == 0.0)
 	{
+		color = txColor;
 		color = lerp(txColor, gFogColor, 0.9f);
 	}
 	else
@@ -80,14 +82,20 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 		// Blend the fog color and the lit color.
 		color = lerp(color, gFogColor, fogLerp);
 	}
-
-	//rgb.a = fLightingAmount;
-	return ColorToLum(color).rgbr;//float4(LumToColor(ColorToLum(rgb)), 1);
+#ifdef LUMCOLOR
+	color = float4(LumToColor(color), 1);//float4(LumToColor(ColorToLum(rgb)), 1);
+	color.r = min(2.0, color.r);
+#else
+	color = min(2.0, color);
+#endif
+	return color;
 }
 
 float4 DumpMap(PS_SCENE_INPUT input) : SV_Target
 {
-	float2 Tex = float2((float)input.pos.x / (float)g_param.x, (float)input.pos.y / (float)g_param.y);
+	float2 fInputSize = g_param.zw;
+	float2 Tex = float2((float)input.pos.x / fInputSize.x, (float)input.pos.y / fInputSize.y);
+	
 	return gtxtTexture.Sample(gSamplerState, Tex);
 }
 

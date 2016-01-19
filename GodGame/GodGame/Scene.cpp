@@ -231,6 +231,8 @@ void CScene::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS
 
 bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	CMaterial * pMat;
+
 	switch (nMessageID)
 	{
 	case WM_KEYDOWN:
@@ -240,6 +242,27 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			if(m_pLights->m_pLights[1].m_bEnable) m_pLights->m_pLights[1].m_bEnable = false;
 			else m_pLights->m_pLights[1].m_bEnable = true;
 			//((CParticleShader*)m_ppShaders[3])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
+			break;
+		case 'N':
+			pMat = MaterialMgr.GetObjects("White");
+			pMat->m_Material.m_xcAmbient = XMFLOAT4(0, 0, 0, 0);
+			pMat->m_Material.m_xcDiffuse = XMFLOAT4(0, 0, 0, 0);
+			pMat = MaterialMgr.GetObjects("Terrain");
+			pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+			pMat->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+			pMat->m_Material.m_xcSpecular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+			pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+			break;
+		case 'M':
+			pMat = MaterialMgr.GetObjects("White");
+			pMat->m_Material.m_xcAmbient = XMFLOAT4(1, 1, 1, 0);
+			pMat->m_Material.m_xcDiffuse = XMFLOAT4(1, 1, 1, 0);
+
+			pMat = MaterialMgr.GetObjects("Terrain");
+			pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.8f, 0.7f, 1.0f);
+			pMat->m_Material.m_xcAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+			pMat->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
+			pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 			break;
 		}
 		break;

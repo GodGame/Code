@@ -1,5 +1,4 @@
-
-#include "Define.fx"
+#include "PostDefine.fx"
 
 Texture2D gtxtInput : register(t0);
 StructuredBuffer<float> Input : register(t1);
@@ -29,7 +28,11 @@ void LumCompression(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 		gtxtInput.Load(uint3(DTid.xy + uint2(0, Threadnums * gDispatchCalls.y), 0)) +
 		gtxtInput.Load(uint3(DTid.xy + uint2(Threadnums * gDispatchCalls.x, Threadnums * gDispatchCalls.y), 0));
 
-	accum[GI] = s.r;// dot(s, LUM_VECTOR); //(s.a); //s.r; dot(s.rgb, float3(0.3, 0.3, 0.3)); //
+#ifdef LUMCOLOR
+	accum[GI] = s.r;//(s.a); dot(s.rgb, float3(0.3, 0.3, 0.3)); //
+#else
+	accum[GI] = dot(s, LUM_VECTOR);
+#endif
 
 	GroupMemoryBarrierWithGroupSync();
 	if (GI < 32)

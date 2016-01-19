@@ -207,6 +207,9 @@
     <FxCompile Include="Final.fx">
       <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
     </FxCompile>
+    <FxCompile Include="PostDefine.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt">

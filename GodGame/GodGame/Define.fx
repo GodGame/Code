@@ -30,6 +30,8 @@ Texture2DArray gTextureArray : register(t10);
 
 #define  MRT_NUM	5
 
+//#define LUMCOLOR
+
 //카메라 변환 행렬과 투영 변환 행렬을 위한 쉐이더 변수를 선언한다(슬롯 0을 사용).
 cbuffer cbViewProjectionMatrix : register(b0)
 {
@@ -60,7 +62,7 @@ cbuffer cbFixed
 {
 	static float  gFogStart = 20.0f;
 	static float  gFogRange = 400.0f;
-	static float4 gFogColor = float4(0.4, 0.4, 0.4, 0.0);
+	static float4 gFogColor = float4(0.2, 0.2, 0.2, 0.0);
 	static float2 gvQuadTexCoord[4] = { float2(1.0f, 1.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(0.0f, 0.0f) };
 
 };
