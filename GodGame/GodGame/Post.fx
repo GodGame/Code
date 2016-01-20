@@ -41,9 +41,9 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	int3 uvm = int3(input.pos.xy, 0);	// (u, v, level)
 	float4 normal = gtxtNormal.Load(uvm);
 	float3 pos = gtxtPos.Load(uvm).xyz;
-	float4 diffuse = pow(gtxtDiffuse.Load(uvm), 2.2);
+	float4 diffuse = gtxtDiffuse.Load(uvm);	// 2.2
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = pow(gtxtTxColor.Load(uvm), 2.2);//GammaToneMapping(gtxtTxColor.Load(uvm));
+	float4 txColor = gtxtTxColor.Load(uvm);// 2.2
 
 	float fLightingAmount = 0;
 	float4 color;

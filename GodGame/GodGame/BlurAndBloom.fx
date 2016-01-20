@@ -163,7 +163,7 @@ void HorizonBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThreadI
 }
 
 
-[numthreads(1, 480, 1)]
+[numthreads(1, 240, 1)]
 void VerticalBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThreadID : SV_DispatchThreadID)
 {
 	//uint2 ftLength = gtxtInput.Length;
@@ -174,7 +174,7 @@ void VerticalBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThread
 		int y = max(vDispatchThreadID.y - 5, 0);
 		gTextureCache2[vGroupThreadID.y] = gtxtInput[int2(vDispatchThreadID.x, y)];
 	}
-	else if (vGroupThreadID.y >= 480 - 5)
+	else if (vGroupThreadID.y >= 240 - 5)
 	{
 		int y = min(vDispatchThreadID.y + 5, g_inputSize.y - 1);
 		gTextureCache2[vGroupThreadID.y + 2 * 5] = gtxtInput[int2(vDispatchThreadID.x, y)];

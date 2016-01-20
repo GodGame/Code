@@ -434,8 +434,8 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 	ID3D11RenderTargetView    * pRTV = nullptr;
 
 	ID3D11Texture2D * pTx2D = nullptr;
-	ID3D11Buffer    * pBuffer1, *pBuffer2;
-	pBuffer1 = pBuffer2 =  nullptr;
+	ID3D11Buffer    * pBuffer1, *pBuffer2, *pBuffer3;
+	pBuffer1 = pBuffer2 = pBuffer3 = nullptr;
 
 	D3D11_RENDER_TARGET_VIEW_DESC d3dRTVDesc;
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -585,10 +585,23 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 		InsertSRV(pSRV, "su_reduce1"); pSRV->Release();
 		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer2, &DescRV, &pSRV)));
 		InsertSRV(pSRV, "su_reduce2"); pSRV->Release();
+
+	}
+	{
+		DescBuffer.ByteWidth = sizeof(float);
+		DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
+		DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
+		DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;
+
+		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer3)));
+		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer3, &DescUAV, &pUAV)));
+		InsertUAV(pUAV, "su_4last_reduce"); pUAV->Release();
+		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer3, &DescRV, &pSRV)));
+		InsertSRV(pSRV, "su_4last_reduce"); pSRV->Release();
 	}
 	pBuffer1->Release();
 	pBuffer2->Release();
-
+	pBuffer3->Release();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Buffers for blooming effect in CS path
 	//ZeroMemory(&DescBuffer, sizeof(DescBuffer));

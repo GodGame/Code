@@ -24,7 +24,7 @@ struct CB_PS
 
 struct CB_CS
 {
-	UINT param[4];	// x, y = dispatch , z , w = input size;
+	XMFLOAT4 param;	// x, y = dispatch , z , w = input size;
 };
 
 struct CB_CS_BLOOM
@@ -119,6 +119,9 @@ public:
 
 class CSceneShader : public CTexturedShader
 {
+	float m_fFrameTime;
+	float m_fTotalTime;
+
 	CB_WEIGHT m_cbWeights;
 
 	CTexture * m_pTexture;
@@ -160,7 +163,8 @@ private:
 	ID3D11Buffer * m_pd3dCBBloomInfo;
 
 	ID3D11ComputeShader * m_pd3dCSReduceToSingle;
-	
+	ID3D11ShaderResourceView * m_pd3dLastReducedSRV;
+	ID3D11UnorderedAccessView * m_pd3dLastReducedUAV;
 	POST_CS_REPEATABLE m_csReduce;
 //	POST_CS_BLOOMING m_csBloom;
 
@@ -171,7 +175,7 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceView ** ppd3dMrtSrv, int nMrtSrv, ID3D11RenderTargetView * pd3dBackRTV);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	
+	virtual void AnimateObjects(float fTimeElapsed);
 public:
 	void FinalRender(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV[], UINT uRenderState, CCamera *pCamera = nullptr);
 	void MeasureLuminance(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);

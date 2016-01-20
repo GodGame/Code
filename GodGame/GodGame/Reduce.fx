@@ -3,11 +3,11 @@
 Texture2D gtxtInput : register(t0);
 StructuredBuffer<float> Input : register(t1);
 RWStructuredBuffer<float> fLum : register(u1);
-
+RWStructuredBuffer<float> fLastLum : register(u2);
 
 cbuffer computeInfo : register(b0)
 {
-	uint4    g_param; // x, y : dispatch call, w, a : inputsize
+	float4    g_param; // x, y : dispatch call, w, a : inputsize
 					  //uint2 gDispatchCalls;
 					  //uint2 gInputSize;
 };
@@ -108,8 +108,51 @@ void ReduceToSingle(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 	if (GI < 1)
 		accumulate[GI] += accumulate[1 + GI];
 
+
 	if (GI == 0)
 	{
+		float fAdapted = fLastLum[0];
+		float fAccum = accumulate[0];
+
 		fLum[Gid.x] = accumulate[0];
+		fLastLum[0] = accumulate[0];
+
+		if (DTid.x < g_param.x && fAdapted <= 0.0f)
+		{			
+			fLum[Gid.x] = accumulate[0];
+			fLastLum[0] = fLastLum[1] = fLastLum[2] = fLastLum[3] = accumulate[0];
+		}
+		else if(DTid.x < g_param.x)
+		{
+			//float ftau = Ttau(g_param.w, 0.2f, 0.4f) * -g_param.z;
+			//float fResult = fAdapted - (fAccum - fAdapted) * (1 - exp(ftau));
+			//
+			//fLastLum[0] = fLum[Gid.x] = fResult;
+
+			fLum[Gid.x] = ((1.0f - g_param.z) * fAdapted) + (g_param.z * fAccum);
+			
+			if(g_param.z >= 1) fLastLum[0] = fLum[Gid.x];
+
+
+			//if (g_param.z > 0.1f)
+			//{
+			//	fLastLum[3] = fAccum;
+			//	fLum[Gid.x] = fLastLum[0];
+			//	fLastLum[0] = fLastLum[1];
+			//	fLastLum[1] = fLastLum[2];
+			//}
+			
+
+			//}
+			//if (fDelta > 0)
+			//{
+			//	fLastLum[0] = fLum[0] += 0.1f * fDelta;
+			//}
+			//else 
+			//{
+			//	fLastLum[0] = fLum[0] += 0.1f * fDelta;
+			//}
+			//			fLum[0] = accumulate[0];
+		}
 	}
 }

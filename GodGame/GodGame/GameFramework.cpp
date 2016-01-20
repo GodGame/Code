@@ -159,7 +159,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3dUAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	d3dUAVDesc.Texture2D.MipSlice = 0;
 
-	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
+	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;// DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
 	d3d2DBufferDesc.Width = m_nWndClientWidth * 0.25f;
 	d3d2DBufferDesc.Height = m_nWndClientHeight * 0.25f;
 		
@@ -195,6 +195,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 		{
 		case MRT_TXCOLOR:
 		case MRT_DIFFUSE:
+			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 		case MRT_SPEC:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
@@ -669,7 +670,9 @@ void CGameFramework::ProcessInput()
 
 void CGameFramework::AnimateObjects()
 {
-	if (m_pScene) m_pScene->AnimateObjects(m_GameTimer.GetTimeElapsed());
+	float fFrameTime = m_GameTimer.GetTimeElapsed();
+	if (m_pScene) m_pScene->AnimateObjects(fFrameTime);
+	if (m_pSceneShader) m_pSceneShader->AnimateObjects(fFrameTime);
 }
 
 void CGameFramework::FrameAdvance()

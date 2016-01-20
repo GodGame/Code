@@ -19,6 +19,8 @@ static float GaussianDistribution(float x, float y, float rho)
 
 CSceneShader::CSceneShader() : CTexturedShader()
 {
+	m_fTotalTime = m_fFrameTime = 0;
+
 	m_pMesh = nullptr;
 	m_pTexture = nullptr;
 	m_pd3dDepthStencilState = nullptr;
@@ -50,6 +52,8 @@ CSceneShader::CSceneShader() : CTexturedShader()
 		m_pd3dPostUAV[i] = nullptr;
 	}
 
+	m_pd3dLastReducedSRV = nullptr;
+	m_pd3dLastReducedUAV = nullptr;
 //	m_csReduce = POST_CS_REPEATABLE(); // new POST_CS_REPEATABLE();
 	//m_csBloom = POST_CS_BLOOMING();
 }
@@ -88,6 +92,8 @@ CSceneShader::~CSceneShader()
 
 	if (m_pd3dCSReduceToSingle) m_pd3dCSReduceToSingle->Release();
 
+	if (m_pd3dLastReducedSRV) m_pd3dLastReducedSRV->Release();
+	if (m_pd3dLastReducedUAV) m_pd3dLastReducedUAV->Release();
 	//m_csReduce.~POST_CS_REPEATABLE();
 	//m_csBloom.~POST_CS_BLOOMING();
 	//if (m_pcsReduce) delete m_pcsReduce;
@@ -147,6 +153,8 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 	m_csReduce.m_pd3dSRVArray[0] = ViewMgr.GetSRV("su_reduce1"); m_csReduce.m_pd3dSRVArray[0]->AddRef();
 	m_csReduce.m_pd3dSRVArray[1] = ViewMgr.GetSRV("su_reduce2"); m_csReduce.m_pd3dSRVArray[1]->AddRef();
 
+	m_pd3dLastReducedSRV = ViewMgr.GetSRV("su_4last_reduce"); m_pd3dLastReducedSRV->AddRef();
+	m_pd3dLastReducedUAV = ViewMgr.GetUAV("su_4last_reduce"); m_pd3dLastReducedUAV->AddRef();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Buffers for blooming effect in CS path
 
@@ -163,7 +171,7 @@ void CSceneShader::CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;// 0;
 	HRESULT hr = pd3dDevice->CreateBuffer(&desc, nullptr, &m_pd3dCBWeight);
 
-	desc.ByteWidth = sizeof(UINT) * 4;
+	desc.ByteWidth = sizeof(float) * 4;
 	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &m_pd3dCBComputeInfo)));
 
 	desc.ByteWidth = sizeof(CB_CS_BLOOM);
@@ -240,8 +248,12 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	//}
 
 //	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
+		ID3D11ShaderResourceView * pNullArray[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+
+
 	m_pMesh->Render(pd3dDeviceContext, uRenderState);
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
+	pd3dDeviceContext->PSGetShaderResources(17, NUM_MRT - 1, pNullArray);
 
 	// 이런...
 	//SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
@@ -288,6 +300,12 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 }
 
+void CSceneShader::AnimateObjects(float fTimeElapsed)
+{
+	m_fTotalTime < 1.0f ? m_fTotalTime += fTimeElapsed, m_fFrameTime = fTimeElapsed : m_fTotalTime = fTimeElapsed, m_fFrameTime = fTimeElapsed;
+	cout << "SceneFrame : " << m_fTotalTime << endl;
+}
+
 void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV[], UINT uRenderState, CCamera * pCamera)
 {
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
@@ -319,14 +337,17 @@ void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, ID3D11Sh
 
 void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
+	//if (m_fTotalTime < 0.1f) return;
+
 	int dimx = int(ceil(ToneMappingTexSize / 8.0f));
 	int dimy = dimx;
 
 	ID3D11ShaderResourceView * pd3dNullSRV[1] = { nullptr };
-	ID3D11UnorderedAccessView * pd3dNullUAV[1] = { nullptr };
-
+	ID3D11UnorderedAccessView * pd3dNullUAV[2] = { nullptr, nullptr };
+//	ID3D11UnorderedAccessView * pd3dUAV1 = m_csReduce.m_pd3dUAVArray[1];
+//	ID3D11UnorderedAccessView * pd3dUAVs[2] = { pd3dUAV1, m_pd3dLastReducedUAV };
 	{
-		CB_CS cbCS = { dimx, dimy, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
+		CB_CS cbCS = { XMFLOAT4(dimx, dimy, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT) };
 		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 		pd3dDeviceContext->Map(m_pd3dCBComputeInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 		memcpy(d3dMappedResource.pData, &cbCS, sizeof(CB_CS));
@@ -342,10 +363,12 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		pd3dDeviceContext->Dispatch(dimx, dimy, 1);
 
 		pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
-		pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, pd3dNullUAV, nullptr);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(1, 2, pd3dNullUAV, nullptr);
 		pd3dDeviceContext->CSSetShaderResources(0, 1, pd3dNullSRV);
 	}
+
 	{
+
 		int dim = dimx*dimy;
 		int nNumToReduce = dim;
 		dim = int(ceil(dim / 128.0f));
@@ -353,7 +376,7 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		{
 			for (;;)
 			{
-				CB_CS cbCS = { nNumToReduce, 0, 0, 0 };
+				CB_CS cbCS = { XMFLOAT4(nNumToReduce, 0, m_fTotalTime, m_fFrameTime) };
 				D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 				pd3dDeviceContext->Map(m_pd3dCBComputeInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 				memcpy(d3dMappedResource.pData, &cbCS, sizeof(CB_CS));
@@ -363,13 +386,15 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 
 				pd3dDeviceContext->CSSetShader(m_pd3dCSReduceToSingle, nullptr, 0);
 				pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, &m_csReduce.m_pd3dUAVArray[1], nullptr);
+				pd3dDeviceContext->CSSetUnorderedAccessViews(2, 1, &m_pd3dLastReducedUAV, nullptr);
 				pd3dDeviceContext->CSSetShaderResources(1, 1, &m_csReduce.m_pd3dSRVArray[0]);
 
 				pd3dDeviceContext->Dispatch(dim, 1, 1);
 
 				pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
-				pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, pd3dNullUAV, nullptr);
+				pd3dDeviceContext->CSSetUnorderedAccessViews(1, 2, pd3dNullUAV, nullptr);
 				pd3dDeviceContext->CSSetShaderResources(0, 1, pd3dNullSRV);
+
 
 				nNumToReduce = dim;
 				dim = int(ceil(dim / 128.0f));
@@ -384,6 +409,7 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		{
 			m_csReduce.swap(0, 1);
 		}
+
 	}
 
 
@@ -412,6 +438,7 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		cout << "평균치는 : " << fResult << endl;
 	}
 #endif
+	
 }
 
 void CSceneShader::SceneBlur(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
@@ -497,7 +524,7 @@ void CSceneShader::Blooming(ID3D11DeviceContext * pd3dDeviceContext,  UINT uRend
 		pd3dDeviceContext->Dispatch(cxGroup, ScreenHeight, 1);
 		//pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
 
-		pd3dDeviceContext->CSSetShader(m_pd3dComputeVertBloom, nullptr, 0);
+		pd3dDeviceContext->CSSetShader(m_pd3dComputeVertBlur, nullptr, 0);	// bloom이 아니라 블러로 한다.
 		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostUAV[1], nullptr);
 
 		pd3dSRVArray[0] = m_pd3dPostSRV[0];

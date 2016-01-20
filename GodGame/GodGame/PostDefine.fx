@@ -133,3 +133,8 @@ float4 CalculateToneColor(float4 Color, float fLum, float middle_gray)
 	fColor = HDRToLDR(fColor);
 	return float4(fColor, 1);
 }
+
+float Ttau(float p, float rods, float cones)
+{
+	return (p * rods + (1 - p) * cones);
+}
