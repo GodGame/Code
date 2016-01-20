@@ -26,10 +26,6 @@ CGameFramework::CGameFramework()
 
 	m_pRenderingThreadInfo = nullptr;
 	//m_pd3dPostProcessing = nullptr;
-	m_pd3dPostSRV[1] = m_pd3dPostSRV[0] = nullptr;
-	m_pd3dPostUAV[1] = m_pd3dPostUAV[0] = nullptr;
-	m_pd3dBloom4x4SRV = nullptr;
-	m_pd3dBloom4x4RTV = nullptr;
 
 	m_pd3dBackRenderTargetView = nullptr;
 
@@ -60,7 +56,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	if (!CreateDirect3DDisplay()) return(false);
 	if (!CreateRenderTargetDepthStencilView()) return(false);
 
-	CManagers::BuildManagers(m_pd3dDevice);
+	CManagers::BuildManagers(m_pd3dDevice, m_pd3dDeviceContext);
 	BuildObjects();
 
 	InitilizeThreads();
@@ -103,13 +99,6 @@ void CGameFramework::OnDestroy()
 	//if (m_pd3dPostProcessing) m_pd3dPostProcessing->Release();
 	if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
 	
-	for (int i = 0; i < 2; ++i) {
-		if (m_pd3dPostSRV[i]) m_pd3dPostSRV[i]->Release();
-		if (m_pd3dPostUAV[i]) m_pd3dPostUAV[i]->Release();
-	}
-
-	if (m_pd3dBloom4x4SRV) m_pd3dBloom4x4SRV->Release();
-	if (m_pd3dBloom4x4RTV) m_pd3dBloom4x4RTV->Release();
 
 	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
@@ -171,29 +160,12 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3dUAVDesc.Texture2D.MipSlice = 0;
 
 	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
-	//d3d2DBufferDesc.Width = m_nWndClientWidth * 0.5f;
-	//d3d2DBufferDesc.Height = m_nWndClientHeight * 0.5f;
+	d3d2DBufferDesc.Width = m_nWndClientWidth * 0.25f;
+	d3d2DBufferDesc.Height = m_nWndClientHeight * 0.25f;
 		
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dPostSRV[0])));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[0], &d3dUAVDesc, &m_pd3dPostUAV[0])));
-	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
-
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dPostSRV[1])));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[0], &d3dUAVDesc, &m_pd3dPostUAV[1])));
-	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
 	
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-	d3d2DBufferDesc.Width = m_nWndClientWidth * 0.125f;
-	d3d2DBufferDesc.Height = m_nWndClientHeight * 0.125f;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[0])));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[0], &d3dSRVDesc, &m_pd3dBloom4x4SRV)));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[0], &d3dRTVDesc, &m_pd3dBloom4x4RTV)));
-	if (m_ppd3dMRTtx[0]) m_ppd3dMRTtx[0]->Release();
-
 
 	d3d2DBufferDesc.Width = m_nWndClientWidth;
 	d3d2DBufferDesc.Height = m_nWndClientHeight;
@@ -250,15 +222,18 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	
 
-	ID3D11Texture2D * pdTx2D = nullptr;
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV)));
-	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView)));
+//	ID3D11Texture2D * pdTx2D = nullptr;
+//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
+//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV)));
+//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView)));
 
-	TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "srv_rtvSSAO", 0);
-	m_pd3dSSAOSRV->Release();
-	pdTx2D->Release();
+//	TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "sr_rtvSSAO", 0);
+
+//	m_pd3dSSAOSRV->Release();
+//	pdTx2D->Release();
 	
+	//m_pd3dSSAOSRV = ViewMgr.GetSRV("sr2d_SSAO"); m_pd3dSSAOSRV->AddRef();
+	//m_pd3dSSAOTargetView = ViewMgr.GetRTV("sr2d_SSAO"); m_pd3dSSAOTargetView->AddRef();
 
 	//m_pd3dDeviceContext->OMSetRenderTargets(5, &m_pd3dRenderTargetView, m_pd3dDepthStencilView);
 
@@ -551,8 +526,8 @@ void CGameFramework::BuildObjects()
 	m_pSceneShader = new CSceneShader();
 	m_pSceneShader->CreateShader(m_pd3dDevice);
 	m_pSceneShader->BuildObjects(m_pd3dDevice, m_pd3dMRTSRV, m_iDrawOption, m_pd3dBackRenderTargetView);
-	m_pSceneShader->SetPostView(m_pd3dPostSRV, m_pd3dPostUAV);
-	m_pSceneShader->SetBloomScaled(m_pd3dBloom4x4RTV, m_pd3dBloom4x4SRV);
+	//m_pSceneShader->SetPostView(m_pd3dPostSRV, m_pd3dPostUAV);
+	//m_pSceneShader->SetBloomScaled(m_pd3dBloom4x4RTV, m_pd3dBloom4x4SRV);
 
 	m_pScene = new CScene();
 	//m_pScene->SetRenderTarget(m_pd3dRenderTargetView);

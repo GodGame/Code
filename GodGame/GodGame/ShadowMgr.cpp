@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "TextureMgr.h"
+#include "ResourceMgr.h"
 #include "ShadowMgr.h"
 #include "Camera.h"
 #include "MyInline.h"

@@ -405,7 +405,7 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 
 	pSwordTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
-	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 3.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 10.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
 	//CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
 
 	m_nObjects = 1;
@@ -429,7 +429,7 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 		m_ppObjects[i] = pObject;
 	}
 
-	m_ppObjects[0]->SetPosition(1085, 170, 220);//(1105, 200, 250);
+	m_ppObjects[0]->SetPosition(1085, 230, 220);//(1105, 200, 250);
 	//m_ppObjects[1]->SetPosition(1085, 170, 260);
 	//m_ppObjects[2]->SetPosition(1115, 170, 265);
 	//m_ppObjects[3]->SetPosition(1100, 170, 255);

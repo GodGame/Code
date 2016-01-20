@@ -52,9 +52,6 @@
     <ClInclude Include="MgrType.h">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClInclude>
-    <ClInclude Include="TextureMgr.h">
-      <Filter>StaticGlobal\2_Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>LocalDynamic\3_Scenes</Filter>
     </ClInclude>
@@ -109,6 +106,9 @@
     <ClInclude Include="CollisionMgr.h">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceMgr.h">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -116,9 +116,6 @@
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>StaticGlobal\1_Common</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureMgr.cpp">
-      <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>LocalDynamic\3_Scenes</Filter>
@@ -160,6 +157,9 @@
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
     <ClCompile Include="CollisionPartitionTree.cpp">
+      <Filter>StaticGlobal\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourceMgr.cpp">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
   </ItemGroup>

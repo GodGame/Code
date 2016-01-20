@@ -146,6 +146,8 @@ private:
 	
 	ID3D11RenderTargetView * m_pd3dBloom4x4RTV;
 	ID3D11ShaderResourceView * m_pd3dBloom4x4SRV;
+	ID3D11RenderTargetView * m_pd3dBloom8x8RTV;
+	ID3D11ShaderResourceView * m_pd3dBloom8x8SRV;
 
 	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
 	ID3D11ShaderResourceView * m_pd3dPostSRV[2];
@@ -155,13 +157,12 @@ private:
 	ID3D11ComputeShader * m_pd3dComputeVertBloom;
 
 	ID3D11Buffer * m_pd3dCBComputeInfo;
-	ID3D11Buffer * m_pd3dComputeRead;
 	ID3D11Buffer * m_pd3dCBBloomInfo;
 
 	ID3D11ComputeShader * m_pd3dCSReduceToSingle;
 	
 	POST_CS_REPEATABLE m_csReduce;
-	POST_CS_BLOOMING m_csBloom;
+//	POST_CS_BLOOMING m_csBloom;
 
 public:
 	CSceneShader();
@@ -179,11 +180,8 @@ public:
 	void DumpMap(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pSRVsource, ID3D11RenderTargetView * pRTVTarget, DWORD dFrameWidth, DWORD dFrameHeight, CCamera * pCamera);
 
 public:
-	void SetPostView(ID3D11ShaderResourceView ** ppd3dPostSrv, ID3D11UnorderedAccessView ** ppd3dPostUav);
 	void SetTexture(int index, ID3D11ShaderResourceView * m_pSceneSRV);
 	void SetInfoTextures(ID3D11DeviceContext *pd3dDeviceContext);
-
-	void SetBloomScaled(ID3D11RenderTargetView * pd3dRTV, ID3D11ShaderResourceView * pd3dSRV);
 
 	void SetLightSRV(ID3D11ShaderResourceView * pSRV) { m_pd3dShadowSrv = pSRV; }
 	void SetDrawOption(int iOpt) { m_iDrawOption = iOpt; }

@@ -62,7 +62,7 @@ cbuffer cbFixed
 {
 	static float  gFogStart = 20.0f;
 	static float  gFogRange = 400.0f;
-	static float4 gFogColor = float4(0.2, 0.2, 0.2, 0.0);
+	static float4 gFogColor = float4(0.5, 0.4, 0.3, 0.0);
 	static float2 gvQuadTexCoord[4] = { float2(1.0f, 1.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(0.0f, 0.0f) };
 
 };

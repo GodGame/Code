@@ -128,7 +128,7 @@ public:
 	MATERIAL m_Material;
 };
 
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CMaterialMgr : public CMgr<CMaterial>
 {
 private:
@@ -143,4 +143,47 @@ public:
 };
 
 #define MaterialMgr CMaterialMgr::GetInstance()
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CViewManager
+{
+	CMgr<ID3D11ShaderResourceView>    m_mgrSrv;
+	CMgr<ID3D11RenderTargetView>	  m_mgrRtv;
+	CMgr<ID3D11DepthStencilView>	  m_mgrDsv;
+	CMgr<ID3D11UnorderedAccessView>   m_mgrUav;
+	CMgr<ID3D11Buffer>				  m_mgrBuffer;
+	CMgr<ID3D11Texture2D>			  m_mgrTex2D;
+
+	CViewManager() {}
+	~CViewManager() {}
+
+public:
+	static CViewManager& GetInstance();
+
+	void InsertSRV(ID3D11ShaderResourceView  * pSRV, string  name) { m_mgrSrv.InsertObject(pSRV, name); }
+	void InsertRTV(ID3D11RenderTargetView    * pRTV, string  name) { m_mgrRtv.InsertObject(pRTV, name); }
+	void InsertDSV(ID3D11DepthStencilView    * pDSV, string  name) { m_mgrDsv.InsertObject(pDSV, name); }
+	void InsertUAV(ID3D11UnorderedAccessView * pUAV, string  name) { m_mgrUav.InsertObject(pUAV, name); }
+	void InsertTex2D(ID3D11Texture2D * pTex2D, string name)		{ m_mgrTex2D.InsertObject(pTex2D, name); }
+	void InsertBuffer(ID3D11Buffer * pBuffer, string name)		{ m_mgrBuffer.InsertObject(pBuffer, name); }
+
+	ID3D11ShaderResourceView  * GetSRV(string  name) { return m_mgrSrv.GetObjects(name); }
+	ID3D11RenderTargetView    * GetRTV(string  name) { return m_mgrRtv.GetObjects(name); }
+	ID3D11DepthStencilView	  * GetDSV(string  name) { return m_mgrDsv.GetObjects(name); }
+	ID3D11UnorderedAccessView * GetUAV(string  name) { return m_mgrUav.GetObjects(name); }
+	ID3D11Texture2D * GetTex2D(string name)		{ return m_mgrTex2D.GetObjects(name); }
+	ID3D11Buffer    * GetBuffer(string name)    { return m_mgrBuffer.GetObjects(name); }
+
+	void EraseSRV(string  name) { m_mgrSrv.EraseObjects(name); }
+	void EraseRTV(string  name) { m_mgrRtv.EraseObjects(name); }
+	void EraseDSV(string  name) { m_mgrDsv.EraseObjects(name); }
+	void EraseUAV(string  name) { m_mgrUav.EraseObjects(name); }
+	void EraseTex2D(string name)  { m_mgrTex2D.EraseObjects(name); }
+	void EraseBuffer(string name) { m_mgrBuffer.EraseObjects(name); }
+
+public:
+	void BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
+};
+
+#define ViewMgr CViewManager::GetInstance()
+
 #endif

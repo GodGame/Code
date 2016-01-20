@@ -10,7 +10,7 @@ protected:
 	typedef map<string, Target*> MgrList;
 	MgrList m_mpList;
 	
-protected:
+public:
 	CMgr(){}
 	virtual ~CMgr()
 	{
@@ -29,8 +29,8 @@ public:
 		pObject->AddRef();
 	}
 	virtual void BuildResources(ID3D11Device *pd3dDevice) {};
-	virtual Target * GetObjects(string name) { return m_mpList[name]; }
-	virtual void EraseObjects(string name) { m_mpList[name]->Release(); m_mpList.erase(name); }
+	inline virtual Target * GetObjects(string name) { return m_mpList[name]; }
+	inline virtual void EraseObjects(string name) { m_mpList[name]->Release(); m_mpList.erase(name); }
 
 };
 

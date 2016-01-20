@@ -31,8 +31,8 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 
 	float4 vColor = tex.SampleLevel(PointSampler, Tex, 0);
 	float fLum = lum[0] * g_param.x;
-	float3 vBloom = bloom.Sample(PointSampler, Tex);
-	float3 vBloomScaled = bloom8x8.Sample(PointSampler, Tex);
+	float3 vBloom = bloom.Sample(LinearSampler, Tex);
+	float3 vBloomScaled = bloom8x8.Sample(LinearSampler, Tex);
 	//return vColor;
 
 	// Tone mapping
@@ -45,7 +45,7 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	//vBloomScaled = CalculateToneColor(vColor, fLum, middle);
 
 
-	vColor.rgb += max(0.6f * vBloom, 0.6f * vBloomScaled);//vBloom;// max(vBloom, vBloomScaled);
+	vColor.rgb += max(0.6f * vBloom, 0.4f * vBloomScaled);//vBloom;// max(vBloom, vBloomScaled);
 //	vColor.a = 1.0f;
 
 	return vColor;//vColor;

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "MyInline.h"
-#include "TextureMgr.h"
+#include "ResourceMgr.h"
 
 
 CTexture::CTexture(int nTextures, int nSamplers, int nTextureStartSlot, int nSamplerStartSlot, SETSHADER nSetInfo)
@@ -416,4 +416,206 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	InsertObject(pMaterial, "Terrain");
+}
+
+
+CViewManager & CViewManager::GetInstance()
+{
+	static CViewManager instance;
+	return instance;
+}
+
+void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
+{
+	HRESULT hResult;
+	ID3D11DepthStencilView	  * pDSV = nullptr;
+	ID3D11ShaderResourceView  * pSRV = nullptr;
+	ID3D11UnorderedAccessView * pUAV = nullptr;
+	ID3D11RenderTargetView    * pRTV = nullptr;
+
+	ID3D11Texture2D * pTx2D = nullptr;
+	ID3D11Buffer    * pBuffer1, *pBuffer2;
+	pBuffer1 = pBuffer2 =  nullptr;
+
+	D3D11_RENDER_TARGET_VIEW_DESC d3dRTVDesc;
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	d3dRTVDesc.Texture2D.MipSlice = 0;
+	d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	D3D11_TEXTURE2D_DESC d3d2DBufferDesc;
+	ZeroMemory(&d3d2DBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT;
+	d3d2DBufferDesc.MipLevels = 1;
+	d3d2DBufferDesc.ArraySize = 1;
+	d3d2DBufferDesc.Format = DXGI_FORMAT_R32_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
+	d3d2DBufferDesc.SampleDesc.Count = 1;
+	d3d2DBufferDesc.SampleDesc.Quality = 0;
+	d3d2DBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;// | D3D11_BIND_SHADER_RESOURCE;
+	d3d2DBufferDesc.CPUAccessFlags = 0;
+	d3d2DBufferDesc.MiscFlags = 0;
+	//ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_pd3dDepthStencilBuffer/*m_ppd3dMRTtx[MRT_DEPTH]*/)));
+
+	//생성한 깊이 버퍼(Depth Buffer)에 대한 뷰를 생성한다.
+	D3D11_DEPTH_STENCIL_VIEW_DESC d3dViewDesc;
+	ZeroMemory(&d3dViewDesc, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
+	d3dViewDesc.Format = DXGI_FORMAT_D32_FLOAT;//d3d2DBufferDesc.Format;
+	d3dViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	d3dViewDesc.Texture2D.MipSlice = 0;
+	//ASSERT(SUCCEEDED((hResult = m_pd3dDevice->CreateDepthStencilView(m_pd3dDepthStencilBuffer, &d3dViewDesc, &m_pd3dDepthStencilView))));
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
+	ZeroMemory(&d3dSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+	d3dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	d3dSRVDesc.Texture2D.MipLevels = 1;
+	d3dSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	//if (FAILED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_DEPTH], &d3dSRVDesc, &m_pd3dMRTSRV[MRT_DEPTH]))) 
+	//	return(false);
+
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC d3dUAVDesc;
+	ZeroMemory(&d3dUAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	d3dUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+	d3dUAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	d3dUAVDesc.Texture2D.MipSlice = 0;
+
+	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.25f;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.25f;
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "su2d_post0"); pSRV->Release();
+		InsertUAV(pUAV, "su2d_post0"); pUAV->Release();
+	}
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "su2d_post1"); pSRV->Release();
+		InsertUAV(pUAV, "su2d_post1"); pUAV->Release();
+	}
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "sr2d_bloom4x4"); pSRV->Release();
+		InsertRTV(pRTV, "sr2d_bloom4x4"); pRTV->Release();
+	}
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.125f;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.125f;
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "sr2d_bloom8x8"); pSRV->Release();
+		InsertRTV(pRTV, "sr2d_bloom8x8"); pRTV->Release();
+	}
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT;
+
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;// | D3D11_BIND_UNORDERED_ACCESS;
+	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//{
+	//	ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+	//	ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+	//	ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+	//	if (pTx2D) pTx2D->Release();
+
+	//	InsertSRV(pSRV, "sr2d_SSAO"); pSRV->Release();
+	//	InsertRTV(pRTV, "sr2d_SSAO"); pRTV->Release();
+	//}
+
+	// Create two buffers for ping-ponging in the reduction operation used for calculating luminance
+	D3D11_BUFFER_DESC DescBuffer;
+	ZeroMemory(&DescBuffer, sizeof(D3D11_BUFFER_DESC));
+	DescBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	DescBuffer.ByteWidth = int(ceil(FRAME_BUFFER_WIDTH / 8.0f) * ceil(FRAME_BUFFER_HEIGHT / 8.0f)) * sizeof(float);
+	DescBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	DescBuffer.StructureByteStride = sizeof(float);
+	DescBuffer.Usage = D3D11_USAGE_DEFAULT;
+	{
+		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer1)));
+		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer2)));
+	}
+	//{
+	//	// This Buffer is for reduction on CPU
+	//	DescBuffer.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	//	DescBuffer.Usage = D3D11_USAGE_STAGING;
+	//	DescBuffer.BindFlags = 0;
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &m_pd3dComputeRead)));
+	//}
+	// Create UAV on the above two buffers object
+	D3D11_UNORDERED_ACCESS_VIEW_DESC DescUAV;
+	ZeroMemory(&DescUAV, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	DescUAV.Format = DXGI_FORMAT_UNKNOWN;
+	DescUAV.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	DescUAV.Buffer.FirstElement = 0;
+	DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
+	{
+		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer1, &DescUAV, &pUAV)));
+		InsertUAV(pUAV, "su_reduce1"); pUAV->Release();
+		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer2, &DescUAV, &pUAV)));
+		InsertUAV(pUAV, "su_reduce2"); pUAV->Release();
+	}
+
+	// Create resource view for the two buffers object
+	D3D11_SHADER_RESOURCE_VIEW_DESC DescRV;
+	ZeroMemory(&DescRV, sizeof(DescRV));
+	DescRV.Format = DXGI_FORMAT_UNKNOWN;
+	DescRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
+	DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;
+	{
+		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer1, &DescRV, &pSRV)));
+		InsertSRV(pSRV, "su_reduce1"); pSRV->Release();
+		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer2, &DescRV, &pSRV)));
+		InsertSRV(pSRV, "su_reduce2"); pSRV->Release();
+	}
+	pBuffer1->Release();
+	pBuffer2->Release();
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Buffers for blooming effect in CS path
+	//ZeroMemory(&DescBuffer, sizeof(DescBuffer));
+	//DescBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	//DescBuffer.ByteWidth = FRAME_BUFFER_WIDTH / 8 * FRAME_BUFFER_HEIGHT / 8 * sizeof(XMFLOAT4);
+	//DescBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	//DescBuffer.StructureByteStride = sizeof(XMFLOAT4);
+	//DescBuffer.Usage = D3D11_USAGE_DEFAULT;
+
+	//ZeroMemory(&DescRV, sizeof(DescRV));
+	//DescRV.Format = DXGI_FORMAT_UNKNOWN;
+	//DescRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	//DescRV.Buffer.FirstElement = 0;
+	//DescRV.Buffer.NumElements = DescBuffer.ByteWidth / DescBuffer.StructureByteStride;
+
+	//ZeroMemory(&DescUAV, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	//DescUAV.Format = DXGI_FORMAT_UNKNOWN;
+	//DescUAV.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	//DescUAV.Buffer.FirstElement = 0;
+	//DescUAV.Buffer.NumElements = DescRV.Buffer.NumElements;
+
+	//string name = "su_bloom";
+	//for (int i = 0; i < NUM_BLOOM_TEXTURES; i++)
+	//{
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&bufdesc, nullptr, &m_csBloom.m_pd3dCBBufferArray[i])));
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(m_csBloom.m_pd3dCBBufferArray[i], &DescRV, &m_csBloom.m_pd3dSRVArray[i])));
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(m_csBloom.m_pd3dCBBufferArray[i], &DescUAV, &m_csBloom.m_pd3dUAVArray[i])));
+	//}
+
 }

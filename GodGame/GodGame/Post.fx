@@ -84,9 +84,9 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	}
 #ifdef LUMCOLOR
 	color = float4(LumToColor(color), 1);//float4(LumToColor(ColorToLum(rgb)), 1);
-	color.r = min(2.0, color.r);
+	color.r = min(LUM_WHITE, color.r);
 #else
-	color = min(2.0, color);
+	color = min(LUM_WHITE, color);
 #endif
 	return color;
 }

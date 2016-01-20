@@ -67,12 +67,6 @@ private:
 
 	ID3D11ShaderResourceView *m_pd3dMRTSRV[NUM_MRT];
 
-	ID3D11ShaderResourceView *m_pd3dPostSRV[2];
-	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
-
-	ID3D11ShaderResourceView * m_pd3dBloom4x4SRV;
-	ID3D11RenderTargetView * m_pd3dBloom4x4RTV;
-
 	ID3D11Texture2D * m_ppd3dMRTtx[NUM_MRT];
 
 	ID3D11Texture2D	* m_pd3dDepthStencilBuffer;
