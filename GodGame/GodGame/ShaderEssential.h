@@ -6,7 +6,7 @@
 static float GaussianDistribution(float x, float y, float rho);
 
 #define NUM_TONEMAP_TEXTURES  5       // Number of stages in the 3x3 down-scaling for post-processing in PS
-static const int ToneMappingTexSize = (int)pow(4.0f, NUM_TONEMAP_TEXTURES - 1);
+static const int ToneMappingTexSize = (int)pow(4.0f, NUM_TONEMAP_TEXTURES - 1);//128
 #define NUM_BLOOM_TEXTURES 2
 
 struct CB_SSAO_INFO

@@ -406,16 +406,19 @@ VS_INSTANCE_CUBE_OUTPUT VSPointCubeInstance(VS_INSTANCE_CUBE_INPUT input)
 	return output;
 }
 
-float4 PSPointInstance(GS_INSTANCE_OUTPUT input) : SV_Target
+PS_MRT_OUT PSPointInstance(GS_INSTANCE_OUTPUT input) : SV_Target
 {
-	float4 cIllumination = Lighting(input.posW, input.normalW);
-	//float3 uvw = float3(input.texCoord, (input.primID % 4));
-	//float4 cTexture = gTextureArray.Sample(gSamplerState, uvw);
-	float4 cTexture = gtxtTexture.Sample(gSamplerState, input.texCoord);
-	float4 cColor = cIllumination * cTexture;
-	cColor.a = cTexture.a;
-	//float4 cColor = float4(1.0f, 1.0f, 1.0f, 0.0f);
-	return (cColor);
+	//float4 cTexture = gtxtTexture.Sample(gSamplerState, input.texCoord);
+
+	PS_MRT_OUT output;
+
+	output.vNormal = float4(input.normalW, 0.0f/*input.posW.w * gfDepthFar*/);
+	output.vPos = float4(input.posW, 1.0f);
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
+	output.vSpec = gMaterial.m_cSpecular;
+	output.vTxColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
+
+	return (output);
 }
 
 
@@ -565,7 +568,7 @@ void GSPointSphereInstance(point VS_INSTANCE_SPHERE_OUTPUT input[1],
 	int j = input[0].info.y;
 	float fRadius = input[0].info.w;
 	int nStacks, nSlices;
-	nStacks = nSlices = input[0].info.z; 
+	nStacks = nSlices = input[0].info.z;
 
 	float3 Point = input[0].centerW.xyz;
 
@@ -604,13 +607,14 @@ void GSPointSphereInstance(point VS_INSTANCE_SPHERE_OUTPUT input[1],
 	f2TexCoords[2] = float2(float(i + 1) * rSlices, float(j) * rStacks);
 	f3Normal[2] = normalize(pNormal);
 
+	[unroll]
 	for (int k = 0; k < 3; ++k)
 	{
-			output.posW = f4Vertices[k];
-			output.posH = mul(f4Vertices[k], gmtxViewProjection);
-			output.normalW = f3Normal[k];
-			output.texCoord = f2TexCoords[k];
-			triStream.Append(output);
+		output.posW = f4Vertices[k];
+		output.posH = mul(f4Vertices[k], gmtxViewProjection);
+		output.normalW = f3Normal[k];
+		output.texCoord = f2TexCoords[k];
+		triStream.Append(output);
 	}
 	triStream.RestartStrip();
 
@@ -627,6 +631,7 @@ void GSPointSphereInstance(point VS_INSTANCE_SPHERE_OUTPUT input[1],
 	f2TexCoords[2] = float2(float(i + 1) * rSlices, float(j) * rStacks);
 	f3Normal[2] = normalize(pNormal);
 
+	[unroll]
 	for (int k = 0; k < 3; ++k)
 	{
 		output.posW = f4Vertices[k];

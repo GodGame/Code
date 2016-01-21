@@ -480,7 +480,7 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 {
 	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
-		{ "INFO", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "INFO",		 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	//D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
@@ -498,13 +498,13 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 {
 	m_pMaterial = pMaterial;
 	if (pMaterial) pMaterial->AddRef();
-	m_nObjects = m_nCubes = 100;
+	m_nObjects = m_nCubes = 1;
 
 	XMFLOAT3 xmf3Pos;
 	XMFLOAT2 xmf2Size = XMFLOAT2(20, 50);
 
 	//m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
-	m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
+	m_nInstanceBufferStride = sizeof(XMFLOAT4);
 	m_nInstanceBufferOffset = 0;
 
 	m_ppObjects = new CGameObject*[m_nObjects];
@@ -514,7 +514,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	int czTerrain = pTerrain->GetLength();
 
 
-	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 10, 10);
+	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 30, 30);
 	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
 	{
@@ -528,7 +528,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		m_ppObjects[i] = pObject;
 	}
 
-	//m_ppObjects[0]->SetPosition(XMFLOAT3(1105, 190, 250)); 
+	m_ppObjects[0]->SetPosition(XMFLOAT3(1125, 190, 218)); 
 	//m_ppObjects[1]->SetPosition(XMFLOAT3(1085, 180, 260));
 	//m_ppObjects[2]->SetPosition(XMFLOAT3(1115, 180, 265));
 	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255)); 
@@ -539,11 +539,11 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 
 
-	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0);
+	m_pTexture = new CTexture(1, 1, 0, 0);
 	ID3D11ShaderResourceView * pd3dsrvArray;
 	//ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
 	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Ceiling_01.jpg"), nullptr, nullptr, &pd3dsrvArray, nullptr);
-	//if (FAILED(hr)) printf("¿À·ù \n");
+	ASSERT(SUCCEEDED(hr));
 
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;

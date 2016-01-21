@@ -572,7 +572,6 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer2, &DescUAV, &pUAV)));
 		InsertUAV(pUAV, "su_reduce2"); pUAV->Release();
 	}
-
 	// Create resource view for the two buffers object
 	D3D11_SHADER_RESOURCE_VIEW_DESC DescRV;
 	ZeroMemory(&DescRV, sizeof(DescRV));
@@ -588,7 +587,7 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 
 	}
 	{
-		DescBuffer.ByteWidth = sizeof(float);
+		DescBuffer.ByteWidth = sizeof(float) * 4;
 		DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
 		DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
 		DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;

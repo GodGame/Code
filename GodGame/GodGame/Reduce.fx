@@ -31,7 +31,7 @@ void LumCompression(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 #ifdef LUMCOLOR
 	accum[GI] = s.r;//(s.a); dot(s.rgb, float3(0.3, 0.3, 0.3)); //
 #else
-	accum[GI] = dot(s, LUM_VECTOR);
+	accum[GI] =  max(0.2, dot(s, LUM_VECTOR));
 #endif
 
 	GroupMemoryBarrierWithGroupSync();
@@ -112,47 +112,50 @@ void ReduceToSingle(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 	if (GI == 0)
 	{
 		float fAdapted = fLastLum[0];
+	//	float fAdaptedAverage = (fAdapted + fLastLum[2] + fLastLum[1] + fLastLum[0]) ;
 		float fAccum = accumulate[0];
 
 		fLum[Gid.x] = accumulate[0];
 		fLastLum[0] = accumulate[0];
 
-		if (DTid.x < g_param.x && fAdapted <= 0.0f)
-		{			
-			fLum[Gid.x] = accumulate[0];
-			fLastLum[0] = fLastLum[1] = fLastLum[2] = fLastLum[3] = accumulate[0];
-		}
-		else if(DTid.x < g_param.x)
-		{
-			//float ftau = Ttau(g_param.w, 0.2f, 0.4f) * -g_param.z;
-			//float fResult = fAdapted - (fAccum - fAdapted) * (1 - exp(ftau));
-			//
-			//fLastLum[0] = fLum[Gid.x] = fResult;
+		//if (DTid.x < g_param.x && fAdapted <= 0.0f)
+		//{			
+		//	fLum[Gid.x] = accumulate[0];
+		//	fLastLum[0] = accumulate[0];
+		//}
+		//if (DTid.x < g_param.x)
+		//{
+		//	float fResult = 0;
+		//	//int iGreater = 0;
+		//	//[unroll]
+		//	//for (int i = 0; i < 4; ++i)
+		//	//	iGreater += (fLastLum[i] >= fAccum);
 
-			fLum[Gid.x] = ((1.0f - g_param.z) * fAdapted) + (g_param.z * fAccum);
-			
-			if(g_param.z >= 1) fLastLum[0] = fLum[Gid.x];
+		//	if (fAdapted >= fAccum)
+		//	{
+		//		fResult = fAdapted - (0.1f * g_param.z) * (fAdapted - fAccum);
+		//		//float ftau = lerp(0.2f, 0.4f, 0.0f) * -g_param.z;
+		//		//fResult = fAdapted + (fAccum - fAdaptedAverage) * (1 - exp(ftau));
+		//	}
+		//	else
+		//	{
+		//		fResult = fAdapted - (0.1f * g_param.z) * (fAccum - fAdapted);
+		//	}
+		//	fLum[Gid.x] = fResult;
+		//	fLastLum[1] += g_param.z;
+
+		//	if (fLastLum[1] >= 1.0f)
+		//	{
+		//		fLastLum[0] = fAccum;
+		//		fLastLum[1] = 0.0f;
+		//	}
 
 
-			//if (g_param.z > 0.1f)
-			//{
-			//	fLastLum[3] = fAccum;
-			//	fLum[Gid.x] = fLastLum[0];
-			//	fLastLum[0] = fLastLum[1];
-			//	fLastLum[1] = fLastLum[2];
-			//}
-			
+		//	//fLastLum[3] = fLum[Gid.x] = fResult;
+		//	//fLastLum[2] = fLastLum[3];
+		//	//fLastLum[1] = fLastLum[2];
+		//	//fLastLum[0] = fLastLum[1];
+		//}
 
-			//}
-			//if (fDelta > 0)
-			//{
-			//	fLastLum[0] = fLum[0] += 0.1f * fDelta;
-			//}
-			//else 
-			//{
-			//	fLastLum[0] = fLum[0] += 0.1f * fDelta;
-			//}
-			//			fLum[0] = accumulate[0];
-		}
 	}
 }

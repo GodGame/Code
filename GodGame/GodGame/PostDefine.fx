@@ -134,7 +134,7 @@ float4 CalculateToneColor(float4 Color, float fLum, float middle_gray)
 	return float4(fColor, 1);
 }
 
-float Ttau(float p, float rods, float cones)
+float Ttau(float p, float rods, float cones)	//  rods = 간상체 (어둠 적응) cones = 원추체 (밝음 적응)
 {
 	return (p * rods + (1 - p) * cones);
 }
