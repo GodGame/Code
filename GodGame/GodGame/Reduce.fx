@@ -2,8 +2,10 @@
 
 Texture2D gtxtInput : register(t0);
 StructuredBuffer<float> Input : register(t1);
+//StructuredBuffer<float> LastLum : register(t2);
 RWStructuredBuffer<float> fLum : register(u1);
 RWStructuredBuffer<float> fLastLum : register(u2);
+
 
 cbuffer computeInfo : register(b0)
 {
@@ -31,7 +33,7 @@ void LumCompression(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 #ifdef LUMCOLOR
 	accum[GI] = s.r;//(s.a); dot(s.rgb, float3(0.3, 0.3, 0.3)); //
 #else
-	accum[GI] =  max(0.2, dot(s, LUM_VECTOR));
+	accum[GI] = dot(s, LUM_VECTOR); //max(0.2, dot(s, LUM_VECTOR));
 #endif
 
 	GroupMemoryBarrierWithGroupSync();
@@ -111,51 +113,58 @@ void ReduceToSingle(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 
 	if (GI == 0)
 	{
-		float fAdapted = fLastLum[0];
-	//	float fAdaptedAverage = (fAdapted + fLastLum[2] + fLastLum[1] + fLastLum[0]) ;
-		float fAccum = accumulate[0];
-
 		fLum[Gid.x] = accumulate[0];
-		fLastLum[0] = accumulate[0];
-
-		//if (DTid.x < g_param.x && fAdapted <= 0.0f)
-		//{			
-		//	fLum[Gid.x] = accumulate[0];
-		//	fLastLum[0] = accumulate[0];
-		//}
-		//if (DTid.x < g_param.x)
-		//{
-		//	float fResult = 0;
-		//	//int iGreater = 0;
-		//	//[unroll]
-		//	//for (int i = 0; i < 4; ++i)
-		//	//	iGreater += (fLastLum[i] >= fAccum);
-
-		//	if (fAdapted >= fAccum)
-		//	{
-		//		fResult = fAdapted - (0.1f * g_param.z) * (fAdapted - fAccum);
-		//		//float ftau = lerp(0.2f, 0.4f, 0.0f) * -g_param.z;
-		//		//fResult = fAdapted + (fAccum - fAdaptedAverage) * (1 - exp(ftau));
-		//	}
-		//	else
-		//	{
-		//		fResult = fAdapted - (0.1f * g_param.z) * (fAccum - fAdapted);
-		//	}
-		//	fLum[Gid.x] = fResult;
-		//	fLastLum[1] += g_param.z;
-
-		//	if (fLastLum[1] >= 1.0f)
-		//	{
-		//		fLastLum[0] = fAccum;
-		//		fLastLum[1] = 0.0f;
-		//	}
-
-
-		//	//fLastLum[3] = fLum[Gid.x] = fResult;
-		//	//fLastLum[2] = fLastLum[3];
-		//	//fLastLum[1] = fLastLum[2];
-		//	//fLastLum[0] = fLastLum[1];
-		//}
-
+		//fLastLum[0] = accumulate[0];
 	}
+}
+
+[numthreads(1, 1, 1)]
+void LumAdapted(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
+{
+	float fAccum = Input[0];
+	float fAdapted = fLastLum[15];
+	float fAdaptedAverage = fAdapted;
+
+	[unroll]
+	for (int i = 1; i < 16; ++i)
+	{
+		fAdaptedAverage += fLastLum[i];
+		fLastLum[i - 1] = fLastLum[i];
+	}
+	fAdaptedAverage *= 0.0625;
+
+	float fResult = 0;
+	int iGreater = 0;
+	[unroll]
+	for (int i = 0; i < 16; ++i)
+		iGreater += (fLastLum[i] >= fAccum);
+
+	if (iGreater >= 15.9)
+	{
+		float ftau = lerp(0.4, 0.2, g_param.w)/*Ttau(g_param.w, 0.2f, 0.4f)*/ *g_param.w;
+		fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
+	}
+	else if (iGreater <= 0.1f)
+	{
+		float ftau = lerp(0.4, 0.2f, 1 - g_param.w * 0.5f) /*Ttau(1 - g_param.w * 0.5f, 0.2f, 0.4f)*/ * g_param.w *0.5f;
+		fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
+	}
+	else
+	{
+		fResult = fAdapted;// fAdapted - (0.1f * g_param.z) * (fAccum - fAdapted);
+	}
+
+	//if (fAdaptedAverage >= fAccum)//iGreater >= 15.9)
+	//{
+	//	fResult = fAdaptedAverage - (0.1 * g_param.z) * (fAccum - fAdaptedAverage);
+
+	//}
+	//else //if(iGreater <= 0.1f)
+	//{
+	//	fResult = fAdaptedAverage + (0.1 * g_param.z) * (fAccum - fAdaptedAverage);
+	//}
+
+	fLum[0] = fResult;
+	fLastLum[15] = fResult;
+
 }

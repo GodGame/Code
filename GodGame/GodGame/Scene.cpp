@@ -2,6 +2,7 @@
 #include "MyInline.h"
 #include "Scene.h"
 
+bool bIsKeyDown = false;
 
 CScene::CScene()
 {
@@ -175,13 +176,13 @@ void CScene::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	m_pLights->m_pLights[1].m_fPhi = (float)cos(XMConvertToRadians(40.0f));
 	m_pLights->m_pLights[1].m_fTheta = (float)cos(XMConvertToRadians(20.0f));
 
-	m_pLights->m_pLights[2].m_bEnable = 1.0f;
+	m_pLights->m_pLights[2].m_bEnable = 0.0f;//1.0f;
 	m_pLights->m_pLights[2].m_nType = POINT_LIGHT;
 	m_pLights->m_pLights[2].m_fRange = 300.0f;
-	m_pLights->m_pLights[2].m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 0.3f, 1.0f);
-	m_pLights->m_pLights[2].m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 0.8f, 1.0f);
-	m_pLights->m_pLights[2].m_xcSpecular = XMFLOAT4(0.0f, 0.0f, 0.5f, 0.0f);
-	m_pLights->m_pLights[2].m_xv3Position = XMFLOAT3(1040, 200, 303);;
+	m_pLights->m_pLights[2].m_xcAmbient = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
+	m_pLights->m_pLights[2].m_xcDiffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 10.0f);
+	m_pLights->m_pLights[2].m_xcSpecular = XMFLOAT4(0.5f, 0.5f, 0.5f, 10.0f);
+	m_pLights->m_pLights[2].m_xv3Position = XMFLOAT3(1098, 210, 350);
 	m_pLights->m_pLights[2].m_xv3Direction = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_pLights->m_pLights[2].m_xv3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
 
@@ -264,6 +265,10 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 			pMat->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
 			pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 			break;
+		case 'B':
+			if (bIsKeyDown == false) bIsKeyDown = true;
+			else bIsKeyDown = false;
+			break;
 		}
 		break;
 	}
@@ -317,7 +322,7 @@ void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRender
 
 #ifdef _THREAD
 	int index = pRenderInfo->ThreadID;
-	if (index == 2)
+	if (index == 3 && bIsKeyDown == true)
 		return;
 
 	//if (index == m_nShaders - 1)
@@ -327,7 +332,7 @@ void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRender
 	//	ShadowMgr.UpdateStaticShadowResource(pd3dDeviceContext);
 	//	ShadowMgr.UpdateDynamicShadowResource(pd3dDeviceContext);
 	//}
-	if (index == m_nShaders - 1)
+	if (index == m_nShaders - 2)
 	{			
 		m_pPlayerShader->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
 	}

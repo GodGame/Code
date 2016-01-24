@@ -58,7 +58,6 @@ public:
 	CDiffusedVertex() { m_xv3Position = XMFLOAT3(0.0f, 0.0f, 0.0f); m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f); }
 	~CDiffusedVertex() { }
 };
-
 class CMesh
 {
 private:
@@ -78,7 +77,7 @@ public:
 
 protected:
 	//정점의 개수이다. 
-	int m_nVertices;
+	UINT m_nVertices;
 	UINT m_nStartVertex;
 	//정점의 요소들을 나타내는 버퍼들의 원소의 바이트 수를 나타내는 배열이다. 
 	UINT *m_pnVertexStrides;
@@ -125,8 +124,9 @@ public:
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	//인스턴싱을 사용하여 렌더링한다. 
-	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState,int nInstances = 0, int nStartInstance = 0);
+	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, int nInstances = 0, int nStartInstance = 0);
 };
+
 
 class CMeshDiffused : public CMesh
 {

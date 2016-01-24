@@ -231,7 +231,11 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		pd3dSamplerState->Release();
 	}
 	{
-//		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR; // D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		ASSERT(SUCCEEDED(hr));
+		InsertSamplerState(pd3dSamplerState, "ss_linear_point_wrap", 0);
+		pd3dSamplerState->Release();
 	}
 	{
 		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -384,28 +388,28 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	//재질을 생성한다.
 	CMaterial *pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.2f, 0.0f, 0.0f, 1.0f);
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	InsertObject(pMaterial, "Red");
 
 	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.2f, 0.0f, 1.0f);
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 3.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	InsertObject(pMaterial, "Green");
 
 	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	InsertObject(pMaterial, "Blue");
 
 	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "White");
@@ -502,6 +506,28 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 		InsertSRV(pSRV, "su2d_post1"); pSRV->Release();
 		InsertUAV(pUAV, "su2d_post1"); pUAV->Release();
 	}
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625f;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625f;
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "su2d_postscaled0"); pSRV->Release();
+		InsertUAV(pUAV, "su2d_postscaled0"); pUAV->Release();
+	}
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "su2d_postscaled1"); pSRV->Release();
+		InsertUAV(pUAV, "su2d_postscaled1"); pUAV->Release();
+	}
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.25f;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.25f;
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	{
@@ -513,16 +539,16 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 		InsertSRV(pSRV, "sr2d_bloom4x4"); pSRV->Release();
 		InsertRTV(pRTV, "sr2d_bloom4x4"); pRTV->Release();
 	}
-	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.125f;
-	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.125f;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625;//0.125f;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625;//0.125f;
 	{
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
 		if (pTx2D) pTx2D->Release();
 
-		InsertSRV(pSRV, "sr2d_bloom8x8"); pSRV->Release();
-		InsertRTV(pRTV, "sr2d_bloom8x8"); pRTV->Release();
+		InsertSRV(pSRV, "sr2d_bloom16x16"); pSRV->Release();
+		InsertRTV(pRTV, "sr2d_bloom16x16"); pRTV->Release();
 	}
 	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT;
@@ -587,7 +613,7 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 
 	}
 	{
-		DescBuffer.ByteWidth = sizeof(float) * 4;
+		DescBuffer.ByteWidth = sizeof(float) * 16;
 		DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
 		DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
 		DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;

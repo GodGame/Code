@@ -80,7 +80,6 @@ public:
 };
 
 
-
 class CGameObject
 {
 public:
@@ -107,7 +106,7 @@ public:
 	AABB m_bcMeshBoundingCube;
 
 	void SetMesh(CMesh *pMesh, int nIndex = 0);
-	
+
 	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
 	//게임 객체는 텍스쳐 가질 수 있다.
 	CTexture *m_pTexture;
@@ -151,6 +150,7 @@ public:
 	int PickObjectByRayIntersection(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxView, MESHINTERSECTINFO *pd3dxIntersectInfo);
 #endif
 };
+
 
 class CMirrorObject : public CGameObject
 {

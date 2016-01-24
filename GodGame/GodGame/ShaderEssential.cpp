@@ -15,8 +15,6 @@ static float GaussianDistribution(float x, float y, float rho)
 
 #pragma region PlayerShader
 
-
-
 CSceneShader::CSceneShader() : CTexturedShader()
 {
 	m_fTotalTime = m_fFrameTime = 0;
@@ -32,8 +30,8 @@ CSceneShader::CSceneShader() : CTexturedShader()
 	m_pInfoScene = nullptr;
 	m_pd3dPSDump = nullptr;
 
-	m_pd3dBloom8x8RTV = m_pd3dBloom4x4RTV = nullptr;
-	m_pd3dBloom8x8SRV = m_pd3dBloom4x4SRV = nullptr;
+	m_pd3dBloom16x16RTV = m_pd3dBloom4x4RTV = nullptr;
+	m_pd3dBloom16x16SRV = m_pd3dBloom4x4SRV = nullptr;
 
 	m_pd3dShadowSrv = nullptr;
 	m_pd3dLightPS = nullptr;
@@ -43,13 +41,13 @@ CSceneShader::CSceneShader() : CTexturedShader()
 	m_pd3dBackRTV = nullptr;
 
 	m_pd3dCBComputeInfo = m_pd3dCBWeight = nullptr;
-	m_pd3dCSReduceToSingle = nullptr;
+	m_pd3dCSAdaptLum = m_pd3dCSReduceToSingle = nullptr;
 
 	ZeroMemory(&m_cbWeights, sizeof(m_cbWeights));
 	for (int i = 0; i < 2; ++i)
 	{
-		m_pd3dPostSRV[i] = nullptr;
-		m_pd3dPostUAV[i] = nullptr;
+		m_pd3dPostScaledSRV[i] = m_pd3dPostSRV[i] = nullptr;
+		m_pd3dPostScaledUAV[i] = m_pd3dPostUAV[i] = nullptr;
 	}
 
 	m_pd3dLastReducedSRV = nullptr;
@@ -73,8 +71,8 @@ CSceneShader::~CSceneShader()
 
 	if (m_pd3dBloom4x4RTV) m_pd3dBloom4x4RTV->Release();
 	if (m_pd3dBloom4x4SRV) m_pd3dBloom4x4SRV->Release();
-	if (m_pd3dBloom8x8RTV) m_pd3dBloom8x8RTV->Release();
-	if (m_pd3dBloom8x8SRV) m_pd3dBloom8x8SRV->Release();
+	if (m_pd3dBloom16x16RTV) m_pd3dBloom16x16RTV->Release();
+	if (m_pd3dBloom16x16SRV) m_pd3dBloom16x16SRV->Release();
 
 	if (m_pd3dComputeHorzBlur) m_pd3dComputeHorzBlur->Release();
 	if (m_pd3dComputeVertBlur) m_pd3dComputeVertBlur->Release();
@@ -85,12 +83,16 @@ CSceneShader::~CSceneShader()
 	{
 		if (m_pd3dPostSRV[i]) m_pd3dPostSRV[i]->Release();
 		if (m_pd3dPostUAV[i]) m_pd3dPostUAV[i]->Release();
+
+		if (m_pd3dPostScaledSRV[i]) m_pd3dPostScaledSRV[i]->Release();
+		if (m_pd3dPostScaledUAV[i]) m_pd3dPostScaledUAV[i]->Release();
 	}
 
 	if (m_pd3dCBWeight)m_pd3dCBWeight->Release();
 	if (m_pd3dCBComputeInfo) m_pd3dCBComputeInfo->Release();
 
 	if (m_pd3dCSReduceToSingle) m_pd3dCSReduceToSingle->Release();
+	if (m_pd3dCSAdaptLum)m_pd3dCSAdaptLum->Release();
 
 	if (m_pd3dLastReducedSRV) m_pd3dLastReducedSRV->Release();
 	if (m_pd3dLastReducedUAV) m_pd3dLastReducedUAV->Release();
@@ -122,6 +124,7 @@ void CSceneShader::CreateShader(ID3D11Device *pd3dDevice)
 
 	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "LumCompression", "cs_5_0", &m_csReduce.m_pd3dComputeShader);
 	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "ReduceToSingle", "cs_5_0", &m_pd3dCSReduceToSingle);
+	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "LumAdapted", "cs_5_0", &m_pd3dCSAdaptLum);
 }
 
 void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceView ** ppd3dMrtSrv, int nMrtSrv, ID3D11RenderTargetView * pd3dBackRTV)
@@ -140,13 +143,18 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 
 	m_pd3dBloom4x4RTV = ViewMgr.GetRTV("sr2d_bloom4x4");  m_pd3dBloom4x4RTV->AddRef();
 	m_pd3dBloom4x4SRV = ViewMgr.GetSRV("sr2d_bloom4x4");  m_pd3dBloom4x4SRV->AddRef();
-	m_pd3dBloom8x8RTV = ViewMgr.GetRTV("sr2d_bloom8x8");  m_pd3dBloom8x8RTV->AddRef();
-	m_pd3dBloom8x8SRV = ViewMgr.GetSRV("sr2d_bloom8x8");  m_pd3dBloom8x8SRV->AddRef();
+	m_pd3dBloom16x16RTV = ViewMgr.GetRTV("sr2d_bloom16x16");  m_pd3dBloom16x16RTV->AddRef();
+	m_pd3dBloom16x16SRV = ViewMgr.GetSRV("sr2d_bloom16x16");  m_pd3dBloom16x16SRV->AddRef();
 
-	m_pd3dPostSRV[0] = ViewMgr.GetSRV("su2d_post0");     m_pd3dPostSRV[0]->AddRef();
-	m_pd3dPostSRV[1] = ViewMgr.GetSRV("su2d_post1");     m_pd3dPostSRV[1]->AddRef();
-	m_pd3dPostUAV[0] = ViewMgr.GetUAV("su2d_post0");     m_pd3dPostUAV[0]->AddRef();
-	m_pd3dPostUAV[1] = ViewMgr.GetUAV("su2d_post1");     m_pd3dPostUAV[1]->AddRef();
+	m_pd3dPostSRV[0]  = ViewMgr.GetSRV("su2d_post0");     m_pd3dPostSRV[0]->AddRef();
+	m_pd3dPostSRV[1]  = ViewMgr.GetSRV("su2d_post1");     m_pd3dPostSRV[1]->AddRef();
+	m_pd3dPostUAV[0]  = ViewMgr.GetUAV("su2d_post0");     m_pd3dPostUAV[0]->AddRef();
+	m_pd3dPostUAV[1]  = ViewMgr.GetUAV("su2d_post1");     m_pd3dPostUAV[1]->AddRef();
+
+	m_pd3dPostScaledSRV[0] = ViewMgr.GetSRV("su2d_postscaled0");     m_pd3dPostScaledSRV[0]->AddRef();
+	m_pd3dPostScaledSRV[1] = ViewMgr.GetSRV("su2d_postscaled0");     m_pd3dPostScaledSRV[1]->AddRef();
+	m_pd3dPostScaledUAV[0] = ViewMgr.GetUAV("su2d_postscaled0");     m_pd3dPostScaledUAV[0]->AddRef();
+	m_pd3dPostScaledUAV[1] = ViewMgr.GetUAV("su2d_postscaled0");     m_pd3dPostScaledUAV[1]->AddRef();
 
 	m_csReduce.m_pd3dUAVArray[0] = ViewMgr.GetUAV("su_reduce1"); m_csReduce.m_pd3dUAVArray[0]->AddRef();
 	m_csReduce.m_pd3dUAVArray[1] = ViewMgr.GetUAV("su_reduce2"); m_csReduce.m_pd3dUAVArray[1]->AddRef();
@@ -277,7 +285,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 		//m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
 
 		//m_pMesh->Render(pd3dDeviceContext, uRenderState);
-		ID3D11ShaderResourceView * pSRVArrsy[] = { m_pd3dPostSRV[1], m_pd3dBloom8x8SRV };
+		ID3D11ShaderResourceView * pSRVArrsy[] = { m_pd3dPostSRV[1], m_pd3dPostScaledSRV[1] };
 		FinalRender(pd3dDeviceContext, pSRVArrsy, uRenderState, pCamera);
 	}
 	else
@@ -288,7 +296,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	//	DumpMap(pd3dDeviceContext, m_pd3dPostSRV[1], m_pd3dBloom4x4RTV,
 	//		FRAME_BUFFER_WIDTH * 0.125f, FRAME_BUFFER_HEIGHT * 0.125f, pCamera);
 		
-		m_pInfoScene->SetTexture(0, m_pd3dBloom8x8SRV);//m_pd3dPostSRV[1]);
+		m_pInfoScene->SetTexture(0, m_pd3dBloom16x16SRV);//m_pd3dPostSRV[1]);
 
 //		m_pInfoScene->SetTexture(0, m_pd3dPostSRV[0]);
 		pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
@@ -302,7 +310,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 void CSceneShader::AnimateObjects(float fTimeElapsed)
 {
-	m_fTotalTime < 1.0f ? m_fTotalTime += fTimeElapsed, m_fFrameTime = fTimeElapsed : m_fTotalTime = fTimeElapsed, m_fFrameTime = fTimeElapsed;
+	m_fTotalTime < 1.0f ? (m_fTotalTime += fTimeElapsed, m_fFrameTime = fTimeElapsed) : (m_fTotalTime = fTimeElapsed, m_fFrameTime = fTimeElapsed);
 	cout << "SceneFrame : " << m_fTotalTime << endl;
 }
 
@@ -319,7 +327,7 @@ void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, ID3D11Sh
 	
 //	m_csBloom.m_pd3dSRVArray[1]
 	ID3D11ShaderResourceView* pShaderViews[4] = { m_ppd3dMrtSrv[0], m_csReduce.m_pd3dSRVArray[1], pBloomSRV != nullptr? pBloomSRV[0] : nullptr, pBloomSRV != nullptr ? pBloomSRV[1] : nullptr };
-	ID3D11SamplerState * pSamplers[2] = { TXMgr.GetSamplerState("ss_point_clamp"),  TXMgr.GetSamplerState("ss_linear_clamp") };
+	ID3D11SamplerState * pSamplers[2] = { TXMgr.GetSamplerState("ss_point_clamp"),  TXMgr.GetSamplerState("ss_linear_point_wrap") };
 	CB_PS cbPS = { m_fInverseToneTex, m_fInverseToneTex, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT };
 	{
 		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -386,9 +394,9 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 
 				pd3dDeviceContext->CSSetShader(m_pd3dCSReduceToSingle, nullptr, 0);
 				pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, &m_csReduce.m_pd3dUAVArray[1], nullptr);
-				pd3dDeviceContext->CSSetUnorderedAccessViews(2, 1, &m_pd3dLastReducedUAV, nullptr);
+				//pd3dDeviceContext->CSSetUnorderedAccessViews(2, 1, &m_pd3dLastReducedUAV, nullptr);
 				pd3dDeviceContext->CSSetShaderResources(1, 1, &m_csReduce.m_pd3dSRVArray[0]);
-
+				//pd3dDeviceContext->CSSetShaderResources(2, 1, &m_csReduce.m_pd3dSRVArray[1]);
 				pd3dDeviceContext->Dispatch(dim, 1, 1);
 
 				pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
@@ -410,6 +418,28 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 			m_csReduce.swap(0, 1);
 		}
 
+	}
+	{
+		m_csReduce.swap(0, 1);
+
+		CB_CS cbCS = { XMFLOAT4(0, 0, m_fTotalTime, m_fFrameTime) };
+		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+		pd3dDeviceContext->Map(m_pd3dCBComputeInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		memcpy(d3dMappedResource.pData, &cbCS, sizeof(CB_CS));
+		pd3dDeviceContext->Unmap(m_pd3dCBComputeInfo, 0);
+
+		pd3dDeviceContext->CSSetConstantBuffers(0, 1, &m_pd3dCBComputeInfo);
+
+		pd3dDeviceContext->CSSetShader(m_pd3dCSAdaptLum, nullptr, 0);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(1, 1, &m_csReduce.m_pd3dUAVArray[1], nullptr);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(2, 1, &m_pd3dLastReducedUAV, nullptr);
+		pd3dDeviceContext->CSSetShaderResources(1, 1, &m_csReduce.m_pd3dSRVArray[0]);
+		//pd3dDeviceContext->CSSetShaderResources(2, 1, &m_csReduce.m_pd3dSRVArray[1]);
+		pd3dDeviceContext->Dispatch(1, 1, 1);
+
+		pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
+		pd3dDeviceContext->CSSetUnorderedAccessViews(1, 2, pd3dNullUAV, nullptr);
+		pd3dDeviceContext->CSSetShaderResources(0, 1, pd3dNullSRV);
 	}
 
 
@@ -523,22 +553,54 @@ void CSceneShader::Blooming(ID3D11DeviceContext * pd3dDeviceContext,  UINT uRend
 
 		pd3dDeviceContext->Dispatch(cxGroup, ScreenHeight, 1);
 		//pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
-
+		
 		pd3dDeviceContext->CSSetShader(m_pd3dComputeVertBlur, nullptr, 0);	// bloom이 아니라 블러로 한다.
 		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostUAV[1], nullptr);
 
 		pd3dSRVArray[0] = m_pd3dPostSRV[0];
 
 		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
-
 		pd3dDeviceContext->Dispatch(ScreenWidth, cyGroup, 1);
+		
 
 		pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
 		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, pd3dNullUAV, nullptr);
 		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dNullSRV);
 	}
 
-	DumpMap(pd3dDeviceContext, m_pd3dPostSRV[1], m_pd3dBloom8x8RTV, FRAME_BUFFER_WIDTH * 0.125, FRAME_BUFFER_HEIGHT * 0.125, pCamera);
+	DumpMap(pd3dDeviceContext, m_pd3dPostSRV[1], m_pd3dBloom16x16RTV, FRAME_BUFFER_WIDTH * 0.0625, FRAME_BUFFER_HEIGHT * 0.0625, pCamera);
+
+
+	ScreenWidth = ceilf(FRAME_BUFFER_WIDTH * 0.0625);
+	ScreenHeight = ceilf(FRAME_BUFFER_HEIGHT * 0.0625);
+
+	cxGroup = (UINT)ceilf(ScreenWidth / 256.0f);
+	cyGroup = (UINT)ceilf(ScreenHeight / 240.0f);
+	{
+		cbcs.m_uOutputSize.x = cbcs.m_uInputSize.x = ScreenWidth;
+		cbcs.m_uOutputSize.y = cbcs.m_uInputSize.y = ScreenHeight;
+
+		pd3dDeviceContext->Map(m_pd3dCBBloomInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		memcpy(d3dMappedResource.pData, &cbcs, sizeof(CB_CS_BLOOM));
+		pd3dDeviceContext->Unmap(m_pd3dCBBloomInfo, 0);
+		pd3dDeviceContext->CSSetConstantBuffers(SLOT_CS_CB_BLOOM, 1, &m_pd3dCBBloomInfo);
+
+		pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBlur, nullptr, 0);	// bloom이 아니라 블러로 한다.
+		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostScaledUAV[1], nullptr);
+
+		pd3dSRVArray[0] = m_pd3dPostScaledSRV[1];
+
+		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
+		pd3dDeviceContext->Dispatch(cxGroup, ScreenHeight, 1);
+
+		pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBlur, nullptr, 0);	// bloom이 아니라 블러로 한다.
+		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostScaledUAV[0], nullptr);
+
+		pd3dSRVArray[0] = m_pd3dPostScaledSRV[1];
+
+		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
+		pd3dDeviceContext->Dispatch(ScreenWidth, cyGroup, 1);
+	}
 }
 
 void CSceneShader::DumpMap(ID3D11DeviceContext * pd3dDeviceContext, ID3D11ShaderResourceView * pSRVsource, ID3D11RenderTargetView * pRTVTarget, DWORD dFrameWidth, DWORD dFrameHeight, CCamera * pCamera)
@@ -619,7 +681,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 
 	CMaterial *pPlayerMaterial = new CMaterial();
 	pPlayerMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	pPlayerMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
+	pPlayerMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	pPlayerMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
 	pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 

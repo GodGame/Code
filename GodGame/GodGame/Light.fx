@@ -5,7 +5,7 @@
 
 #define _WITH_LOCAL_VIEWER_HIGHLIGHTING
 #define _WITH_THETA_PHI_CONES
-//#define _WITH_REFLECT
+#define _WITH_REFLECT
 
 
 //재질을 위한 구조체를 선언한다.
@@ -396,15 +396,15 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 		{
 			float3 vToLight = gLights[i].m_vPosition - vPos;
 			//vSpec.w = CookTorrenceSF(vNormal, vToCamera, vToLight, 0.85f, 0.01f);
-			//vSpec.w = max(0.2, vSpec.w);
-			vSpec.w = 255.0f;
+			//vSpec.w = max(0.5, vSpec.w);
+			vSpec.w = 1.0f;
 
 			//조명의 유형에 따라 조명의 영향을 계산한다.
-			//if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
-			//{
-			//	LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
-			//	cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
-			//}
+			if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
+			{
+				LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
+				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
+			}
 			if (gLights[i].m_nType == POINT_LIGHT)
 			{
 				LightedColor = PointLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
@@ -418,7 +418,7 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 		}
 	}
 	//글로벌 주변 조명의 영향을 최종 색상에 더한다.
-	cColor += (gcLightGlobalAmbient  /** HemisphericLight( vNormal, vPos)*//*gAmbient*/ );//gMaterial.m_cAmbient);
+	cColor += (gcLightGlobalAmbient * vDiffuse/** HemisphericLight( vNormal, vPos)*//*gAmbient*/ );
 	//cColor *= HemisphericLight(vNormal, vPos);
 	//최종 색상의 알파값은 재질의 디퓨즈 색상의 알파값으로 설정한다.
 	//cColor.a = gMaterial.m_cDiffuse.a;

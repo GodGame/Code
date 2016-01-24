@@ -41,9 +41,9 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	int3 uvm = int3(input.pos.xy, 0);	// (u, v, level)
 	float4 normal = gtxtNormal.Load(uvm);
 	float3 pos = gtxtPos.Load(uvm).xyz;
-	float4 diffuse = gtxtDiffuse.Load(uvm);	// 2.2
+	float4 diffuse = pow(gtxtDiffuse.Load(uvm), 2.2);	// 2.2
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = gtxtTxColor.Load(uvm);// 2.2
+	float4 txColor = pow(gtxtTxColor.Load(uvm), 2.2);// 2.2
 
 	float fLightingAmount = 0;
 	float4 color;
@@ -65,13 +65,8 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 #endif
 		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
 		//return float4(ColorToLum(color), 1);
-		color += DirectLighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
-	//	float4 lights = color;
-	//	lights.x = min(1.0f, lights.x);
-	//	lights.y = min(1.0f, lights.y);
-	//	lights.z = min(1.0f, lights.z);
-	//	fLightingAmount = dot( float4(0.333, 0.333, 0.333, 0), lights);
-	//	fLightingAmount =  max(max(lights.x, lights.y), lights.z);
+		//color += DirectLighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
+
 		color *= txColor;
 		//color = GammaToneMapping(color);
 		//color.a = fLightingAmount;

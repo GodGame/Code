@@ -50,6 +50,7 @@ CMesh::~CMesh()
 
 void CMesh::AssembleToVertexBuffer(int nBuffers, ID3D11Buffer **ppd3dBuffers, UINT *pnBufferStrides, UINT *pnBufferOffsets)
 {
+	printf("1");
 	ID3D11Buffer **ppd3dNewVertexBuffers = new ID3D11Buffer*[m_nBuffers + nBuffers];
 	UINT *pnNewVertexStrides = new UINT[m_nBuffers + nBuffers];
 	UINT *pnNewVertexOffsets = new UINT[m_nBuffers + nBuffers];
@@ -1031,6 +1032,7 @@ CPlaneMesh::~CPlaneMesh()
 
 CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, float fScale) : CMeshTexturedIlluminated(pd3dDevice)
 {
+
 	int nReadBytes;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	//D3D11_PRIMITIVE_TOPOLOGY_
@@ -1038,18 +1040,21 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 	FILE * pFile = NULL;
 	::fopen_s(&pFile,tMeshName, "rb");
 
+	m_nBuffers = 0;
 
 	//정점 개수
 	nReadBytes = ::fread(&m_nVertices, sizeof(size_t), 1, pFile);
-
+	//int a;
+	//::fread(&a, 4, 1, pFile);
 	NormalMapVertex * pChaeInfo = new NormalMapVertex[m_nVertices];
 	m_pxv3Positions = new XMFLOAT3[m_nVertices];
 
-	nReadBytes = ::fread(&pChaeInfo[0], sizeof(NormalMapVertex), m_nVertices, pFile);
 
+	nReadBytes = ::fread(&pChaeInfo[0], sizeof(NormalMapVertex), m_nVertices, pFile);
+	
 	nReadBytes = ::fread(&m_nIndices, sizeof(size_t), 1, pFile);
 	m_pnIndices = new UINT[m_nIndices];
-	nReadBytes = ::fread(m_pnIndices, sizeof(UINT), m_nIndices, pFile);
+	nReadBytes = ::fread(&m_pnIndices[0], sizeof(UINT), m_nIndices, pFile);
 	::fclose(pFile);
 
 	XMFLOAT3 min{ FLT_MAX, FLT_MAX , FLT_MAX }, max{ FLT_MIN, FLT_MIN, FLT_MIN };

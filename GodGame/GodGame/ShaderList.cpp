@@ -496,8 +496,15 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
 {
-	m_pMaterial = pMaterial;
-	if (pMaterial) pMaterial->AddRef();
+	CMaterial * pMat = new CMaterial();
+	pMat->m_Material.m_xcAmbient = XMFLOAT4(100, 100, 100, 10);
+	pMat->m_Material.m_xcDiffuse = XMFLOAT4(100, 100, 100, 10);
+	pMat->m_Material.m_xcSpecular = XMFLOAT4(100, 100, 100, 10);
+	pMat->m_Material.m_xcEmissive = XMFLOAT4(100, 100, 100, 10);
+
+
+	m_pMaterial = pMat;//pMaterial;
+	pMat->AddRef();//if (pMaterial) pMaterial->AddRef();
 	m_nObjects = m_nCubes = 1;
 
 	XMFLOAT3 xmf3Pos;
@@ -513,8 +520,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 
-
-	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 30, 30);
+	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 10, 10);
 	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
 	{
@@ -523,12 +529,12 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		float fz = rand() % czTerrain;
 		float fy = pTerrain->GetHeight(fx, fz) + 10;
 		pObject->SetMesh(pPointMesh);
-		pObject->SetMaterial(pMaterial);
+		//pObject->SetMaterial(pMat);
 		pObject->SetPosition(fx, fy, fz);
 		m_ppObjects[i] = pObject;
 	}
 
-	m_ppObjects[0]->SetPosition(XMFLOAT3(1125, 190, 218)); 
+	m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350)); 
 	//m_ppObjects[1]->SetPosition(XMFLOAT3(1085, 180, 260));
 	//m_ppObjects[2]->SetPosition(XMFLOAT3(1115, 180, 265));
 	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255)); 
@@ -542,7 +548,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	m_pTexture = new CTexture(1, 1, 0, 0);
 	ID3D11ShaderResourceView * pd3dsrvArray;
 	//ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Ceiling_01.jpg"), nullptr, nullptr, &pd3dsrvArray, nullptr);
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Marble01.jpg"), nullptr, nullptr, &pd3dsrvArray, nullptr);
 	ASSERT(SUCCEEDED(hr));
 
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
@@ -575,7 +581,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 
 	//m_ppObjects[0]->Render(pd3dDeviceContext, nullptr);
-	int nTreeObject = m_nCubes;
+	//int nTreeObject = m_nCubes;
 
 	int nCubeInstance = 0;
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -599,13 +605,21 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
 
 	CMesh *pCubeMesh = m_ppObjects[0]->GetMesh();
-	pCubeMesh->RenderInstanced(pd3dDeviceContext, nCubeInstance, 0);
+	pCubeMesh->RenderInstanced(pd3dDeviceContext, uRenderState, nCubeInstance, 0);
 
 }
 
 
 void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 {
+	if (GetAsyncKeyState('O') & 0x0001)
+	{
+		m_ppObjects[0]->SetPosition(XMFLOAT3(8, 0, 0));
+	}
+	else if (GetAsyncKeyState('P') & 0x0001)
+	{
+		m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350));
+	}
 }
 #pragma endregion
 

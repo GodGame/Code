@@ -3,7 +3,7 @@
 Texture2D<float4> tex : register(t0);
 StructuredBuffer<float> lum : register(t1);
 Texture2D bloom : register(t2);
-Texture2D bloom8x8 : register(t3);
+Texture2D bloom16x16 : register(t3);
 
 
 SamplerState PointSampler : register (s0);
@@ -32,7 +32,7 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	float4 vColor = tex.SampleLevel(PointSampler, Tex, 0);
 	float fLum = lum[0] * g_param.x;
 	float3 vBloom = bloom.Sample(LinearSampler, Tex);
-	float3 vBloomScaled = bloom8x8.Sample(LinearSampler, Tex);
+	float3 vBloomScaled = bloom16x16.Sample(LinearSampler, Tex);
 	//return vColor;
 
 	// Tone mapping
@@ -45,7 +45,7 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	//vBloomScaled = CalculateToneColor(vColor, fLum, middle);
 
 
-	vColor.rgb += ( 0.3f * vBloom + 0.3f * vBloomScaled);//vBloom;// max(vBloom, vBloomScaled);
+	vColor.rgb += ( 0.3f * vBloom + 0.4f * vBloomScaled);//vBloom;// max(vBloom, vBloomScaled);
 //	vColor.a = 1.0f;
 
 	return vColor;//vColor;

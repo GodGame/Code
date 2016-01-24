@@ -149,11 +149,14 @@ private:
 	
 	ID3D11RenderTargetView * m_pd3dBloom4x4RTV;
 	ID3D11ShaderResourceView * m_pd3dBloom4x4SRV;
-	ID3D11RenderTargetView * m_pd3dBloom8x8RTV;
-	ID3D11ShaderResourceView * m_pd3dBloom8x8SRV;
+	ID3D11RenderTargetView * m_pd3dBloom16x16RTV;
+	ID3D11ShaderResourceView * m_pd3dBloom16x16SRV;
 
 	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
 	ID3D11ShaderResourceView * m_pd3dPostSRV[2];
+	ID3D11UnorderedAccessView * m_pd3dPostScaledUAV[2];
+	ID3D11ShaderResourceView * m_pd3dPostScaledSRV[2];
+
 	ID3D11ComputeShader * m_pd3dComputeHorzBlur;
 	ID3D11ComputeShader * m_pd3dComputeVertBlur;
 	ID3D11ComputeShader * m_pd3dComputeHorzBloom;
@@ -162,6 +165,7 @@ private:
 	ID3D11Buffer * m_pd3dCBComputeInfo;
 	ID3D11Buffer * m_pd3dCBBloomInfo;
 
+	ID3D11ComputeShader * m_pd3dCSAdaptLum;
 	ID3D11ComputeShader * m_pd3dCSReduceToSingle;
 	ID3D11ShaderResourceView * m_pd3dLastReducedSRV;
 	ID3D11UnorderedAccessView * m_pd3dLastReducedUAV;
