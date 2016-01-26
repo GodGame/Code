@@ -189,9 +189,6 @@
     <FxCompile Include="Particle.fx">
       <Filter>StaticGlobal\0_Effects</Filter>
     </FxCompile>
-    <FxCompile Include="Shadow.fx">
-      <Filter>StaticGlobal\0_Effects</Filter>
-    </FxCompile>
     <FxCompile Include="Post.fx">
       <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
     </FxCompile>
@@ -208,6 +205,9 @@
       <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
     </FxCompile>
     <FxCompile Include="PostDefine.fx">
+      <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="Shadow.fx">
       <Filter>StaticGlobal\0_Effects\PostProcessing</Filter>
     </FxCompile>
   </ItemGroup>

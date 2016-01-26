@@ -153,7 +153,7 @@ void CScene::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	m_pLights = new LIGHTS;
 	::ZeroMemory(m_pLights, sizeof(LIGHTS));
 	//게임 월드 전체를 비추는 주변조명을 설정한다.
-	m_pLights->m_xcGlobalAmbient = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+	m_pLights->m_xcGlobalAmbient = XMFLOAT4(0.2f, 0.2f, 0.2f, 0.0f);
 
 	//3개의 조명(점 광원, 스팟 광원, 방향성 광원)을 설정한다.
 	m_pLights->m_pLights[0].m_bEnable = 1.0f;

@@ -92,8 +92,8 @@ public:
 	XMFLOAT4	m_xmfPlane;
 
 private:
-	int		m_nReferences;
-	bool	m_bActive;
+	unsigned int	m_nReferences : 31;
+	unsigned int	m_bActive : 1;
 
 public:
 	void	 AddRef();

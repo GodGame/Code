@@ -418,7 +418,7 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 		}
 	}
 	//글로벌 주변 조명의 영향을 최종 색상에 더한다.
-	cColor += (gcLightGlobalAmbient * vDiffuse/** HemisphericLight( vNormal, vPos)*//*gAmbient*/ );
+	cColor += (gcLightGlobalAmbient * vDiffuse * fShadowFactor/** HemisphericLight( vNormal, vPos)*//*gAmbient*/ );
 	//cColor *= HemisphericLight(vNormal, vPos);
 	//최종 색상의 알파값은 재질의 디퓨즈 색상의 알파값으로 설정한다.
 	//cColor.a = gMaterial.m_cDiffuse.a;

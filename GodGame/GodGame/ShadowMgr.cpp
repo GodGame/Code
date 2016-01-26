@@ -116,7 +116,7 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 	d3dRSDesc.FrontCounterClockwise = false;
 	d3dRSDesc.DepthBias = SHADOW_DEPTH_BIAS;
 	d3dRSDesc.DepthBiasClamp = 0.0f;
-	d3dRSDesc.SlopeScaledDepthBias = 2.0f;
+	d3dRSDesc.SlopeScaledDepthBias = 1.0f;
 	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateRasterizerState(&d3dRSDesc, &m_pd3dShadowRS)));
 }
 

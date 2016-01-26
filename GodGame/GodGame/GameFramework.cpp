@@ -38,7 +38,7 @@ CGameFramework::CGameFramework()
 
 	m_pd3dSSAOTargetView = nullptr;
 
-	m_pSSAOShader = nullptr;
+	//m_pSSAOShader = nullptr;
 	m_uRenderState = 0;
 }
 
@@ -530,11 +530,8 @@ void CGameFramework::BuildObjects()
 	m_pSceneShader = new CSceneShader();
 	m_pSceneShader->CreateShader(m_pd3dDevice);
 	m_pSceneShader->BuildObjects(m_pd3dDevice, m_pd3dMRTSRV, m_iDrawOption, m_pd3dBackRenderTargetView);
-	//m_pSceneShader->SetPostView(m_pd3dPostSRV, m_pd3dPostUAV);
-	//m_pSceneShader->SetBloomScaled(m_pd3dBloom4x4RTV, m_pd3dBloom4x4SRV);
 
 	m_pScene = new CScene();
-	//m_pScene->SetRenderTarget(m_pd3dRenderTargetView);
 	m_pScene->SetDepthStencilView(m_pd3dDepthStencilView);
 	m_pScene->BuildObjects(m_pd3dDevice, m_pSceneShader);
 
@@ -615,9 +612,9 @@ void CGameFramework::ReleaseObjects()
 	if (m_pSceneShader) delete m_pSceneShader;
 	m_pSceneShader = nullptr;
 
-	if (m_pSSAOShader) m_pSSAOShader->ReleaseObjects();
-	if (m_pSSAOShader) delete m_pSSAOShader;
-	m_pSSAOShader = nullptr;
+	//if (m_pSSAOShader) m_pSSAOShader->ReleaseObjects();
+	//if (m_pSSAOShader) delete m_pSSAOShader;
+	//m_pSSAOShader = nullptr;
 }
 
 void CGameFramework::ProcessInput()
@@ -702,7 +699,6 @@ void CGameFramework::FrameAdvance()
 	}
 	if (m_pd3dDepthStencilView) m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-	ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
 #ifdef _THREAD
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
@@ -741,7 +737,8 @@ void CGameFramework::FrameAdvance()
 	//m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_pd3dMRTSRV[MRT_NORMAL]);	
 	//m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
 
-
+	//ShadowMgr.UpdateStaticShadowResource(m_pd3dDeviceContext);
+	ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
 
 	m_pScene->UpdateLights(m_pd3dDeviceContext);
 	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);

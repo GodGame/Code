@@ -332,7 +332,7 @@ CSphereMeshDiffused::CSphereMeshDiffused(ID3D11Device *pd3dDevice, float fRadius
 	d3dBufferData.pSysMem = pXMFLOAT4s;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dColorBuffer);
 
-	delete[] pXMFLOAT4s;
+	delete [] pXMFLOAT4s;
 
 	ID3D11Buffer *pd3dBuffers[2] = { m_pd3dPositionBuffer, m_pd3dColorBuffer };
 	UINT pnBufferStrides[2] = { sizeof(XMFLOAT3), sizeof(XMFLOAT4) };
@@ -1043,7 +1043,7 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 	m_nBuffers = 0;
 
 	//정점 개수
-	nReadBytes = ::fread(&m_nVertices, sizeof(size_t), 1, pFile);
+	nReadBytes = ::fread(&m_nVertices, sizeof(UINT), 1, pFile);
 	//int a;
 	//::fread(&a, 4, 1, pFile);
 	NormalMapVertex * pChaeInfo = new NormalMapVertex[m_nVertices];
@@ -1052,7 +1052,7 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 
 	nReadBytes = ::fread(&pChaeInfo[0], sizeof(NormalMapVertex), m_nVertices, pFile);
 	
-	nReadBytes = ::fread(&m_nIndices, sizeof(size_t), 1, pFile);
+	nReadBytes = ::fread(&m_nIndices, sizeof(UINT), 1, pFile);
 	m_pnIndices = new UINT[m_nIndices];
 	nReadBytes = ::fread(&m_pnIndices[0], sizeof(UINT), m_nIndices, pFile);
 	::fclose(pFile);

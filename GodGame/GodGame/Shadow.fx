@@ -1,5 +1,3 @@
-
-
 Texture2D gtxtStaticShadow : register(t30);
 Texture2D gtxtShadowMap : register(t31);
 //#define SHADOW
@@ -26,9 +24,9 @@ float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowM
 	float percentLit = 0.0f;
 	const float2 offsets[9] =
 	{
-		float2(-dx, -dx), float2 (0.0f, -dx), float2(dx, -dx),
+		float2(-dx, -dx),  float2 (0.0f, -dx), float2(dx, -dx),
 		float2(-dx, 0.0f), float2(0.0f, 0.0f), float2(dx, 0.0f),
-		float2(-dx, dx), float2(0.0f, dx), float2(dx, +dx)
+		float2(-dx, dx),   float2(0.0f, dx),   float2(dx, dx)
 	};
 
 	[unroll]
@@ -41,7 +39,7 @@ float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowM
 				);
 	}
 
-	return percentLit *= 0.11111f;
+	return (percentLit *= 0.11112f);
 }
 
 float CalcOneShadowFactor( float4 shadowPos, float fMinFactor)

@@ -256,12 +256,12 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	//}
 
 //	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
-		ID3D11ShaderResourceView * pNullArray[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+		//ID3D11ShaderResourceView * pNullArray[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 
 
 	m_pMesh->Render(pd3dDeviceContext, uRenderState);
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
-	pd3dDeviceContext->PSGetShaderResources(17, NUM_MRT - 1, pNullArray);
+	//pd3dDeviceContext->PSGetShaderResources(17, NUM_MRT - 1, pNullArray);
 
 	// 이런...
 	//SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
@@ -593,7 +593,7 @@ void CSceneShader::Blooming(ID3D11DeviceContext * pd3dDeviceContext,  UINT uRend
 		pd3dDeviceContext->CSSetShaderResources(0, 2, pd3dSRVArray);
 		pd3dDeviceContext->Dispatch(cxGroup, ScreenHeight, 1);
 
-		pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBlur, nullptr, 0);	// bloom이 아니라 블러로 한다.
+		pd3dDeviceContext->CSSetShader(m_pd3dComputeVertBlur, nullptr, 0);	// bloom이 아니라 블러로 한다.
 		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostScaledUAV[0], nullptr);
 
 		pd3dSRVArray[0] = m_pd3dPostScaledSRV[1];
@@ -1052,28 +1052,6 @@ void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	m_ppObjects[0]->Render(pd3dDeviceContext, uRenderState, pCamera);
-}
-
-
-CShadowShader::CShadowShader()
-{
-
-}
-
-CShadowShader::~CShadowShader()
-{
-}
-
-void CShadowShader::CreateShader(ID3D11Device * pd3dDevice)
-{
-}
-
-void CShadowShader::BuildObjects(ID3D11Device * pd3dDevice)
-{
-}
-
-void CShadowShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
-{
 }
 
 CSSAOShader::CSSAOShader()

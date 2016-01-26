@@ -118,53 +118,65 @@ void ReduceToSingle(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, ui
 	}
 }
 
-[numthreads(1, 1, 1)]
+#define framesnum 16
+groupshared float lums[framesnum + 1];
+[numthreads(framesnum, 1, 1)]
 void LumAdapted(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
 {
-	float fAccum = Input[0];
-	float fAdapted = fLastLum[15];
-	float fAdaptedAverage = fAdapted;
+	lums[GI] = fLastLum[GI];
 
-	[unroll]
-	for (int i = 1; i < 16; ++i)
+	GroupMemoryBarrierWithGroupSync();
+
+	if (GI == 0) 
 	{
-		fAdaptedAverage += fLastLum[i];
-		fLastLum[i - 1] = fLastLum[i];
+		float fAccum = Input[0];
+		float fAdapted = lums[framesnum - 1]; // fLastLum[15];
+		float fAdaptedAverage = fAdapted;
+		int iGreater = (fAdapted >= fAccum);
+
+		[unroll]
+		for (int i = framesnum - 1; i >= 0; --i)
+		{
+			fAdaptedAverage += lums[i];
+			iGreater += (lums[i] >= fAccum);
+		}
+
+		fAdaptedAverage *= 0.0625;
+
+		float fResult = 0;
+		if (iGreater >= (framesnum - 0.01f))
+		{
+			float ftau = 0.4f * g_param.w;
+			fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
+		}
+		else if (iGreater <= 0.1f)
+		{
+			float ftau = 0.05f * g_param.w;
+			fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
+		}
+		else
+		{
+			fResult = fAdapted;// fAdapted - (0.1f * g_param.z) * (fAccum - fAdapted);
+		}
+		
+		fLum[0] = fResult;
+		lums[framesnum] = fResult;
 	}
-	fAdaptedAverage *= 0.0625;
 
-	float fResult = 0;
-	int iGreater = 0;
-	[unroll]
-	for (int i = 0; i < 16; ++i)
-		iGreater += (fLastLum[i] >= fAccum);
+	GroupMemoryBarrierWithGroupSync();
 
-	if (iGreater >= 15.9)
-	{
-		float ftau = lerp(0.4, 0.2, g_param.w)/*Ttau(g_param.w, 0.2f, 0.4f)*/ *g_param.w;
-		fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
-	}
-	else if (iGreater <= 0.1f)
-	{
-		float ftau = lerp(0.4, 0.2f, 1 - g_param.w * 0.5f) /*Ttau(1 - g_param.w * 0.5f, 0.2f, 0.4f)*/ * g_param.w *0.5f;
-		fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
-	}
-	else
-	{
-		fResult = fAdapted;// fAdapted - (0.1f * g_param.z) * (fAccum - fAdapted);
-	}
+	fLastLum[GI] = lums[GI + 1];
 
-	//if (fAdaptedAverage >= fAccum)//iGreater >= 15.9)
-	//{
-	//	fResult = fAdaptedAverage - (0.1 * g_param.z) * (fAccum - fAdaptedAverage);
-
-	//}
-	//else //if(iGreater <= 0.1f)
-	//{
-	//	fResult = fAdaptedAverage + (0.1 * g_param.z) * (fAccum - fAdaptedAverage);
-	//}
-
-	fLum[0] = fResult;
-	fLastLum[15] = fResult;
 
 }
+//if (fAdaptedAverage >= fAccum)//iGreater >= 15.9)
+//{
+//	fResult = fAdaptedAverage - (0.1 * g_param.z) * (fAccum - fAdaptedAverage);
+
+//}
+//else //if(iGreater <= 0.1f)
+//{
+//	fResult = fAdaptedAverage + (0.1 * g_param.z) * (fAccum - fAdaptedAverage);
+//}
+
+

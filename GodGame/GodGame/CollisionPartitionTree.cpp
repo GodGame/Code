@@ -1,6 +1,5 @@
 #include "CollisionMgr.h"
 
-
 template<int nodes>
 CPartitionTree<nodes>::CPartitionTree(AABB & bbMapBox, int nLevels)
 {

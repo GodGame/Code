@@ -30,12 +30,12 @@ public:
 	static ePartLoc IsIncludeAABBBy2D(AABB & bbSmall, AABB & bbLarge);
 
 };
+
 class CGameObject;
 struct CPartitionNode
 {
-
-	bool m_bIsStatic;
-	CGameObject * m_pObject;
+	AABB m_BoundingBox;
+	vector<CGameObject*> m_vpObjects;
 };
 
 template <int nodes>
@@ -68,8 +68,34 @@ public:
 
 #include "CollisionPartitionTree.cpp"
 
-class QuadTree
+class DirectQuadTree
 {
+	CPartitionNode * m_pNodesArray;
+	unsigned int m_nTreeLevels : 8;
+	unsigned int m_nMapWidth : 12;
+	unsigned int m_nMapLength : 12;
+
+	unsigned int m_nNodes;
+
+	float m_fXScaleInverse;
+	float m_fZScaleInverse;
+
+public:
+	DirectQuadTree();
+	~DirectQuadTree();
+
+	void BuildQuadTree(BYTE nTreeLevels, UINT MapWidth, UINT MapLength);
+
+
+public:
+	int GetNodeContainingIndex(AABB & bb);
+
+	CPartitionNode * GetNodeContaining(AABB & objBoundingBox);
+	CPartitionNode * GetNodeContaining(float fLeft, float fRight, float fNear, float fFar);
+
+	int EntryObject(CGameObject * pObject);
+	void EntryObjects(CGameObject ** ppObjectArrays, int nObjects);
+
 };
 
 

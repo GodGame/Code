@@ -202,17 +202,6 @@ public:
 
 };
 
-class CShadowShader : public CTexturedShader
-{
-public:
-	CShadowShader();
-	virtual ~CShadowShader();
-
-	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-};
-
 class CSSAOShader : public CShader
 {
 	CMesh * m_pMesh;

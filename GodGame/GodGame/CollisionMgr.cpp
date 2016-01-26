@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "CollisionMgr.h"
-
+#include "Object.h"
 
 CCollisionMgr::CCollisionMgr()
 {
@@ -103,4 +103,97 @@ ePartLoc AABB::IsIncludeAABBBy2D(AABB & bbSmall, AABB & bbLarge)
 	if (bbSmall.m_xv3Maximum.y > bbLarge.m_xv3Maximum.y) return ePartLoc::INCLUDE_PART_MIN;
 
 	return ePartLoc::INCLUDE_ALL;
+}
+
+DirectQuadTree::DirectQuadTree()
+{
+	m_pNodesArray = nullptr;
+	m_nTreeLevels = 0;
+	m_nNodes = 0;
+
+	m_nMapWidth = 0;
+	m_nMapLength = 0;
+	m_fXScaleInverse = 0;
+	m_fZScaleInverse = 0;
+}
+
+DirectQuadTree::~DirectQuadTree()
+{
+	if (m_pNodesArray) delete m_pNodesArray;
+}
+
+void DirectQuadTree::BuildQuadTree(BYTE nTreeLevels, UINT MapWidth, UINT MapLength)
+{
+	float fXScale, fZScale;
+
+	m_nTreeLevels = nTreeLevels;
+	fXScale = m_nMapWidth = MapWidth;
+	fZScale = m_nMapLength = MapLength;
+
+	for (int lv = m_nTreeLevels; lv > 0; --lv)
+	{
+		fXScale *= 0.5f;
+		fZScale *= 0.5f;
+		m_nNodes += pow(4, lv);
+	}
+	m_fXScaleInverse = 1 / fXScale;
+	m_fZScaleInverse = 1 / fZScale;
+
+	m_pNodesArray = new CPartitionNode[++m_nNodes];
+}
+
+int DirectQuadTree::GetNodeContainingIndex(AABB & bb)
+{
+	int x1 = (int)(bb.m_xv3Minimum.x * m_fXScaleInverse);
+	int z1 = (int)(bb.m_xv3Minimum.y * m_fZScaleInverse);
+
+	int xResult = x1 ^ (int)(bb.m_xv3Maximum.x * m_fXScaleInverse);
+	int zResult = z1 ^ (int)(bb.m_xv3Maximum.z * m_fZScaleInverse);
+
+	int nNodeLv = m_nTreeLevels;
+	int nShift = 0;
+
+	while (xResult + zResult != 0)	// 최 상단 비트 찾기
+	{
+		xResult >>= 1;
+		zResult >>= 1;
+		nNodeLv--;
+		nShift++;
+	}
+	x1 >>= nShift;
+	z1 >>= nShift;
+
+	return (z1 << (nNodeLv - 1) + x1);
+}
+
+CPartitionNode * DirectQuadTree::GetNodeContaining(AABB & objBoundingBox)
+{
+	return &(m_pNodesArray[GetNodeContainingIndex(objBoundingBox)]);
+}
+
+CPartitionNode * DirectQuadTree::GetNodeContaining(float fLeft, float fRight, float fNear, float fFar)
+{
+	AABB bb;
+	bb.m_xv3Maximum = { fRight, 0.0f, fFar };
+	bb.m_xv3Minimum = { fLeft, 0.0f, fNear };
+
+	int index = GetNodeContainingIndex(bb);
+
+	return &m_pNodesArray[index];
+}
+
+int DirectQuadTree::EntryObject(CGameObject * pObject)
+{
+	int index =
+		GetNodeContainingIndex(pObject->m_bcMeshBoundingCube);
+
+	m_pNodesArray[index].m_vpObjects.push_back(pObject);
+
+	return index;
+}
+
+void DirectQuadTree::EntryObjects(CGameObject ** ppObjectArrays, int nObjects)
+{
+	for (int i = 0; i < nObjects; ++i)
+		DirectQuadTree::EntryObject(ppObjectArrays[i]);
 }
