@@ -51,15 +51,25 @@ float4 PSDiffusedColor(VS_DIFFUSED_COLOR_OUTPUT input) : SV_Target
 VS_INSTANCED_DIFFUSED_COLOR_OUTPUT VSInstancedDiffusedColor(VS_INSTANCED_DIFFUSED_COLOR_INPUT input)
 {
 	VS_INSTANCED_DIFFUSED_COLOR_OUTPUT output = (VS_INSTANCED_DIFFUSED_COLOR_OUTPUT)0;
-	output.position = mul(mul(float4(input.position, 1.0f), input.mtxTransform), gmtxViewProjection);
+	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform);
+	output.position = mul(output.positionW, gmtxViewProjection);
 	output.color = input.color;
 
 	return(output);
 }
 
-float4 PSInstancedDiffusedColor(VS_INSTANCED_DIFFUSED_COLOR_OUTPUT input) : SV_Target
+PS_MRT_OUT PSInstancedDiffusedColor(VS_INSTANCED_DIFFUSED_COLOR_OUTPUT input) : SV_Target
 {
-	return(input.color);
+	//return(input.color);
+
+	PS_MRT_OUT output;
+	output.vNormal = float4(0, 0, 0, 0);
+	output.vPos = float4(input.positionW.xyz, 1.0f);
+	output.vDiffuse = float4(1, 1, 1, 0.0f/*fShadowFactor*/);
+	output.vSpec = float4(1, 1, 1, 0.0f/*fShadowFactor*/);
+	output.vTxColor = input.color;
+
+	return(output);
 }
 
 //조명의 영향을 계산하기 위한 정점의 법선 벡터와 정점의 위치를 계산하는 정점 쉐이더 함수이다.

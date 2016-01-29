@@ -54,6 +54,11 @@ void CGameObject::SetTexture(CTexture *pTexture, bool beforeRelease)
 	if (m_pTexture) m_pTexture->AddRef();
 }
 
+void CGameObject::UpdateBoundingBox()
+{
+	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());
+}
+
 void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
 {
 	if (m_ppMeshes)
@@ -83,7 +88,7 @@ bool CGameObject::IsVisible(CCamera *pCamera)
 	if (m_bActive)
 	{
 		AABB bcBoundingCube = m_bcMeshBoundingCube;
-		bcBoundingCube.Update(&m_xmf44World);
+		bcBoundingCube.Update(m_xmf44World);
 		if (pCamera) bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
 	}
 	return(bIsVisible);
@@ -110,7 +115,7 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 				if (pCamera)
 				{
 					AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
-					bcBoundingCube.Update(&m_xmf44World);
+					bcBoundingCube.Update(m_xmf44World);
 					bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
 				}
 				if (bIsVisible) 
@@ -208,6 +213,47 @@ XMFLOAT3 CGameObject::GetRight()
 	Chae::XMFloat3Normalize(&xv3Right);
 	return(xv3Right);
 }
+
+void CGameObject::GetGameMessage(CGameObject * byObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		return;
+	case eMessage::MSG_CULL_OUT:
+		m_bActive = false;
+		return;
+	case eMessage::MSG_COLLIDE:
+		return;
+	case eMessage::MSG_COLLIDED:
+		return;
+
+	case eMessage::MSG_NORMAL:
+		return;
+	}
+}
+
+void CGameObject::SendGameMessage(CGameObject * toObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_NORMAL:
+		return;
+	case eMessage::MSG_COLLIDE:
+		return;
+	case eMessage::MSG_COLLIDED:
+		return;
+	}
+}
+
+void CGameObject::MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG)
+{
+	byObj->SendGameMessage(toObj, eMSG);
+	toObj->GetGameMessage(byObj, eMSG);
+}
+
+
 void CGameObject::MoveStrafe(float fDistance)
 {
 	//게임 객체를 로컬 x-축 방향으로 이동한다.

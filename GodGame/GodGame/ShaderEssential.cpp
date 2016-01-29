@@ -704,6 +704,8 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 
 	pBrickTexture->Release();
 	m_ppObjects[0] = pTerrainPlayer;
+
+	QUADMgr.EntityDynamicObject(m_ppObjects[0]);
 }
 
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -859,10 +861,16 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
 	XMFLOAT3 xv3Scale(8.0f, 2.0f, 8.0f);
+	const int ImageWidth = 256;
+	const int ImageLength = 256;
+
 	/*지형을 높이 맵 이미지 파일을 사용하여 생성한다. 높이 맵 이미지의 크기는 가로x세로(257x257)이고 격자 메쉬의 크기는 가로x세로(17x17)이다.
 	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
 
-	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), 257, 257, 257, 257, xv3Scale);
+	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth + 1, ImageLength + 1, ImageWidth + 1, ImageLength + 1, xv3Scale);
+
+	XMFLOAT3 xv3Size = XMFLOAT3(ImageWidth * xv3Scale.x, 0, ImageWidth * xv3Scale.z);
+	QUADMgr.BuildQuadTree(XMFLOAT3(xv3Size.x * 0.5f, 0, xv3Size.z * 0.5f), xv3Size.x, xv3Size.z, nullptr);
 
 	m_ppObjects[0]->SetMaterial(MaterialMgr.GetObjects("Terrain"));
 

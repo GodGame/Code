@@ -114,7 +114,7 @@ protected:
 	AABB m_bcBoundingCube;
 
 public:
-	AABB GetBoundingCube() { return(m_bcBoundingCube); }
+	AABB & GetBoundingCube() { return(m_bcBoundingCube); }
 #ifdef PICKING
 	int CheckRayIntersection(XMFLOAT3 *pxv3RayPosition, XMFLOAT3 *pxv3RayDirection, MESHINTERSECTINFO *pd3dxIntersectInfo);
 #endif
@@ -144,10 +144,17 @@ protected:
 class CCubeMeshDiffused : public CMeshDiffused
 {
 public:
-	CCubeMeshDiffused(ID3D11Device *pd3dDevice, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f, XMFLOAT4 XMFLOAT4 = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f));
+	CCubeMeshDiffused(ID3D11Device *pd3dDevice, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f, XMFLOAT4 xmf4 = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f));
 	virtual ~CCubeMeshDiffused();
 };
 
+class CWireCube : public CCubeMeshDiffused
+{
+public:
+	CWireCube(ID3D11Device *pd3dDevice, float fWidth = 2.0f, float fHeight = 2.0f, float fDepth = 2.0f, XMFLOAT4 xmf4 = XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f));
+	virtual ~CWireCube();
+	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
+};
 /*CSphereMesh를 CSphereMeshDiffused로 변경하고 베이스 클래스를 CMeshDiffused로 변경한다.*/
 class CSphereMeshDiffused : public CMeshDiffused
 {

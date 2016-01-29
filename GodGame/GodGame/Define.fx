@@ -175,6 +175,7 @@ struct VS_INSTANCED_DIFFUSED_COLOR_INPUT
 struct VS_INSTANCED_DIFFUSED_COLOR_OUTPUT
 {
 	float4 position : SV_POSITION;
+	float4 positionW : POSITION;
 	float4 color : COLOR0;
 };
 

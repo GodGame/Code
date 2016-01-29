@@ -79,6 +79,18 @@ public:
 	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 };
 
+enum eMessage 
+{
+	MSG_NONE = -1,
+	MSG_NORMAL = 0,
+	MSG_COLLIDE,
+	MSG_COLLIDED,
+	MSG_DAMAGED,
+	MSG_GETPOINT,
+
+	MSG_CULL_OUT,
+	MSG_CULL_IN
+};
 
 class CGameObject
 {
@@ -104,14 +116,19 @@ public:
 	CMesh **m_ppMeshes;
 	int m_nMeshes;
 	AABB m_bcMeshBoundingCube;
+	//AABB m_bcMeshBoundingCube;
 
-	void SetMesh(CMesh *pMesh, int nIndex = 0);
 
+public:
 	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
 	//게임 객체는 텍스쳐 가질 수 있다.
 	CTexture *m_pTexture;
 	void SetTexture(CTexture *pTexture, bool beforeRelease = true);
 	void SetActive(bool bActive = false) { m_bActive = bActive; }
+	void UpdateBoundingBox();
+
+	void SetMesh(CMesh *pMesh, int nIndex = 0);
+
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
@@ -143,6 +160,9 @@ public:
 	//객체를 렌더링하기 전에 호출되는 함수이다.
 	virtual void OnPrepareRender() { }
 
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
+	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG);
+	static void MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG);
 #ifdef PICKING
 	//월드 좌표계의 픽킹 광선을 생성한다.
 	void GenerateRayForPicking(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxWorld, XMFLOAT4X4 *pxmtxView, XMFLOAT3 *pxv3PickRayPosition, XMFLOAT3 *pxv3PickRayDirection);

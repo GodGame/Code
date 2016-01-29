@@ -313,6 +313,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 	{
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 	}
+
+	QUADMgr.RenewalDynamicObjects();
 }
 
 void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)

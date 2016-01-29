@@ -268,7 +268,7 @@ CCubeMeshDiffused::CCubeMeshDiffused(ID3D11Device *pd3dDevice, float fWidth, flo
 	//인덱스 버퍼를 생성한다.
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
 
-	CreateRasterizerState(pd3dDevice);
+	//CreateRasterizerState(pd3dDevice);
 
 	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-fx, -fy, -fz);
 	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+fx, +fy, +fz);
@@ -277,6 +277,28 @@ CCubeMeshDiffused::CCubeMeshDiffused(ID3D11Device *pd3dDevice, float fWidth, flo
 CCubeMeshDiffused::~CCubeMeshDiffused()
 {
 }
+
+
+CWireCube::CWireCube(ID3D11Device * pd3dDevice, float fWidth, float fHeight, float fDepth, XMFLOAT4 xmcolor) : CCubeMeshDiffused(pd3dDevice, fWidth, fHeight, fDepth, xmcolor)
+{
+	CreateRasterizerState(pd3dDevice);
+}
+
+CWireCube::~CWireCube()
+{
+}
+
+void CWireCube::CreateRasterizerState(ID3D11Device * pd3dDevice)
+{
+	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
+	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	//래스터라이저 단계에서 컬링(은면 제거)을 하지 않도록 래스터라이저 상태를 생성한다.
+	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
+	d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	d3dRasterizerDesc.DepthClipEnable = true;
+	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
+}
+
 
 /////////////////////////////////////////
 

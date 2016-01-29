@@ -1,16 +1,10 @@
 #include "stdafx.h"
 #include "CollisionMgr.h"
 #include "Object.h"
-
-CCollisionMgr::CCollisionMgr()
-{
-}
-
-
-CCollisionMgr::~CCollisionMgr()
-{
-}
-
+#include <algorithm>
+//typedef pair<QuadTree*, CGameObject*> DynamicInfo;
+//static vector<CGameObject*> gvcContainedArray;
+//static vector<DynamicInfo> gvDynamicArray;
 
 
 void AABB::Union(XMFLOAT3& xv3Minimum, XMFLOAT3& xv3Maximum)
@@ -28,8 +22,14 @@ void AABB::Union(AABB *pAABB)
 	Union(pAABB->m_xv3Minimum, pAABB->m_xv3Maximum);
 }
 
-void AABB::Update(XMFLOAT4X4 *pmtxTransform)
+void AABB::Update(XMFLOAT4X4 &pmtxTransform, AABB * bbMesh)
 {
+	if (bbMesh)
+	{
+		m_xv3Maximum = bbMesh->m_xv3Maximum;
+		m_xv3Minimum = bbMesh->m_xv3Minimum;
+	}
+
 	XMVECTOR vVertices[8];
 	vVertices[0] = XMVectorSet(m_xv3Minimum.x, m_xv3Minimum.y, m_xv3Minimum.z, 1);
 	vVertices[1] = XMVectorSet(m_xv3Minimum.x, m_xv3Minimum.y, m_xv3Maximum.z, 1);
@@ -45,13 +45,16 @@ void AABB::Update(XMFLOAT4X4 *pmtxTransform)
 	//8개의 정점에서 x, y, z 좌표의 최소값과 최대값을 구한다.
 	XMMATRIX mtxTransform;
 	XMFLOAT4 xmvVertcies;
+
+	//XMVECTOR xmvPos = XMVectorSet( pmtxTransform->_41 , pmtxTransform->_42, pmtxTransform->_43, 0 );
+
 	for (int i = 0; i < 8; i++)
 	{
 		//정점을 변환한다.
-		mtxTransform = XMLoadFloat4x4(pmtxTransform);
+		mtxTransform = XMLoadFloat4x4(&pmtxTransform);
+		//vVertices[i] += xmvPos; 
 		vVertices[i] = XMVector3TransformCoord(vVertices[i], mtxTransform);
 		XMStoreFloat4(&xmvVertcies, vVertices[i]);
-		//xv3ec3TransformCoord(&vVertices[i], &vVertices[i], pmtxTransform);
 		if (xmvVertcies.x < m_xv3Minimum.x) m_xv3Minimum.x = xmvVertcies.x;
 		if (xmvVertcies.y < m_xv3Minimum.y) m_xv3Minimum.y = xmvVertcies.y;
 		if (xmvVertcies.z < m_xv3Minimum.z) m_xv3Minimum.z = xmvVertcies.z;
@@ -69,40 +72,44 @@ bool AABB::CollisionAABB(AABB & one, AABB & two)
 
 	return true;
 }
-ePartLoc AABB::IsIncludeAABB(AABB & bbSmall, AABB & bbLarge)
+ePartition AABB::IsIncludeAABB(AABB & bbSmall, AABB & bbLarge, bool bCollideCheck)
 {
-	if (!AABB::CollisionAABB(bbSmall, bbLarge)) return ePartLoc::INCLUDE_NOT;
+	if(!bCollideCheck) 
+		if (!AABB::CollisionAABB(bbSmall, bbLarge)) 
+			return ePartition::CULL_OUT;
 
-	if (bbSmall.m_xv3Minimum.x < bbLarge.m_xv3Minimum.x) return ePartLoc::INCLUDE_PART_MAX;
-	if (bbSmall.m_xv3Minimum.y < bbLarge.m_xv3Minimum.y) return ePartLoc::INCLUDE_PART_MAX;
-	if (bbSmall.m_xv3Minimum.z < bbLarge.m_xv3Minimum.z) return ePartLoc::INCLUDE_PART_MAX;
+	if (bbSmall.m_xv3Minimum.x < bbLarge.m_xv3Minimum.x) return ePartition::CONTAIN_PART;
+	if (bbSmall.m_xv3Minimum.y < bbLarge.m_xv3Minimum.y) return ePartition::CONTAIN_PART;
+	if (bbSmall.m_xv3Minimum.z < bbLarge.m_xv3Minimum.z) return ePartition::CONTAIN_PART;
 
-	if (bbSmall.m_xv3Maximum.x > bbLarge.m_xv3Maximum.x) return ePartLoc::INCLUDE_PART_MIN;
-	if (bbSmall.m_xv3Maximum.y > bbLarge.m_xv3Maximum.y) return ePartLoc::INCLUDE_PART_MIN;
-	if (bbSmall.m_xv3Maximum.z > bbLarge.m_xv3Maximum.z) return ePartLoc::INCLUDE_PART_MIN;
+	if (bbSmall.m_xv3Maximum.x > bbLarge.m_xv3Maximum.x) return ePartition::CONTAIN_PART;
+	if (bbSmall.m_xv3Maximum.y > bbLarge.m_xv3Maximum.y) return ePartition::CONTAIN_PART;
+	if (bbSmall.m_xv3Maximum.z > bbLarge.m_xv3Maximum.z) return ePartition::CONTAIN_PART;
 
-	return ePartLoc::INCLUDE_ALL;
+	return ePartition::CONTAIN_ALL;
 }
 bool AABB::CollisionAABBBy2D(AABB & one, AABB & two)
 {
 	if (one.m_xv3Minimum.x > two.m_xv3Maximum.x) return false;
-	if (one.m_xv3Minimum.y > two.m_xv3Maximum.y) return false;
+	if (one.m_xv3Minimum.z > two.m_xv3Maximum.z) return false;
 	if (two.m_xv3Minimum.x > two.m_xv3Maximum.x) return false;
-	if (two.m_xv3Minimum.y > two.m_xv3Maximum.y) return false;
+	if (two.m_xv3Minimum.z > two.m_xv3Maximum.z) return false;
 
 	return true;
 }
-ePartLoc AABB::IsIncludeAABBBy2D(AABB & bbSmall, AABB & bbLarge)
+ePartition AABB::IsIncludeAABBBy2D(AABB & bbSmall, AABB & bbLarge, bool bCollideCheck = false)
 {
-	if (!AABB::CollisionAABBBy2D(bbSmall, bbLarge)) return ePartLoc::INCLUDE_NOT;
+	if (!bCollideCheck)
+		if (!AABB::CollisionAABBBy2D(bbSmall, bbLarge)) 
+			return ePartition::CULL_OUT;
 
-	if (bbSmall.m_xv3Minimum.x < bbLarge.m_xv3Minimum.x) return ePartLoc::INCLUDE_PART_MAX;
-	if (bbSmall.m_xv3Minimum.y < bbLarge.m_xv3Minimum.y) return ePartLoc::INCLUDE_PART_MAX;
+	if (bbSmall.m_xv3Minimum.x < bbLarge.m_xv3Minimum.x) return ePartition::CONTAIN_PART;
+	if (bbSmall.m_xv3Minimum.z < bbLarge.m_xv3Minimum.z) return ePartition::CONTAIN_PART;
 
-	if (bbSmall.m_xv3Maximum.x > bbLarge.m_xv3Maximum.x) return ePartLoc::INCLUDE_PART_MIN;
-	if (bbSmall.m_xv3Maximum.y > bbLarge.m_xv3Maximum.y) return ePartLoc::INCLUDE_PART_MIN;
+	if (bbSmall.m_xv3Maximum.x > bbLarge.m_xv3Maximum.x) return ePartition::CONTAIN_PART;
+	if (bbSmall.m_xv3Maximum.z > bbLarge.m_xv3Maximum.z) return ePartition::CONTAIN_PART;
 
-	return ePartLoc::INCLUDE_ALL;
+	return ePartition::CONTAIN_ALL;
 }
 
 DirectQuadTree::DirectQuadTree()
@@ -140,15 +147,18 @@ void DirectQuadTree::BuildQuadTree(BYTE nTreeLevels, UINT MapWidth, UINT MapLeng
 	m_fZScaleInverse = 1 / fZScale;
 
 	m_pNodesArray = new CPartitionNode[++m_nNodes];
+
+	for (int i = 0; i < m_nNodes; ++i)
+		m_pNodesArray[i].m_uIndex = i;
 }
 
 int DirectQuadTree::GetNodeContainingIndex(AABB & bb)
 {
-	int x1 = (int)(bb.m_xv3Minimum.x * m_fXScaleInverse);
-	int z1 = (int)(bb.m_xv3Minimum.y * m_fZScaleInverse);
+	int xmin = (int)(bb.m_xv3Minimum.x * m_fXScaleInverse);
+	int zmin = (int)(bb.m_xv3Minimum.y * m_fZScaleInverse);
 
-	int xResult = x1 ^ (int)(bb.m_xv3Maximum.x * m_fXScaleInverse);
-	int zResult = z1 ^ (int)(bb.m_xv3Maximum.z * m_fZScaleInverse);
+	int xResult = xmin ^ (int)(bb.m_xv3Maximum.x * m_fXScaleInverse);
+	int zResult = zmin ^ (int)(bb.m_xv3Maximum.z * m_fZScaleInverse);
 
 	int nNodeLv = m_nTreeLevels;
 	int nShift = 0;
@@ -160,10 +170,10 @@ int DirectQuadTree::GetNodeContainingIndex(AABB & bb)
 		nNodeLv--;
 		nShift++;
 	}
-	x1 >>= nShift;
-	z1 >>= nShift;
+	xmin >>= nShift;
+	zmin >>= nShift;
 
-	return (z1 << (nNodeLv - 1) + x1);
+	return (zmin << (nNodeLv - 1) + xmin);
 }
 
 CPartitionNode * DirectQuadTree::GetNodeContaining(AABB & objBoundingBox)
@@ -184,8 +194,7 @@ CPartitionNode * DirectQuadTree::GetNodeContaining(float fLeft, float fRight, fl
 
 int DirectQuadTree::EntryObject(CGameObject * pObject)
 {
-	int index =
-		GetNodeContainingIndex(pObject->m_bcMeshBoundingCube);
+	int index =	GetNodeContainingIndex(pObject->m_bcMeshBoundingCube);
 
 	m_pNodesArray[index].m_vpObjects.push_back(pObject);
 
@@ -197,3 +206,291 @@ void DirectQuadTree::EntryObjects(CGameObject ** ppObjectArrays, int nObjects)
 	for (int i = 0; i < nObjects; ++i)
 		DirectQuadTree::EntryObject(ppObjectArrays[i]);
 }
+
+
+
+QuadTree::QuadTree()
+{
+	for (int i = 0; i < 5; ++i) m_pNodes[i] = nullptr;
+	
+	ZeroMemory(&m_xmi3Center, sizeof(XMINT3));
+	m_uHalfLength = 0;
+	m_uHalfWidth = 0;
+
+	m_bLeaf = false;
+	m_bCulled = false;
+}
+
+QuadTree::~QuadTree()
+{
+	for (int i = 0; i < 4; ++i) if (m_pNodes[i]) delete m_pNodes[i];
+}
+
+void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
+{
+	static UINT nBuilds = 0;
+	nBuilds++;
+	cout << nBuilds << endl;
+
+	m_pNodes[Location::LOC_PARENT] = pParent;
+
+	m_xmi3Center = XMINT3(xmf3Center.x, 0, xmf3Center.z);
+	m_uHalfWidth = (uWidth >> 1);
+	m_uHalfLength = (uLength >> 1);
+
+	if (m_uHalfWidth < QAUD_MIN_UNIT)
+	{
+		m_bLeaf = true;
+		return;
+	}
+
+	UINT uNextHalfWidth  = (m_uHalfWidth  >> 1);
+	UINT uNextHalfLength = (m_uHalfLength >> 1);
+
+	XMFLOAT3 xmf3Temp = { 0, 0, 0 };
+	xmf3Temp.x = (float)m_xmi3Center.x - uNextHalfWidth;
+	xmf3Temp.z = (float)m_xmi3Center.z - uNextHalfLength;
+	m_pNodes[Location::LOC_LB] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+
+	xmf3Temp.x = (float)m_xmi3Center.x + uNextHalfWidth;
+	xmf3Temp.z = (float)m_xmi3Center.z - uNextHalfLength;
+	m_pNodes[Location::LOC_RB] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+
+	xmf3Temp.x = (float)m_xmi3Center.x - uNextHalfWidth;
+	xmf3Temp.z = (float)m_xmi3Center.z + uNextHalfLength;
+	m_pNodes[Location::LOC_LT] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+
+	xmf3Temp.x = (float)m_xmi3Center.x + uNextHalfWidth;
+	xmf3Temp.z = (float)m_xmi3Center.z + uNextHalfLength;
+	m_pNodes[Location::LOC_RT] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+}
+
+QuadTree * QuadTree::CreateQuadTrees(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
+{
+	QuadTree * pTree = new QuadTree();
+	
+	pTree->BuildNodes(xmf3Center, uWidth, uLength, pParent);
+	
+	return pTree;
+}
+
+Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
+{
+	AABB & bbObj = pObject->m_bcMeshBoundingCube;
+	const XMFLOAT3 pos = pObject->GetPosition();
+
+	AABB bbQuad;
+	
+	if (bCheckCollide)
+	{
+		bbQuad.m_xv3Maximum = { (float)m_xmi3Center.x + m_uHalfWidth, (float)m_xmi3Center.y, (float)m_xmi3Center.z + m_uHalfLength };
+		bbQuad.m_xv3Minimum = { (float)m_xmi3Center.x - m_uHalfWidth, (float)m_xmi3Center.y, (float)m_xmi3Center.z - m_uHalfLength };
+
+		if (AABB::CollisionAABBBy2D(bbObj, bbQuad) == false) 
+			return Location(LOC_NONE);
+	}
+	bbQuad.m_xv3Maximum = { (float)m_xmi3Center.x, (float)m_xmi3Center.y, (float)m_xmi3Center.z };
+	bbQuad.m_xv3Minimum = { (float)m_xmi3Center.x, (float)m_xmi3Center.y, (float)m_xmi3Center.z };
+
+	UINT uCheck = 0;
+	if (pos.z > m_xmi3Center.z) uCheck |= 0x02;
+	if (pos.x > m_xmi3Center.x) uCheck |= 0x01;
+
+	switch (uCheck)
+	{
+	case Location::LOC_LB:
+		bbQuad.m_xv3Minimum.x -= m_uHalfWidth;
+		bbQuad.m_xv3Minimum.z -= m_uHalfLength;
+		break;
+
+	case Location::LOC_RB:
+		bbQuad.m_xv3Maximum.x += m_uHalfWidth;
+		bbQuad.m_xv3Minimum.z -= m_uHalfLength;
+		break;
+
+	case Location::LOC_LT:
+		bbQuad.m_xv3Minimum.x -= m_uHalfWidth;
+		bbQuad.m_xv3Maximum.z += m_uHalfWidth;
+		break;
+
+	case Location::LOC_RT:
+		bbQuad.m_xv3Maximum.x += m_uHalfWidth;
+		bbQuad.m_xv3Maximum.z += m_uHalfLength;
+		break;
+
+	default:
+		ASSERT(SUCCEEDED(1));
+		break;
+	}
+
+	if (bbObj.m_xv3Maximum.x > bbQuad.m_xv3Maximum.x) return Location::LOC_ALL;
+	if (bbObj.m_xv3Minimum.x < bbQuad.m_xv3Minimum.x) return Location::LOC_ALL;
+
+	if (bbObj.m_xv3Maximum.z > bbQuad.m_xv3Maximum.z) return Location::LOC_ALL;
+	if (bbObj.m_xv3Minimum.z < bbQuad.m_xv3Minimum.z) return Location::LOC_ALL;
+
+	return Location(uCheck);
+}
+
+void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGameObject*> & vcArray)
+{
+	//충돌하면 vector에 
+	//if (포함) vcArray.push_back(pObject);
+
+	if (m_bLeaf) return;
+	for (int i = 0; i < 4; ++i)
+	{
+		m_pNodes[i]->FindContainedObjects_InChilds(pObject, vcArray);
+	}
+}
+
+QuadTree * QuadTree::EntityObject(CGameObject * pObject)
+{
+	Location eLoc = IsContained(pObject, false);
+	
+	if (eLoc != Location::LOC_ALL)
+		return m_pNodes[eLoc]->EntityObject(pObject);
+
+	m_vpObjectList.push_back(pObject);
+	return this;
+}
+
+QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
+{
+	CGameObject * pObj = pObject;
+	Location eContain = IsContained(pObj, true);
+	
+	if (eContain != Location::LOC_ALL) // 다른 이동할 곳이 존재할때만 갱신한다.
+	{
+		if (bStart)	// 시작지이면 리스트에서 제거한다.
+		{
+			vector<CGameObject*>::iterator it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
+			m_vpObjectList.erase(it);
+		}
+
+		if (eContain == Location::LOC_NONE) // 충돌하지 않으면 부모로 올라가 찾아본다.
+			return m_pNodes[Location::LOC_PARENT]->RenewalObject(pObj, false);
+
+		if (!m_bLeaf)	// 말단 노드가 아니면 하위 노드를 찾아본다.
+			return m_pNodes[eContain]->RenewalObject(pObj, false);
+		
+		// 말단 노드이면 오브젝트를 추가한다.
+		m_vpObjectList.push_back(pObj);
+		pObj = nullptr;
+	}
+
+	if (pObj && bStart == false) m_vpObjectList.push_back(pObj);
+
+	return this;
+}
+
+void QuadTree::DeleteObject(CGameObject * pObject, bool IsDynamic)
+{
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+CQuadTreeManager::CQuadTreeManager()
+{
+	m_pRootTree = nullptr;
+
+	m_vcContainedArray.reserve(200);
+	m_vcDynamicArray.reserve(100);
+}
+
+CQuadTreeManager::~CQuadTreeManager()
+{
+	ReleaseQuadTree();
+}
+
+CQuadTreeManager & CQuadTreeManager::GetInstance()
+{
+	static CQuadTreeManager instance;
+	return instance;
+}
+
+void CQuadTreeManager::BuildQuadTree(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
+{
+	if (nullptr == m_pRootTree)
+		m_pRootTree = QuadTree::CreateQuadTrees(xmf3Center, uWidth, uLength, pParent);
+}
+
+void CQuadTreeManager::ReleaseQuadTree()
+{
+	if (m_pRootTree) delete m_pRootTree;
+	m_pRootTree = nullptr;
+}
+
+void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
+{
+
+}
+
+bool CQuadTreeManager::IsCollide(CGameObject * pObject)
+{
+	return false;
+}
+
+vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pObject)
+{
+	m_vcContainedArray.clear();
+
+	if (m_pRootTree) m_pRootTree->FindContainedObjects_InChilds(pObject, m_vcContainedArray);
+
+//	pObject->Ge
+	return &m_vcContainedArray;
+}
+
+QuadTree * CQuadTreeManager::EntityStaticObject(CGameObject * pObject)
+{
+	return m_pRootTree->EntityObject(pObject);
+}
+
+QuadTree * CQuadTreeManager::EntityDynamicObject(CGameObject * pObject)
+{
+	QuadTree * pTree = m_pRootTree->EntityObject(pObject);
+	m_vcDynamicArray.push_back(DynamicInfo(pTree, pObject));
+	return pTree;
+}
+
+UINT CQuadTreeManager::RenewalDynamicObjects()
+{
+	UINT uCountRenewal = 0;
+	QuadTree * pTree = nullptr;
+	CGameObject * pObject = nullptr;
+
+	for (auto it = m_vcDynamicArray.begin(); it != m_vcDynamicArray.end(); ++it)
+	{
+		pObject = it->second;
+		pObject->UpdateBoundingBox();
+		pTree = it->first->RenewalObject(pObject, true);
+		
+		if (it->first != pTree)
+		{
+			it->first = pTree;
+			++uCountRenewal;
+		}
+	}
+
+	return uCountRenewal;
+}
+
+
+
+CCollisionMgr::CCollisionMgr()
+{
+	m_pQuadMgr = &CQuadTreeManager::GetInstance();
+
+}
+
+
+CCollisionMgr::~CCollisionMgr()
+{
+}
+
+CCollisionMgr & CCollisionMgr::GetInstance()
+{
+	static CCollisionMgr instance;
+	return instance;
+}
+
