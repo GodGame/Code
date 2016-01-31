@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CollisionMgr.h"
 #include "Object.h"
+#include "Camera.h"
 #include <algorithm>
 //typedef pair<QuadTree*, CGameObject*> DynamicInfo;
 //static vector<CGameObject*> gvcContainedArray;
@@ -218,7 +219,7 @@ QuadTree::QuadTree()
 	m_uHalfWidth = 0;
 
 	m_bLeaf = false;
-	m_bCulled = false;
+	m_bCulled = true;
 }
 
 QuadTree::~QuadTree()
@@ -272,6 +273,60 @@ QuadTree * QuadTree::CreateQuadTrees(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uL
 	pTree->BuildNodes(xmf3Center, uWidth, uLength, pParent);
 	
 	return pTree;
+}
+
+void QuadTree::FrustumCulling(CCamera * pCamera)
+{
+	XMFLOAT3 xmfMin = XMFLOAT3(m_xmi3Center.x - m_uHalfWidth, -1000.0f, m_xmi3Center.z - m_uHalfLength);
+	XMFLOAT3 xmfMax = XMFLOAT3(m_xmi3Center.x + m_uHalfWidth, 1000.0f, m_xmi3Center.z + m_uHalfLength);
+	
+	
+	bool bVisible;
+	//if (m_uHalfLength >= 512.0f)
+	//{
+	//	bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
+	//	CGameObject * pObj = nullptr;
+	//	for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
+	//	{
+	//		pObj = (*it);
+	//		pObj->UpdateBoundingBox();
+	//		AABB & bb = pObj->m_bcMeshBoundingCube;
+	//		pObj->SetActive(pCamera->IsInFrustum(&bb));
+	//	}
+	//}
+	//else 
+	{
+		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
+		if (!bVisible) return;
+		CGameObject * pObj = nullptr;
+
+		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
+		{
+			pObj = (*it);
+			pObj->UpdateBoundingBox();
+			AABB & bb = pObj->m_bcMeshBoundingCube;
+			pObj->SetActive(pCamera->IsInFrustum(&bb)); //bVisible);
+		}
+
+	}
+	m_bCulled = !(bVisible);
+
+	if (m_bCulled || m_bLeaf) return;
+
+	for (int i = 0; i < 4; ++i)
+		m_pNodes[i]->FrustumCulling(pCamera);
+
+		/*for (int i = 0; i < 4; ++i)
+			m_pNodes[i]->PreCutCulling();*/
+}
+
+void QuadTree::PreCutCulling()
+{
+	m_bCulled = true;
+	if (m_bLeaf) return;
+
+	for (int i = 0; i < 4; ++i)
+		m_pNodes[i]->PreCutCulling();
 }
 
 Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
@@ -334,14 +389,25 @@ Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
 
 void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGameObject*> & vcArray)
 {
-	//충돌하면 vector에 
-	//if (포함) vcArray.push_back(pObject);
-
-	if (m_bLeaf) return;
-	for (int i = 0; i < 4; ++i)
+	if (!m_bLeaf) //말단노드 아니면 계산해서 넣는다.
 	{
-		m_pNodes[i]->FindContainedObjects_InChilds(pObject, vcArray);
+		Location loc = IsContained(pObject, false);
+	
+		if (loc == Location::LOC_ALL)
+		{
+			for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
+				vcArray.push_back(*it);
+
+			return;
+		}
+
+		else 
+			m_pNodes[loc]->FindContainedObjects_InChilds(pObject, vcArray);
 	}
+
+	else
+		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
+			vcArray.push_back(*it);
 }
 
 QuadTree * QuadTree::EntityObject(CGameObject * pObject)
@@ -354,6 +420,18 @@ QuadTree * QuadTree::EntityObject(CGameObject * pObject)
 	m_vpObjectList.push_back(pObject);
 	return this;
 }
+
+void QuadTree::DeleteObject(CGameObject * pObject)
+{
+	Location eLoc = IsContained(pObject, false);
+
+	if (eLoc != Location::LOC_ALL)
+		m_pNodes[eLoc]->EntityObject(pObject);
+
+	auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
+	m_vpObjectList.erase(it);
+}
+
 
 QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 {
@@ -382,10 +460,6 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 	if (pObj && bStart == false) m_vpObjectList.push_back(pObj);
 
 	return this;
-}
-
-void QuadTree::DeleteObject(CGameObject * pObject, bool IsDynamic)
-{
 }
 
 
@@ -423,7 +497,7 @@ void CQuadTreeManager::ReleaseQuadTree()
 
 void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
 {
-
+	m_pRootTree->FrustumCulling(pCamera);
 }
 
 bool CQuadTreeManager::IsCollide(CGameObject * pObject)
@@ -437,7 +511,6 @@ vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pOb
 
 	if (m_pRootTree) m_pRootTree->FindContainedObjects_InChilds(pObject, m_vcContainedArray);
 
-//	pObject->Ge
 	return &m_vcContainedArray;
 }
 
@@ -453,19 +526,39 @@ QuadTree * CQuadTreeManager::EntityDynamicObject(CGameObject * pObject)
 	return pTree;
 }
 
+void CQuadTreeManager::DeleteStaticObject(CGameObject * pObject)
+{
+	m_pRootTree->DeleteObject(pObject);
+}
+
+void CQuadTreeManager::DeleteDynamicObject(CGameObject * pObject)
+{ 
+	auto it = find_if(m_vcDynamicArray.begin(), m_vcDynamicArray.end(), 
+		[=](const DynamicInfo & a) { return pObject == a.second;});
+	m_vcDynamicArray.erase(it);
+
+	m_pRootTree->DeleteObject(pObject);
+}
+
 UINT CQuadTreeManager::RenewalDynamicObjects()
 {
 	UINT uCountRenewal = 0;
+	QuadTree * pBefore = nullptr;
 	QuadTree * pTree = nullptr;
 	CGameObject * pObject = nullptr;
 
 	for (auto it = m_vcDynamicArray.begin(); it != m_vcDynamicArray.end(); ++it)
 	{
+		pBefore = it->first;
+		if (pBefore->IsCulled()) continue;
+
 		pObject = it->second;
 		pObject->UpdateBoundingBox();
-		pTree = it->first->RenewalObject(pObject, true);
+
+			
+		pTree = pBefore->RenewalObject(pObject, true);
 		
-		if (it->first != pTree)
+		if (pBefore != pTree)
 		{
 			it->first = pTree;
 			++uCountRenewal;

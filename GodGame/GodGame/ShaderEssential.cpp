@@ -311,7 +311,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 void CSceneShader::AnimateObjects(float fTimeElapsed)
 {
 	m_fTotalTime < 1.0f ? (m_fTotalTime += fTimeElapsed, m_fFrameTime = fTimeElapsed) : (m_fTotalTime = fTimeElapsed, m_fFrameTime = fTimeElapsed);
-	cout << "SceneFrame : " << m_fTotalTime << endl;
+	//cout << "SceneFrame : " << m_fTotalTime << endl;
 }
 
 void CSceneShader::FinalRender(ID3D11DeviceContext * pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV[], UINT uRenderState, CCamera * pCamera)
@@ -715,6 +715,7 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
 	//3인칭 카메라일 때 플레이어를 렌더링한다.
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
+	m_ppObjects[0]->SetActive(true);
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
 		CShader::Render(pd3dDeviceContext, uRenderState);
@@ -886,6 +887,7 @@ void CTerrainShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 	{
 		//m_ppObjects[0]->SetTexture(m_pptxLayerMap[0], false);
 		m_pptxLayerMap[i]->UpdateShaderVariable(pd3dDeviceContext);
+		m_ppObjects[i]->SetActive(true);
 		m_ppObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 	//pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);

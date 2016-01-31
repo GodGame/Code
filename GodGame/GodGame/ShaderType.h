@@ -45,6 +45,9 @@ public:
 	static void ReleaseShaderVariables();
 	static void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 *pxmtxWorld);
 
+	void EntityAllStaticObjects();
+	void EntityAllDynamicObjects();
+
 	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
 public:
 	//게임 객체들을 생성하고 애니메이션 처리를 하고 렌더링하기 위한 함수이다.

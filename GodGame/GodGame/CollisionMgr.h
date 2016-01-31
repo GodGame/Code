@@ -104,6 +104,7 @@ public:
 
 enum Location{ LOC_NONE = -1, LOC_LB, LOC_RB, LOC_LT, LOC_RT, LOC_PARENT, LOC_ALL };
 
+class CCamera;
 class QuadTree
 {
 public:
@@ -116,8 +117,8 @@ private:
 private:
 	UINT m_uHalfWidth : 15;
 	UINT m_uHalfLength : 15;
-	UINT m_bCulled : 1;
 	UINT m_bLeaf : 1;
+	bool m_bCulled : 1;
 
 	XMINT3 m_xmi3Center;
 
@@ -128,12 +129,16 @@ public:
 	void BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent);
 	static QuadTree * CreateQuadTrees(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent);
 
+	void FrustumCulling(CCamera * pCamera);
+	void PreCutCulling();
+	bool IsCulled() { return m_bCulled; }
+
 	Location IsContained(CGameObject * pObject, bool bCheckCollide);
 	void FindContainedObjects_InChilds(CGameObject * pObject, vector<CGameObject*> & vcArray);
 
 	QuadTree* EntityObject(CGameObject * pObject);
 	QuadTree* RenewalObject(CGameObject * pObject, bool bStart = true);
-	void DeleteObject(CGameObject * pObject, bool IsDynamic);
+	void DeleteObject(CGameObject * pObject);
 	
 //s	bool ReleaseTree();
 };
@@ -162,6 +167,11 @@ public:
 public:
 	QuadTree* EntityStaticObject(CGameObject* pObject);
 	QuadTree* EntityDynamicObject(CGameObject* pObject);
+
+	void DeleteStaticObject(CGameObject* pObject);
+	void DeleteDynamicObject(CGameObject* pObject);
+
+
 	UINT RenewalDynamicObjects();
 
 public:

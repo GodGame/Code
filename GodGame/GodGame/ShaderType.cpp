@@ -83,12 +83,12 @@ void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
-		if (m_ppObjects[j])
+		if (m_ppObjects[j]->IsVisible())
 		{
 			//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
-			if (m_ppObjects[j]->IsVisible(pCamera)) {
+			//if (m_ppObjects[j]->IsVisible(pCamera)) {
 				m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
-			}
+			//}
 		}
 	}
 }
@@ -308,6 +308,18 @@ CGameObject * CShader::GetObj(int num) {
 	if (m_ppObjects[num])
 		return m_ppObjects[num];
 	return nullptr;
+}
+
+void CShader::EntityAllStaticObjects()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+		QUADMgr.EntityStaticObject(m_ppObjects[i]);
+}
+
+void CShader::EntityAllDynamicObjects()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+		QUADMgr.EntityDynamicObject(m_ppObjects[i]);
 }
 
 ID3D11ShaderResourceView * CShader::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)

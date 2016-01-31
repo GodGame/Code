@@ -80,18 +80,17 @@ void CGameObject::Animate(float fTimeElapsed)
 
 }
 
-bool CGameObject::IsVisible(CCamera *pCamera)
+bool CGameObject::IsVisible(CCamera * pCamera)
 {
 	OnPrepareRender();
 
-	bool bIsVisible = true;
-	if (m_bActive)
+	if (pCamera) 
 	{
 		AABB bcBoundingCube = m_bcMeshBoundingCube;
 		bcBoundingCube.Update(m_xmf44World);
-		if (pCamera) bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
+		if (pCamera) m_bActive = pCamera->IsInFrustum(&bcBoundingCube);
 	}
-	return(bIsVisible);
+	return(m_bActive);
 }
 
 
@@ -111,15 +110,17 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 		{
 			if (m_ppMeshes[i])
 			{
-				bool bIsVisible = true;
-				if (pCamera)
-				{
-					AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
-					bcBoundingCube.Update(m_xmf44World);
-					bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
-				}
-				if (bIsVisible) 
-					m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+				//bool bIsVisible = true;
+				//if (pCamera)
+				//{
+				//	AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
+				//	bcBoundingCube.Update(m_xmf44World);
+				//	bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
+				//}
+				//if (bIsVisible) 
+				//	m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+				if (m_bActive) m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+				m_bActive = false;
 			}
 		}
 	}

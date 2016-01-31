@@ -120,6 +120,11 @@ void CScene::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader)
 	//m_ppShaders[3] = pSceneShader;
 
 	//	CreateStates(pd3dDevice);
+
+
+	//m_ppShaders[2]->EntityAllStaticObjects();
+	m_ppShaders[3]->EntityAllStaticObjects();
+
 	CreateShaderVariables(pd3dDevice);
 	//	InitilizeThreads(pd3dDevice);
 }
@@ -314,6 +319,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 	}
 
+	QUADMgr.FrustumCullObjects(m_pCamera);
 	QUADMgr.RenewalDynamicObjects();
 }
 
