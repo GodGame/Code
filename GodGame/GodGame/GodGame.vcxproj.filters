@@ -109,6 +109,9 @@
     <ClInclude Include="ResourceMgr.h">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClInclude>
+    <ClInclude Include="SceneInGame.h">
+      <Filter>LocalDynamic\3_Scenes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -156,11 +159,11 @@
     <ClCompile Include="CollisionMgr.cpp">
       <Filter>StaticGlobal\2_Managers</Filter>
     </ClCompile>
-    <ClCompile Include="CollisionPartitionTree.cpp">
-      <Filter>StaticGlobal\2_Managers</Filter>
-    </ClCompile>
     <ClCompile Include="ResourceMgr.cpp">
       <Filter>StaticGlobal\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneInGame.cpp">
+      <Filter>LocalDynamic\3_Scenes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

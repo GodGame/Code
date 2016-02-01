@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "GameFramework.h"
 #include "MyInline.h"
+#include "SceneInGame.h"
 //CRITICAL_SECTION m_cs;
 
 CGameFramework::CGameFramework()
@@ -36,12 +37,11 @@ CGameFramework::CGameFramework()
 	m_pSceneShader = nullptr;
 	_tcscpy_s(m_pszBuffer, _T("__GodGame__("));
 
-	m_pd3dSSAOTargetView = nullptr;
+	//m_pd3dSSAOTargetView = nullptr;
 
 	//m_pSSAOShader = nullptr;
 	m_uRenderState = 0;
 }
-
 
 CGameFramework::~CGameFramework()
 {
@@ -96,10 +96,8 @@ void CGameFramework::OnDestroy()
 	}
 #endif
 	if (m_pd3dBackRenderTargetView) m_pd3dBackRenderTargetView->Release();
-	//if (m_pd3dPostProcessing) m_pd3dPostProcessing->Release();
-	if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
-	
 
+	//if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
 	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
@@ -215,7 +213,6 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &m_ppd3dMRTtx[i])));
 		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[i], &d3dSRVDesc, &m_pd3dMRTSRV[i])));
 		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(m_ppd3dMRTtx[i], &d3dRTVDesc, &m_ppd3dRenderTargetView[i])));
-//		ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateUnorderedAccessView(m_ppd3dMRTtx[i], &d3dUAVDesc, &m_pd3dMRTUAV[i])));
 
 		if (m_ppd3dMRTtx[i]) 
 		{
@@ -249,7 +246,7 @@ void CGameFramework::BuildStaticShadowMap()
 {
 	// 방향성 광원은 위치 필요 없다.
 	//LIGHT * pLight = m_pScene->GetLight(2);
-	CHeightMapTerrain * pTerrain = m_pScene->GetTerrain();
+	CHeightMapTerrain * pTerrain = ((CSceneInGame*)m_pScene)->GetTerrain();
 	float fHalf = pTerrain->GetWidth() * 0.5;
 
 	CShadowMgr * pSdwMgr = &ShadowMgr;
@@ -264,6 +261,7 @@ void CGameFramework::BuildStaticShadowMap()
 	m_uRenderState = NULL;
 
 	pSdwMgr->UpdateStaticShadowResource(m_pd3dDeviceContext);
+	//pSdwMgr->UpdateDynamicShadowResource(m_pd3dDeviceContext);
 	m_pSceneShader->SetLightSRV(TXMgr.GetShaderResourceView("srv_StaticShaodwMap"));
 }
 
@@ -522,6 +520,18 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	return(0);
 }
 
+void CGameFramework::ChangeGameScene(CScene * pScene)
+{
+}
+
+void CGameFramework::PushGameScene(CScene * pScene)
+{
+}
+
+void CGameFramework::PopGameScene(CScene * pScene)
+{
+}
+
 void CGameFramework::BuildObjects()
 {
 	CShader::CreateShaderVariables(m_pd3dDevice);
@@ -531,11 +541,12 @@ void CGameFramework::BuildObjects()
 	m_pSceneShader->CreateShader(m_pd3dDevice);
 	m_pSceneShader->BuildObjects(m_pd3dDevice, m_pd3dMRTSRV, m_iDrawOption, m_pd3dBackRenderTargetView);
 
-	m_pScene = new CScene();
-	m_pScene->SetDepthStencilView(m_pd3dDepthStencilView);
-	m_pScene->BuildObjects(m_pd3dDevice, m_pSceneShader);
+	CSceneInGame * pScene = new CSceneInGame();
+	//m_pScene->SetDepthStencilView(m_pd3dDepthStencilView);
+	pScene->BuildObjects(m_pd3dDevice, m_pSceneShader);
 
-	CHeightMapTerrain *pTerrain = m_pScene->GetTerrain();
+	CHeightMapTerrain *pTerrain = pScene->GetTerrain();
+	m_pScene = pScene;
 
 	m_pPlayerShader = new CPlayerShader();
 	m_pPlayerShader->CreateShader(m_pd3dDevice);
@@ -607,20 +618,15 @@ void CGameFramework::ReleaseObjects()
 	if (m_pScene) m_pScene->ReleaseObjects();
 	if (m_pScene) delete m_pScene;
 
-
 	if (m_pSceneShader) m_pSceneShader->ReleaseObjects();
 	if (m_pSceneShader) delete m_pSceneShader;
 	m_pSceneShader = nullptr;
-
-	//if (m_pSSAOShader) m_pSSAOShader->ReleaseObjects();
-	//if (m_pSSAOShader) delete m_pSSAOShader;
-	//m_pSSAOShader = nullptr;
 }
 
 void CGameFramework::ProcessInput()
 {
 	bool bProcessedByScene = false;
-	if (m_pScene) bProcessedByScene = m_pScene->ProcessInput();
+//	if (m_pScene) bProcessedByScene = m_pScene->ProcessInput();
 	if (!bProcessedByScene)
 	{
 		static UCHAR pKeyBuffer[256];
@@ -675,22 +681,14 @@ void CGameFramework::AnimateObjects()
 	if (m_pSceneShader) m_pSceneShader->AnimateObjects(fFrameTime);
 }
 
-void CGameFramework::FrameAdvance()
+void CGameFramework::Render()
 {
-	//타이머의 시간이 갱신되도록 하고 프레임 레이트를 계산한다. 
-	m_GameTimer.Tick();
-	//사용자 입력을 처리하기 위한 ProcessInput() 함수를 호출한다.  
-	ProcessInput();
-	//게임 객체의 애니메이션을 처리하기 위한 AnimateObjects() 함수를 호출한다.  
-	AnimateObjects();
-
-
 	CShader* shaderList[] = { m_pPlayerShader, m_pScene->GetShader(2) };
 	OnCreateShadowMap(shaderList, 2);
 
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.0f };	//렌더 타겟 뷰를 채우기 위한 색상을 설정한다.  
-	/* 렌더 타겟 뷰를 fClearColor[] 색상으로 채운다. 즉, 렌더 타겟 뷰에 연결된 스왑 체인의 첫 번째 후면버퍼를 fClearColor[] 색상으로 지운다. */
-	m_pd3dDeviceContext->OMSetRenderTargets(NUM_MRT -1, &m_ppd3dRenderTargetView[1], m_pd3dDepthStencilView);
+															/* 렌더 타겟 뷰를 fClearColor[] 색상으로 채운다. 즉, 렌더 타겟 뷰에 연결된 스왑 체인의 첫 번째 후면버퍼를 fClearColor[] 색상으로 지운다. */
+	m_pd3dDeviceContext->OMSetRenderTargets(NUM_MRT - 1, &m_ppd3dRenderTargetView[1], m_pd3dDepthStencilView);
 	m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dBackRenderTargetView, fClearColor);
 
 	for (int i = 0; i < NUM_MRT; ++i)
@@ -732,7 +730,10 @@ void CGameFramework::FrameAdvance()
 	if (m_pScene) m_pScene->Render(m_pd3dDeviceContext, &RenderInfo);
 	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 #endif
+}
 
+void CGameFramework::PostProcess()
+{
 	//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
 	//m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_pd3dMRTSRV[MRT_NORMAL]);	
 	//m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
@@ -744,15 +745,20 @@ void CGameFramework::FrameAdvance()
 	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);
 	m_pSceneShader->Render(m_pd3dDeviceContext, 0, m_pCamera);
 
-	//if (m_iDrawOption >= 0)
-	//{
-	//	printf("opt : %d \n", m_iDrawOption);
-	//	m_pSceneShader->SetTexture(0, m_pd3dMRTSRV[m_iDrawOption]);
-	//}
-	//m_pCamera->SetViewport(m_pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-	
+}
 
-
+void CGameFramework::FrameAdvance()
+{
+	//타이머의 시간이 갱신되도록 하고 프레임 레이트를 계산한다. 
+	m_GameTimer.Tick();
+	//사용자 입력을 처리하기 위한 ProcessInput() 함수를 호출한다.  
+	ProcessInput();
+	//게임 객체의 애니메이션을 처리하기 위한 AnimateObjects() 함수를 호출한다.  
+	AnimateObjects();
+	// 렌더링
+	Render();
+	// 후처리 기법
+	PostProcess();
 	//스왑 체인의 후면버퍼의 내용이 디스플레이에 출력되도록 프리젠트한다.  
 	m_pDXGISwapChain->Present(0, 0);
 

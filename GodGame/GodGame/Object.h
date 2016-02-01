@@ -105,7 +105,7 @@ public:
 
 private:
 	unsigned int	m_nReferences : 31;
-	unsigned int	m_bActive : 1;
+	bool	m_bActive : 1;
 
 public:
 	void	 AddRef();

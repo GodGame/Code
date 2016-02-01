@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Shader.h"
 
 #define MAX_LIGHTS		4 
@@ -41,66 +42,49 @@ struct RENDER_INFO
 
 class CScene
 {
-private:
+protected:
 	CShader **m_ppShaders;
 	int		m_nShaders;
 
-	//CShader * m_pMirrorShader;
-
 	CPlayerShader * m_pPlayerShader;
-	CCamera *m_pCamera;
+	CCamera * m_pCamera;
 	CGameObject *m_pSelectedObject;
 
-	LIGHTS *m_pLights;
+	LIGHTS * m_pLights;
 	ID3D11Buffer *m_pd3dcbLights;
 
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
-	ID3D11RenderTargetView *m_pd3dRenderTargetView;
-	ID3D11DepthStencilView *m_pd3dDepthStencilView;
+	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
+	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
 
-	//	ID3D11DepthStencilState  * m_pd3dStencilMirrorState;	// 거울 스텐실 버퍼에 기록하기 위해 거울 렌더링 전용
-	//	ID3D11DepthStencilState  * m_pd3dDepthStencilReflectState;	// 반사될 물체들을 가시적인 부분만 그릴때 사용
-
-	//	ID3D11BlendState	* m_pd3dNoWriteBlendState;	// 블렌드 스테이트
-	//	ID3D11RasterizerState * m_pd3dCullCWRasterizerState;	// 반시계방향 전용 RS
-	//int m_nRenderThreads;
-	//RenderingThreadInfo * m_pRenderingThreadInfo;
-	//HANDLE * m_hRenderingEndEvents;
 public:
-
 	CScene();
-	~CScene();
+	virtual ~CScene();
 
-	void UpdateLights(ID3D11DeviceContext *pd3dDeviceContext);
+	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
-	void SetRenderTarget(ID3D11RenderTargetView *pd3dRenderTargetView){ m_pd3dRenderTargetView = pd3dRenderTargetView; }
-	void SetDepthStencilView(ID3D11DepthStencilView *pd3dDepthStencilView) { m_pd3dDepthStencilView = pd3dDepthStencilView; }
-	bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader);
+	virtual void ReleaseObjects();
 
-	//void InitilizeThreads(ID3D11Device *pd3dDevice);
-	void BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader);
-	void ReleaseObjects();
-	//	void CreateStates(ID3D11Device *pd3dDevice);
-	void SetPlayerShader(CPlayerShader * pPlayerShader) { m_pPlayerShader = pPlayerShader; }
+	virtual void AnimateObjects(float fTimeElapsed);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, RENDER_INFO * pRenderInfo);
 
-	bool ProcessInput();
-	void AnimateObjects(float fTimeElapsed);
-	void Render(ID3D11DeviceContext *pd3dDeviceContext, RENDER_INFO * pRenderInfo);
-	//	void RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, CCamera * pCamera, XMMATRIX * pxmtxReflect);
+	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
+	virtual void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights);
+	virtual void ReleaseShaderVariables();
+public:
 #ifdef PICKING
 	CGameObject *PickObjectPointedByCursor(int xClient, int yClient);
 #endif
+	void UpdateLights(ID3D11DeviceContext *pd3dDeviceContext);
+
+	//void SetRenderTarget(ID3D11RenderTargetView *pd3dRenderTargetView){ m_pd3dRenderTargetView = pd3dRenderTargetView; }
+	//void SetDepthStencilView(ID3D11DepthStencilView *pd3dDepthStencilView) { m_pd3dDepthStencilView = pd3dDepthStencilView; }
+	void SetPlayerShader(CPlayerShader * pPlayerShader) { m_pPlayerShader = pPlayerShader; }
+
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
 
-	CHeightMapTerrain *GetTerrain();
-
-	void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights);
-	void ReleaseShaderVariables();
-
 	LIGHT * GetLight(int index) { return &m_pLights->m_pLights[index]; }
-
-	//static DWORD WINAPI RenderThread(LPVOID lpParameter);
-	CShader * GetShader(int index){ return m_ppShaders[index]; }
+	CShader * GetShader(int index) { return m_ppShaders[index]; }
 };

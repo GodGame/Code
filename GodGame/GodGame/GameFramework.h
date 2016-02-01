@@ -54,25 +54,22 @@ private:
 	//디바이스 컨텍스트에 대한 포인터이다. 주로 파이프라인 설정을 하기 위하여 필요하다.
 	ID3D11DeviceContext *m_pd3dDeviceContext;
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
-	
+	ID3D11Texture2D	* m_pd3dDepthStencilBuffer;
+	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
+	ID3D11RenderTargetView *m_pd3dBackRenderTargetView;
+
+
+private:
 	//ID3D11ShaderResourceView * m_pd3dSSAOSRV;
 	//CSSAOShader * m_pSSAOShader;
 	CSceneShader * m_pSceneShader;
 
-	ID3D11RenderTargetView *m_pd3dBackRenderTargetView;
-
 	ID3D11RenderTargetView *m_ppd3dRenderTargetView[NUM_MRT];
-	ID3D11RenderTargetView *m_pd3dSSAOTargetView;
+	//ID3D11RenderTargetView *m_pd3dSSAOTargetView;
 	//ID3D11RenderTargetView *m_pd3dPostProcessing;
 
 	ID3D11ShaderResourceView *m_pd3dMRTSRV[NUM_MRT];
-
 	ID3D11Texture2D * m_ppd3dMRTtx[NUM_MRT];
-
-	ID3D11Texture2D	* m_pd3dDepthStencilBuffer;
-	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
-
-private:	
 
 	UINT m_uRenderState;
 
@@ -82,9 +79,7 @@ public:
 
 private:
 	int		m_iDrawOption;
-
 	POINT	m_ptOldCursorPos;
-
 
 	int m_nRenderThreads;
 	RenderingThreadInfo * m_pRenderingThreadInfo;
@@ -92,7 +87,6 @@ private:
 
 public:
 	CPlayerShader *m_pPlayerShader;
-
 
 	CGameFramework();
 	~CGameFramework();
@@ -111,18 +105,23 @@ public:
 	void ReleaseObjects();
 
 	//프레임워크의 핵심(사용자 입력, 애니메이션, 렌더링)을 구성하는 함수이다. 
+	void FrameAdvance();
 	void ProcessInput();
 	void AnimateObjects();
-	void FrameAdvance();
+	void Render();
+	void PostProcess();
 
 	//윈도우의 메시지(키보드, 마우스 입력)를 처리하는 함수이다. 
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
-private:
-	ID3D11Buffer			* m_pd3dcbColor;
+public:
+	static void ChangeGameScene(CScene * pScene);
+	static void PushGameScene(CScene * pScene);
+	static void PopGameScene(CScene * pScene);
 
+private:
 	//다음은 게임 프레임워크에서 사용할 타이머이다.
 	CGameTimer m_GameTimer;
 

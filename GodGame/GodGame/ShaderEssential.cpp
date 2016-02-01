@@ -256,12 +256,10 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	//}
 
 //	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
-		//ID3D11ShaderResourceView * pNullArray[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 
 
 	m_pMesh->Render(pd3dDeviceContext, uRenderState);
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
-	//pd3dDeviceContext->PSGetShaderResources(17, NUM_MRT - 1, pNullArray);
 
 	// ÀÌ·±...
 	//SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
@@ -304,6 +302,9 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 		m_pMesh->Render(pd3dDeviceContext, uRenderState);
 	}
+
+
+
 	pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
 
 }
