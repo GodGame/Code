@@ -282,19 +282,19 @@ void QuadTree::FrustumCulling(CCamera * pCamera)
 	
 	
 	bool bVisible;
-	//if (m_uHalfLength >= 512.0f)
-	//{
-	//	bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
-	//	CGameObject * pObj = nullptr;
-	//	for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
-	//	{
-	//		pObj = (*it);
-	//		pObj->UpdateBoundingBox();
-	//		AABB & bb = pObj->m_bcMeshBoundingCube;
-	//		pObj->SetActive(pCamera->IsInFrustum(&bb));
-	//	}
-	//}
-	//else 
+	if (m_uHalfLength > 512.0f)
+	{
+		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
+		CGameObject * pObj = nullptr;
+		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
+		{
+			pObj = (*it);
+			pObj->UpdateBoundingBox();
+			AABB & bb = pObj->m_bcMeshBoundingCube;
+			pObj->SetActive(pCamera->IsInFrustum(&bb));
+		}
+	}
+	else 
 	{
 		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
 		if (!bVisible) return;
@@ -302,10 +302,11 @@ void QuadTree::FrustumCulling(CCamera * pCamera)
 
 		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
 		{
-			pObj = (*it);
-			pObj->UpdateBoundingBox();
-			AABB & bb = pObj->m_bcMeshBoundingCube;
-			pObj->SetActive(pCamera->IsInFrustum(&bb)); //bVisible);
+			//pObj = (*it);
+			//pObj->UpdateBoundingBox();
+			//AABB & bb = pObj->m_bcMeshBoundingCube;
+			//pObj->SetActive(pCamera->IsInFrustum(&bb)); //bVisible);
+			(*it)->SetActive(bVisible);
 		}
 
 	}
@@ -379,9 +380,9 @@ Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
 	}
 
 	if (bbObj.m_xv3Maximum.x > bbQuad.m_xv3Maximum.x) return Location::LOC_ALL;
-	if (bbObj.m_xv3Minimum.x < bbQuad.m_xv3Minimum.x) return Location::LOC_ALL;
-
 	if (bbObj.m_xv3Maximum.z > bbQuad.m_xv3Maximum.z) return Location::LOC_ALL;
+
+	if (bbObj.m_xv3Minimum.x < bbQuad.m_xv3Minimum.x) return Location::LOC_ALL;
 	if (bbObj.m_xv3Minimum.z < bbQuad.m_xv3Minimum.z) return Location::LOC_ALL;
 
 	return Location(uCheck);
@@ -566,6 +567,12 @@ UINT CQuadTreeManager::RenewalDynamicObjects()
 	}
 
 	return uCountRenewal;
+}
+
+void CQuadTreeManager::Update(CCamera * pCamera)
+{
+	RenewalDynamicObjects();
+	FrustumCullObjects(pCamera);
 }
 
 

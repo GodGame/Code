@@ -6,6 +6,7 @@ bool bIsKeyDown = false;
 
 CSceneInGame::CSceneInGame() : CScene()
 {
+	m_nMRT = NUM_MRT;
 	//m_nRenderThreads = 0;
 
 	//m_pRenderingThreadInfo = nullptr;
@@ -24,7 +25,7 @@ CSceneInGame::~CSceneInGame()
 	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
 
-void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader)
+void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader)
 {
 	HRESULT hr;
 
@@ -65,6 +66,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneS
 	//pd3dsrvTexture->Release();
 	//pd3dSamplerState->Release();
 
+
 	m_nShaders = NUM_SHADER;
 	m_ppShaders = new CShader*[m_nShaders];
 
@@ -76,6 +78,15 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneS
 	m_ppShaders[1] = new CTerrainShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
 	m_ppShaders[1]->BuildObjects(pd3dDevice);
+
+
+	m_pPlayerShader = new CPlayerShader();
+	m_pPlayerShader->CreateShader(pd3dDevice);
+	m_pPlayerShader->BuildObjects(pd3dDevice, GetTerrain());
+
+	SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
+	m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+	m_pCamera->GenerateViewMatrix();
 
 	//재질을 생성한다.
 	CMaterial *pRedMaterial = MaterialMgr.GetObjects("Red");
@@ -132,7 +143,6 @@ void CSceneInGame::ReleaseObjects()
 		if (m_ppShaders[j]) delete m_ppShaders[j];
 	}
 	if (m_ppShaders) delete[] m_ppShaders;
-
 }
 
 
@@ -146,6 +156,7 @@ bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 	}
 	return false;
 }
+
 void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	m_pLights = new LIGHTS;
@@ -305,8 +316,7 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 	}
 
-	QUADMgr.FrustumCullObjects(m_pCamera);
-	QUADMgr.RenewalDynamicObjects();
+	QUADMgr.Update(m_pCamera);
 }
 
 void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)

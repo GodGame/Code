@@ -50,7 +50,7 @@ public:
 
 	void SetDynamicShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera);
 	void ResetDynamicShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera);
-	inline void UpdateDynamicShadowResource(ID3D11DeviceContext * pd3dDeviceContext);
+	void UpdateDynamicShadowResource(ID3D11DeviceContext * pd3dDeviceContext);
 };
 
 #define ShadowMgr CShadowMgr::GetInstance()

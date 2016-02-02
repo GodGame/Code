@@ -33,7 +33,7 @@ CSceneShader::CSceneShader() : CTexturedShader()
 	m_pd3dBloom16x16RTV = m_pd3dBloom4x4RTV = nullptr;
 	m_pd3dBloom16x16SRV = m_pd3dBloom4x4SRV = nullptr;
 
-	m_pd3dShadowSrv = nullptr;
+	//m_pd3dShadowSrv = nullptr;
 	m_pd3dLightPS = nullptr;
 
 	m_pd3dComputeVertBlur = m_pd3dComputeHorzBlur = nullptr;
@@ -63,7 +63,7 @@ CSceneShader::~CSceneShader()
 	if (m_pd3dDepthStencilState) m_pd3dDepthStencilState->Release();
 
 	if (m_pd3dPSOther) m_pd3dPSOther->Release();
-	if (m_pd3dShadowSrv) m_pd3dShadowSrv->Release();
+	//if (m_pd3dShadowSrv) m_pd3dShadowSrv->Release();
 	if (m_pd3dLightPS) m_pd3dLightPS->Release();
 
 	if (m_pd3dPSDump)m_pd3dPSDump->Release();

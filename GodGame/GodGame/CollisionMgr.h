@@ -100,7 +100,7 @@ public:
 	//CPartitionNode * GetChildNode(int index);
 };
 
-#define QAUD_MIN_UNIT 128
+#define QAUD_MIN_UNIT 256
 
 enum Location{ LOC_NONE = -1, LOC_LB, LOC_RB, LOC_LT, LOC_RT, LOC_PARENT, LOC_ALL };
 
@@ -171,12 +171,12 @@ public:
 	void DeleteStaticObject(CGameObject* pObject);
 	void DeleteDynamicObject(CGameObject* pObject);
 
-
-	UINT RenewalDynamicObjects();
-
 public:
+	UINT RenewalDynamicObjects();
 	void FrustumCullObjects(CCamera * pCamera);
 	bool IsCollide(CGameObject * pObject);
+
+	void Update(CCamera * pCamera);
 	vector<CGameObject*>* GetContainedObjectList(CGameObject * pObject);
 };
 

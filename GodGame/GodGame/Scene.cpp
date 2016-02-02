@@ -10,6 +10,7 @@ CScene::CScene()
 	m_pCamera = nullptr;
 	m_pSelectedObject = nullptr;
 
+	m_nMRT = 1;
 
 	//m_nRenderThreads = 0;
 
@@ -29,7 +30,7 @@ CScene::~CScene()
 	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
 
-void CScene::BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader)
+void CScene::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader)
 {
 }
 

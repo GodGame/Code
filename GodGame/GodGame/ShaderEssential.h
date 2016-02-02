@@ -143,7 +143,7 @@ private:
 	ID3D11PixelShader * m_pd3dLightPS;
 	ID3D11PixelShader * m_pd3dPSDump;
 
-	ID3D11ShaderResourceView * m_pd3dShadowSrv;
+	//ID3D11ShaderResourceView * m_pd3dShadowSrv;
 
 	ID3D11RenderTargetView * m_pd3dBackRTV;
 	
@@ -191,7 +191,7 @@ public:
 	void SetTexture(int index, ID3D11ShaderResourceView * m_pSceneSRV);
 	void SetInfoTextures(ID3D11DeviceContext *pd3dDeviceContext);
 
-	void SetLightSRV(ID3D11ShaderResourceView * pSRV) { m_pd3dShadowSrv = pSRV; }
+	//void SetLightSRV(ID3D11ShaderResourceView * pSRV) { m_pd3dShadowSrv = pSRV; }
 	void SetDrawOption(int iOpt) { m_iDrawOption = iOpt; }
 	int GetDrawOption() { return m_iDrawOption; }
 

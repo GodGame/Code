@@ -45,6 +45,7 @@ class CScene
 protected:
 	CShader **m_ppShaders;
 	int		m_nShaders;
+	int		m_nMRT;
 
 	CPlayerShader * m_pPlayerShader;
 	CCamera * m_pCamera;
@@ -64,7 +65,7 @@ public:
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader);
 	virtual void ReleaseObjects();
 
 	virtual void AnimateObjects(float fTimeElapsed);
@@ -82,9 +83,13 @@ public:
 	//void SetRenderTarget(ID3D11RenderTargetView *pd3dRenderTargetView){ m_pd3dRenderTargetView = pd3dRenderTargetView; }
 	//void SetDepthStencilView(ID3D11DepthStencilView *pd3dDepthStencilView) { m_pd3dDepthStencilView = pd3dDepthStencilView; }
 	void SetPlayerShader(CPlayerShader * pPlayerShader) { m_pPlayerShader = pPlayerShader; }
+	CPlayerShader * GetPlayerShader() { return m_pPlayerShader; }
 
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
 
 	LIGHT * GetLight(int index) { return &m_pLights->m_pLights[index]; }
 	CShader * GetShader(int index) { return m_ppShaders[index]; }
+
+	int GetShaderNumber() { return m_nShaders; }
+	int GetMRTNumber() { return m_nMRT; }
 };

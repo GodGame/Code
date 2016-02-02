@@ -16,7 +16,7 @@ public:
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CSceneShader * pSceneShader);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader);
 	virtual void ReleaseObjects();
 
 	virtual void AnimateObjects(float fTimeElapsed);

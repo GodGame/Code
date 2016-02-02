@@ -505,7 +505,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 	m_pMaterial = pMat;//pMaterial;
 	pMat->AddRef();//if (pMaterial) pMaterial->AddRef();
-	m_nObjects = m_nCubes = 1;
+	m_nObjects = m_nCubes = 1000;
 
 	XMFLOAT3 xmf3Pos;
 	XMFLOAT2 xmf2Size = XMFLOAT2(20, 50);
@@ -571,8 +571,6 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	pd3dsrvArray->Release();
 	pd3dSamplerState->Release();
 
-
-
 }
 
 void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -595,11 +593,11 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	{
 		if (m_ppObjects[j])
 		{
-			if(m_ppObjects[j]->IsVisible())//if (m_ppObjects[j]->IsVisible(pCamera))
+			if (m_ppObjects[j]->IsVisible())// if (m_ppObjects[j]->IsVisible(pCamera))//			{
 			{
 				xmf3Pos = m_ppObjects[j]->GetPosition();
 				pnTreeInstance[nCubeInstance].m_xv3Position = XMFLOAT4(xmf3Pos.x, xmf3Pos.y, xmf3Pos.z, 1.0f);
-				printf("%0.2f %0.2f %0.2f \n", xmf3Pos.x, xmf3Pos.y, xmf3Pos.z);
+				//printf("%0.2f %0.2f %0.2f \n", xmf3Pos.x, xmf3Pos.y, xmf3Pos.z);
 				nCubeInstance++;
 			}
 			m_ppObjects[j]->SetActive(false);
