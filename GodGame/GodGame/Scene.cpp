@@ -5,11 +5,16 @@
 CScene::CScene()
 {
 	m_ppShaders = nullptr;
+	m_pSceneShader = nullptr;
+	m_pPlayerShader = nullptr;
+	m_pUIShader = nullptr;
 
 	m_nShaders = 0;
 	m_pCamera = nullptr;
 	m_pSelectedObject = nullptr;
+	m_pd3dcbLights = nullptr;
 
+	m_pLights = nullptr;
 	m_nMRT = 1;
 
 	//m_nRenderThreads = 0;
@@ -19,6 +24,7 @@ CScene::CScene()
 
 CScene::~CScene()
 {
+
 	//for (int i = 0; i < m_nRenderThreads; ++i)
 	//{
 	//	m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
@@ -30,9 +36,6 @@ CScene::~CScene()
 	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
 
-void CScene::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader)
-{
-}
 
 void CScene::ReleaseObjects()
 {
@@ -45,6 +48,9 @@ void CScene::ReleaseObjects()
 	}
 	if (m_ppShaders) delete[] m_ppShaders;
 
+	if (m_pPlayerShader) delete m_pPlayerShader;
+	if (m_pSceneShader) delete m_pSceneShader;
+	if (m_pUIShader) delete m_pUIShader;
 }
 
 
@@ -59,15 +65,20 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	return false;
 }
 
-void CScene::CreateShaderVariables(ID3D11Device *pd3dDevice)
-{
-}
-
 void CScene::ReleaseShaderVariables()
 {
 	if (m_pLights) delete m_pLights;
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
 }
+
+void CScene::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+{
+}
+
+void CScene::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+{
+}
+
 void CScene::UpdateLights(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	if (m_pLights && m_pd3dcbLights) UpdateShaderVariable(pd3dDeviceContext, m_pLights);
@@ -87,6 +98,11 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return false;
 }
 
+bool CScene::ProcessInput()
+{
+	return false;
+}
+
 void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nShaders; i++)
@@ -97,5 +113,9 @@ void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRender
 {
 	for (int i = 0; i < m_nShaders; ++i)
 		m_ppShaders[i]->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
+}
+
+void CScene::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
+{
 }
 

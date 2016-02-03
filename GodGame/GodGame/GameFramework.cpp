@@ -2,6 +2,7 @@
 #include "GameFramework.h"
 #include "MyInline.h"
 #include "SceneInGame.h"
+#include "SceneTitle.h"
 //CRITICAL_SECTION m_cs;
 
 vector<CScene*> gSceneState;
@@ -19,6 +20,16 @@ void CGameFramework::PushGameScene(CScene * pScene)
 	{
 		gpScene = pScene;
 		BuildObjects(gpScene);
+
+		CSceneInGame * pInGame = dynamic_cast<CSceneInGame*>(pScene);
+		if (pInGame != nullptr)
+		{
+			m_bInGame = true;
+			InitilizeThreads();
+		}
+		else
+			m_bInGame = false;
+
 		gSceneState.push_back(pScene);
 	}
 }
@@ -29,6 +40,7 @@ void CGameFramework::PopGameScene()
 	{
 		CScene * pScene = *(gSceneState.end() - 1);
 		ReleaseObjects(gpScene);
+		m_pPlayer = nullptr;
 	}
 	gSceneState.pop_back();
 }
@@ -92,9 +104,11 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	if (!CreateRenderTargetDepthStencilView()) return(false);
 
 	CManagers::BuildManagers(m_pd3dDevice, m_pd3dDeviceContext);
-	PushGameScene(new CSceneInGame());
+	//PushGameScene(new CSceneInGame());
+	PushGameScene(new CSceneTitle());
 
-	InitilizeThreads();
+
+	//InitilizeThreads();
 	return(true);
 }
 
@@ -102,6 +116,7 @@ void CGameFramework::OnDestroy()
 {
 	//게임 객체를 소멸한다. 
 	ReleaseObjects(gpScene);
+	gSceneState.pop_back();
 
 	for (auto it = gSceneState.begin(); it != gSceneState.end(); ++it)
 	{
@@ -256,6 +271,7 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 			m_ppd3dMRTtx[i]->Release();
 			m_ppd3dMRTtx[i] = nullptr;
 		}
+		m_ppd3dMRTtx[0] = nullptr;
 	}
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	
@@ -278,68 +294,6 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	return(true);
 }
 
-
-void CGameFramework::BuildStaticShadowMap()
-{
-	// 방향성 광원은 위치 필요 없다.
-	//LIGHT * pLight = m_pScene->GetLight(2);
-	CHeightMapTerrain * pTerrain = ((CSceneInGame*)gpScene)->GetTerrain();
-	float fHalf = pTerrain->GetWidth() * 0.5;
-
-	CShadowMgr * pSdwMgr = &ShadowMgr;
-	pSdwMgr->BuildShadowMap(m_pd3dDeviceContext, XMFLOAT3(fHalf - 1000.0f, 0.0f, fHalf), XMFLOAT3(fHalf, fHalf, fHalf), fHalf);
-
-	m_uRenderState = NOT_PSUPDATE;
-	pSdwMgr->SetStaticShadowMap(m_pd3dDeviceContext, m_pCamera);
-
-	gpScene->GetShader(1)->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
-
-	pSdwMgr->ResetStaticShadowMap(m_pd3dDeviceContext, m_pCamera);
-	m_uRenderState = NULL;
-
-	pSdwMgr->UpdateStaticShadowResource(m_pd3dDeviceContext);
-	//pSdwMgr->UpdateDynamicShadowResource(m_pd3dDeviceContext);
-	//m_pSceneShader->SetLightSRV(TXMgr.GetShaderResourceView("srv_StaticShaodwMap"));
-}
-
-void CGameFramework::OnCreateShadowMap(CShader*ShaderList[], int nShaders)
-{
-	m_uRenderState = NOT_PSUPDATE;
-
-	ShadowMgr.SetDynamicShadowMap(m_pd3dDeviceContext, m_pCamera);
-
-	for (int i = 0; i < nShaders; ++i)
-		ShaderList[i]->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
-
-	ShadowMgr.ResetDynamicShadowMap(m_pd3dDeviceContext, m_pCamera);
-	m_uRenderState = NULL;
-
-	//(*m_pScene->GetShader(1))->Render(m_pd3dDeviceContext, m_uRenderState, nullptr);
-	//m_pPlayerShader->Render(m_pd3dDeviceContext, m_uRenderState, m_pCamera);
-	//(*m_pScene->GetShader(2))->Render(m_pd3dDeviceContext, m_uRenderState, nullptr);
-
-//#ifdef _THREAD
-//	for (int i = 1; i < 3; ++i)
-//	{
-//		::SetEvent(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
-//	}
-//	::WaitForMultipleObjects(2, &m_hRenderingEndEvents[1], TRUE, INFINITE);
-//#endif
-//	ID3D11RenderTargetView* renderTargets[1] = { 0 };
-//	m_pd3dDeviceContext->OMSetRenderTargets(0, nullptr, m_pd3ddsvShadowMap);
-//	m_pd3dDeviceContext->ClearDepthStencilView(m_pd3ddsvShadowMap, D3D11_CLEAR_DEPTH, 1.0f, 0);
-//#ifdef _THREAD
-//	for (int i = 1; i < 3; ++i)
-//	{
-//		m_pd3dDeviceContext->ExecuteCommandList(m_pRenderingThreadInfo[i].m_pd3dCommandList, TRUE);
-//		m_pRenderingThreadInfo[i].m_pd3dCommandList->Release();
-//	}
-//#else
-//	if (m_pScene) m_pScene->Render(m_pd3dDeviceContext, m_pCamera);
-//#endif
-
-
-}
 
 
 bool CGameFramework::CreateDirect3DDisplay()
@@ -408,8 +362,8 @@ bool CGameFramework::CreateDirect3DDisplay()
 
 void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-
 	if (gpScene) gpScene->OnProcessingMouseMessage(hWnd, nMessageID, wParam, lParam);
+
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
@@ -434,28 +388,29 @@ void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM
 void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	if (gpScene) gpScene->OnProcessingKeyboardMessage(hWnd, nMessageID, wParam, lParam);
+	if (!m_bInGame) return;
 	switch (nMessageID)
 	{
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
 		case 'Q':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = 0));
+			((CSceneShader*)m_pSceneShader)->SetDrawOption((m_iDrawOption = 0));
 			break;
 		case 'W':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = 1));
+			((CSceneShader*)m_pSceneShader)->SetDrawOption((m_iDrawOption = 1));
 			break;
 		case 'E':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = 2));
+			((CSceneShader*)m_pSceneShader)->SetDrawOption((m_iDrawOption = 2));
 			break;
 		case 'R':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = 3));
+			((CSceneShader*)m_pSceneShader)->SetDrawOption((m_iDrawOption = 3));
 			break;
 		case 'T':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = 4));
+			((CSceneShader*)m_pSceneShader)->SetDrawOption((m_iDrawOption = 4));
 			break;
 		case 'Y':
-			m_pSceneShader->SetDrawOption((m_iDrawOption = 5));
+			((CSceneShader*)m_pSceneShader)->SetDrawOption((m_iDrawOption = 5));
 			break;
 //		case 'Z':
 //			m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
@@ -557,29 +512,6 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	return(0);
 }
 
-void CGameFramework::BuildObjects(CScene * pScene)
-{
-	CShader::CreateShaderVariables(m_pd3dDevice);
-	CIlluminatedShader::CreateShaderVariables(m_pd3dDevice);
-
-	m_pSceneShader = new CSceneShader();
-	m_pSceneShader->CreateShader(m_pd3dDevice);
-	m_pSceneShader->BuildObjects(m_pd3dDevice, m_pd3dMRTSRV, m_iDrawOption, m_pd3dBackRenderTargetView);
-
-	pScene->BuildObjects(m_pd3dDevice, m_pd3dDeviceContext, m_pSceneShader);
-	m_pPlayerShader = pScene->GetPlayerShader();
-	m_pPlayer = m_pPlayerShader->GetPlayer();
-	m_pCamera = m_pPlayer->GetCamera();
-	//PushGameScene( pScene );
-
-//	m_pSSAOShader = new CSSAOShader();
-//	m_pSSAOShader->CreateShaderVariable(m_pd3dDevice);
-//	m_pSSAOShader->CreateShader(m_pd3dDevice);
-//	m_pSSAOShader->BuildObjects(m_pd3dDevice);
-
-	m_pSceneShader->CreateConstantBuffer(m_pd3dDevice, m_pd3dDeviceContext);
-	BuildStaticShadowMap();
-}
 
 void CGameFramework::InitilizeThreads()
 {
@@ -602,6 +534,7 @@ void CGameFramework::InitilizeThreads()
 		m_pRenderingThreadInfo[i].m_pd3dDepthStencilView = m_pd3dDepthStencilView;
 		m_pRenderingThreadInfo[i].m_ppd3dRenderTargetView = m_ppd3dRenderTargetView;
 		m_pRenderingThreadInfo[i].m_puRenderState = &m_uRenderState;
+		m_pRenderingThreadInfo[i].m_pbInGame = &m_bInGame;
 		m_hRenderingEndEvents[i] = m_pRenderingThreadInfo[i].m_hRenderingEndEvent;
 		// 디퍼드 컨텍스트 생성
 		m_pd3dDevice->CreateDeferredContext(0, &m_pRenderingThreadInfo[i].m_pd3dDeferredContext);
@@ -621,6 +554,35 @@ void CGameFramework::InitilizeThreads()
 #endif
 }
 
+void CGameFramework::BuildObjects(CScene * pScene)
+{
+	CShader::CreateShaderVariables(m_pd3dDevice);
+	CIlluminatedShader::CreateShaderVariables(m_pd3dDevice);
+
+
+	SceneShaderBuildInfo info;
+	info.pd3dBackRTV = m_pd3dBackRenderTargetView;
+	info.ppMRTSRVArray = m_pd3dMRTSRV;
+
+	pScene->BuildObjects(m_pd3dDevice, m_pd3dDeviceContext, &info);
+	m_pPlayerShader = pScene->GetPlayerShader();
+
+	if (m_pPlayerShader)
+	{
+		m_pPlayer = m_pPlayerShader->GetPlayer();
+		m_pCamera = m_pPlayer->GetCamera();
+	}
+	else
+	{
+		CCamera::SetViewport(m_pd3dDeviceContext, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+	}
+	//PushGameScene( pScene );
+
+	m_pSceneShader = pScene->GetSceneShader();
+	
+	//BuildStaticShadowMap();
+}
+
 void CGameFramework::ReleaseObjects(CScene * pScene)
 {
 	//CShader 클래스의 정적(static) 멤버 변수로 선언된 상수 버퍼를 반환한다.
@@ -630,15 +592,16 @@ void CGameFramework::ReleaseObjects(CScene * pScene)
 	pScene->ReleaseObjects();
 	delete pScene;
 
-	if (m_pSceneShader) m_pSceneShader->ReleaseObjects();
-	if (m_pSceneShader) delete m_pSceneShader;
-	m_pSceneShader = nullptr;
+	//if (m_pSceneShader) m_pSceneShader->ReleaseObjects();
+	//if (m_pSceneShader) delete m_pSceneShader;
+	//m_pSceneShader = nullptr;
 }
 
 void CGameFramework::ProcessInput()
 {
 	bool bProcessedByScene = false;
-//	if (m_pScene) bProcessedByScene = m_pScene->ProcessInput();
+	if (gpScene) bProcessedByScene = gpScene->ProcessInput();
+
 	if (!bProcessedByScene)
 	{
 		static UCHAR pKeyBuffer[256];
@@ -668,7 +631,7 @@ void CGameFramework::ProcessInput()
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
 		}
 		//플레이어를 이동하거나(dwDirection) 회전한다(cxDelta 또는 cyDelta).
-		if ((dwDirection != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
+		if (dwDirection  || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
 			if (cxDelta || cyDelta)
 			{
@@ -679,24 +642,26 @@ void CGameFramework::ProcessInput()
 					m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
 			}
 			/*플레이어를 dwDirection 방향으로 이동한다(실제로는 속도 벡터를 변경한다). 이동 거리는 시간에 비례하도록 한다. 플레이어의 이동 속력은 (50/초)로 가정한다. 만약 플레이어의 이동 속력이 있다면 그 값을 사용한다.*/
-			if (dwDirection) m_pPlayer->Move(dwDirection, 50.0f * m_GameTimer.GetTimeElapsed(), true);
+			if (dwDirection) 
+				m_pPlayer->Move(dwDirection, 50.0f * m_GameTimer.GetTimeElapsed(), true);
 		}
 	}
 	//플레이어를 실제로 이동하고 카메라를 갱신한다. 중력과 마찰력의 영향을 속도 벡터에 적용한다.
-	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
+	if(m_pPlayer) m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
+
+
 }
 
 void CGameFramework::AnimateObjects()
 {
 	float fFrameTime = m_GameTimer.GetTimeElapsed();
 	gpScene->AnimateObjects(fFrameTime);
-	m_pSceneShader->AnimateObjects(fFrameTime);
+	if(m_pSceneShader) m_pSceneShader->AnimateObjects(fFrameTime);
 }
 
 void CGameFramework::Render()
 {
-	CShader* shaderList[] = { m_pPlayerShader, gpScene->GetShader(2) };
-	OnCreateShadowMap(shaderList, 2);
+	gpScene->OnCreateShadowMap(m_pd3dDeviceContext);
 
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.0f };	//렌더 타겟 뷰를 채우기 위한 색상을 설정한다.  
 															/* 렌더 타겟 뷰를 fClearColor[] 색상으로 채운다. 즉, 렌더 타겟 뷰에 연결된 스왑 체인의 첫 번째 후면버퍼를 fClearColor[] 색상으로 지운다. */
@@ -709,6 +674,7 @@ void CGameFramework::Render()
 		//	m_pd3dDeviceContext->ClearRenderTargetView(m_ppd3dRenderTargetView[i], fClearColor);
 		//}
 		m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
 	}
 	else
 	{
@@ -716,11 +682,13 @@ void CGameFramework::Render()
 		m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dBackRenderTargetView, fClearColor);
 		m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
-#ifdef _THREAD
-	DeferredRender();
-#else
-	ImmediateRender();
-#endif
+//#ifdef _THREAD
+//	DeferredRender();
+//#else
+//	ImmediateRender();
+//#endif
+	if (m_bInGame) DeferredRender();
+	else ImmediateRender();
 }
 
 void CGameFramework::DeferredRender()
@@ -749,25 +717,33 @@ void CGameFramework::ImmediateRender()
 	RenderInfo.ThreadID = -1;
 	RenderInfo.pRenderState = &m_uRenderState;
 
-	if (m_pPlayer) m_pPlayer->UpdateShaderVariables(m_pd3dDeviceContext);
+	if (m_pPlayer) 
+		m_pPlayer->UpdateShaderVariables(m_pd3dDeviceContext);
+
 	gpScene->UpdateLights(m_pd3dDeviceContext);
 	gpScene->Render(m_pd3dDeviceContext, &RenderInfo);
-	if (m_pPlayerShader) m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
+	
+	if (m_pPlayerShader)
+		m_pPlayerShader->Render(m_pd3dDeviceContext, *RenderInfo.pRenderState, RenderInfo.pCamera);
 }
 
 void CGameFramework::PostProcess()
 {
-	if (m_pSceneShader == nullptr) return;
-	//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
-	//m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_pd3dMRTSRV[MRT_NORMAL]);	
-	//m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
+	if (m_pSceneShader) 
+	{
+		//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dSSAOTargetView, nullptr);
+		//m_pd3dDeviceContext->PSSetShaderResources(21, 1, &m_pd3dMRTSRV[MRT_NORMAL]);	
+		//m_pSSAOShader->Render(m_pd3dDeviceContext, NULL, m_pCamera);
 
-	//ShadowMgr.UpdateStaticShadowResource(m_pd3dDeviceContext);
-	ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
+		//ShadowMgr.UpdateStaticShadowResource(m_pd3dDeviceContext);
+		//ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
 
-	gpScene->UpdateLights(m_pd3dDeviceContext);
-	m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);
-	m_pSceneShader->Render(m_pd3dDeviceContext, 0, m_pCamera);
+		gpScene->UpdateLights(m_pd3dDeviceContext);
+		m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);
+		m_pSceneShader->Render(m_pd3dDeviceContext, 0, m_pCamera);
+	}
+
+	gpScene->UIRender(m_pd3dDeviceContext);
 }
 
 void CGameFramework::FrameAdvance()
@@ -807,6 +783,7 @@ UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter)
 	pd3dDeferredContext->OMSetDepthStencilState(nullptr, 1);
 	while (true)
 	{
+		//if (!pRenderingThreadInfo->m_pbInGame) return 0;
 		::WaitForSingleObject(pRenderingThreadInfo->m_hRenderingBeginEvent, INFINITE);
 		if (RenderInfo.ThreadID == 0)
 		{

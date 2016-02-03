@@ -163,20 +163,20 @@ public:
 	void InsertRTV(ID3D11RenderTargetView    * pRTV, string  name) { m_mgrRtv.InsertObject(pRTV, name); }
 	void InsertDSV(ID3D11DepthStencilView    * pDSV, string  name) { m_mgrDsv.InsertObject(pDSV, name); }
 	void InsertUAV(ID3D11UnorderedAccessView * pUAV, string  name) { m_mgrUav.InsertObject(pUAV, name); }
-	void InsertTex2D(ID3D11Texture2D * pTex2D, string name)		{ m_mgrTex2D.InsertObject(pTex2D, name); }
-	void InsertBuffer(ID3D11Buffer * pBuffer, string name)		{ m_mgrBuffer.InsertObject(pBuffer, name); }
+	void InsertTex2D(ID3D11Texture2D * pTex2D, string name)		   { m_mgrTex2D.InsertObject(pTex2D, name); }
+	void InsertBuffer(ID3D11Buffer * pBuffer, string name)	       { m_mgrBuffer.InsertObject(pBuffer, name); }
 
 	ID3D11ShaderResourceView  * GetSRV(string  name) { return m_mgrSrv.GetObjects(name); }
 	ID3D11RenderTargetView    * GetRTV(string  name) { return m_mgrRtv.GetObjects(name); }
 	ID3D11DepthStencilView	  * GetDSV(string  name) { return m_mgrDsv.GetObjects(name); }
 	ID3D11UnorderedAccessView * GetUAV(string  name) { return m_mgrUav.GetObjects(name); }
-	ID3D11Texture2D * GetTex2D(string name)		{ return m_mgrTex2D.GetObjects(name); }
-	ID3D11Buffer    * GetBuffer(string name)    { return m_mgrBuffer.GetObjects(name); }
+	ID3D11Texture2D * GetTex2D(string name)		     { return m_mgrTex2D.GetObjects(name); }
+	ID3D11Buffer    * GetBuffer(string name)         { return m_mgrBuffer.GetObjects(name); }
 
-	void EraseSRV(string  name) { m_mgrSrv.EraseObjects(name); }
-	void EraseRTV(string  name) { m_mgrRtv.EraseObjects(name); }
-	void EraseDSV(string  name) { m_mgrDsv.EraseObjects(name); }
-	void EraseUAV(string  name) { m_mgrUav.EraseObjects(name); }
+	void EraseSRV(string  name)   { m_mgrSrv.EraseObjects(name); }
+	void EraseRTV(string  name)   { m_mgrRtv.EraseObjects(name); }
+	void EraseDSV(string  name)   { m_mgrDsv.EraseObjects(name); }
+	void EraseUAV(string  name)   { m_mgrUav.EraseObjects(name); }
 	void EraseTex2D(string name)  { m_mgrTex2D.EraseObjects(name); }
 	void EraseBuffer(string name) { m_mgrBuffer.EraseObjects(name); }
 

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef __SCENE
+#define __SCENE
 
 #include "Shader.h"
 
@@ -40,9 +42,17 @@ struct RENDER_INFO
 	UINT * pRenderState;
 };
 
+struct SceneShaderBuildInfo
+{
+	ID3D11ShaderResourceView ** ppMRTSRVArray;
+	ID3D11RenderTargetView  * pd3dBackRTV;
+};
+
 class CScene
 {
 protected:
+	CShader * m_pSceneShader;
+	CShader * m_pUIShader;
 	CShader **m_ppShaders;
 	int		m_nShaders;
 	int		m_nMRT;
@@ -64,16 +74,21 @@ public:
 
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	virtual bool ProcessInput();
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo) = 0;
 	virtual void ReleaseObjects();
 
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, RENDER_INFO * pRenderInfo);
+	virtual void UIRender(ID3D11DeviceContext *pd3dDeviceContext);
 
-	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
+	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice) = 0;
 	virtual void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights);
 	virtual void ReleaseShaderVariables();
+
+	virtual void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
+	virtual void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
 public:
 #ifdef PICKING
 	CGameObject *PickObjectPointedByCursor(int xClient, int yClient);
@@ -82,8 +97,11 @@ public:
 
 	//void SetRenderTarget(ID3D11RenderTargetView *pd3dRenderTargetView){ m_pd3dRenderTargetView = pd3dRenderTargetView; }
 	//void SetDepthStencilView(ID3D11DepthStencilView *pd3dDepthStencilView) { m_pd3dDepthStencilView = pd3dDepthStencilView; }
+
 	void SetPlayerShader(CPlayerShader * pPlayerShader) { m_pPlayerShader = pPlayerShader; }
 	CPlayerShader * GetPlayerShader() { return m_pPlayerShader; }
+	CShader * GetSceneShader() { return m_pSceneShader; }
+	CShader * GetUIShader() { return m_pUIShader; }
 
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
 
@@ -93,3 +111,4 @@ public:
 	int GetShaderNumber() { return m_nShaders; }
 	int GetMRTNumber() { return m_nMRT; }
 };
+#endif

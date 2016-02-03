@@ -69,6 +69,17 @@ void CCamera::SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD xTopLeft
 	m_d3dViewport.MaxDepth = fMaxZ;
 	pd3dDeviceContext->RSSetViewports(1, &m_d3dViewport);
 }
+void CCamera::SetViewport(ID3D11DeviceContext * pd3dDeviceContext, DWORD nWidth, DWORD nHeight)
+{
+	D3D11_VIEWPORT viewport;
+	viewport.TopLeftX = float(0);
+	viewport.TopLeftY = float(0);
+	viewport.Width = float(nWidth);
+	viewport.Height = float(nHeight);
+	viewport.MinDepth = 0;
+	viewport.MaxDepth = 1;
+	pd3dDeviceContext->RSSetViewports(1, &viewport);
+}
 void CCamera::Update(XMFLOAT3& xv3LookAt, float fTimeElapsed)
 {
 

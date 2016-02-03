@@ -1,6 +1,6 @@
 #include "PostDefine.fx"
 
-Texture2D<float4> tex : register(t0);
+Texture2D<float4> gTex : register(t0);
 StructuredBuffer<float> lum : register(t1);
 Texture2D bloom : register(t2);
 Texture2D bloom16x16 : register(t3);
@@ -29,7 +29,7 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	int3 uvm = int3(Input.pos.xy, 0);	// (u, v, level)
 	float2 Tex = float2((float)uvm.x / (float)g_param.z, (float)uvm.y / (float)g_param.w);
 
-	float4 vColor = tex.SampleLevel(PointSampler, Tex, 0);
+	float4 vColor = gTex.SampleLevel(PointSampler, Tex, 0);
 	float fLum = lum[0] * g_param.x;
 	float3 vBloom = bloom.Sample(LinearSampler, Tex);
 	float3 vBloomScaled = bloom16x16.Sample(LinearSampler, Tex);
@@ -49,4 +49,66 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 //	vColor.a = 1.0f;
 
 	return vColor;//vColor;
+}
+
+struct VS_UI_INSTANCE
+{
+	float extra			: POSITION;
+	float4 DrawInfo		: INSTANCE;	// x, y -> pos z, w -> size
+};
+
+struct GS_UI_INSTANCE
+{
+	float extra			: POSITION;
+	float4 DrawInfo		: INSTANCE;
+};
+
+struct PS_UI_INSTANCE
+{
+	float4 pos			: SV_POSITION;
+	float2 tex			: TEXCOORD;
+};
+
+GS_UI_INSTANCE VS_UI_Draw(VS_UI_INSTANCE input)
+{
+	GS_UI_INSTANCE output;
+	output.extra = input.extra;
+	output.DrawInfo = input.DrawInfo;
+
+	return output;
+}
+
+[maxvertexcount(6)]
+void GS_UI_Draw(point GS_UI_INSTANCE input[1], uint primID : SV_PrimitiveID,
+	inout TriangleStream<PS_UI_INSTANCE> triStream)
+{
+	GS_UI_INSTANCE inPoint = input[0];
+	PS_UI_INSTANCE output[4];
+
+	output[0].pos = float4(inPoint.DrawInfo.xy, 1, 0) + float4(-inPoint.DrawInfo.z, +inPoint.DrawInfo.w, 1, 0);
+	output[0].tex = float2(0, 0);		
+
+	output[1].pos = float4(inPoint.DrawInfo.xy, 1, 0) + float4(+inPoint.DrawInfo.z, +inPoint.DrawInfo.w, 1, 0);
+	output[1].tex = float2(1, 0);		
+
+	output[2].pos = float4(inPoint.DrawInfo.xy, 1, 0) + float4(-inPoint.DrawInfo.z, -inPoint.DrawInfo.w, 1, 0);
+	output[2].tex = float2(0, 1);		
+
+	output[3].pos = float4(inPoint.DrawInfo.xy, 1, 0) + float4(+inPoint.DrawInfo.z, -inPoint.DrawInfo.w, 1, 0);
+	output[3].tex = float2(1, 1);
+
+	[unroll]
+	for (int i = 0; i < 4; ++ i)
+		triStream.Append(output[i]);
+}
+
+SamplerState gSampler : register (s0);
+
+float PS_UI_Draw(PS_UI_INSTANCE input)
+{
+	float4 color = gTex.Sample(gSampler, input.tex);
+
+	if (color.a == 0.0f) discard;
+
+	return color;
 }

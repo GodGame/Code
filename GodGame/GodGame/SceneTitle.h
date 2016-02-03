@@ -1,17 +1,14 @@
 #pragma once
-#ifndef __INGAME__
-#define __INGAME__
+#ifndef __SCENE_TITLE
+#define __SCENE_TITLE
 
 #include "Scene.h"
 
-class CSceneInGame : public CScene
+class CSceneTitle : public CScene
 {
-	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
-	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
-	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
 public:
-	CSceneInGame();
-	virtual ~CSceneInGame();
+	CSceneTitle();
+	virtual ~CSceneTitle();
 
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
@@ -27,14 +24,11 @@ public:
 	virtual void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	virtual void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights);
 	virtual void ReleaseShaderVariables();
-
-	virtual void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
-	virtual void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
 public:
 #ifdef PICKING
 	CGameObject *PickObjectPointedByCursor(int xClient, int yClient);
 #endif
-	CHeightMapTerrain *GetTerrain();
+	//CHeightMapTerrain *GetTerrain();
 };
 
 #endif

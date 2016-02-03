@@ -79,6 +79,7 @@ public:
 	CPlayer *GetPlayer() {return(m_pPlayer);}
 	//뷰-포트를 설정하는 멤버 함수를 선언한다.
 	void SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD xStart, DWORD yStart, DWORD nWidth, DWORD nHeight, float fMinZ = 0.0f, float fMaxZ = 1.0f);
+	static void SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD nWidth, DWORD nHeight);
 	D3D11_VIEWPORT GetViewport() { return(m_d3dViewport); }
 
 	XMFLOAT4X4 GetViewMatrix() { return(m_xmf44View); }

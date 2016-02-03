@@ -232,6 +232,8 @@ void CSceneShader::UpdateShaderReosurces(ID3D11DeviceContext * pd3dDeviceContext
 void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera /*= nullptr*/)
 {
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
+	ShadowMgr.UpdateDynamicShadowResource(pd3dDeviceContext);
+
 	//printf("Opt: %d \n", m_iDrawOption);
 	//SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
 	//pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dMrtRtv[0], nullptr);
@@ -1190,4 +1192,50 @@ void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
 	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 	pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
+}
+
+CUIShader::CUIShader()
+{
+	m_pMesh = nullptr;
+	m_pTexture = nullptr;
+}
+
+CUIShader::~CUIShader()
+{
+	if (m_pMesh) m_pMesh->Release();
+	if (m_pTexture) m_pTexture->Release();
+}
+
+void CUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+{
+	m_pMesh = new CPlaneMesh(pd3dDevice, 1, 1);
+	m_pTexture = new CTexture(1, 1, 0, 0, SET_SHADER_PS);
+
+	m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
+	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	m_pBackRTV = pBackRTV;
+}
+
+void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	//pd3dDeviceContext->OMSet
+	//pd3dDeviceContext->OMSetDepthStencilState(nullptr, NULL);
+	pd3dDeviceContext->OMSetRenderTargets(1, &m_pBackRTV, nullptr);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
+	m_pMesh->Render(pd3dDeviceContext, uRenderState);
+}
+
+void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputElements);
+	CreateVertexShaderFromFile(pd3dDevice, L"Post.fx", "VSScreen", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "ScreenDraw", "ps_5_0", &m_pd3dPixelShader);
 }

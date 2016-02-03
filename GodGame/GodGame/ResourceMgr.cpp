@@ -283,14 +283,22 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 
 void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 {
+	HRESULT hr;
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	ASSERT(SUCCEEDED(hr));
+	{
+		hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+		ASSERT(SUCCEEDED(hr));
 
-	InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
-	pd3dsrvTexture->Release();
+		InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
+		pd3dsrvTexture->Release();
+	}
+	{
+		hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+		ASSERT(SUCCEEDED(hr));
 
-
+		InsertShaderResourceView(pd3dsrvTexture, "srv_title_jpg", 0);
+		pd3dsrvTexture->Release();
+	}
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

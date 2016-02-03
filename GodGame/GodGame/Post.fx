@@ -3,6 +3,9 @@
 #include "Shadow.fx"
 #include "PostDefine.fx"
 
+///Texture2D txScreen : register(t0);
+//SamplerState gScreenSampler : register(s0);
+
 cbuffer cbPS : register(b0)
 {
 	float4    g_param; // : packoffset(c0);
@@ -20,11 +23,12 @@ PS_SCENE_INPUT VSScreen(VS_SCENE_INPUT input)
 float4 InfoScreen(PS_SCENE_INPUT input) : SV_Target
 {
 	int3 uvm = int3(input.pos.xy, 0);
+	//float2 Tex = float2((float)input.pos.x / FRAME_BUFFER_WIDTH, (float)input.pos.y / FRAME_BUFFER_HEIGHT);
+
+	//float4 color = gtxtTexture.Sample(gSamplerState, Tex);
+	//float4 color = gtxtTexture.Sample(gSamplerState, input.tex);
+
 	float4 color = gtxtTexture.Load(uvm);
-	//if (color.x > 100.0f)
-	//{
-	//	color.xyz /= 2000.0f;
-	//}
 	return color;
 }
 
@@ -95,5 +99,11 @@ float4 DumpMap(PS_SCENE_INPUT input) : SV_Target
 }
 
 
+float4 ScreenDraw(PS_SCENE_INPUT input) : SV_Target
+{
+	float4 color = gtxtTexture.Sample(gSamplerState, input.tex);
 
+	if (color.a == 0.0) discard;
 
+	return color;
+}

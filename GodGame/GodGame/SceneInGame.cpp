@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "MyInline.h"
 #include "SceneInGame.h"
+#include "SceneTitle.h"
+#include "GameFramework.h"
 
 bool bIsKeyDown = false;
 
@@ -25,7 +27,7 @@ CSceneInGame::~CSceneInGame()
 	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
 
-void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, CSceneShader * pSceneShader)
+void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
 {
 	HRESULT hr;
 
@@ -67,6 +69,12 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	//pd3dSamplerState->Release();
 
 
+	//재질을 생성한다.
+	CMaterial *pRedMaterial = MaterialMgr.GetObjects("Red");
+	CMaterial *pGreenMaterial = MaterialMgr.GetObjects("Green");
+	CMaterial *pBlueMaterial = MaterialMgr.GetObjects("Blue");
+	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
+
 	m_nShaders = NUM_SHADER;
 	m_ppShaders = new CShader*[m_nShaders];
 
@@ -78,21 +86,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	m_ppShaders[1] = new CTerrainShader();
 	m_ppShaders[1]->CreateShader(pd3dDevice);
 	m_ppShaders[1]->BuildObjects(pd3dDevice);
-
-
-	m_pPlayerShader = new CPlayerShader();
-	m_pPlayerShader->CreateShader(pd3dDevice);
-	m_pPlayerShader->BuildObjects(pd3dDevice, GetTerrain());
-
-	SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
-	m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-	m_pCamera->GenerateViewMatrix();
-
-	//재질을 생성한다.
-	CMaterial *pRedMaterial = MaterialMgr.GetObjects("Red");
-	CMaterial *pGreenMaterial = MaterialMgr.GetObjects("Green");
-	CMaterial *pBlueMaterial = MaterialMgr.GetObjects("Blue");
-	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
 
 	CStaticShader *pStaticObjectsShader = new CStaticShader();
 	pStaticObjectsShader->CreateShader(pd3dDevice);
@@ -123,26 +116,32 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 	//m_ppShaders[4] = pSceneShader;
 
-	//	CreateStates(pd3dDevice);
-
-
 	//m_ppShaders[2]->EntityAllStaticObjects();
 	m_ppShaders[3]->EntityAllStaticObjects();
 
+
+	m_pPlayerShader = new CPlayerShader();
+	m_pPlayerShader->CreateShader(pd3dDevice);
+	m_pPlayerShader->BuildObjects(pd3dDevice, GetTerrain());
+
+	SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
+	m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+	m_pCamera->GenerateViewMatrix();
+
+	CSceneShader * pSceneShader = new CSceneShader();
+	pSceneShader->CreateShader(pd3dDevice);
+	pSceneShader->BuildObjects(pd3dDevice, SceneInfo->ppMRTSRVArray, 0, SceneInfo->pd3dBackRTV);
+	pSceneShader->CreateConstantBuffer(pd3dDevice, pd3dDeviceContext);
+	m_pSceneShader = pSceneShader;
+
 	CreateShaderVariables(pd3dDevice);
-	//	InitilizeThreads(pd3dDevice);
+	BuildStaticShadowMap(pd3dDeviceContext);
 }
 
 void CSceneInGame::ReleaseObjects()
 {
-	ReleaseShaderVariables();
-
-	for (int j = 0; j < m_nShaders; j++)
-	{
-		if (m_ppShaders[j]) m_ppShaders[j]->ReleaseObjects();
-		if (m_ppShaders[j]) delete m_ppShaders[j];
-	}
-	if (m_ppShaders) delete[] m_ppShaders;
+	CScene::ReleaseObjects();
+	QUADMgr.ReleaseQuadTree();
 }
 
 
@@ -224,6 +223,43 @@ void CSceneInGame::ReleaseShaderVariables()
 {
 	if (m_pLights) delete m_pLights;
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
+
+}
+
+void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	// 방향성 광원은 위치 필요 없다.
+	//LIGHT * pLight = m_pScene->GetLight(2);
+	CHeightMapTerrain * pTerrain = GetTerrain();
+	float fHalf = pTerrain->GetWidth() * 0.5;
+
+	CShadowMgr * pSdwMgr = &ShadowMgr;
+	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf - 1000.0f, 0.0f, fHalf), XMFLOAT3(fHalf, fHalf, fHalf), fHalf);
+
+	UINT uRenderState = NOT_PSUPDATE;
+	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
+
+	m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+
+	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
+	//m_uRenderState = NULL;
+
+	pSdwMgr->UpdateStaticShadowResource(pd3dDeviceContext);
+	//pSdwMgr->UpdateDynamicShadowResource(m_pd3dDeviceContext);
+	//m_pSceneShader->SetLightSRV(TXMgr.GetShaderResourceView("srv_StaticShaodwMap"));
+}
+
+void CSceneInGame::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	UINT uRenderState = NOT_PSUPDATE;
+
+	ShadowMgr.SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
+
+	m_pPlayerShader->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	
+	ShadowMgr.ResetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
+	uRenderState = NULL;
 }
 
 void CSceneInGame::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights)
@@ -275,10 +311,31 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			if (bIsKeyDown == false) bIsKeyDown = true;
 			else bIsKeyDown = false;
 			break;
+		//case VK_SPACE:
+		//	FRAMEWORK.ChangeGameScene(new CSceneTitle());
+		//	break;
+
 		}
 		break;
 	}
 	return(false);
+}
+
+bool CSceneInGame::ProcessInput()
+{
+	static UCHAR pKeyBuffer[256];
+
+	if (GetKeyboardState(pKeyBuffer))
+	{
+		if (pKeyBuffer[VK_SPACE] & 0xF0)
+		{
+			FRAMEWORK.ChangeGameScene(new CSceneTitle());
+
+			ZeroMemory(pKeyBuffer, 256);
+			SetKeyboardState(pKeyBuffer);
+		}
+	}
+	return false;
 }
 
 
@@ -352,6 +409,10 @@ void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * p
 
 
 	//m_ppShaders[m_nShaders - 1]->Render(pd3dDeviceContext, pCamera);
+}
+
+void CSceneInGame::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
+{
 }
 
 #ifdef PICKING

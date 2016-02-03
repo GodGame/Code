@@ -593,7 +593,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	{
 		if (m_ppObjects[j])
 		{
-			if (m_ppObjects[j]->IsVisible())// if (m_ppObjects[j]->IsVisible(pCamera))//			{
+			if (m_ppObjects[j]->IsVisible(nullptr))// if (m_ppObjects[j]->IsVisible(pCamera))//			{
 			{
 				xmf3Pos = m_ppObjects[j]->GetPosition();
 				pnTreeInstance[nCubeInstance].m_xv3Position = XMFLOAT4(xmf3Pos.x, xmf3Pos.y, xmf3Pos.z, 1.0f);
@@ -604,6 +604,8 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 		}
 	}
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
+
+	cout << nCubeInstance << "개 그렸습니다." << endl;
 
 	CMesh *pCubeMesh = m_ppObjects[0]->GetMesh();
 	pCubeMesh->RenderInstanced(pd3dDeviceContext, uRenderState, nCubeInstance, 0);

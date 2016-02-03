@@ -163,6 +163,7 @@
     <ClInclude Include="GodGame.h" />
     <ClInclude Include="MgrList.h" />
     <ClInclude Include="SceneInGame.h" />
+    <ClInclude Include="SceneTitle.h" />
     <ClInclude Include="ShadowMgr.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshType.h" />
@@ -193,6 +194,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneInGame.cpp" />
+    <ClCompile Include="SceneTitle.cpp" />
     <ClCompile Include="ShaderEssential.cpp" />
     <ClCompile Include="ShaderList.cpp" />
     <ClCompile Include="ShaderType.cpp" />
