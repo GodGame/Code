@@ -14,10 +14,10 @@ CSceneTitle::~CSceneTitle()
 
 void CSceneTitle::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
 {
-	m_nShaders = 1;
+	m_nThread = m_nShaders = 1;
 	m_ppShaders = new CShader*[m_nShaders];
 
-	CUIShader * pTitle = new CUIShader();
+	CUIScreenShader * pTitle = new CUIScreenShader(); //new CUIShader();
 	pTitle->CreateShader(pd3dDevice);
 	pTitle->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV);
 	m_ppShaders[0] = pTitle;
@@ -30,7 +30,6 @@ void CSceneTitle::ReleaseObjects()
 {
 	CScene::ReleaseObjects();
 }
-
 
 bool CSceneTitle::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
@@ -67,7 +66,7 @@ bool CSceneTitle::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 		switch (wParam)
 		{
 		case VK_SPACE:
-//			FRAMEWORK.ChangeGameScene(new CSceneInGame());
+			//			FRAMEWORK.ChangeGameScene(new CSceneInGame());
 			break;
 		}
 		break;
@@ -81,17 +80,15 @@ bool CSceneTitle::ProcessInput()
 	if (GetKeyboardState(pKeyBuffer))
 	{
 		if (pKeyBuffer[VK_SPACE] & 0xF0) FRAMEWORK.ChangeGameScene(new CSceneInGame());
-		
 	}
 	return false;
 }
-
 
 void CSceneTitle::AnimateObjects(float fTimeElapsed)
 {
 }
 
-void CSceneTitle::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)
+void CSceneTitle::Render(ID3D11DeviceContext * pd3dDeviceContext, RENDER_INFO * pRenderInfo)
 {
 	m_ppShaders[0]->Render(pd3dDeviceContext, 0, nullptr);
 }

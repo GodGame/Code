@@ -52,8 +52,8 @@ void CShader::ReleaseObjects()
 {
 	if (m_ppObjects)
 	{
-		for (int j = 0; j < m_nObjects; j++) 
-			if (m_ppObjects[j]) 
+		for (int j = 0; j < m_nObjects; j++)
+			if (m_ppObjects[j])
 				delete m_ppObjects[j];
 		delete[] m_ppObjects;
 	}
@@ -66,8 +66,8 @@ void CShader::AnimateObjects(float fTimeElapsed)
 	}
 }
 void CShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
-{	
-	if(!(uRenderState & NOT_PSUPDATE))
+{
+	if (!(uRenderState & NOT_PSUPDATE))
 		pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, nullptr, 0);
 	pd3dDeviceContext->IASetInputLayout(m_pd3dVertexLayout);
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
@@ -85,9 +85,9 @@ void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 	{
 		if (m_ppObjects[j]->IsVisible())
 		{
-			//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
+			//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
 			//if (m_ppObjects[j]->IsVisible(pCamera)) {
-				m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
+			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
 			//}
 		}
 	}
@@ -107,9 +107,9 @@ void CShader::CreateVertexShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFil
 	/*파일(pszFileName)에서 쉐이더 함수(pszShaderName)를 컴파일하여 컴파일된 쉐이더 코드의 메모리 주소(pd3dShaderBlob)를 반환한다.*/
 	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
-		//컴파일된 쉐이더 코드의 메모리 주소에서 정점-쉐이더를 생성한다. 
+		//컴파일된 쉐이더 코드의 메모리 주소에서 정점-쉐이더를 생성한다.
 		pd3dDevice->CreateVertexShader(pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), nullptr, ppd3dVertexShader);
-		//컴파일된 쉐이더 코드의 메모리 주소와 입력 레이아웃에서 정점 레이아웃을 생성한다. 
+		//컴파일된 쉐이더 코드의 메모리 주소와 입력 레이아웃에서 정점 레이아웃을 생성한다.
 		pd3dDevice->CreateInputLayout(pd3dInputLayout, nElements, pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), ppd3dVertexLayout);
 		pd3dShaderBlob->Release();
 	}
@@ -128,7 +128,7 @@ void CShader::CreatePixelShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFile
 	/*파일(pszFileName)에서 쉐이더 함수(pszShaderName)를 컴파일하여 컴파일된 쉐이더 코드의 메모리 주소(pd3dShaderBlob)를 반환한다.*/
 	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
-		//컴파일된 쉐이더 코드의 메모리 주소에서 픽셀-쉐이더를 생성한다. 
+		//컴파일된 쉐이더 코드의 메모리 주소에서 픽셀-쉐이더를 생성한다.
 		pd3dDevice->CreatePixelShader(pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), nullptr, ppd3dPixelShader);
 		pd3dShaderBlob->Release();
 	}
@@ -151,8 +151,7 @@ void CShader::CreateGeometryShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszF
 	}
 }
 
-
-void CShader::CreateGeometryStreamOutShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11GeometryShader **ppd3dGeometryShader, 
+void CShader::CreateGeometryStreamOutShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11GeometryShader **ppd3dGeometryShader,
 	D3D11_SO_DECLARATION_ENTRY * pSODeclaration, UINT NumEntries, UINT *pBufferStrides, UINT NumStrides, UINT RasterizedStream)
 {
 	HRESULT hResult;
@@ -165,14 +164,13 @@ void CShader::CreateGeometryStreamOutShaderFromFile(ID3D11Device *pd3dDevice, WC
 	ID3DBlob *pd3dGeometryShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
 	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dGeometryShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
-		HRESULT hr = pd3dDevice->CreateGeometryShaderWithStreamOutput(pd3dGeometryShaderBlob->GetBufferPointer(), pd3dGeometryShaderBlob->GetBufferSize(), 
+		HRESULT hr = pd3dDevice->CreateGeometryShaderWithStreamOutput(pd3dGeometryShaderBlob->GetBufferPointer(), pd3dGeometryShaderBlob->GetBufferSize(),
 			pSODeclaration, NumEntries, pBufferStrides, NumStrides, RasterizedStream, nullptr, ppd3dGeometryShader);
 		if (FAILED(hr))
 			printf("실패했습니다.");
 		pd3dGeometryShaderBlob->Release();
 	}
 }
-
 
 void CShader::CreateHullShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11HullShader **ppd3dHullShader)
 {
@@ -229,8 +227,6 @@ void CShader::CreateComputeShaderFromFile(ID3D11Device * pd3dDevice, WCHAR * psz
 }
 #pragma endregion CREATE_SHADER_FROM_FILE
 
-
-
 void CShader::CreateShader(ID3D11Device *pd3dDevice)
 {
 	/*IA 단계에 설정할 입력-레이아웃을 정의한다. 정점 버퍼의 한 원소가 CVertex 클래스의 멤버 변수
@@ -249,7 +245,6 @@ void CShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateShaderVariables(pd3dDevice);
 }
 
-
 void CShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	//월드 변환 행렬을 위한 상수 버퍼를 생성한다.
@@ -262,7 +257,7 @@ void CShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbWorldMatrix);
 }
 
- void CShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 *pxmtxWorld)
+void CShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 *pxmtxWorld)
 {
 	//월드 변환 행렬을 상수 버퍼에 복사한다.
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -329,7 +324,7 @@ ID3D11ShaderResourceView * CShader::CreateRandomTexture1DSRV(ID3D11Device * pd3d
 		RandomValue[i] = XMFLOAT4(Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f));
 	D3D11_SUBRESOURCE_DATA d3dSubresourceData;
 	d3dSubresourceData.pSysMem = RandomValue;
-	d3dSubresourceData.SysMemPitch = sizeof(XMFLOAT4)* 1024;
+	d3dSubresourceData.SysMemPitch = sizeof(XMFLOAT4) * 1024;
 	d3dSubresourceData.SysMemSlicePitch = 0;
 
 	D3D11_TEXTURE1D_DESC d3dTextureDesc;
@@ -343,7 +338,7 @@ ID3D11ShaderResourceView * CShader::CreateRandomTexture1DSRV(ID3D11Device * pd3d
 
 	ID3D11Texture1D * pd3dTexture;
 	pd3dDevice->CreateTexture1D(&d3dTextureDesc, &d3dSubresourceData, &pd3dTexture);
-	
+
 	ID3D11ShaderResourceView * pd3dsrvTexutre;
 	pd3dDevice->CreateShaderResourceView(pd3dTexture, nullptr, &pd3dsrvTexutre);
 	pd3dTexture->Release();
@@ -420,7 +415,6 @@ void CDiffusedShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSDiffusedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
 	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSDiffusedColor", "ps_5_0", &m_pd3dPixelShader);
 }
-
 
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -518,7 +512,6 @@ void CDetailTexturedIlluminatedShader::CreateShader(ID3D11Device *pd3dDevice)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 #pragma endregion BasicShader
 
-
 //////////////////////////////////////////////////////////////////////////
 
 CInstanceShader::CInstanceShader()
@@ -547,8 +540,6 @@ ID3D11Buffer *CInstanceShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, in
 	return(pd3dInstanceBuffer);
 }
 
-
-
 #pragma region SplatTextureIlluminated
 CSplatLightingShader::CSplatLightingShader()
 {
@@ -576,15 +567,12 @@ void CSplatLightingShader::CreateShader(ID3D11Device *pd3dDevice)
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 CNormalMapShader::CNormalMapShader() : CShader()
 {
-
 }
 
 CNormalMapShader::~CNormalMapShader()
 {
-
 }
 
 void CNormalMapShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -600,7 +588,6 @@ void CNormalMapShader::CreateShader(ID3D11Device *pd3dDevice)
 	bd.ByteWidth = sizeof(CB_DISPLACEMENT);
 	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbBump);
 
-
 	//D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
 	//{
 	//	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -614,16 +601,14 @@ void CNormalMapShader::CreateShader(ID3D11Device *pd3dDevice)
 }
 
 void CNormalMapShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
-{	
+{
 	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
-	
+
 	UpdateBumpInfo(pd3dDeviceContext);
 }
 
-
-
 void CNormalMapShader::UpdateBumpInfo(ID3D11DeviceContext *pd3dDeviceContext, SETSHADER setInfo /*= ( SET_SHADER_DS | SET_SHADER_PS )*/)
-{	
+{
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	/*상수 버퍼의 메모리 주소를 가져와서 카메라 변환 행렬과 투영 변환 행렬을 복사한다. 쉐이더에서 행렬의 행과 열이 바뀌는 것에 주의하라.*/
 	pd3dDeviceContext->Map(m_pd3dcbBump, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);

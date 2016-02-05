@@ -265,12 +265,12 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 	// 이런...
 	//SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
-	if (m_iDrawOption == 0) {
+	if (m_iDrawOption == 1) {
 		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
 
 		FinalRender(pd3dDeviceContext, nullptr, uRenderState, pCamera);
 	}
-	else if (m_iDrawOption == 1)
+	else if (m_iDrawOption == 0)
 	{
 		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
 		Blooming(pd3dDeviceContext, uRenderState, pCamera);
@@ -682,14 +682,14 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	
 	TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
 
-	CMaterial *pPlayerMaterial = new CMaterial();
-	pPlayerMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	pPlayerMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	CMaterial *pPlayerMaterial               = new CMaterial();
+	pPlayerMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	pPlayerMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	pPlayerMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
 	pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 
-	CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 4.0f, 12.0f, 4.0f);
-	CTerrainPlayer *pTerrainPlayer = new CTerrainPlayer(1);
+	CCubeMeshTexturedIlluminated *pCubeMesh  = new CCubeMeshTexturedIlluminated(pd3dDevice, 4.0f, 12.0f, 4.0f);
+	CTerrainPlayer *pTerrainPlayer           = new CTerrainPlayer(1);
 
 	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
 	pTerrainPlayer->SetPlayerUpdatedContext(pTerrain);
@@ -1018,8 +1018,6 @@ void CWaterShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
 }
 
-
-
 CSkyBoxShader::CSkyBoxShader()
 {
 }
@@ -1097,7 +1095,6 @@ void CSSAOShader::BuildObjects(ID3D11Device * pd3dDevice)
 
 	CPlaneMesh * pMesh = new CPlaneMesh(pd3dDevice, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 	m_pMesh = pMesh;
-
 }
 
 void CSSAOShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
@@ -1219,8 +1216,6 @@ void CUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView *
 
 void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
-	//pd3dDeviceContext->OMSet
-	//pd3dDeviceContext->OMSetDepthStencilState(nullptr, NULL);
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pBackRTV, nullptr);
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
@@ -1238,4 +1233,72 @@ void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
 	UINT nElements = ARRAYSIZE(d3dInputElements);
 	CreateVertexShaderFromFile(pd3dDevice, L"Post.fx", "VSScreen", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
 	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "ScreenDraw", "ps_5_0", &m_pd3dPixelShader);
+}
+
+CUIScreenShader::CUIScreenShader() : CUIShader()
+{
+}
+
+CUIScreenShader::~CUIScreenShader()
+{
+}
+
+void CUIScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+{
+	m_nObjects = 1;
+	m_ppObjects = new CGameObject*[m_nObjects];
+	m_pBackRTV = pBackRTV;
+
+	CPoint2DMesh * pUIMesh  = nullptr;
+	CGameObject  * pObject  = nullptr;
+	CTexture     * pTexture = nullptr;
+
+	XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f) };
+	string   UIName[1] = { {"srv_title_jpg"} };
+
+	//m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
+	//m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
+		pObject = new CGameObject(1);
+		pObject->SetMesh(pUIMesh);
+		
+ 		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
+	//	pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_point_wrap"));
+
+		pObject->SetTexture(pTexture);
+		m_ppObjects[i] = pObject;
+	}
+}
+
+void CUIScreenShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	pd3dDeviceContext->OMSetRenderTargets(1, &m_pBackRTV, nullptr);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	ID3D11SamplerState * pSampler = TXMgr.GetSamplerState("ss_point_wrap");
+	pd3dDeviceContext->PSSetSamplers(0, 1, &pSampler);
+	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
+	
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		m_ppObjects[i]->SetActive(true);
+		m_ppObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
+}
+
+void CUIScreenShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
+	{
+		{ "POSITION"   , 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+	CreateVertexShaderFromFile(pd3dDevice, L"Final.fx", "VS_UI_Draw", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"Final.fx", "PS_UI_Draw", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"Final.fx", "GS_UI_Draw", "gs_5_0", &m_pd3dGeometryShader);
 }

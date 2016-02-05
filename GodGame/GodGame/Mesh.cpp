@@ -582,6 +582,54 @@ CTreeVertex::~CTreeVertex()
 }
 
 
+CPoint2DMesh::CPoint2DMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fxSize, float fySize) : CMesh(pd3dDevice)
+{
+	m_nVertices = 1;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+	XMFLOAT4 xmfInfo = XMFLOAT4(fWidth, fHeight, fxSize, fySize);
+
+	BuildMesh(pd3dDevice, xmfInfo);
+
+
+}
+
+CPoint2DMesh::CPoint2DMesh(ID3D11Device * pd3dDevice, XMFLOAT4 & info) : CMesh(pd3dDevice)
+{
+	m_nVertices = 1;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+
+	BuildMesh(pd3dDevice, info);
+}
+
+CPoint2DMesh::~CPoint2DMesh()
+{
+}
+
+void CPoint2DMesh::BuildMesh(ID3D11Device * pd3dDevice, XMFLOAT4 & info)
+{
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT4) *m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = &info;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
+
+	ID3D11Buffer *pd3dBuffers[1] = { m_pd3dPositionBuffer };
+	UINT pnBufferStrides[1] = { sizeof(XMFLOAT4) };
+	UINT pnBufferOffsets[1] = { 0 };
+	AssembleToVertexBuffer(1, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+
+	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(FLT_MIN, FLT_MIN, FLT_MIN);
+	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(FLT_MAX, FLT_MAX, FLT_MAX);
+}
+
+
 CPointCubeMesh::CPointCubeMesh(ID3D11Device *pd3dDevice, float fSize) : CMesh(pd3dDevice)
 {
 	m_nVertices = 1;

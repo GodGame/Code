@@ -28,9 +28,9 @@ public:
 		m_mpList[name] = pObject;
 		pObject->AddRef();
 	}
-	virtual void BuildResources(ID3D11Device *pd3dDevice) {};
-	inline virtual Target * GetObjects(string name) { return m_mpList[name]; }
-	inline virtual void EraseObjects(string name) { m_mpList[name]->Release(); m_mpList.erase(name); }
+	virtual void BuildResources(ID3D11Device *pd3dDevice)      {};
+	inline virtual Target * GetObjects(string name)		       { return m_mpList[name]; }
+	inline virtual void EraseObjects(string name)              { m_mpList[name]->Release(); m_mpList.erase(name); }
 
 };
 

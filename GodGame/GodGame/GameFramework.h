@@ -20,19 +20,19 @@ class CPlayer;
 struct RenderingThreadInfo
 {
 	int		    m_nRenderingThreadID;
-	HANDLE  m_hRenderingThread;
-	HANDLE  m_hRenderingBeginEvent;
-	HANDLE  m_hRenderingEndEvent;
+	HANDLE      m_hRenderingThread;
+	HANDLE      m_hRenderingBeginEvent;
+	HANDLE      m_hRenderingEndEvent;
 
-	ID3D11DeviceContext * m_pd3dDeferredContext;
-	ID3D11CommandList * m_pd3dCommandList;
-	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
-	ID3D11RenderTargetView ** m_ppd3dRenderTargetView;
+	ID3D11DeviceContext     *       m_pd3dDeferredContext;
+	ID3D11CommandList       *       m_pd3dCommandList;
+	ID3D11DepthStencilView	*       m_pd3dDepthStencilView;
+	ID3D11RenderTargetView  **      m_ppd3dRenderTargetView;
 	//int		m_nShaders;
-	CScene * m_pScene;
+	CScene  * m_pScene;
 	CPlayer * m_pPlayer;
-	UINT * m_puRenderState;
-	bool * m_pbInGame;
+	UINT    * m_puRenderState;
+	bool    * m_pbInGame;
 };
 
 #endif
@@ -41,52 +41,52 @@ struct RenderingThreadInfo
 class CGameFramework
 {
 private:
-	HINSTANCE	m_hInstance;		// 윈도우 프로그램 인스턴스 핸들
-	HWND		m_hWnd;			// 윈도우 핸들(Handle)
+	HINSTANCE	              m_hInstance;		// 윈도우 프로그램 인스턴스 핸들
+	HWND		              m_hWnd;			// 윈도우 핸들(Handle)
 
-	int m_nWndClientWidth;
-	int m_nWndClientHeight;
+	int                       m_nWndClientWidth;
+	int                       m_nWndClientHeight;
 
-	CCamera *m_pCamera;
+	CCamera                 * m_pCamera;
 
 	//디바이스 인터페이스에 대한 포인터이다. 주로 리소스를 생성하기 위하여 필요하다.
-	ID3D11Device *m_pd3dDevice;
+	ID3D11Device            * m_pd3dDevice;
 	//스왑 체인 인터페이스에 대한 포인터이다. 주로 디스플레이를 제어하기 위하여 필요하다.
-	IDXGISwapChain *m_pDXGISwapChain;
+	IDXGISwapChain          * m_pDXGISwapChain;
 	//디바이스 컨텍스트에 대한 포인터이다. 주로 파이프라인 설정을 하기 위하여 필요하다.
-	ID3D11DeviceContext *m_pd3dDeviceContext;
+	ID3D11DeviceContext     * m_pd3dDeviceContext;
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
-	ID3D11Texture2D	* m_pd3dDepthStencilBuffer;
+	ID3D11Texture2D	        * m_pd3dDepthStencilBuffer;
 	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
-	ID3D11RenderTargetView *m_pd3dBackRenderTargetView;
+	ID3D11RenderTargetView  * m_pd3dBackRenderTargetView;
 
 
 private:
-	//ID3D11ShaderResourceView * m_pd3dSSAOSRV;
-	//CSSAOShader * m_pSSAOShader;
-	CShader * m_pSceneShader;
+	//ID3D11ShaderResourceView      * m_pd3dSSAOSRV;
+	//CSSAOShader                   * m_pSSAOShader;
+	CShader                         * m_pSceneShader;
 
-	ID3D11RenderTargetView *m_ppd3dRenderTargetView[NUM_MRT];
-	//ID3D11RenderTargetView *m_pd3dSSAOTargetView;
-	//ID3D11RenderTargetView *m_pd3dPostProcessing;
-	ID3D11ShaderResourceView *m_pd3dMRTSRV[NUM_MRT];
-	ID3D11Texture2D * m_ppd3dMRTtx[NUM_MRT];
+	ID3D11RenderTargetView          * m_ppd3dRenderTargetView[NUM_MRT];
+	//ID3D11RenderTargetView        * m_pd3dSSAOTargetView;
+	//ID3D11RenderTargetView        * m_pd3dPostProcessing;
+	ID3D11ShaderResourceView        * m_pd3dMRTSRV[NUM_MRT];
+	ID3D11Texture2D                 * m_ppd3dMRTtx[NUM_MRT];
 
-	UINT m_uRenderState;
+	UINT                              m_uRenderState;
 public:
 	//void BuildStaticShadowMap();
 	//void OnCreateShadowMap(CShader*ShaderList[], int nShaders);
 
 private:
-	bool	m_bInGame;
-	int		m_iDrawOption;
-	POINT	m_ptOldCursorPos;
+	bool	                          m_bInGame;
+	int		                          m_iDrawOption;
+	POINT	                          m_ptOldCursorPos;
 
-	int m_nRenderThreads;
-	RenderingThreadInfo * m_pRenderingThreadInfo;
-	HANDLE * m_hRenderingEndEvents;
+	int                               m_nRenderThreads;
+	RenderingThreadInfo             * m_pRenderingThreadInfo;
+	HANDLE                          * m_hRenderingEndEvents;
 
-	CPlayerShader *m_pPlayerShader;
+	CPlayerShader                   * m_pPlayerShader;
 
 	CGameFramework();
 	~CGameFramework();
@@ -96,6 +96,7 @@ public:
 	void OnDestroy();
 
 	void InitilizeThreads();
+	void ReleaseThreads();
 	static UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter);
 
 	//디바이스, 스왑 체인, 디바이스 컨텍스트, 디바이스와 관련된 뷰를 생성하는 함수이다. 

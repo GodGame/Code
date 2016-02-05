@@ -27,7 +27,7 @@ private:
 	int m_nReferences;
 
 public:
-	void AddRef() { m_nReferences++; }
+	void AddRef()  { m_nReferences++; }
 	void Release() { if (--m_nReferences <= 0) delete this; }
 
 private:
@@ -43,8 +43,8 @@ private:
 	int m_nSamplerStartSlot;
 
 public:
-	void ChangeSetShader(SETSHADER uInfo) { m_uTextureSet = uInfo; }
-	void AddSetShader(SETSHADER uAdd) { m_uTextureSet |= (uAdd); }
+	void ChangeSetShader(SETSHADER uInfo)        { m_uTextureSet = uInfo; }
+	void AddSetShader(SETSHADER uAdd)            { m_uTextureSet |= (uAdd); }
 
 	void SetTexture(int nIndex, ID3D11ShaderResourceView *pd3dsrvTexture);
 	void SetSampler(int nIndex, ID3D11SamplerState *pd3dSamplerState);
@@ -57,13 +57,13 @@ public:
 	void UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 
 public:
-	ID3D11ShaderResourceView * GetSRV(int index) {return m_ppd3dsrvTextures[index];}
-	ID3D11SamplerState * GetSampler(int index) { return m_ppd3dSamplerStates[index]; }
-	ID3D11ShaderResourceView ** GetSRVList(void) { return m_ppd3dsrvTextures; }
-	ID3D11SamplerState ** GetSamplerList(void) { return m_ppd3dSamplerStates; }
+	ID3D11ShaderResourceView * GetSRV(int index) const {return m_ppd3dsrvTextures[index];}
+	ID3D11SamplerState * GetSampler(int index)   const { return m_ppd3dSamplerStates[index]; }
+	ID3D11ShaderResourceView ** GetSRVList(void) const { return m_ppd3dsrvTextures; }
+	ID3D11SamplerState ** GetSamplerList(void)   const { return m_ppd3dSamplerStates; }
 
-	bool IsSampler() { return m_nSamplers > 0; }
-	bool IsSRV() { return m_nTextures > 0; }
+	bool IsSampler()                             { return m_nSamplers > 0; }
+	bool IsSRV()                                 { return m_nTextures > 0; }
 
 	static ID3D11ShaderResourceView * CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, UINT nTextures);
 };
@@ -84,8 +84,8 @@ public:
 	bool InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, string name, UINT uSlotNum, SETSHADER nSetInfo = SET_SHADER_PS);
 	bool InsertSamplerState(ID3D11SamplerState * pSamplerState, string name, UINT uSlotNum, SETSHADER nSetInfo = SET_SHADER_PS);
 
-	ID3D11ShaderResourceView * GetShaderResourceView(string name) { return m_mpList[name]->GetSRV(0);}
-	ID3D11SamplerState * GetSamplerState(string name) { return m_mpList[name]->GetSampler(0);}
+	ID3D11ShaderResourceView * GetShaderResourceView(string name)  { return m_mpList[name]->GetSRV(0);}
+	ID3D11SamplerState * GetSamplerState(string name)              { return m_mpList[name]->GetSampler(0);}
 
 	//void RegisterSRVSlot(ID3D11ShaderResourceView UINT nSlot)
 
@@ -166,12 +166,12 @@ public:
 	void InsertTex2D(ID3D11Texture2D * pTex2D, string name)		   { m_mgrTex2D.InsertObject(pTex2D, name); }
 	void InsertBuffer(ID3D11Buffer * pBuffer, string name)	       { m_mgrBuffer.InsertObject(pBuffer, name); }
 
-	ID3D11ShaderResourceView  * GetSRV(string  name) { return m_mgrSrv.GetObjects(name); }
-	ID3D11RenderTargetView    * GetRTV(string  name) { return m_mgrRtv.GetObjects(name); }
-	ID3D11DepthStencilView	  * GetDSV(string  name) { return m_mgrDsv.GetObjects(name); }
-	ID3D11UnorderedAccessView * GetUAV(string  name) { return m_mgrUav.GetObjects(name); }
-	ID3D11Texture2D * GetTex2D(string name)		     { return m_mgrTex2D.GetObjects(name); }
-	ID3D11Buffer    * GetBuffer(string name)         { return m_mgrBuffer.GetObjects(name); }
+	ID3D11ShaderResourceView  * GetSRV(string  name)               { return m_mgrSrv.GetObjects(name); }
+	ID3D11RenderTargetView    * GetRTV(string  name)               { return m_mgrRtv.GetObjects(name); }
+	ID3D11DepthStencilView	  * GetDSV(string  name)               { return m_mgrDsv.GetObjects(name); }
+	ID3D11UnorderedAccessView * GetUAV(string  name)               { return m_mgrUav.GetObjects(name); }
+	ID3D11Texture2D * GetTex2D(string name)		                   { return m_mgrTex2D.GetObjects(name); }
+	ID3D11Buffer    * GetBuffer(string name)                       { return m_mgrBuffer.GetObjects(name); }
 
 	void EraseSRV(string  name)   { m_mgrSrv.EraseObjects(name); }
 	void EraseRTV(string  name)   { m_mgrRtv.EraseObjects(name); }

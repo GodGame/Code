@@ -4,12 +4,12 @@
 
 #include "Shader.h"
 
-#define MAX_LIGHTS		4 
+#define MAX_LIGHTS		4
 #define POINT_LIGHT		1.0f
 #define SPOT_LIGHT		2.0f
 #define DIRECTIONAL_LIGHT	3.0f
 
-//1개의 조명을 표현하는 구조체이다. 
+//1개의 조명을 표현하는 구조체이다.
 struct LIGHT
 {
 	XMFLOAT4 m_xcAmbient;
@@ -36,8 +36,8 @@ struct LIGHTS
 
 struct RENDER_INFO
 {
-	ID3D11RenderTargetView ** ppd3dMrtRTV; 
-	CCamera * pCamera; 
+	ID3D11RenderTargetView ** ppd3dMrtRTV;
+	CCamera * pCamera;
 	int ThreadID;
 	UINT * pRenderState;
 };
@@ -54,8 +54,9 @@ protected:
 	CShader * m_pSceneShader;
 	CShader * m_pUIShader;
 	CShader **m_ppShaders;
-	int		m_nShaders;
-	int		m_nMRT;
+	int		m_nShaders : 8;
+	int		m_nMRT : 8;
+	int		m_nThread : 16;
 
 	CPlayerShader * m_pPlayerShader;
 	CCamera * m_pCamera;
@@ -64,7 +65,7 @@ protected:
 	LIGHTS * m_pLights;
 	ID3D11Buffer *m_pd3dcbLights;
 
-	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
+	//렌더 타겟 뷰 인터페이스에 대한 포인터이다.
 	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
 	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
 
@@ -110,5 +111,6 @@ public:
 
 	int GetShaderNumber() { return m_nShaders; }
 	int GetMRTNumber() { return m_nMRT; }
+	int GetRenderThreadNumber() { return m_nThread; }
 };
 #endif

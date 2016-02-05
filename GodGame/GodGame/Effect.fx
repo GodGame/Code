@@ -1,7 +1,6 @@
 #include "Define.fx"
 #include "Shadow.fx"
 
-
 /*정점-쉐이더이다. 정점의 위치 벡터를 월드 변환, 카메라 변환, 투영 변환을 순서대로 수행한다. 이제 삼각형의 각 정점은 y-축으로의 회전을 나타내는 행렬에 따라 변환한다. 그러므로 삼각형은 회전하게 된다.*/
 VS_OUTPUT VS(VS_INPUT input)
 {
@@ -21,7 +20,6 @@ VS_INSTANCED_COLOR_OUTPUT VSInstancedDiffusedColor(VS_INSTANCED_COLOR_INPUT inpu
 	output.instanceID = instanceID;
 	return output;
 }
-
 
 float4 PS(VS_OUTPUT input) : SV_Target
 {
@@ -46,7 +44,6 @@ float4 PSDiffusedColor(VS_DIFFUSED_COLOR_OUTPUT input) : SV_Target
 {
 	return(input.color);
 }
-
 
 VS_INSTANCED_DIFFUSED_COLOR_OUTPUT VSInstancedDiffusedColor(VS_INSTANCED_DIFFUSED_COLOR_INPUT input)
 {
@@ -116,19 +113,19 @@ VS_TEXTURED_COLOR_OUTPUT VSTexturedColor(VS_TEXTURED_COLOR_INPUT input)
 	output.position = mul(mul(float4(input.position, 1.0f), gmtxWorld), gmtxViewProjection);
 	output.texCoord = input.texCoord;
 	output.posW = mul(mul(input.position, (float3x3)gmtxWorld), gmtxViewProjection);
-//	float4x4 shadowProj = mul(gmtxWorld, gmtxShadowTransform);
-//	output.shadowPos = mul(float4(output.posW, 1.0f), shadowProj);
+	//	float4x4 shadowProj = mul(gmtxWorld, gmtxShadowTransform);
+	//	output.shadowPos = mul(float4(output.posW, 1.0f), shadowProj);
 	return(output);
 }
 
 PS_MRT_OUT PSTexturedColor(VS_TEXTURED_COLOR_OUTPUT input)
 {
 	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
-//	input.shadowPos.xyz /= input.shadowPos.w;
-//	float fsDepth = gtxtShadowMap.Sample(gssShadowMap, input.shadowPos.xy).r;
-//	float fShadowFactor = 0.1f;
-//	if (input.shadowPos.z <= (fsDepth + gfBias))
-//		fShadowFactor = 1.0f;
+	//	input.shadowPos.xyz /= input.shadowPos.w;
+	//	float fsDepth = gtxtShadowMap.Sample(gssShadowMap, input.shadowPos.xy).r;
+	//	float fShadowFactor = 0.1f;
+	//	if (input.shadowPos.z <= (fsDepth + gfBias))
+	//		fShadowFactor = 1.0f;
 
 	PS_MRT_OUT output;
 	output.vNormal = float4(1, 1, 1, input.position.w * gfDepthFar);
@@ -164,8 +161,6 @@ PS_MRT_OUT PSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_Target
 	output.vTxColor = float4(cColor.xyz, 0);
 	return(output);
 }
-
-
 
 VS_INSTANCED_TEXTURED_COLOR_OUTPUT VSInstancedTexturedColor(VS_INSTANCED_TEXTURED_COLOR_INPUT input)
 {
@@ -206,7 +201,6 @@ float4 PSDetailTexturedColor(VS_DETAIL_TEXTURED_COLOR_OUTPUT input) : SV_Target
 
 //---------------------------------------------------------------------------------------------------------------------
 
-
 VS_TEXTURED_LIGHTING_COLOR_OUTPUT VSTexturedLightingColor(VS_TEXTURED_LIGHTING_COLOR_INPUT input)
 {
 	VS_TEXTURED_LIGHTING_COLOR_OUTPUT output = (VS_TEXTURED_LIGHTING_COLOR_OUTPUT)0;
@@ -240,8 +234,6 @@ PS_MRT_OUT PSTexturedLightingColor(VS_TEXTURED_LIGHTING_COLOR_OUTPUT input)
 	return(output);
 }
 
-
-
 //---------------------------------------------------------------------------------------------------------------------
 VS_DETAIL_TEXTURED_LIGHTING_COLOR_OUTPUT VSDetailTexturedLightingColor(VS_DETAIL_TEXTURED_LIGHTING_COLOR_INPUT input)
 {
@@ -266,15 +258,14 @@ float4 PSDetailTexturedLightingColor(VS_DETAIL_TEXTURED_LIGHTING_COLOR_OUTPUT in
 	return(cColor*cIllumination);
 }
 
-// 스플랫용 
+// 스플랫용
 VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT VSSplatTexturedLightingColor(VS_SPLAT_TEXTURED_LIGHTING_COLOR_INPUT input)
 {
-	
 	VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT output = (VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT)0;
 	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
 	output.positionW = mul(float4(input.position, 1.0f), gmtxWorld).xyz;
 	output.position = mul(float4(output.positionW, 1.0f), gmtxViewProjection);
-	output.texCoordBase  = input.texCoordBase;
+	output.texCoordBase = input.texCoordBase;
 	output.texCoordAlpha = input.texCoordAlpha;
 
 	//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
@@ -286,26 +277,26 @@ VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT VSSplatTexturedLightingColor(VS_SPLAT_TE
 PS_MRT_OUT PSSplatTexturedLightingColor(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT input) : SV_Target
 {
 	input.normalW = normalize(input.normalW);
-	//float4 cIllumination = Lighting(input.positionW, input.normalW);
-	float4 cAlphaColor = gtxtDetailTexture.Sample(gDetailSamplerState, input.texCoordAlpha);
-	if (cAlphaColor.a != 0.0f)
-		discard;
-	
-	float4 cTexColor = gtxtTexture.Sample(gSamplerState, input.texCoordBase);
-	float4 cEntityColor = gtxtSlpatDetail.Sample(gSamplerState, input.texCoordAlpha);
+//float4 cIllumination = Lighting(input.positionW, input.normalW);
+float4 cAlphaColor = gtxtDetailTexture.Sample(gDetailSamplerState, input.texCoordAlpha);
+if (cAlphaColor.a != 0.0f)
+	discard;
 
-	//float fShadowFactor = 0.3f;
-	//fShadowFactor =	CalcOneShadowFactor(gsShadow, gtxtShadowMap, input.shadowPos, fShadowFactor);
-	
-	PS_MRT_OUT output;
+float4 cTexColor = gtxtTexture.Sample(gSamplerState, input.texCoordBase);
+float4 cEntityColor = gtxtSlpatDetail.Sample(gSamplerState, input.texCoordAlpha);
 
-	output.vNormal = float4(input.normalW, input.position.w * gfDepthFar);
-	output.vPos = float4(input.positionW, 1.0f);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
-	output.vSpec = gMaterial.m_cSpecular;
-	output.vTxColor = 0.7f * cTexColor + 0.7 * cEntityColor;
+//float fShadowFactor = 0.3f;
+//fShadowFactor =	CalcOneShadowFactor(gsShadow, gtxtShadowMap, input.shadowPos, fShadowFactor);
 
-	return output;
+PS_MRT_OUT output;
+
+output.vNormal = float4(input.normalW, input.position.w * gfDepthFar);
+output.vPos = float4(input.positionW, 1.0f);
+output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
+output.vSpec = gMaterial.m_cSpecular;
+output.vTxColor = 0.7f * cTexColor + 0.7 * cEntityColor;
+
+return output;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -329,7 +320,6 @@ float4 PSInstancedTexturedLightingColor(VS_INSTANCED_TEXTURED_LIGHTING_COLOR_OUT
 	return(cColor);
 }
 
-
 // 빌보드용--------------------------------------------------------------------------------------------------------------
 VS_BILLBOARD_OUTPUT VSBillboard(VS_BILLBOARD_INPUT input)
 {
@@ -344,8 +334,8 @@ VS_BILLBOARD_OUTPUT VSBillboard(VS_BILLBOARD_INPUT input)
 }
 
 [maxvertexcount(4)]
-void GSBillboard(point VS_BILLBOARD_OUTPUT input[1], 
-	uint primID : SV_PrimitiveID, 
+void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
+	uint primID : SV_PrimitiveID,
 	inout TriangleStream<GS_BILLBOARD_OUTPUT> triStream)
 {
 	float3 vUp = float3(0.0f, 1.0f, 0.0f);
@@ -353,13 +343,13 @@ void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
 	vLook.y = 0.0f;
 	vLook = normalize(vLook);
 	float3 vRight = cross(vUp, vLook);
-	
+
 	float fHalfW = 0.5f * input[0].sizeW.x;
 	float fHalfH = 0.5f * input[0].sizeW.y;
 
 	float3 vWidth = fHalfW * vRight;
 	float3 vHeight = fHalfH * vUp;
-	
+
 	float4 pVertices[4];
 	pVertices[0] = float4(input[0].centerW + fHalfW * vRight - fHalfH * vUp, 1.0f);
 	pVertices[1] = float4(input[0].centerW + fHalfW * vRight + fHalfH * vUp, 1.0f);
@@ -369,7 +359,7 @@ void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
 	float2 pTexCoords[4] = { float2(0.0f, 1.0f), float2(0.0f, 0.0f), float2(1.0f, 1.0f), float2(1.0f, 0.0f) };
 
 	GS_BILLBOARD_OUTPUT output;
-	for (int i = 0; i < 4; ++i) 
+	for (int i = 0; i < 4; ++i)
 	{
 		output.posW = pVertices[i].xyz;
 		output.posH = mul(pVertices[i], gmtxViewProjection);
@@ -390,8 +380,6 @@ float4 PSBillboard(GS_BILLBOARD_OUTPUT input) : SV_Target
 	float4 cColor = float4(1.0f, 1.0f, 1.0f, 0.0f);
 	return (cColor);
 }
-
-
 
 VS_BILLBOARD_CUBE_OUTPUT VSCubeBillboard(VS_BILLBOARD_CUBE_INPUT input)
 {
@@ -431,7 +419,6 @@ PS_MRT_OUT PSPointInstance(GS_INSTANCE_OUTPUT input) : SV_Target
 	return (output);
 }
 
-
 [maxvertexcount(36)]
 void GSPointCubeInstance(point VS_INSTANCE_CUBE_OUTPUT input[1],
 	uint primID : SV_PrimitiveID,
@@ -442,7 +429,7 @@ void GSPointCubeInstance(point VS_INSTANCE_CUBE_OUTPUT input[1],
 	fx = fy = fz = fSize;
 	float3 Point = input[0].centerW.xyz;
 
-		float2 pTexCoords[4] = { float2(0.0f, 0.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(1.0f, 1.0f) };
+	float2 pTexCoords[4] = { float2(0.0f, 0.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(1.0f, 1.0f) };
 
 	float4  f4Vertices[36];
 	float3  f3Normal[36];
@@ -540,7 +527,6 @@ void GSPointCubeInstance(point VS_INSTANCE_CUBE_OUTPUT input[1],
 	pNormal = float3(+fx, -fy, -fz); f4Vertices[index] = float4(pNormal + Point, 1.0f);
 	f3Normal[index] = normalize(pNormal); f2TexCoords[index++] = pTexCoords[2];
 
-
 	GS_INSTANCE_OUTPUT output;
 
 	for (int i = 1; i <= 36; ++i)
@@ -556,7 +542,6 @@ void GSPointCubeInstance(point VS_INSTANCE_CUBE_OUTPUT input[1],
 		if (i % 3 == 0)
 			triStream.RestartStrip();
 	}
-
 }
 
 VS_INSTANCE_SPHERE_OUTPUT VSPointSphereInstance(VS_INSTANCE_SPHERE_INPUT input)
@@ -567,7 +552,6 @@ VS_INSTANCE_SPHERE_OUTPUT VSPointSphereInstance(VS_INSTANCE_SPHERE_INPUT input)
 	output.info = input.info;
 	return output;
 }
-
 
 [maxvertexcount(6)]
 void GSPointSphereInstance(point VS_INSTANCE_SPHERE_OUTPUT input[1],
@@ -651,7 +635,6 @@ void GSPointSphereInstance(point VS_INSTANCE_SPHERE_OUTPUT input[1],
 		triStream.Append(output);
 	}
 	triStream.RestartStrip();
-
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -685,12 +668,12 @@ HCS_EDGE4_IN2 HSBezierCS(InputPatch<FLOAT3_POS_FLOAT2_TEX, 16> input, uint nPatc
 FLOAT3_POS_FLOAT2_TEX HSBezier(InputPatch<FLOAT3_POS_FLOAT2_TEX, 16> input, uint i : SV_OutputControlPointID, uint nID : SV_PrimitiveID)
 {
 	FLOAT3_POS_FLOAT2_TEX output;
-	output.pos = input[i].pos;	
+	output.pos = input[i].pos;
 	output.tex = input[i].tex;
 	return output;
 }
 
-// uv : 15 * 15 호출 (u, v)수만큼 
+// uv : 15 * 15 호출 (u, v)수만큼
 // 셰이더는 테셀레이터가 생성한 각 정점마다 호출
 [domain("quad")]
 DS_BEZIER_OUTPUT DSBezier(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation, OutputPatch<FLOAT3_POS_FLOAT2_TEX, 16> patch)
@@ -707,12 +690,11 @@ DS_BEZIER_OUTPUT DSBezier(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation, Ou
 	return output;
 }
 
-
 float4 PSBezier(DS_BEZIER_OUTPUT input) : SV_Target
 {
 	//return input.color;
 	return (1.0f, 1.0f, 1.0f, 1.0f);
-	//return gcColor;    // Yellow, with Alpha = 1
+//return gcColor;    // Yellow, with Alpha = 1
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -744,7 +726,7 @@ HCS_EDGE4_IN2 CameraHCS(InputPatch<FLOAT3_POS_FLOAT2_TEX, 4> input, uint nPatchI
 
 	output.fTessInsides[0] = CalculateTessFactor(center);
 	output.fTessInsides[1] = output.fTessInsides[0];
-	
+
 	return output;
 }
 
@@ -763,7 +745,6 @@ FLOAT3_POS_FLOAT2_TEX HSTerrain(InputPatch<FLOAT3_POS_FLOAT2_TEX, 4> input,
 	return output;
 }
 
-
 [domain("quad")]
 DETAIL_TERRAIN DSTerrain(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation,
 	OutputPatch<FLOAT3_POS_FLOAT2_TEX, 4> quad)
@@ -773,7 +754,7 @@ DETAIL_TERRAIN DSTerrain(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation,
 	// uv 조절?
 	// 애초에 터레인 좌표값을 월드 좌표 값으로 넣으므로 월드 변환은 필요가 없다.
 	output.posW = lerp(lerp(quad[0].pos, quad[1].pos, uv.x), lerp(quad[2].pos, quad[3].pos, uv.x), uv.y);
-	output.tex  = lerp(lerp(quad[0].tex, quad[1].tex, uv.x), lerp(quad[2].tex, quad[3].tex, uv.x), uv.y);
+	output.tex = lerp(lerp(quad[0].tex, quad[1].tex, uv.x), lerp(quad[2].tex, quad[3].tex, uv.x), uv.y);
 	output.texDetail = output.tex * gWorldCell;
 
 	output.posW.y = gtxtTexture.SampleLevel(gSamplerState, output.tex, 0).r * gHegiht;
@@ -790,16 +771,16 @@ PS_MRT_OUT PSTerrain(DETAIL_TERRAIN input)
 	static float TexelU = 1.0f;
 	static float TexelV = 1.0f;
 
-	static int left  = 0;
+	static int left = 0;
 	static int right = 1;
-	static int bot   = 2;
-	static int top   = 3;
+	static int bot = 2;
+	static int top = 3;
 
 	float2 Tex[4];
-	Tex[left]  = input.tex + float2(-TexelU, 0.0f);
+	Tex[left] = input.tex + float2(-TexelU, 0.0f);
 	Tex[right] = input.tex + float2(TexelU, 0.0f);
-	Tex[bot]   = input.tex + float2(0.0f, TexelV);
-	Tex[top]   = input.tex + float2(0.0f, -TexelV);
+	Tex[bot] = input.tex + float2(0.0f, TexelV);
+	Tex[top] = input.tex + float2(0.0f, -TexelV);
 
 	float  Height[4];
 	Height[0] = gtxtTexture.SampleLevel(gSamplerState, Tex[0], 0).r * gWorldCell;
@@ -838,14 +819,14 @@ PS_WORLD_NORMALMAP VSNormalMap(MODEL_NORMALMAP input)
 	output.pos = mul(float4(input.pos, 1.0f), gmtxWorld);
 	output.posW = output.pos.xyz;
 	output.tangentW = mul(input.tangent, (float3x3)gmtxWorld);
-	output.normalW  = mul(input.normal,  (float3x3)gmtxWorld);
+	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
 	output.pos = mul(output.pos, gmtxViewProjection);
 	output.tex = input.tex;
 
 	return output;
 }
 
-PS_MRT_OUT PSNormalMap(PS_WORLD_NORMALMAP input) 
+PS_MRT_OUT PSNormalMap(PS_WORLD_NORMALMAP input)
 {
 	float3 N = normalize(input.normalW);
 	float3 T = normalize(input.tangentW - dot(input.tangentW, N) * N);
@@ -858,7 +839,7 @@ PS_MRT_OUT PSNormalMap(PS_WORLD_NORMALMAP input)
 
 	//float offset = displacementInfo.a;//gtxtTexture.SampleLevel(gSamplerState, input.tex, 0).a;
 	input.posW -= normal * (gBumpScale.y * 2) * (1.0 - displacementInfo.a);
-	
+
 	float4 color = gtxtDetailTexture.Sample(gDetailSamplerState, input.tex);
 	//	return (1, 1, 1, 0);
 
@@ -880,10 +861,10 @@ PS_MRT_OUT PSNormalMap(PS_WORLD_NORMALMAP input)
 WORLD_NORMALMAP VSDisplacement(MODEL_NORMALMAP input)
 {
 	WORLD_NORMALMAP output;
-	output.posW     = mul(input.pos,   gmtxWorld).xyz;
+	output.posW = mul(input.pos, gmtxWorld).xyz;
 	output.tangentW = mul(input.tangent, (float3x3)gmtxWorld);
-	output.normalW  = mul(input.normal,  (float3x3)gmtxWorld);
-	output.tex      = input.tex;
+	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
+	output.tex = input.tex;
 
 	//////////////////////////////////////////////////////////////
 	//float fDistToCamera = distance(output.posW, gf3CameraPos);
@@ -892,7 +873,6 @@ WORLD_NORMALMAP VSDisplacement(MODEL_NORMALMAP input)
 
 	return output;
 }
-
 
 HCS_EDGE3_IN1 TriCameraHCS(InputPatch<WORLD_NORMALMAP, 3> input, uint nPatchID : SV_PrimitiveID)
 {
@@ -907,7 +887,7 @@ HCS_EDGE3_IN1 TriCameraHCS(InputPatch<WORLD_NORMALMAP, 3> input, uint nPatchID :
 	output.fTessEdges[0] = CalculateTessFactor(edges[0]);
 	output.fTessEdges[1] = CalculateTessFactor(edges[1]);
 	output.fTessEdges[2] = CalculateTessFactor(edges[2]);
-	
+
 	output.fTessInsides[0] = CalculateTessFactor(center);
 
 	//output.fTessEdges[0] = 0.5f * (input[1].fTessFactor + input[2].fTessFactor);
@@ -927,10 +907,10 @@ HCS_EDGE3_IN1 TriCameraHCS(InputPatch<WORLD_NORMALMAP, 3> input, uint nPatchID :
 WORLD_NORMALMAP HSDisplacement(InputPatch<WORLD_NORMALMAP, 3> input, uint i : SV_OutputControlPointID, uint nPID : SV_PrimitiveID)
 {
 	WORLD_NORMALMAP output;
-	output.posW		= input[i].posW;
-	output.normalW  = input[i].normalW;
+	output.posW = input[i].posW;
+	output.normalW = input[i].normalW;
 	output.tangentW = input[i].tangentW;
-	output.tex		= input[i].tex;
+	output.tex = input[i].tex;
 
 	return output;
 }
@@ -940,23 +920,21 @@ PS_WORLD_NORMALMAP DSDisplacement(HCS_EDGE3_IN1 input, float3 uv : SV_DomainLoca
 {
 	PS_WORLD_NORMALMAP output;
 
-	output.posW		= uv.x * tri[0].posW	 + uv.y * tri[1].posW		+ uv.z * tri[2].posW;
-	output.normalW	= uv.x * tri[0].normalW  + uv.y * tri[1].normalW	+ uv.z * tri[2].normalW;
-	output.tangentW = uv.x * tri[0].tangentW + uv.y * tri[1].tangentW	+ uv.z * tri[2].tangentW;
-	output.tex		= uv.x * tri[0].tex		 + uv.y * tri[1].tex		+ uv.z * tri[2].tex;
-	output.normalW  = normalize(output.normalW);
+	output.posW = uv.x * tri[0].posW + uv.y * tri[1].posW + uv.z * tri[2].posW;
+	output.normalW = uv.x * tri[0].normalW + uv.y * tri[1].normalW + uv.z * tri[2].normalW;
+	output.tangentW = uv.x * tri[0].tangentW + uv.y * tri[1].tangentW + uv.z * tri[2].tangentW;
+	output.tex = uv.x * tri[0].tex + uv.y * tri[1].tex + uv.z * tri[2].tex;
+	output.normalW = normalize(output.normalW);
 
 	//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
 	//output.shadowPos = mul(float4(output.posW, 1.0f), shadowProj);
 
-	float fHeight = gtxtTexture.SampleLevel(gSamplerState, output.tex,0 ).a;
-	output.posW -= (gScaleHeight * (1.0f - fHeight )) * output.normalW;
+	float fHeight = gtxtTexture.SampleLevel(gSamplerState, output.tex, 0).a;
+	output.posW -= (gScaleHeight * (1.0f - fHeight)) * output.normalW;
 	output.pos = mul(float4(output.posW, 1.0f), gmtxViewProjection);
 
 	return output;
 }
-
-
 
 WORLD_NORMALMAP VSBump(MODEL_NORMALMAP input)
 {
@@ -969,7 +947,6 @@ WORLD_NORMALMAP VSBump(MODEL_NORMALMAP input)
 	return output;
 }
 
-
 HCS_EDGE4_IN2 HCSBump(InputPatch<WORLD_NORMALMAP, 4> input, uint nPatchID : SV_PrimitiveID)
 {
 	HCS_EDGE4_IN2 output;
@@ -980,7 +957,6 @@ HCS_EDGE4_IN2 HCSBump(InputPatch<WORLD_NORMALMAP, 4> input, uint nPatchID : SV_P
 	edges[2] = 0.5f * (input[1].posW + input[3].posW);
 	edges[3] = 0.5f * (input[2].posW + input[3].posW);
 	float3 center = 0.25 * (input[0].posW + input[1].posW + input[2].posW + input[3].posW);
-
 
 	output.fTessEdges[0] = CalculateTessFactor(edges[0]);
 	output.fTessEdges[1] = CalculateTessFactor(edges[1]);
@@ -993,7 +969,6 @@ HCS_EDGE4_IN2 HCSBump(InputPatch<WORLD_NORMALMAP, 4> input, uint nPatchID : SV_P
 	return output;
 }
 
-
 [domain("quad")]
 [partitioning("fractional_even")]
 [outputtopology("triangle_cw")]
@@ -1003,36 +978,34 @@ HCS_EDGE4_IN2 HCSBump(InputPatch<WORLD_NORMALMAP, 4> input, uint nPatchID : SV_P
 WORLD_NORMALMAP HSBump(InputPatch<WORLD_NORMALMAP, 4> input, uint i : SV_OutputControlPointID, uint nPID : SV_PrimitiveID)
 {
 	WORLD_NORMALMAP output;
-	output.posW		 = input[i].posW;
-	output.normalW   = input[i].normalW;
-	output.tangentW  = input[i].tangentW;
-	output.tex       = input[i].tex;
+	output.posW = input[i].posW;
+	output.normalW = input[i].normalW;
+	output.tangentW = input[i].tangentW;
+	output.tex = input[i].tex;
 
 	return output;
 }
-
 
 [domain("quad")]
 PS_WORLD_NORMALMAP DSBump(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation, OutputPatch<WORLD_NORMALMAP, 4> quad)
 {
 	PS_WORLD_NORMALMAP output;
 
-	output.posW      = lerp(lerp(quad[0].posW, quad[1].posW, uv.x), lerp(quad[2].posW, quad[3].posW, uv.x), uv.y);
-	output.tex       = lerp(lerp(quad[0].tex, quad[1].tex, uv.x), lerp(quad[2].tex, quad[3].tex, uv.x), uv.y);
-	output.normalW   = lerp(lerp(quad[0].normalW, quad[1].normalW, uv.x), lerp(quad[2].normalW, quad[3].normalW, uv.x), uv.y);
-	output.tangentW  = lerp(lerp(quad[0].tangentW, quad[1].tangentW, uv.x), lerp(quad[2].tangentW, quad[3].tangentW, uv.x), uv.y);
-	output.normalW   = normalize(output.normalW);
+	output.posW = lerp(lerp(quad[0].posW, quad[1].posW, uv.x), lerp(quad[2].posW, quad[3].posW, uv.x), uv.y);
+	output.tex = lerp(lerp(quad[0].tex, quad[1].tex, uv.x), lerp(quad[2].tex, quad[3].tex, uv.x), uv.y);
+	output.normalW = lerp(lerp(quad[0].normalW, quad[1].normalW, uv.x), lerp(quad[2].normalW, quad[3].normalW, uv.x), uv.y);
+	output.tangentW = lerp(lerp(quad[0].tangentW, quad[1].tangentW, uv.x), lerp(quad[2].tangentW, quad[3].tangentW, uv.x), uv.y);
+	output.normalW = normalize(output.normalW);
 
 	//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
 	//output.shadowPos = mul(float4(output.posW, 1.0f), shadowProj);
 
 	float fHeight = gtxtTexture.SampleLevel(gSamplerState, output.tex, 0).a;
 	output.posW += (gBumpScale.y * (fHeight - 1.0f)) * output.normalW;
-	output.pos    = mul(float4(output.posW, 1.0f), gmtxViewProjection);
+	output.pos = mul(float4(output.posW, 1.0f), gmtxViewProjection);
 
 	return output;
 }
-
 
 PS_WORLD_NORMALMAP VSNormalAndSF(MODEL_NORMALMAP input)
 {
@@ -1047,7 +1020,7 @@ PS_WORLD_NORMALMAP VSNormalAndSF(MODEL_NORMALMAP input)
 	return output;
 }
 
-PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input) 
+PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 {
 	float3 N = normalize(input.normalW);
 	float3 T = normalize(input.tangentW - dot(input.tangentW, N) * N);
@@ -1063,7 +1036,6 @@ PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 
 	float4 color = gtxtTexture.SampleLevel(gSamplerState, input.tex, 0);
 	//	return (1, 1, 1, 0);gtxtDetailTexture
-
 
 	PS_MRT_OUT output;
 	output.vNormal = float4(normal, input.pos.w * gfDepthFar);

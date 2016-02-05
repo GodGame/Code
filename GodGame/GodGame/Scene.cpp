@@ -16,6 +16,7 @@ CScene::CScene()
 
 	m_pLights = nullptr;
 	m_nMRT = 1;
+	m_nThread = 0;
 
 	//m_nRenderThreads = 0;
 
@@ -24,7 +25,6 @@ CScene::CScene()
 
 CScene::~CScene()
 {
-
 	//for (int i = 0; i < m_nRenderThreads; ++i)
 	//{
 	//	m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
@@ -35,7 +35,6 @@ CScene::~CScene()
 	//if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
 	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
-
 
 void CScene::ReleaseObjects()
 {
@@ -52,7 +51,6 @@ void CScene::ReleaseObjects()
 	if (m_pSceneShader) delete m_pSceneShader;
 	if (m_pUIShader) delete m_pUIShader;
 }
-
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
@@ -118,4 +116,3 @@ void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRender
 void CScene::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
 {
 }
-

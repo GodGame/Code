@@ -281,12 +281,25 @@ public:
 
 class CUIShader : public CTexturedShader
 {
-	CMesh * m_pMesh;
-	CTexture * m_pTexture;
+protected:
+	CMesh                  * m_pMesh;
+	CTexture               * m_pTexture;
 	ID3D11RenderTargetView * m_pBackRTV;
+
 public:
 	CUIShader();
 	virtual ~CUIShader();
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+};
+
+class CUIScreenShader : public CUIShader
+{
+public:
+	CUIScreenShader();
+	virtual ~CUIScreenShader();
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);

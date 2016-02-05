@@ -83,6 +83,16 @@ public:
 	~CTreeVertex();
 };
 
+class CPoint2DMesh : public CMesh
+{
+public:
+	CPoint2DMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fxSize, float fySize);
+	CPoint2DMesh(ID3D11Device *pd3dDevice, XMFLOAT4 & info);
+	~CPoint2DMesh();
+
+	void BuildMesh(ID3D11Device *pd3dDevice, XMFLOAT4 & info);
+};
+
 class CPointCubeMesh : public CMesh
 {
 protected:

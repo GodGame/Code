@@ -8,27 +8,17 @@ bool bIsKeyDown = false;
 
 CSceneInGame::CSceneInGame() : CScene()
 {
-	m_nMRT = NUM_MRT;
-	//m_nRenderThreads = 0;
-
-	//m_pRenderingThreadInfo = nullptr;
 }
 
 CSceneInGame::~CSceneInGame()
 {
-	//for (int i = 0; i < m_nRenderThreads; ++i)
-	//{
-	//	m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
-	//	::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
-	//	::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingEndEvent);
-	//}
-
-	//if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
-	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
 
 void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
 {
+	m_nMRT = NUM_MRT;
+	m_nThread = NUM_THREAD;
+
 	HRESULT hr;
 
 	//텍스쳐 맵핑에 사용할 샘플러 상태 객체를 생성한다.
@@ -68,7 +58,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	//pd3dsrvTexture->Release();
 	//pd3dSamplerState->Release();
 
-
 	//재질을 생성한다.
 	CMaterial *pRedMaterial = MaterialMgr.GetObjects("Red");
 	CMaterial *pGreenMaterial = MaterialMgr.GetObjects("Green");
@@ -102,12 +91,10 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	//pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
 	//m_ppShaders[3] = pParticleShader;
 
-
 	CPointInstanceShader *pPointShader = new CPointInstanceShader();
 	pPointShader->CreateShader(pd3dDevice);
 	pPointShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
 	m_ppShaders[3] = pPointShader;
-
 
 	//CWaterShader * pWaterShader = new CWaterShader();
 	//pWaterShader->CreateShader(pd3dDevice);
@@ -118,7 +105,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 	//m_ppShaders[2]->EntityAllStaticObjects();
 	m_ppShaders[3]->EntityAllStaticObjects();
-
 
 	m_pPlayerShader = new CPlayerShader();
 	m_pPlayerShader->CreateShader(pd3dDevice);
@@ -143,7 +129,6 @@ void CSceneInGame::ReleaseObjects()
 	CScene::ReleaseObjects();
 	QUADMgr.ReleaseQuadTree();
 }
-
 
 bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
@@ -223,7 +208,6 @@ void CSceneInGame::ReleaseShaderVariables()
 {
 	if (m_pLights) delete m_pLights;
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
-
 }
 
 void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
@@ -257,7 +241,7 @@ void CSceneInGame::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 
 	m_pPlayerShader->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
-	
+
 	ShadowMgr.ResetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 	uRenderState = NULL;
 }
@@ -311,10 +295,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			if (bIsKeyDown == false) bIsKeyDown = true;
 			else bIsKeyDown = false;
 			break;
-		//case VK_SPACE:
-		//	FRAMEWORK.ChangeGameScene(new CSceneTitle());
-		//	break;
-
+			//case VK_SPACE:
+			//	FRAMEWORK.ChangeGameScene(new CSceneTitle());
+			//	break;
 		}
 		break;
 	}
@@ -337,7 +320,6 @@ bool CSceneInGame::ProcessInput()
 	}
 	return false;
 }
-
 
 void CSceneInGame::AnimateObjects(float fTimeElapsed)
 {
@@ -407,7 +389,6 @@ void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * p
 	}
 #endif
 
-
 	//m_ppShaders[m_nShaders - 1]->Render(pd3dDeviceContext, pCamera);
 }
 
@@ -453,4 +434,3 @@ CHeightMapTerrain *CSceneInGame::GetTerrain()
 	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[1];
 	return(pTerrainShader->GetTerrain());
 }
-
