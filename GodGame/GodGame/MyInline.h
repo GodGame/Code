@@ -61,5 +61,6 @@ namespace Chae
 	{
 		return (a + (float)(rand() / (float)RAND_MAX) * (b - a));
 	}
+
 };
 #endif

@@ -17,7 +17,7 @@ void CSceneTitle::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * p
 	m_nThread = m_nShaders = 1;
 	m_ppShaders = new CShader*[m_nShaders];
 
-	CUIScreenShader * pTitle = new CUIScreenShader(); //new CUIShader();
+	CUIShader * pTitle = new CUIShader(); //new CUIShader();
 	pTitle->CreateShader(pd3dDevice);
 	pTitle->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV);
 	m_ppShaders[0] = pTitle;

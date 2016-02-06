@@ -24,6 +24,18 @@ struct CB_DISPLACEMENT
 	float  m_fBumpMax;
 };
 
+// Constant buffer layout for transferring data to the PS
+struct CB_PS
+{
+	float param[4];
+};
+
+struct CB_CS
+{
+	XMFLOAT4 param;	// x, y = dispatch , z , w = input size;
+};
+
+
 class CShader
 {
 public:

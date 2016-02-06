@@ -424,9 +424,9 @@ void GSPointCubeInstance(point VS_INSTANCE_CUBE_OUTPUT input[1],
 	uint primID : SV_PrimitiveID,
 	inout TriangleStream<GS_INSTANCE_OUTPUT> triStream)
 {
-	float fSize = input[0].sizeW;
+	float fSize  = input[0].sizeW;
 	float fx, fy, fz;
-	fx = fy = fz = fSize;
+	fx           = fy = fz = fSize;
 	float3 Point = input[0].centerW.xyz;
 
 	float2 pTexCoords[4] = { float2(0.0f, 0.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(1.0f, 1.0f) };

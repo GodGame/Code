@@ -182,8 +182,12 @@ public:
 
 public:
 	void BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
+	void BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
+	void BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 };
 
 #define ViewMgr CViewManager::GetInstance()
+
+void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * buffer);
 
 #endif

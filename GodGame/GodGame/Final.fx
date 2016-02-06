@@ -11,6 +11,8 @@ SamplerState LinearSampler : register (s1);
 #define	FRAME_BUFFER_WIDTH		1280
 #define	FRAME_BUFFER_HEIGHT		960
 
+static float2 gvQuadTexCoord[4] = { float2(0.0f, 0.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(1.0f, 1.0f) };
+
 cbuffer cbPS : register(b0)
 {
 	float4    g_param;
@@ -24,19 +26,19 @@ struct PS_SCENE_INPUT
 
 float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 {
-	int3 uvm = int3(Input.pos.xy, 0);	// (u, v, level)
-	float2 Tex = float2((float)uvm.x / (float)g_param.z, (float)uvm.y / (float)g_param.w);
+	int3 uvm            = int3(Input.pos.xy, 0);	// (u, v, level)
+	float2 Tex          = float2((float)uvm.x / (float)g_param.z, (float)uvm.y / (float)g_param.w);
 
-	float4 vColor = gTex.SampleLevel(PointSampler, Tex, 0);
-	float fLum = lum[0] * g_param.x;
-	float3 vBloom = bloom.Sample(LinearSampler, Tex);
+	float4 vColor       = gTex.SampleLevel(PointSampler, Tex, 0);
+	float fLum          = lum[0] * g_param.x;
+	float3 vBloom       = bloom.Sample(LinearSampler, Tex);
 	float3 vBloomScaled = bloom16x16.Sample(LinearSampler, Tex);
 	//return vColor;
 
 	// Tone mapping
-	//vColor = LumToColor(vColor).rgbr;
+	//vColor            = LumToColor(vColor).rgbr;
 	//return vColor;
-	float middle = CalculateMiddleGray(fLum);
+	float middle        = CalculateMiddleGray(fLum);
 
 	vColor = CalculateToneColor(vColor, fLum, middle);
 	//vBloom = CalculateToneColor(vColor, fLum, middle);
@@ -48,58 +50,45 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	return vColor;//vColor;
 }
 
-struct VS_UI
-{
-	float4 DrawInfo		: POSITION;	// x, y -> pos z, w -> size
-};
-
 struct GS_UI
 {
+	// x, y -> pos / z, w -> size
 	float4 DrawInfo		: POSITION;
 };
 
 struct PS_UI
 {
-	float4 pos			: SV_POSITION;
+	float4 posH			: SV_POSITION;
 	float2 tex			: TEXCOORD;
 };
 
-GS_UI VS_UI_Draw(VS_UI input)
+GS_UI VS_UI_Draw(float4 input : POSITION)
 {
 	GS_UI output;
-	output.DrawInfo = input.DrawInfo;
+	output.DrawInfo = input;
 
 	return output;
 }
 
 [maxvertexcount(6)]
-void GS_UI_Draw(point GS_UI input[1], uint primID : SV_PrimitiveID,
-	inout TriangleStream<PS_UI> triStream)
+void GS_UI_Draw(point GS_UI input[1], inout TriangleStream<PS_UI> triStream)
 {
-	GS_UI inPoint = input[0];
 	PS_UI output[4];
 
-	output[0].pos = float4(inPoint.DrawInfo.xy, 0, 0) + float4(-inPoint.DrawInfo.z, +inPoint.DrawInfo.w, 0, 0);
-	output[0].pos = float4(-0, -0, 0, 0);
-	output[0].tex = float2(0, 0);
-
-	output[1].pos = float4(inPoint.DrawInfo.xy, 0, 0) + float4(+inPoint.DrawInfo.z, +inPoint.DrawInfo.w, 0, 0);
-	output[1].pos = float4(FRAME_BUFFER_WIDTH, -0, 0, 0);
-	output[1].tex = float2(1, 0);
-
-	output[2].pos = float4(inPoint.DrawInfo.xy, 0, 0) + float4(-inPoint.DrawInfo.z, -inPoint.DrawInfo.w, 0, 0);
-	output[2].pos = float4(-0, FRAME_BUFFER_HEIGHT, 0, 0);
-	output[2].tex = float2(0, 1);
-
-	output[3].pos = float4(inPoint.DrawInfo.xy, 0, 0) + float4(+inPoint.DrawInfo.z, -inPoint.DrawInfo.w, 0, 0);
-	output[3].pos = float4(FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0, 0);
-	output[3].tex = float2(1, 1);
+	float2 fHalfSize = (g_param.x * 0.5f, g_param.y * 0.5f);
+	float2 pos = input[0].DrawInfo.xy; 
+	output[0].posH = float4(pos + float2(-input[0].DrawInfo.z, +input[0].DrawInfo.w), 0, 1);
+	output[1].posH = float4(pos + float2(+input[0].DrawInfo.z, +input[0].DrawInfo.w), 0, 1);
+	output[2].posH = float4(pos + float2(-input[0].DrawInfo.z, -input[0].DrawInfo.w), 0, 1);
+	output[3].posH = float4(pos + float2(+input[0].DrawInfo.z, -input[0].DrawInfo.w), 0, 1);
 
 	[unroll]
 	for (int i = 0; i < 4; ++i)
 	{
-		output[i].pos.xy /= float2(FRAME_BUFFER_WIDTH  * 10, FRAME_BUFFER_HEIGHT * 10);
-		//output[i].pos.xy -= 0.1f;
+		output[i].tex      = gvQuadTexCoord[i];
+		output[i].posH.xy -= fHalfSize;
+		output[i].posH.xy /= fHalfSize;
+
 		triStream.Append(output[i]);
 	}
 	triStream.RestartStrip();
@@ -111,7 +100,7 @@ float4 PS_UI_Draw(PS_UI input) : SV_Target
 {
 	float4 color = gTex.Sample(gSampler, input.tex);
 
-//	if (color.a == 0.0f) discard;
+	if (color.a == 0.0f) discard;
 
 	return color;
 }

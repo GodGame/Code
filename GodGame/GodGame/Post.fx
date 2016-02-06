@@ -42,12 +42,12 @@ float4 LightScreen(PS_SCENE_INPUT input) : SV_Target
 
 float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 {
-	int3 uvm = int3(input.pos.xy, 0);	// (u, v, level)
-	float4 normal = gtxtNormal.Load(uvm);
-	float3 pos = gtxtPos.Load(uvm).xyz;
-	float4 diffuse = pow(gtxtDiffuse.Load(uvm), 2.2);	// 2.2
+	int3 uvm        = int3(input.pos.xy, 0);	// (u, v, level)
+	float4 normal   = gtxtNormal.Load(uvm);
+	float3 pos      = gtxtPos.Load(uvm).xyz;
+	float4 diffuse  = pow(gtxtDiffuse.Load(uvm), 2.2);	// 2.2
 	float4 specular = gtxtSpecular.Load(uvm);
-	float4 txColor = pow(gtxtTxColor.Load(uvm), 2.2);// 2.2
+	float4 txColor  = pow(gtxtTxColor.Load(uvm), 2.2);// 2.2
 
 	float fLightingAmount = 0;
 	float4 color;
@@ -82,10 +82,10 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 		color = lerp(color, gFogColor, fogLerp);
 	}
 #ifdef LUMCOLOR
-	color = float4(LumToColor(color), 1);//float4(LumToColor(ColorToLum(rgb)), 1);
+	color   = float4(LumToColor(color), 1);//float4(LumToColor(ColorToLum(rgb)), 1);
 	color.r = min(LUM_WHITE, color.r);
 #else
-	color = min(LUM_WHITE, color);
+	color   = min(LUM_WHITE, color);
 #endif
 	return color;
 }

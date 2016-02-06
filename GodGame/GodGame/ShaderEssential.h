@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef __SHADER_TYPE
+#define __SHADER_TYPE
+
 #include "ShaderType.h"
 
 #define NUM_SSAO_OFFSET 14
@@ -16,16 +20,7 @@ struct CB_SSAO_INFO
 	XMFLOAT4 m_gFrustumCorners[4];
 };
 
-// Constant buffer layout for transferring data to the PS
-struct CB_PS
-{
-	float param[4];
-};
 
-struct CB_CS
-{
-	XMFLOAT4 param;	// x, y = dispatch , z , w = input size;
-};
 
 struct CB_CS_BLOOM
 {
@@ -279,29 +274,22 @@ public:
 };
 
 
-class CUIShader : public CTexturedShader
+class CUIShader : public CShader
 {
 protected:
-	CMesh                  * m_pMesh;
-	CTexture               * m_pTexture;
 	ID3D11RenderTargetView * m_pBackRTV;
+	ID3D11Buffer           * m_pd3dScreenInfoBuffer;
 
 public:
 	CUIShader();
 	virtual ~CUIShader();
 
+	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
+
+	void CreateConstantBuffer(ID3D11Device * pd3dDevice);
 };
 
-class CUIScreenShader : public CUIShader
-{
-public:
-	CUIScreenShader();
-	virtual ~CUIScreenShader();
-
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	virtual void CreateShader(ID3D11Device *pd3dDevice);
-};
+#endif
