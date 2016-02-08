@@ -7,7 +7,6 @@
 #define DIR_UP		0x10
 #define DIR_DOWN	0x20
 
-
 #include "Camera.h"
 #include "MgrList.h"
 
@@ -31,10 +30,9 @@ struct CB_PARTICLE
 	float m_fLifeTime;
 	XMFLOAT3 m_vAccel;
 	float m_fTimeStep;
-	float m_fNewTime;	
+	float m_fNewTime;
 	XMFLOAT2 m_NewSize;
 	float m_bEnable;
-
 };
 
 class CParticle
@@ -79,7 +77,7 @@ public:
 	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 };
 
-enum eMessage 
+enum eMessage
 {
 	MSG_NONE = -1,
 	MSG_NORMAL = 0,
@@ -118,7 +116,6 @@ public:
 	AABB m_bcMeshBoundingCube;
 	//AABB m_bcMeshBoundingCube;
 
-
 public:
 	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
 	//게임 객체는 텍스쳐 가질 수 있다.
@@ -128,7 +125,6 @@ public:
 	void UpdateBoundingBox();
 
 	void SetMesh(CMesh *pMesh, int nIndex = 0);
-
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
@@ -171,19 +167,6 @@ public:
 #endif
 };
 
-
-class CMirrorObject : public CGameObject
-{
-public :
-	CMirrorObject();
-	virtual ~CMirrorObject();
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
-	//virtual void Animate(float fTimeElapsed);
-	virtual void SetPosition(float x, float y, float z);
-	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
-};
-
-
 class CRotatingObject : public CGameObject
 {
 protected:
@@ -195,7 +178,6 @@ public:
 	//자전 속도와 회전축 벡터를 설정하는 함수이다.
 	void SetRotationSpeed(float fRotationSpeed) { m_fRotationSpeed = fRotationSpeed; }
 	void SetRotationAxis(XMFLOAT3 xv3RotationAxis) { m_xv3RotationAxis = xv3RotationAxis; }
-
 
 	CRotatingObject(int nMeshes = 1);
 	virtual ~CRotatingObject();
@@ -283,7 +265,6 @@ public:
 
 class CSkyBox : public CGameObject
 {
-
 public:
 	CSkyBox(ID3D11Device *pd3dDevice);
 	virtual ~CSkyBox();
@@ -299,9 +280,8 @@ public:
 	XMFLOAT3 m_xv3Pos;
 	XMFLOAT2 m_xv2Size;
 
-	CTrees(){}
+	CTrees() {}
 	CTrees(XMFLOAT3 xmf3Pos, XMFLOAT2 xmf2Size);
 	~CTrees() {}
 	bool IsVisible(CCamera *pCamera = nullptr);
 };
-

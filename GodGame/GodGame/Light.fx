@@ -389,7 +389,8 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
 
 	float4 cColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-	for (i = 1; i < MAX_LIGHTS; i++)
+	[unroll]
+	for (i = 0; i < MAX_LIGHTS; i++)
 	{
 		//활성화된 조명에 대하여 조명의 영향을 계산한다.
 		if (gLights[i].m_bEnable == 1.0f)
@@ -397,23 +398,23 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 			float3 vToLight = gLights[i].m_vPosition - vPos;
 			//vSpec.w = CookTorrenceSF(vNormal, vToCamera, vToLight, 0.85f, 0.01f);
 			//vSpec.w = max(0.5, vSpec.w);
-			vSpec.w = 1.0f;
+			//vSpec.w = 1.0f;
 
 			//조명의 유형에 따라 조명의 영향을 계산한다.
 			if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
 			{
 				LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
-				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
+				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
 			}
-			if (gLights[i].m_nType == POINT_LIGHT)
+			else if (gLights[i].m_nType == POINT_LIGHT)
 			{
 				LightedColor = PointLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
-				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
+				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
 			}
-			if (gLights[i].m_nType == SPOT_LIGHT)
+			else if (gLights[i].m_nType == SPOT_LIGHT)
 			{
 				LightedColor = SpotLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
-				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse  + LightedColor.m_cSpecular );
+				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse + LightedColor.m_cSpecular );
 			}
 		}
 	}
@@ -430,8 +431,8 @@ float4 DirectLighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecula
 	float4 vDiffuse = vDiff;
 	float fShadowFactor = vDiff.a;
 	float4 vSpec = float4(vSpecular.xyz, vSpecular.w * 255.0f);
-	float3 vCameraPosition = float3(gvCameraPosition.x, gvCameraPosition.y, gvCameraPosition.z);
-	float3 vToCamera = normalize(vCameraPosition - vPos);
+	//float3 vCameraPosition = float3(gvCameraPosition.x, gvCameraPosition.y, gvCameraPosition.z);
+	float3 vToCamera = normalize(gvCameraPosition.xyz - vPos);
 	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
 
 	float4 cColor = float4(0.0f, 0.0f, 0.0f, 0.0f);

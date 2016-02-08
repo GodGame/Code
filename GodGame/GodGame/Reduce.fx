@@ -123,6 +123,7 @@ groupshared float lums[framesnum + 1];
 [numthreads(framesnum, 1, 1)]
 void LumAdapted(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI : SV_GroupIndex)
 {
+	//g_param.x = 가중치 곱, y = 가중치 합, z = 프레임타임 누적 (최대 1초 ), w = 프레임 타임
 	lums[GI] = fLastLum[GI];
 
 	GroupMemoryBarrierWithGroupSync();
@@ -142,32 +143,32 @@ void LumAdapted(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 
 		}
 
 		fAdaptedAverage *= 0.0625;
+		fAdaptedAverage = fAdaptedAverage * g_param.x + g_param.y;
 
 		float fResult = 0;
 		if (iGreater >= (framesnum - 0.01f))
 		{
 			float ftau = 0.4f * g_param.w;
 			fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
+			//fResult = fResult * g_param.x + g_param.y;
 		}
 		else if (iGreater <= 0.1f)
 		{
 			float ftau = 0.05f * g_param.w;
 			fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
+			//fResult = fResult * g_param.x + g_param.y;
 		}
 		else
 		{
 			fResult = fAdapted;// fAdapted - (0.1f * g_param.z) * (fAccum - fAdapted);
 		}
-		
+
 		fLum[0] = fResult;
 		lums[framesnum] = fResult;
 	}
-
 	GroupMemoryBarrierWithGroupSync();
 
 	fLastLum[GI] = lums[GI + 1];
-
-
 }
 //if (fAdaptedAverage >= fAccum)//iGreater >= 15.9)
 //{

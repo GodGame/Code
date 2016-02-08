@@ -51,9 +51,9 @@ struct SceneShaderBuildInfo
 class CScene
 {
 protected:
-	CShader * m_pSceneShader;
-	CShader * m_pUIShader;
-	CShader **m_ppShaders;
+	CSceneShader *  m_pSceneShader;
+	CShader      *  m_pUIShader;
+	CShader      ** m_ppShaders;
 	int		m_nShaders : 8;
 	int		m_nMRT : 8;
 	int		m_nThread : 16;
@@ -75,7 +75,7 @@ public:
 
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	virtual bool ProcessInput();
+	virtual bool ProcessInput(HWND hWnd, float fTime);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo) = 0;
 	virtual void ReleaseObjects();
@@ -101,16 +101,16 @@ public:
 
 	void SetPlayerShader(CPlayerShader * pPlayerShader) { m_pPlayerShader = pPlayerShader; }
 	CPlayerShader * GetPlayerShader() { return m_pPlayerShader; }
-	CShader * GetSceneShader() { return m_pSceneShader; }
-	CShader * GetUIShader() { return m_pUIShader; }
+	CSceneShader  * GetSceneShader()  { return m_pSceneShader; }
+	CShader       * GetUIShader()     { return m_pUIShader; }
 
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
 
-	LIGHT * GetLight(int index) { return &m_pLights->m_pLights[index]; }
+	LIGHT   * GetLight(int index)  { return &m_pLights->m_pLights[index]; }
 	CShader * GetShader(int index) { return m_ppShaders[index]; }
 
-	int GetShaderNumber() { return m_nShaders; }
-	int GetMRTNumber() { return m_nMRT; }
+	int GetShaderNumber()       { return m_nShaders; }
+	int GetMRTNumber()          { return m_nMRT; }
 	int GetRenderThreadNumber() { return m_nThread; }
 };
 #endif

@@ -9,19 +9,19 @@ CGameObject::CGameObject(int nMeshes)
 {
 	Chae::XMFloat4x4Identity(&m_xmf44World);
 
-	m_nMeshes = nMeshes;
+	m_nMeshes  = nMeshes;
 	m_ppMeshes = nullptr;
-	if (m_nMeshes > 0) 
+	if (m_nMeshes > 0)
 		m_ppMeshes = new CMesh*[m_nMeshes];
 	for (int i = 0; i < m_nMeshes; i++)m_ppMeshes[i] = nullptr;
 
 	m_bcMeshBoundingCube = AABB();
 
-	m_bActive = true;
+	m_bActive     = true;
 
 	m_nReferences = 0;
-	m_pMaterial = nullptr;
-	m_pTexture = nullptr;
+	m_pMaterial   = nullptr;
+	m_pTexture    = nullptr;
 }
 
 CGameObject::~CGameObject()
@@ -39,7 +39,7 @@ CGameObject::~CGameObject()
 	if (m_pTexture) m_pTexture->Release();
 }
 
-void CGameObject::AddRef() { m_nReferences++;}
+void CGameObject::AddRef() { m_nReferences++; }
 
 void CGameObject::Release()
 {
@@ -77,14 +77,13 @@ void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
 
 void CGameObject::Animate(float fTimeElapsed)
 {
-
 }
 
 bool CGameObject::IsVisible(CCamera * pCamera)
 {
 	OnPrepareRender();
 
-	if (pCamera) 
+	if (pCamera)
 	{
 		AABB bcBoundingCube = m_bcMeshBoundingCube;
 		bcBoundingCube.Update(m_xmf44World);
@@ -93,35 +92,32 @@ bool CGameObject::IsVisible(CCamera * pCamera)
 	return(m_bActive);
 }
 
-
 void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	CShader::UpdateShaderVariable(pd3dDeviceContext, &m_xmf44World);
+	CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
 	//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
 	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 	//객체의 텍스쳐를 쉐이더 변수에 설정(연결)한다.
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
-	// if (m_pTexture) m_pTexture->UpdateSamplerShaderVariable(pd3dDeviceContext, 0, 0);
-	// if(m_pTexture) m_pTexture->UpdateTextureShaderVariable(pd3dDeviceContext, 0, 0);
 
 	if (m_ppMeshes)
 	{
 		for (int i = 0; i < m_nMeshes; i++)
 		{
-			if (m_ppMeshes[i])
+#ifdef _QUAD_TREE
+			if (m_bActive) m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+			m_bActive = false;
+#else
+			bool bIsVisible = true;
+			if (pCamera)
 			{
-				//bool bIsVisible = true;
-				//if (pCamera)
-				//{
-				//	AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
-				//	bcBoundingCube.Update(m_xmf44World);
-				//	bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
-				//}
-				//if (bIsVisible) 
-				//	m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
-				if (m_bActive) m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
-				m_bActive = false;
+				AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
+				bcBoundingCube.Update(m_xmf44World);
+				bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
 			}
+			if (bIsVisible)
+				m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+#endif
 		}
 	}
 }
@@ -229,7 +225,6 @@ void CGameObject::GetGameMessage(CGameObject * byObj, eMessage eMSG)
 		return;
 	case eMessage::MSG_COLLIDED:
 		return;
-
 	case eMessage::MSG_NORMAL:
 		return;
 	}
@@ -254,12 +249,11 @@ void CGameObject::MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMes
 	toObj->GetGameMessage(byObj, eMSG);
 }
 
-
 void CGameObject::MoveStrafe(float fDistance)
 {
 	//게임 객체를 로컬 x-축 방향으로 이동한다.
-	XMVECTOR xmv3Position = XMLoadFloat3( &GetPosition() );
-	XMVECTOR xv3Right = XMLoadFloat3( &GetRight() );
+	XMVECTOR xmv3Position = XMLoadFloat3(&GetPosition());
+	XMVECTOR xv3Right = XMLoadFloat3(&GetRight());
 	xmv3Position += fDistance * xv3Right;
 
 	CGameObject::SetPosition(&xmv3Position);
@@ -301,56 +295,6 @@ void CGameObject::Rotate(XMFLOAT3 *pxv3Axis, float fAngle)
 XMFLOAT3 CGameObject::GetPosition()
 {
 	return(XMFLOAT3(m_xmf44World._41, m_xmf44World._42, m_xmf44World._43));
-}
-
-CMirrorObject::CMirrorObject() : CGameObject(1)
-{
-	m_xmfPlane = { 0, 0, 1, 0 };
-}
-
-CMirrorObject::~CMirrorObject()
-{
-}
-
-void CMirrorObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
-{
-	CGameObject::Render(pd3dDeviceContext, uRenderState, pCamera);
-
-	//printf("거울 위치 : %.2f %.2f %.2f ", m_xmf44World._41, m_xmf44World._42, m_xmf44World._43);
-}
-
-void CMirrorObject::SetPosition(float x, float y, float z)
-{
-	//XMFLOAT3 pos = XMFLOAT3(x, y, z);
-	m_xmf44World._41 = x;
-	m_xmf44World._42 = y;
-	m_xmf44World._43 = z;
-
-	XMVECTOR xfDistance = XMPlaneDotCoord(XMLoadFloat4(&m_xmfPlane), XMVectorSet(x, y, z, 1));
-	float fdis;
-	XMStoreFloat(&fdis, xfDistance);
-	m_xmfPlane.w = -fdis;
-}
-
-void CMirrorObject::Rotate(float fPitch, float fYaw, float fRoll)
-{
-	XMMATRIX mtxWorld = XMLoadFloat4x4(&m_xmf44World);
-	XMMATRIX mtxRotate = XMMatrixRotationRollPitchYaw(XMConvertToRadians(fPitch), XMConvertToRadians(fYaw), XMConvertToRadians(fRoll));
-
-	mtxWorld = XMMatrixMultiply(mtxRotate, mtxWorld);
-
-
-	XMVECTOR xmvPlane = XMLoadFloat4(&m_xmfPlane);
-	xmvPlane = XMVector3TransformNormal(xmvPlane, mtxRotate);
-	
-	XMFLOAT3 xmfPlane;
-	XMStoreFloat3(&xmfPlane, xmvPlane);
-
-	m_xmfPlane.x = xmfPlane.x;
-	m_xmfPlane.y = xmfPlane.y;
-	m_xmfPlane.z = xmfPlane.z;
-
-	XMStoreFloat4x4(&m_xmf44World, mtxWorld);
 }
 
 CRotatingObject::CRotatingObject(int nMeshes) : CGameObject(nMeshes)
@@ -490,7 +434,6 @@ float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad)
 
 CHeightMapTerrain::CHeightMapTerrain(ID3D11Device *pd3dDevice, LPCTSTR pFileName, int nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xv3Scale) : CGameObject(xv3Scale.x * xv3Scale.z)
 {
-
 	//지형에 사용할 높이 맵의 가로, 세로의 크기이다.
 	m_nWidth = nWidth;
 	m_nLength = nLength;
@@ -563,16 +506,15 @@ CSkyBox::~CSkyBox()
 
 void CSkyBox::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-
 #ifdef SKYBOX_CUBE
 	XMFLOAT3 xv3CameraPos = pCamera->GetPosition();
 	SetPosition(xv3CameraPos.x, xv3CameraPos.y, xv3CameraPos.z);
-	CShader::UpdateShaderVariable(pd3dDeviceContext, &m_xmf44World);
+	CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
 	//m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 
 	if (m_ppMeshes && m_ppMeshes[0])
 		m_ppMeshes[0]->Render(pd3dDeviceContext, uRenderState);
-		
+
 #else
 	//스카이 박스 객체의 위치를 카메라의 위치로 변경한다.
 	XMFLOAT3 xv3CameraPos = pCamera->GetPosition();
@@ -604,7 +546,6 @@ bool CTrees::IsVisible(CCamera *pCamera)
 	return(bIsVisible);
 }
 
-
 CParticle::CParticle()
 {
 	m_pd3dInitialVertexBuffer = nullptr;
@@ -634,7 +575,6 @@ CParticle::~CParticle()
 	if (m_pd3dInitialVertexBuffer) m_pd3dInitialVertexBuffer->Release();
 }
 
-
 void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float fDurability, int iMaxParticle)
 {
 	m_fDurability = fDurability;
@@ -644,16 +584,16 @@ void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float f
 
 	m_nVertices = 1;
 	ZeroMemory(&m_cParticle, sizeof(CB_PARTICLE));
-	m_cParticle.m_xmf3Pos            = info.m_vParticleEmitPos;
-	m_cParticle.m_uType              = PARTICLE_TYPE_EMITTER;
+	m_cParticle.m_xmf3Pos = info.m_vParticleEmitPos;
+	m_cParticle.m_uType = PARTICLE_TYPE_EMITTER;
 
 	m_cbParticle.m_vParticleVelocity = info.m_vParticleVelocity;
-	m_cbParticle.m_vAccel            = info.m_vAccel;
-	m_cbParticle.m_vParticleEmitPos  = info.m_vParticleEmitPos;
-	m_cbParticle.m_fLifeTime         = info.m_fLifeTime;
-	m_cbParticle.m_fNewTime          = info.m_fNewTime;
-	m_cbParticle.m_bEnable           = 1;
-	m_cbParticle.m_NewSize           = XMFLOAT2(4, 4);
+	m_cbParticle.m_vAccel = info.m_vAccel;
+	m_cbParticle.m_vParticleEmitPos = info.m_vParticleEmitPos;
+	m_cbParticle.m_fLifeTime = info.m_fLifeTime;
+	m_cbParticle.m_fNewTime = info.m_fNewTime;
+	m_cbParticle.m_bEnable = 1;
+	m_cbParticle.m_NewSize = XMFLOAT2(4, 4);
 
 	m_nVertexStrides = sizeof(PATICLE_INFO);
 	//cout << m_nVertexStrides << endl;
@@ -661,14 +601,13 @@ void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float f
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO)  * 2;
+	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO) * 2;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;// | D3D11_BIND_STREAM_OUTPUT;
-
 
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = &m_cParticle;// pQuadPatchVertices;
-	HRESULT hr=	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dInitialVertexBuffer);
+	HRESULT hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dInitialVertexBuffer);
 	if (FAILED(hr)) printf("버퍼생성 실패");
 
 	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO) * iMaxParticle;
@@ -691,7 +630,7 @@ void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float f
 void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	pd3dDeviceContext->SOSetTargets(1, &m_pd3dStreamOutVertexBuffer, &m_nVertexOffsets);
-	UINT strides [] = { m_nVertexStrides * 2};
+	UINT strides[] = { m_nVertexStrides * 2 };
 	//pd3dDeviceContext->Begin(m_pd3dQuery);
 	if (m_bInitilize)
 	{
@@ -709,7 +648,6 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 	//pd3dDeviceContext->GetData(m_pd3dQuery, &d3dSOStatics, sizeof(D3D11_QUERY_DATA_SO_STATISTICS), 0);
 	//printf("Num: %u //", d3dSOStatics.NumPrimitivesWritten);
 	//printf("Storage %u \n", d3dSOStatics.PrimitivesStorageNeeded);
-
 }
 
 void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -718,12 +656,12 @@ void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState
 	m_pd3dDrawVertexBuffer = m_pd3dStreamOutVertexBuffer;
 	m_pd3dStreamOutVertexBuffer = pd3dBuffer;
 
-	UINT strides[] = { m_nVertexStrides};
+	UINT strides[] = { m_nVertexStrides };
 	ID3D11Buffer * pd3dBuffers[1] = { nullptr };
 	pd3dDeviceContext->SOSetTargets(1, pd3dBuffers, 0);
 	pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, strides, &m_nVertexOffsets);
 	pd3dDeviceContext->DrawAuto();
-	
+
 	//pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dInitialVertexBuffer, Strides, Offsets);
 	//pd3dDeviceContext->Draw(1, 0);
 }
@@ -747,12 +685,12 @@ void CParticle::Update(float fTimeElapsed)
 
 void CParticle::Enable()
 {
-	m_bEnable = true; 
-	m_bInitilize = true; 	
+	m_bEnable = true;
+	m_bInitilize = true;
 	m_cbParticle.m_bEnable = 1;
 }
 
-void CParticle::Disable() 
-{ 
-	m_bEnable = false; 
+void CParticle::Disable()
+{
+	m_bEnable = false;
 }

@@ -24,7 +24,6 @@ float4 InfoScreen(PS_SCENE_INPUT input) : SV_Target
 {
 	int3 uvm = int3(input.pos.xy, 0);
 	//float2 Tex = float2((float)input.pos.x / FRAME_BUFFER_WIDTH, (float)input.pos.y / FRAME_BUFFER_HEIGHT);
-
 	//float4 color = gtxtTexture.Sample(gSamplerState, Tex);
 	//float4 color = gtxtTexture.Sample(gSamplerState, input.tex);
 
@@ -38,7 +37,6 @@ float4 LightScreen(PS_SCENE_INPUT input) : SV_Target
 	float color = gtxtTexture.Load(uvm);
 	return float4(color.xxx, 0.0);
 }
-
 
 float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 {
@@ -97,7 +95,6 @@ float4 DumpMap(PS_SCENE_INPUT input) : SV_Target
 	
 	return gtxtTexture.Sample(gSamplerState, Tex);
 }
-
 
 float4 ScreenDraw(PS_SCENE_INPUT input) : SV_Target
 {

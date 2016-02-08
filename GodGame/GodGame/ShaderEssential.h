@@ -16,55 +16,52 @@ static const int ToneMappingTexSize = (int)pow(4.0f, NUM_TONEMAP_TEXTURES - 1);/
 struct CB_SSAO_INFO
 {
 	XMFLOAT4X4 m_gViewToTexSpace; // 투영 행렬 * 텍스쳐 행렬
-	XMFLOAT4 m_gOffsetVectors[NUM_SSAO_OFFSET];
-	XMFLOAT4 m_gFrustumCorners[4];
+	XMFLOAT4   m_gOffsetVectors[NUM_SSAO_OFFSET];
+	XMFLOAT4   m_gFrustumCorners[4];
 };
-
-
 
 struct CB_CS_BLOOM
 {
-	XMFLOAT2   m_uInputSize;
-	XMFLOAT2   m_uOutputSize;
-	float  m_fInverse;
-	float  m_fThreshold;
-	XMFLOAT2 m_fExtra;
+	XMFLOAT2    m_uInputSize;
+	XMFLOAT2    m_uOutputSize;
+	float       m_fInverse;
+	float       m_fThreshold;
+	XMFLOAT2    m_fExtra;
 	//XMFLOAT4  m_fParam;	// x = inverse
-	//UINT   m_uInputSize[2];
-	//UINT    m_uOutputwidth;
-	//float   m_fInverse;
+	//UINT      m_uInputSize[2];
+	//UINT      m_uOutputwidth;
+	//float     m_fInverse;
 };
-#define SLOT_CS_CB_BLOOM 2 
+#define SLOT_CS_CB_BLOOM 2
 
 struct CB_WEIGHT
 {
 	XMFLOAT4 fWeight[11];
-//	XMFLOAT4 fInoutSize;
-//	float fInverse;
+	//	XMFLOAT4 fInoutSize;
+	//	float fInverse;
 };
 #define SLOT_CS_CB_WEIGHT 1
 
 struct CB_CS_INOUT
 {
-
 };
 
 struct POST_CS
 {
-	ID3D11ComputeShader * m_pd3dComputeShader;
+	ID3D11ComputeShader       * m_pd3dComputeShader;
 	ID3D11UnorderedAccessView * m_pd3dUAV;
-	ID3D11ShaderResourceView * m_pd3dSRV;
-	ID3D11Buffer * m_pd3dCBBuffer;
+	ID3D11ShaderResourceView  * m_pd3dSRV;
+	ID3D11Buffer              * m_pd3dCBBuffer;
 };
 
 template <int num>
 class POST_CS_NUM
 {
 public:
-	ID3D11ComputeShader * m_pd3dComputeShader;
+	ID3D11ComputeShader       * m_pd3dComputeShader;
 	ID3D11UnorderedAccessView * m_pd3dUAVArray[num];
-	ID3D11ShaderResourceView * m_pd3dSRVArray[num];
-	ID3D11Buffer * m_pd3dCBBufferArray[num];
+	ID3D11ShaderResourceView  * m_pd3dSRVArray[num];
+	ID3D11Buffer              * m_pd3dCBBufferArray[num];
 
 	POST_CS_NUM<num>()
 	{
@@ -111,27 +108,26 @@ public:
 	virtual ~POST_CS_BLOOMING() {};
 };
 
-
 class CSceneShader : public CTexturedShader
 {
-	float m_fFrameTime;
-	float m_fTotalTime;
+	float     m_fFrameTime;
+	float     m_fTotalTime;
 
 	CB_WEIGHT m_cbWeights;
 
-	CTexture * m_pTexture;
-	CTexture * m_pInfoScene;
+	CTexture                * m_pTexture;
+	CTexture                * m_pInfoScene;
 
-	CMesh * m_pMesh;
+	CMesh                   * m_pMesh;
 	ID3D11DepthStencilState * m_pd3dDepthStencilState;
-	
+
 	int m_iDrawOption;
 	ID3D11ShaderResourceView ** m_ppd3dMrtSrv;
 
 	float m_fInverseToneTex;
 
 private:
-	ID3D11Buffer * m_pd3dCBWeight;
+	ID3D11Buffer      * m_pd3dCBWeight;
 
 	ID3D11PixelShader * m_pd3dPSFinal;
 	ID3D11PixelShader * m_pd3dPSOther;
@@ -140,32 +136,32 @@ private:
 
 	//ID3D11ShaderResourceView * m_pd3dShadowSrv;
 
-	ID3D11RenderTargetView * m_pd3dBackRTV;
-	
-	ID3D11RenderTargetView * m_pd3dBloom4x4RTV;
-	ID3D11ShaderResourceView * m_pd3dBloom4x4SRV;
-	ID3D11RenderTargetView * m_pd3dBloom16x16RTV;
-	ID3D11ShaderResourceView * m_pd3dBloom16x16SRV;
+	ID3D11RenderTargetView    * m_pd3dBackRTV;
+
+	ID3D11RenderTargetView    * m_pd3dBloom4x4RTV;
+	ID3D11ShaderResourceView  * m_pd3dBloom4x4SRV;
+	ID3D11RenderTargetView    * m_pd3dBloom16x16RTV;
+	ID3D11ShaderResourceView  * m_pd3dBloom16x16SRV;
 
 	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
-	ID3D11ShaderResourceView * m_pd3dPostSRV[2];
+	ID3D11ShaderResourceView  * m_pd3dPostSRV[2];
 	ID3D11UnorderedAccessView * m_pd3dPostScaledUAV[2];
-	ID3D11ShaderResourceView * m_pd3dPostScaledSRV[2];
+	ID3D11ShaderResourceView  * m_pd3dPostScaledSRV[2];
 
-	ID3D11ComputeShader * m_pd3dComputeHorzBlur;
-	ID3D11ComputeShader * m_pd3dComputeVertBlur;
-	ID3D11ComputeShader * m_pd3dComputeHorzBloom;
-	ID3D11ComputeShader * m_pd3dComputeVertBloom;
+	ID3D11ComputeShader       * m_pd3dComputeHorzBlur;
+	ID3D11ComputeShader       * m_pd3dComputeVertBlur;
+	ID3D11ComputeShader       * m_pd3dComputeHorzBloom;
+	ID3D11ComputeShader       * m_pd3dComputeVertBloom;
 
-	ID3D11Buffer * m_pd3dCBComputeInfo;
-	ID3D11Buffer * m_pd3dCBBloomInfo;
+	ID3D11Buffer              * m_pd3dCBComputeInfo;
+	ID3D11Buffer              * m_pd3dCBBloomInfo;
 
-	ID3D11ComputeShader * m_pd3dCSAdaptLum;
-	ID3D11ComputeShader * m_pd3dCSReduceToSingle;
-	ID3D11ShaderResourceView * m_pd3dLastReducedSRV;
+	ID3D11ComputeShader       * m_pd3dCSAdaptLum;
+	ID3D11ComputeShader       * m_pd3dCSReduceToSingle;
+	ID3D11ShaderResourceView  * m_pd3dLastReducedSRV;
 	ID3D11UnorderedAccessView * m_pd3dLastReducedUAV;
-	POST_CS_REPEATABLE m_csReduce;
-//	POST_CS_BLOOMING m_csBloom;
+	POST_CS_REPEATABLE          m_csReduce;
+	//	POST_CS_BLOOMING        m_csBloom;
 
 public:
 	CSceneShader();
@@ -175,6 +171,7 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceView ** ppd3dMrtSrv, int nMrtSrv, ID3D11RenderTargetView * pd3dBackRTV);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
+	void PostProcessingRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 public:
 	void FinalRender(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV[], UINT uRenderState, CCamera *pCamera = nullptr);
 	void MeasureLuminance(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
@@ -194,7 +191,6 @@ public:
 	void UpdateShaders(ID3D11DeviceContext *pd3dDeviceContext);
 	void CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void UpdateShaderReosurces(ID3D11DeviceContext *pd3dDeviceContext);
-
 };
 
 class CSSAOShader : public CShader
@@ -229,7 +225,6 @@ public:
 	CPlayer *GetPlayer(int nIndex = 0) { return((CPlayer *)m_ppObjects[nIndex]); }
 };
 
-
 class CWaterShader : public CTexturedShader
 {
 	ID3D11BlendState * m_pd3dWaterBlendState;
@@ -257,10 +252,9 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-//	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
+	//	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 	CHeightMapTerrain *GetTerrain();
 };
-
 
 class CSkyBoxShader : public CTexturedShader
 {
@@ -272,7 +266,6 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 };
-
 
 class CUIShader : public CShader
 {

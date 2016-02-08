@@ -9,13 +9,15 @@ class CSceneInGame : public CScene
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
 	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
 	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
+	POINT m_ptOldCursorPos;
+
 public:
 	CSceneInGame();
 	virtual ~CSceneInGame();
 
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	virtual bool ProcessInput();
+	virtual bool ProcessInput(HWND hWnd, float fTime);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo);
 	virtual void ReleaseObjects();

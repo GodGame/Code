@@ -64,7 +64,7 @@ private:
 private:
 	//ID3D11ShaderResourceView      * m_pd3dSSAOSRV;
 	//CSSAOShader                   * m_pSSAOShader;
-	CShader                         * m_pSceneShader;
+	CSceneShader                    * m_pSceneShader;
 
 	ID3D11RenderTargetView          * m_ppd3dRenderTargetView[NUM_MRT];
 	//ID3D11RenderTargetView        * m_pd3dSSAOTargetView;
@@ -78,7 +78,7 @@ public:
 	//void OnCreateShadowMap(CShader*ShaderList[], int nShaders);
 
 private:
-	bool	                          m_bInGame;
+	//bool	                          m_bInGame;
 	int		                          m_iDrawOption;
 	POINT	                          m_ptOldCursorPos;
 

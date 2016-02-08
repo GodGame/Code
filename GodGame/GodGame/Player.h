@@ -12,25 +12,25 @@ protected:
 	XMFLOAT3 m_xv3Look;
 
 	//플레이어가 로컬 x-축(Right), y-축(Up), z-축(Look)으로 얼마만큼 회전했는가를 나타낸다.
-	float m_fPitch;
-	float m_fYaw;
-	float m_fRoll;
+	float    m_fPitch;
+	float    m_fYaw;
+	float    m_fRoll;
 
 	//플레이어의 이동 속도를 나타내는 벡터이다.
 	XMFLOAT3 m_xv3Velocity;
 	//플레이어에 작용하는 중력을 나타내는 벡터이다.
 	XMFLOAT3 m_xv3Gravity;
 	//xz-평면에서 (한 프레임 동안) 플레이어의 이동 속력의 최대값을 나타낸다.
-	float m_fMaxVelocityXZ;
+	float    m_fMaxVelocityXZ;
 	//y-축 방향으로 (한 프레임 동안) 플레이어의 이동 속력의 최대값을 나타낸다.
-	float m_fMaxVelocityY;
+	float    m_fMaxVelocityY;
 	//플레이어에 작용하는 마찰력을 나타낸다.
-	float m_fFriction;
+	float    m_fFriction;
 
 	//플레이어의 위치가 바뀔 때마다 호출되는 OnPlayerUpdated() 함수에서 사용하는 데이터이다.
-	LPVOID m_pPlayerUpdatedContext;
+	LPVOID   m_pPlayerUpdatedContext;
 	//카메라의 위치가 바뀔 때마다 호출되는 OnCameraUpdated() 함수에서 사용하는 데이터이다.
-	LPVOID m_pCameraUpdatedContext;
+	LPVOID   m_pCameraUpdatedContext;
 
 	//플레이어에 현재 설정된 카메라이다.
 	CCamera *m_pCamera;
@@ -46,7 +46,6 @@ public:
 	//플레이어의 상수 버퍼를 생성하고 갱신하는 멤버 함수를 선언한다.
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
-
 
 	XMFLOAT3 GetPosition() { return(m_xv3Position); }
 	XMFLOAT3 GetLookVector() { return(m_xv3Look); }
@@ -96,9 +95,6 @@ public:
 	//플레이어의 카메라가 3인칭 카메라일 때 플레이어 메쉬를 렌더링한다.
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 };
-
-
-
 
 class CTerrainPlayer : public CPlayer
 {

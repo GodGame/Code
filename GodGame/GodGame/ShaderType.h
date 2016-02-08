@@ -55,7 +55,7 @@ public:
 
 	static void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	static void ReleaseShaderVariables();
-	static void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 *pxmtxWorld);
+	static void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxWorld);
 
 	void EntityAllStaticObjects();
 	void EntityAllDynamicObjects();

@@ -2,26 +2,25 @@
 #include "MyInline.h"
 #include "Player.h"
 
-
 CPlayer::CPlayer(int nMeshes) : CGameObject(nMeshes)
 {
-	m_pCamera = nullptr;
+	m_pCamera               = nullptr;
 
-	m_xv3Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	//m_xv3Position.z += 1;
-	m_xv3Right = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	m_xv3Up = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	m_xv3Look = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	m_xv3Position           = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	//m_xv3Position.z +     = 1;
+	m_xv3Right              = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	m_xv3Up                 = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	m_xv3Look               = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
-	m_xv3Velocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_xv3Gravity = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_fMaxVelocityXZ = 0.0f;
-	m_fMaxVelocityY = 0.0f;
-	m_fFriction = 0.0f;
+	m_xv3Velocity           = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_xv3Gravity            = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_fMaxVelocityXZ        = 0.0f;
+	m_fMaxVelocityY         = 0.0f;
+	m_fFriction             = 0.0f;
 
-	m_fPitch = 0.0f;
-	m_fRoll = 0.0f;
-	m_fYaw = 0.0f;
+	m_fPitch                = 0.0f;
+	m_fRoll                 = 0.0f;
+	m_fYaw                  = 0.0f;
 
 	m_pPlayerUpdatedContext = nullptr;
 	m_pCameraUpdatedContext = nullptr;
@@ -41,12 +40,10 @@ void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 	//플레이어의 현재 카메라의 UpdateShaderVariables() 멤버 함수를 호출한다.
 	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext, m_pCamera->GetViewProjectionMatrix());
 	//printf("Player : %0.2f %0.2f %0.2f \n", m_xmf44World._41, m_xmf44World._42, m_xmf44World._43);
-	cout << "player" << endl;
+	//cout << "player" << endl;
 	//cout << "bb max : " << m_bcMeshBoundingCube.m_xv3Maximum.x << ", " << m_bcMeshBoundingCube.m_xv3Maximum.y << ", " << m_bcMeshBoundingCube.m_xv3Maximum.z << endl;
 	//cout << "bb min : " << m_bcMeshBoundingCube.m_xv3Minimum.x << ", " << m_bcMeshBoundingCube.m_xv3Minimum.y << ", " << m_bcMeshBoundingCube.m_xv3Minimum.z << endl;
-
 }
-
 
 void CPlayer::SetPosition(XMFLOAT3& xv3Position)
 {
@@ -190,7 +187,7 @@ void CPlayer::Rotate(float x, float y, float z)
 void CPlayer::Update(float fTimeElapsed)
 {
 	/*플레이어의 속도 벡터를 중력 벡터와 더한다. 중력 벡터에 fTimeElapsed를 곱하는 것은 중력을 시간에 비례하도록 적용한다는 의미이다.*/
- 	m_xv3Velocity.x += m_xv3Gravity.x * fTimeElapsed;
+	m_xv3Velocity.x += m_xv3Gravity.x * fTimeElapsed;
 	m_xv3Velocity.y += m_xv3Gravity.y * fTimeElapsed;
 	m_xv3Velocity.z += m_xv3Gravity.z * fTimeElapsed;
 	/*플레이어의 속도 벡터의 XZ-성분의 크기를 구한다. 이것이 XZ-평면의 최대 속력보다 크면 속도 벡터의 x와 z-방향 성분을 조정한다.*/
@@ -206,24 +203,30 @@ void CPlayer::Update(float fTimeElapsed)
 	float fMaxVelocityY = m_fMaxVelocityY * fTimeElapsed;
 	if (fLength > fMaxVelocityY) m_xv3Velocity.y *= (fMaxVelocityY / fLength);
 
-	//플레이어를 속도 벡터 만큼 실제로 이동한다(카메라도 이동될 것이다). 
+	//플레이어를 속도 벡터 만큼 실제로 이동한다(카메라도 이동될 것이다).
 	Move(m_xv3Velocity, false);
 
-	/*플레이어의 위치가 변경될 때 추가로 수행할 작업을 수행한다. 예를 들어, 플레이어의 위치가 변경되었지만 플레이어 객체에는 지형(Terrain)의 정보가 없다. 플레이어의 새로운 위치가 유효한 위치가 아닐 수도 있고 또는 플레이어의 충돌 검사 등을 수행할 필요가 있다. 이러한 상황에서 플레이어의 위치를 유효한 위치로 다시 변경할 수 있다.*/
+	/*플레이어의 위치가 변경될 때 추가로 수행할 작업을 수행한다. 
+	예를 들어, 플레이어의 위치가 변경되었지만 플레이어 객체에는 지형(Terrain)의 정보가 없다. 
+	플레이어의 새로운 위치가 유효한 위치가 아닐 수도 있고 또는 플레이어의 충돌 검사 등을 수행할 필요가 있다. 
+	이러한 상황에서 플레이어의 위치를 유효한 위치로 다시 변경할 수 있다.*/
 	if (m_pPlayerUpdatedContext) OnPlayerUpdated(fTimeElapsed);
 
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
 	//플레이어의 위치가 변경되었으므로 카메라의 상태를 갱신한다.
 	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->Update(m_xv3Position, fTimeElapsed);
-	//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다. 
+	//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
 	if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
 	//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
 	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->SetLookAt(m_xv3Position);
 	//카메라의 카메라 변환 행렬을 다시 생성한다.
 	m_pCamera->RegenerateViewMatrix();
 
-	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다. 속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다. 단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다. 마찰력이 속력보다 크면 속력은 0이 될 것이다.*/
-	
+	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다. 
+	속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다. 
+	단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다. 
+	마찰력이 속력보다 크면 속력은 0이 될 것이다.*/
+
 	XMVECTOR xvVelocity = XMLoadFloat3(&m_xv3Velocity);
 	XMVECTOR xvDeceleration = -xvVelocity;
 
@@ -341,7 +344,6 @@ CTerrainPlayer::~CTerrainPlayer()
 {
 }
 
-
 void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed)
 {
 	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
@@ -396,7 +398,8 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 	bool bReverseQuad = ((z % 2) != 0);
 	/*높이 맵에서 플레이어의 현재 위치 (x, z)의 y 값을 구한다. 그리고 플레이어 메쉬의 높이가 12이고 플레이어의 중심이 직육면체의 가운데이므로 y 값에 메쉬의 높이의 절반을 더하면 플레이어의 위치가 된다.*/
 	float fHeight = pTerrain->GetHeight(xv3PlayerPosition.x, xv3PlayerPosition.z, bReverseQuad) + 6.0f;
-	/*플레이어의 속도 벡터의 y-값이 음수이면(예를 들어, 중력이 적용되는 경우) 플레이어의 위치 벡터의 y-값이 점점 작아지게 된다. 
+//	cout << "높이는 : " << fHeight << endl;
+	/*플레이어의 속도 벡터의 y-값이 음수이면(예를 들어, 중력이 적용되는 경우) 플레이어의 위치 벡터의 y-값이 점점 작아지게 된다.
 	이때 플레이어의 현재 위치의 y 값이 지형의 높이(실제로 지형의 높이 + 6)보다 작으면 플레이어가 땅속에 있게 되므로 플레이어의 속도 벡터의 y 값을 0으로 만들고 플레이어의 위치 벡터의 y-값을 지형의 높이로 설정한다. 그러면 플레이어는 지형 위에 있게 된다.*/
 	if (xv3PlayerPosition.y < fHeight)
 	{
@@ -416,9 +419,9 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	XMFLOAT3 xv3CameraPosition = pCamera->GetPosition();
 	int z = (int)(xv3CameraPosition.z / xv3Scale.z);
 	bool bReverseQuad = ((z % 2) != 0);
-	/*높이 맵에서 카메라의 현재 위치 (x, z)의 높이(y 값)를 구한다. 이 값이 카메라의 위치에 해당하는 지형의 높이 보다 작으면 카메라가 땅속에 있게 된다. 
-	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다). 
-	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다. 
+	/*높이 맵에서 카메라의 현재 위치 (x, z)의 높이(y 값)를 구한다. 이 값이 카메라의 위치에 해당하는 지형의 높이 보다 작으면 카메라가 땅속에 있게 된다.
+	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
+	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
 	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 5.0f;
 	if (xv3CameraPosition.y < fHeight)
@@ -433,5 +436,3 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 		}
 	}
 }
-
-

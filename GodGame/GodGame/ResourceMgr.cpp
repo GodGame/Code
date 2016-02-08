@@ -430,13 +430,11 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "Terrain");
 }
 
-
 CViewManager & CViewManager::GetInstance()
 {
 	static CViewManager instance;
 	return instance;
 }
-
 
 void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
 {
@@ -521,7 +519,7 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "su2d_post1"); pSRV->Release();
 		InsertUAV(pUAV, "su2d_post1"); pUAV->Release();
 	}
-	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625f;
+	d3d2DBufferDesc.Width  = FRAME_BUFFER_WIDTH * 0.0625f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625f;
 	{
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
@@ -625,7 +623,6 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "su_reduce1"); pSRV->Release();
 		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer2, &DescRV, &pSRV)));
 		InsertSRV(pSRV, "su_reduce2"); pSRV->Release();
-
 	}
 	{
 		DescBuffer.ByteWidth       = sizeof(float) * 16;
@@ -688,12 +685,27 @@ void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceC
 
 	InsertBuffer(pd3dBuffer, "cs_float4");
 	pd3dBuffer->Release();
+
+	desc.ByteWidth = sizeof(XMFLOAT4X4);
+	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer)));
+	InsertBuffer(pd3dBuffer, "cs_float4x4");
+	pd3dBuffer->Release();
+
 }
 
-void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * buffer)
+void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * pBuffer)
 {
-	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dDeviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	static D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	memcpy(d3dMappedResource.pData, data, size);
-	pd3dDeviceContext->Unmap(buffer, 0);
+	pd3dDeviceContext->Unmap(pBuffer, 0);
+}
+
+void MapMatrixConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT4X4 & matrix, ID3D11Buffer * pBuffer)
+{
+	static D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	XMFLOAT4X4 *pcbWorldMatrix = (XMFLOAT4X4*)d3dMappedResource.pData;
+	Chae::XMFloat4x4Transpose(pcbWorldMatrix, &matrix); //XMFLOAT4X4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld);
+	pd3dDeviceContext->Unmap(pBuffer, 0);
 }

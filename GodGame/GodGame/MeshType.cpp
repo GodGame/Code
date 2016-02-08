@@ -347,7 +347,7 @@ CSphereMeshDiffused::CSphereMeshDiffused(ID3D11Device *pd3dDevice, float fRadius
 	//구 메쉬의 정점 버퍼(색상 버퍼)를 생성한다.
 	XMFLOAT4 pXMFLOAT4s[8];
 	XMVECTOR xmvColor = XMLoadFloat4(&xmcolor);
-	for (int i = 0; i < m_nVertices; i++)
+	for (unsigned int i = 0; i < m_nVertices; i++)
 		XMStoreFloat4(&pXMFLOAT4s[i], xmvColor + XMVectorSet(RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR, RANDOM_COLOR));
 
 	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT4)* m_nVertices;
@@ -565,7 +565,7 @@ XMFLOAT3 CMeshIlluminated::CalculateTriAngleNormal(UINT nIndex0, UINT nIndex1, U
 
 void CMeshIlluminated::SetAverageVertexNormal(XMFLOAT3 *pxv3Normals, int nPrimitives, int nOffset, bool bStrip)
 {
-	for (int j = 0; j < m_nVertices; j++)
+	for (unsigned int j = 0; j < m_nVertices; j++)
 	{
 		XMVECTOR xvSumOfNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		for (int i = 0; i < nPrimitives; i++)
@@ -1085,7 +1085,7 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 	XMVECTOR xmvScale = XMVectorSet(fScale, fScale, fScale, 1);
 	XMMATRIX xmtxRotate = XMMatrixIdentity();// XMMatrixRotationX(90);
 
-	for (int i = 0; i < m_nVertices; ++i)
+	for (unsigned int i = 0; i < m_nVertices; ++i)
 	{
 		XMVECTOR xmvPos = XMVectorSet(pChaeInfo[i].xmf3Pos.x, pChaeInfo[i].xmf3Pos.y, pChaeInfo[i].xmf3Pos.z, 1);
 		xmvPos *= xmvScale;
@@ -1211,7 +1211,8 @@ CLoadMeshCommon::CLoadMeshCommon(ID3D11Device *pd3dDevice, wchar_t * tMeshName, 
 	min[1] = max[1] = m_pxv3Positions[0].y *= yScale;
 	min[2] = max[2] = m_pxv3Positions[0].z *= zScale;
 
-	for (int i = 1; i < m_nVertices; ++i) {
+	for (unsigned int i = 1; i < m_nVertices; ++i) 
+	{
 		temp[0] = m_pxv3Positions[i].x *= xScale;
 		temp[1] = m_pxv3Positions[i].y *= yScale;
 		temp[2] = m_pxv3Positions[i].z *= zScale;

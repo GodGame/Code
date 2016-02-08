@@ -3,33 +3,33 @@
 #include "ShaderType.h"
 #include <D3Dcompiler.h>
 
-ID3D11Buffer *CShader::m_pd3dcbWorldMatrix = nullptr;
+ID3D11Buffer *CShader::m_pd3dcbWorldMatrix         = nullptr;
 ID3D11Buffer *CIlluminatedShader::m_pd3dcbMaterial = nullptr;
 
 BYTE *ReadCompiledEffectFile(WCHAR *pszFileName, int *pnReadBytes)
 {
-	FILE *pFile = nullptr;
+	FILE *pFile     = nullptr;
 	::_wfopen_s(&pFile, pszFileName, L"rb");
 	::fseek(pFile, 0, SEEK_END);
-	int nFileSize = ::ftell(pFile);
+	int nFileSize   = ::ftell(pFile);
 	BYTE *pByteCode = new BYTE[nFileSize];
 	::rewind(pFile);
-	*pnReadBytes = ::fread(pByteCode, sizeof(BYTE), nFileSize, pFile);
+	*pnReadBytes    = (int)::fread(pByteCode, sizeof(BYTE), nFileSize, pFile);
 	::fclose(pFile);
 	return(pByteCode);
 }
 
 CShader::CShader()
 {
-	m_ppObjects = nullptr;
-	m_nObjects = 0;
+	m_ppObjects          = nullptr;
+	m_nObjects           = 0;
 
-	m_pd3dVertexShader = nullptr;
-	m_pd3dVertexLayout = nullptr;
-	m_pd3dPixelShader = nullptr;
+	m_pd3dVertexShader   = nullptr;
+	m_pd3dVertexLayout   = nullptr;
+	m_pd3dPixelShader    = nullptr;
 	m_pd3dGeometryShader = nullptr;
-	m_pd3dHullShader = nullptr;
-	m_pd3dDomainShader = nullptr;
+	m_pd3dHullShader     = nullptr;
+	m_pd3dDomainShader   = nullptr;
 	//m_p3dComputeShader = nullptr;
 }
 
@@ -247,25 +247,15 @@ void CShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
-	//월드 변환 행렬을 위한 상수 버퍼를 생성한다.
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VS_CB_WORLD_MATRIX);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbWorldMatrix);
+	////월드 변환 행렬을 위한 상수 버퍼를 생성한다.
+	ASSERT(nullptr != (m_pd3dcbWorldMatrix = ViewMgr.GetBuffer("cs_float4x4")));
+	m_pd3dcbWorldMatrix->AddRef();
 }
 
-void CShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 *pxmtxWorld)
+void CShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxWorld)
 {
 	//월드 변환 행렬을 상수 버퍼에 복사한다.
-	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dDeviceContext->Map(m_pd3dcbWorldMatrix, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	VS_CB_WORLD_MATRIX *pcbWorldMatrix = (VS_CB_WORLD_MATRIX *)d3dMappedResource.pData;
-	Chae::XMFloat4x4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld); //XMFLOAT4X4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld);
-	pd3dDeviceContext->Unmap(m_pd3dcbWorldMatrix, 0);
-
+	MapMatrixConstantBuffer(pd3dDeviceContext, xmtxWorld, m_pd3dcbWorldMatrix);
 	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
 	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 	//pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
@@ -323,18 +313,18 @@ ID3D11ShaderResourceView * CShader::CreateRandomTexture1DSRV(ID3D11Device * pd3d
 	for (int i = 0; i < 1024; ++i)
 		RandomValue[i] = XMFLOAT4(Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f));
 	D3D11_SUBRESOURCE_DATA d3dSubresourceData;
-	d3dSubresourceData.pSysMem = RandomValue;
-	d3dSubresourceData.SysMemPitch = sizeof(XMFLOAT4) * 1024;
+	d3dSubresourceData.pSysMem          = RandomValue;
+	d3dSubresourceData.SysMemPitch      = sizeof(XMFLOAT4) * 1024;
 	d3dSubresourceData.SysMemSlicePitch = 0;
 
 	D3D11_TEXTURE1D_DESC d3dTextureDesc;
 	ZeroMemory(&d3dTextureDesc, sizeof(D3D11_TEXTURE1D_DESC));
-	d3dTextureDesc.Width = 1024;
-	d3dTextureDesc.MipLevels = 1;
-	d3dTextureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	d3dTextureDesc.Usage = D3D11_USAGE_IMMUTABLE;
-	d3dTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	d3dTextureDesc.ArraySize = 1;
+	d3dTextureDesc.Width                = 1024;
+	d3dTextureDesc.MipLevels            = 1;
+	d3dTextureDesc.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	d3dTextureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
+	d3dTextureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+	d3dTextureDesc.ArraySize            = 1;
 
 	ID3D11Texture1D * pd3dTexture;
 	pd3dDevice->CreateTexture1D(&d3dTextureDesc, &d3dSubresourceData, &pd3dTexture);
@@ -372,10 +362,10 @@ void CIlluminatedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	d3dBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	d3dBufferDesc.Usage          = D3D11_USAGE_DYNAMIC;
+	d3dBufferDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	d3dBufferDesc.ByteWidth = sizeof(MATERIAL);
+	d3dBufferDesc.ByteWidth      = sizeof(MATERIAL);
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbMaterial);
 }
 
@@ -528,9 +518,9 @@ ID3D11Buffer *CInstanceShader::CreateInstanceBuffer(ID3D11Device *pd3dDevice, in
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	/*버퍼의 초기화 데이터가 없으면 동적 버퍼로 생성한다. 즉, 나중에 매핑을 하여 내용을 채우거나 변경한다.*/
-	d3dBufferDesc.Usage = (pBufferData) ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
-	d3dBufferDesc.ByteWidth = nBufferStride * nObjects;
-	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.Usage          = (pBufferData) ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
+	d3dBufferDesc.ByteWidth      = nBufferStride * nObjects;
+	d3dBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = (pBufferData) ? 0 : D3D11_CPU_ACCESS_WRITE;
 
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
@@ -579,9 +569,9 @@ void CNormalMapShader::CreateShader(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(CB_DISPLACEMENT);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.Usage          = D3D11_USAGE_DYNAMIC;
+	bd.ByteWidth      = sizeof(CB_DISPLACEMENT);
+	bd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbBump);
 
@@ -613,8 +603,8 @@ void CNormalMapShader::UpdateBumpInfo(ID3D11DeviceContext *pd3dDeviceContext, SE
 	/*상수 버퍼의 메모리 주소를 가져와서 카메라 변환 행렬과 투영 변환 행렬을 복사한다. 쉐이더에서 행렬의 행과 열이 바뀌는 것에 주의하라.*/
 	pd3dDeviceContext->Map(m_pd3dcbBump, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	CB_DISPLACEMENT *pcbBump = (CB_DISPLACEMENT *)d3dMappedResource.pData;
-	pcbBump->m_xv3BumpScale = m_Bump.m_xv3BumpScale;
-	pcbBump->m_fBumpMax = m_Bump.m_fBumpMax;
+	pcbBump->m_xv3BumpScale  = m_Bump.m_xv3BumpScale;
+	pcbBump->m_fBumpMax      = m_Bump.m_fBumpMax;
 	pd3dDeviceContext->Unmap(m_pd3dcbBump, 0);
 
 	//상수 버퍼를 슬롯(VS_SLOT_CAMERA)에 설정한다.

@@ -58,7 +58,7 @@ void CSceneTitle::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, L
 
 bool CSceneTitle::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	CMaterial * pMat;
+//	CMaterial * pMat = nullptr;
 
 	switch (nMessageID)
 	{
@@ -74,7 +74,7 @@ bool CSceneTitle::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 	return(false);
 }
 
-bool CSceneTitle::ProcessInput()
+bool CSceneTitle::ProcessInput(HWND hWnd, float fTime)
 {
 	static UCHAR pKeyBuffer[256];
 	if (GetKeyboardState(pKeyBuffer))

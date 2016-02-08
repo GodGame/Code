@@ -3,7 +3,6 @@
 #include "ShaderList.h"
 #include <D3Dcompiler.h>
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////
@@ -44,8 +43,6 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSInstancedTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
 	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSInstancedTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
-
-
 
 void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial *pMaterial, CTexture *pTexture, int k)
 {
@@ -225,10 +222,9 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 	int cxTerrain = pTerrain->GetHeightMapWidth();
 	int czTerrain = pTerrain->GetHeightMapLength();
 
-
 	CTreeVertex * pTreeMesh = new CTreeVertex(pd3dDevice, xmf2Size.x, xmf2Size.y);
 
-	for (int i = 0; i < m_nTrees; ++i){
+	for (int i = 0; i < m_nTrees; ++i) {
 		float fxTerrain = xmf3Pos.x = rand() % cxTerrain;
 		float fzTerrain = xmf3Pos.z = rand() % czTerrain;
 		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false);
@@ -240,8 +236,6 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 
 	m_pd3dTreeInstanceBuffer = CreateInstanceBuffer(pd3dDevice, m_nTrees, m_nInstanceBufferStride, nullptr);
 	pTreeMesh->AssembleToVertexBuffer(1, &m_pd3dTreeInstanceBuffer, &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
-
-
 
 	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0);
 	// 크기 동일
@@ -266,9 +260,6 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 
 	pd3dsrvArray->Release();
 	pd3dSamplerState->Release();
-
-
-
 }
 
 void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -307,14 +298,10 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 
 	CMesh *pTreeMesh = m_ppObjects[0]->GetMesh();
 	pTreeMesh->RenderInstanced(pd3dDeviceContext, nTreeInstance, 0);
-
 }
-
-
 
 void CBillboardShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera)
 {
-
 	//D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	//pd3dDeviceContext->Map(m_pd3dcbCameraPos, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	//VS_CB_CAMERAPOS *pcbViewProjection = (VS_CB_CAMERAPOS *)d3dMappedResource.pData;
@@ -341,14 +328,12 @@ CStaticShader::CStaticShader() : CShader()
 {
 	//m_pTexture = nullptr;
 	//m_pMaterial = nullptr;
-
 }
 
 CStaticShader::~CStaticShader()
 {
 	//if (m_pTexture) m_pTexture->Release();
 	//if (m_pMaterial) m_pMaterial->Release();
-
 }
 
 void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -422,8 +407,8 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	{
 		pObject = new CGameObject(1);
 		pObject->SetMesh(pCubeMesh);
-	//	pObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
-	//	pObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
+		//	pObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
+		//	pObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
 		pObject->SetTexture(pSwordTexture);
 		pObject->SetMaterial(pMaterial);
 		m_ppObjects[i] = pObject;
@@ -447,13 +432,10 @@ void CStaticShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
-		if (m_ppObjects[j])
+		//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
+		if (m_ppObjects[j]->IsVisible(pCamera))
 		{
-			//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
-			if (m_ppObjects[j]->IsVisible(pCamera))
-			{
-				m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
-			}
+			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
 		}
 	}
 }
@@ -502,13 +484,12 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	pMat->m_Material.m_xcSpecular = XMFLOAT4(100, 100, 100, 10);
 	pMat->m_Material.m_xcEmissive = XMFLOAT4(100, 100, 100, 10);
 
-
 	m_pMaterial = pMat;//pMaterial;
 	pMat->AddRef();//if (pMaterial) pMaterial->AddRef();
 	m_nObjects = m_nCubes = 1000;
 
 	XMFLOAT3 xmf3Pos;
-	XMFLOAT2 xmf2Size = XMFLOAT2(20, 50);
+	XMFLOAT2 xmf2Size = XMFLOAT2(20, 40);
 
 	//m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
 	m_nInstanceBufferStride = sizeof(XMFLOAT4);
@@ -520,7 +501,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 
-	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 10, 10);
+	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 20, 5);
 	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
 	{
@@ -536,16 +517,14 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		QUADMgr.EntityStaticObject(pObject);
 	}
 
-	m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350)); 
+	m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350));
 	//m_ppObjects[1]->SetPosition(XMFLOAT3(1085, 180, 260));
 	//m_ppObjects[2]->SetPosition(XMFLOAT3(1115, 180, 265));
-	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255)); 
+	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255));
 	//m_ppObjects[4]->SetPosition(XMFLOAT3(1140, 180, 265));
 
 	m_pd3dCubeInstanceBuffer = CreateInstanceBuffer(pd3dDevice, m_nCubes, m_nInstanceBufferStride, nullptr);
 	pPointMesh->AssembleToVertexBuffer(1, &m_pd3dCubeInstanceBuffer, &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
-
-
 
 	m_pTexture = new CTexture(1, 1, 0, 0);
 	ID3D11ShaderResourceView * pd3dsrvArray;
@@ -570,7 +549,6 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 	pd3dsrvArray->Release();
 	pd3dSamplerState->Release();
-
 }
 
 void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -591,17 +569,19 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	XMFLOAT3 xmf3Pos;
 	for (int j = 0; j < m_nCubes; j++)
 	{
-		if (m_ppObjects[j])
+#ifdef _QUAD_TREE
+		if (m_ppObjects[j]->IsVisible(nullptr))// if (m_ppObjects[j]->IsVisible(pCamera))//			{
+#else
+		if (m_ppObjects[j]->IsVisible(pCamera))
+#endif
 		{
-			if (m_ppObjects[j]->IsVisible(nullptr))// if (m_ppObjects[j]->IsVisible(pCamera))//			{
-			{
-				xmf3Pos = m_ppObjects[j]->GetPosition();
-				pnTreeInstance[nCubeInstance].m_xv3Position = XMFLOAT4(xmf3Pos.x, xmf3Pos.y, xmf3Pos.z, 1.0f);
-				//printf("%0.2f %0.2f %0.2f \n", xmf3Pos.x, xmf3Pos.y, xmf3Pos.z);
-				nCubeInstance++;
-			}
-			m_ppObjects[j]->SetActive(false);
+			xmf3Pos = m_ppObjects[j]->GetPosition();
+			pnTreeInstance[nCubeInstance].m_xv3Position = XMFLOAT4(xmf3Pos.x, xmf3Pos.y, xmf3Pos.z, 1.0f);
+			//printf("%0.2f %0.2f %0.2f \n", xmf3Pos.x, xmf3Pos.y, xmf3Pos.z);
+			nCubeInstance++;
 		}
+		m_ppObjects[j]->SetActive(false);
+
 	}
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
 
@@ -609,9 +589,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 
 	CMesh *pCubeMesh = m_ppObjects[0]->GetMesh();
 	pCubeMesh->RenderInstanced(pd3dDeviceContext, uRenderState, nCubeInstance, 0);
-
 }
-
 
 void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 {
@@ -626,17 +604,14 @@ void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 }
 #pragma endregion
 
-
 CNormalShader::CNormalShader()
 {
 	m_pMaterial = nullptr;
 	m_pTexture = nullptr;
-
 }
 
 CNormalShader::~CNormalShader()
 {
-
 }
 
 void CNormalShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -653,17 +628,15 @@ void CNormalShader::CreateShader(ID3D11Device *pd3dDevice)
 	UINT nElements = ARRAYSIZE(d3dInputElements);
 	//CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSNormalMap", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
 	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
-	
+
 	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSBump", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
 	CreateHullShaderFromFile(pd3dDevice, L"Effect.fx", "HSBump", "hs_5_0", &m_pd3dHullShader);
 	CreateDomainShaderFromFile(pd3dDevice, L"Effect.fx", "DSBump", "ds_5_0", &m_pd3dDomainShader);
 	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
-
 }
 
 void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
 {
-
 	m_Bump.m_fBumpMax = 30.0f;
 	m_Bump.m_xv3BumpScale = XMFLOAT3(30.0f, 30.f, 30.0f);
 
@@ -679,7 +652,6 @@ void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	CGameObject *pObject = nullptr;
 	float xPitch = 256.0f, zPitch = 256.0f;
 	float fHalf = 2056 * 0.5;
-
 
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
@@ -704,24 +676,24 @@ void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	pTexture->SetTexture(1, pd3dsrvArray);
 	pTexture->SetSampler(1, pd3dSamplerState);
 	pd3dsrvArray->Release();
-	pd3dSamplerState->Release();	
+	pd3dSamplerState->Release();
 
 	m_pTexture = pTexture;
 	m_pMaterial = pMaterial;
-	for (int j = 0; j < 4; ++j){
+	for (int j = 0; j < 4; ++j) {
 		bool bIsEven = (j % 2) == 0;
 
 		for (int i = 0; i < 8; i++)
 		{
 			pObject = new CGameObject(1);
-			float fx = bIsEven == false ? (j-1) * fHalf + 30 : (i*xPitch) + 128;
+			float fx = bIsEven == false ? (j - 1) * fHalf + 30 : (i*xPitch) + 128;
 			float fz = bIsEven == true ? j * fHalf + 30 : (i*xPitch) + 128;
 
 			float fy = 150;
 			pObject->SetMesh(pPointMesh);
 			pObject->SetPosition(fx, fy, fz);
-			pObject->Rotate(0, (j-2) * 90, 0);
-			m_ppObjects[ (j * 8) + i] = pObject;
+			pObject->Rotate(0, (j - 2) * 90, 0);
+			m_ppObjects[(j * 8) + i] = pObject;
 		}
 	}
 	CNormalCube * pSmallMesh = new CNormalCube(pd3dDevice, 56, 56);
@@ -732,10 +704,8 @@ void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	//m_ppObjects[0]->Rotate(0, 180, 0);
 	//m_ppObjects[1]->SetPosition(XMFLOAT3(1085, 180, 260));
 	//m_ppObjects[2]->SetPosition(XMFLOAT3(1115, 180, 265));
-	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255)); 
+	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255));
 	//m_ppObjects[4]->SetPosition(XMFLOAT3(1140, 180, 265));
-
-
 }
 
 void CNormalShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -749,7 +719,7 @@ void CNormalShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	{
 		if (m_ppObjects[j])
 		{
-			//카메라의 절두체에 포함되는 객체들만을 렌더링한다. 
+			//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
 			if (m_ppObjects[j]->IsVisible(pCamera)) {
 				m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
 			}
@@ -759,7 +729,6 @@ void CNormalShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	CNormalMapShader::UpdateBumpInfo(pd3dDeviceContext);
 	m_ppObjects[m_nObjects - 1]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	m_Bump.m_xv3BumpScale.y = 20;
-
 }
 
 CParticleShader::CParticleShader() : CShader()
@@ -798,7 +767,6 @@ CParticleShader::~CParticleShader()
 			m_ppd3dParticleImageSRV[i]->Release();
 		delete[] m_ppd3dParticleImageSRV;
 	}
-
 }
 
 void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -817,7 +785,7 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleDraw", "gs_5_0", &m_pd3dGeometryShader);
 	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSParticleDraw", "ps_5_0", &m_pd3dPixelShader);
 
-	D3D11_SO_DECLARATION_ENTRY SODeclaration[] = 
+	D3D11_SO_DECLARATION_ENTRY SODeclaration[] =
 	{  // 스트림 번호(인덱스)/ 시멘틱이름/ 출력원소 인덱스(같은이름 시멘틱)/ 출력 시작요소/ 출력 요소(0~3:w)/ 연결된 스트림 출력버퍼(0~3)
 		{ 0, "POSITION", 0, 0, 3, 0 },
 		{ 0, "VELOCITY", 0, 0, 3, 0 },
@@ -828,10 +796,9 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	UINT pBufferStrides[1] = { sizeof(SODeclaration) };
 
 	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSParticleSO", "vs_5_0", &m_pd3dVSSO, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleSO", "gs_5_0", &m_pd3dGSSO, 
+	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleSO", "gs_5_0", &m_pd3dGSSO,
 		SODeclaration, 5, pBufferStrides, 1, 0);
 }
-
 
 void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 {
@@ -875,17 +842,14 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &m_pd3dSamplerState);
 }
 
-
 void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
 {
-
-	
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
 
 	m_nObjects = 2;
 	m_ppParticle = new CParticle*[m_nObjects];
-	
+
 	CB_PARTICLE cbParticle;
 	cbParticle.m_fLifeTime = 1.0f;
 	cbParticle.m_vAccel = XMFLOAT3(0, 10, 0);
@@ -909,7 +873,7 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	m_nImages = 1;
 	m_ppd3dParticleImageSRV = new ID3D11ShaderResourceView*[m_nImages];
 
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, 
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice,
 		_T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &m_ppd3dParticleImageSRV[0], nullptr);
 	if (FAILED(hr)) printf("오류");
 }
@@ -932,10 +896,10 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
 	pd3dDeviceContext->GSSetShader(m_pd3dGeometryShader, nullptr, 0);
 	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, nullptr, 0);
-	
+
 	pd3dDeviceContext->PSSetShaderResources(0, m_nImages, m_ppd3dParticleImageSRV);
 	pd3dDeviceContext->PSSetSamplers(0, 1, &m_pd3dSamplerState);
-	
+
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dDepthStencilState, 0);
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
 	for (int i = 0; i < m_nObjects; ++i)
@@ -955,7 +919,6 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 	}
 }
 
-
 void CParticleShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC bd;
@@ -965,7 +928,7 @@ void CParticleShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	HRESULT hr = pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbGameInfo);
-	if (FAILED(hr)) 
+	if (FAILED(hr))
 		printf("오류입니다!!");
 }
 

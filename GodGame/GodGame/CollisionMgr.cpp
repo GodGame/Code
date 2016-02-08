@@ -7,7 +7,6 @@
 //static vector<CGameObject*> gvcContainedArray;
 //static vector<DynamicInfo> gvDynamicArray;
 
-
 void AABB::Union(XMFLOAT3& xv3Minimum, XMFLOAT3& xv3Maximum)
 {
 	if (xv3Minimum.x < m_xv3Minimum.x) m_xv3Minimum.x = xv3Minimum.x;
@@ -53,7 +52,7 @@ void AABB::Update(XMFLOAT4X4 &pmtxTransform, AABB * bbMesh)
 	{
 		//정점을 변환한다.
 		mtxTransform = XMLoadFloat4x4(&pmtxTransform);
-		//vVertices[i] += xmvPos; 
+		//vVertices[i] += xmvPos;
 		vVertices[i] = XMVector3TransformCoord(vVertices[i], mtxTransform);
 		XMStoreFloat4(&xmvVertcies, vVertices[i]);
 		if (xmvVertcies.x < m_xv3Minimum.x) m_xv3Minimum.x = xmvVertcies.x;
@@ -75,8 +74,8 @@ bool AABB::CollisionAABB(AABB & one, AABB & two)
 }
 ePartition AABB::IsIncludeAABB(AABB & bbSmall, AABB & bbLarge, bool bCollideCheck)
 {
-	if(!bCollideCheck) 
-		if (!AABB::CollisionAABB(bbSmall, bbLarge)) 
+	if (!bCollideCheck)
+		if (!AABB::CollisionAABB(bbSmall, bbLarge))
 			return ePartition::CULL_OUT;
 
 	if (bbSmall.m_xv3Minimum.x < bbLarge.m_xv3Minimum.x) return ePartition::CONTAIN_PART;
@@ -101,7 +100,7 @@ bool AABB::CollisionAABBBy2D(AABB & one, AABB & two)
 ePartition AABB::IsIncludeAABBBy2D(AABB & bbSmall, AABB & bbLarge, bool bCollideCheck = false)
 {
 	if (!bCollideCheck)
-		if (!AABB::CollisionAABBBy2D(bbSmall, bbLarge)) 
+		if (!AABB::CollisionAABBBy2D(bbSmall, bbLarge))
 			return ePartition::CULL_OUT;
 
 	if (bbSmall.m_xv3Minimum.x < bbLarge.m_xv3Minimum.x) return ePartition::CONTAIN_PART;
@@ -138,7 +137,7 @@ void DirectQuadTree::BuildQuadTree(BYTE nTreeLevels, UINT MapWidth, UINT MapLeng
 	fXScale = m_nMapWidth = MapWidth;
 	fZScale = m_nMapLength = MapLength;
 
-	for (int lv = m_nTreeLevels; lv > 0; --lv)
+	for (unsigned int lv = m_nTreeLevels; lv > 0; --lv)
 	{
 		fXScale *= 0.5f;
 		fZScale *= 0.5f;
@@ -149,7 +148,7 @@ void DirectQuadTree::BuildQuadTree(BYTE nTreeLevels, UINT MapWidth, UINT MapLeng
 
 	m_pNodesArray = new CPartitionNode[++m_nNodes];
 
-	for (int i = 0; i < m_nNodes; ++i)
+	for (unsigned int i = 0; i < m_nNodes; ++i)
 		m_pNodesArray[i].m_uIndex = i;
 }
 
@@ -195,7 +194,7 @@ CPartitionNode * DirectQuadTree::GetNodeContaining(float fLeft, float fRight, fl
 
 int DirectQuadTree::EntryObject(CGameObject * pObject)
 {
-	int index =	GetNodeContainingIndex(pObject->m_bcMeshBoundingCube);
+	int index = GetNodeContainingIndex(pObject->m_bcMeshBoundingCube);
 
 	m_pNodesArray[index].m_vpObjects.push_back(pObject);
 
@@ -208,12 +207,10 @@ void DirectQuadTree::EntryObjects(CGameObject ** ppObjectArrays, int nObjects)
 		DirectQuadTree::EntryObject(ppObjectArrays[i]);
 }
 
-
-
 QuadTree::QuadTree()
 {
 	for (int i = 0; i < 5; ++i) m_pNodes[i] = nullptr;
-	
+
 	ZeroMemory(&m_xmi3Center, sizeof(XMINT3));
 	m_uHalfLength = 0;
 	m_uHalfWidth = 0;
@@ -245,7 +242,7 @@ void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, Quad
 		return;
 	}
 
-	UINT uNextHalfWidth  = (m_uHalfWidth  >> 1);
+	UINT uNextHalfWidth = (m_uHalfWidth >> 1);
 	UINT uNextHalfLength = (m_uHalfLength >> 1);
 
 	XMFLOAT3 xmf3Temp = { 0, 0, 0 };
@@ -269,9 +266,9 @@ void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, Quad
 QuadTree * QuadTree::CreateQuadTrees(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
 {
 	QuadTree * pTree = new QuadTree();
-	
+
 	pTree->BuildNodes(xmf3Center, uWidth, uLength, pParent);
-	
+
 	return pTree;
 }
 
@@ -279,36 +276,34 @@ void QuadTree::FrustumCulling(CCamera * pCamera)
 {
 	XMFLOAT3 xmfMin = XMFLOAT3(m_xmi3Center.x - m_uHalfWidth, -1000.0f, m_xmi3Center.z - m_uHalfLength);
 	XMFLOAT3 xmfMax = XMFLOAT3(m_xmi3Center.x + m_uHalfWidth, 1000.0f, m_xmi3Center.z + m_uHalfLength);
-	
-	
+
 	bool bVisible;
 	if (m_uHalfLength > 512.0f)
 	{
 		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
 		CGameObject * pObj = nullptr;
-		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
+		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
 		{
 			pObj = (*it);
 			pObj->UpdateBoundingBox();
 			AABB & bb = pObj->m_bcMeshBoundingCube;
-			pObj->SetActive(pCamera->IsInFrustum(&bb));
+			pObj->GetGameMessage(nullptr, eMessage::MSG_CULL_IN);// SetActive(pCamera->IsInFrustum(&bb));
 		}
 	}
-	else 
+	else
 	{
 		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
 		if (!bVisible) return;
 		CGameObject * pObj = nullptr;
 
-		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it) 
+		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
 		{
 			//pObj = (*it);
 			//pObj->UpdateBoundingBox();
 			//AABB & bb = pObj->m_bcMeshBoundingCube;
 			//pObj->SetActive(pCamera->IsInFrustum(&bb)); //bVisible);
-			(*it)->SetActive(bVisible);
+			(*it)->GetGameMessage(nullptr, eMessage::MSG_CULL_IN);
 		}
-
 	}
 	m_bCulled = !(bVisible);
 
@@ -317,8 +312,8 @@ void QuadTree::FrustumCulling(CCamera * pCamera)
 	for (int i = 0; i < 4; ++i)
 		m_pNodes[i]->FrustumCulling(pCamera);
 
-		/*for (int i = 0; i < 4; ++i)
-			m_pNodes[i]->PreCutCulling();*/
+	/*for (int i = 0; i < 4; ++i)
+		m_pNodes[i]->PreCutCulling();*/
 }
 
 void QuadTree::PreCutCulling()
@@ -336,13 +331,13 @@ Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
 	const XMFLOAT3 pos = pObject->GetPosition();
 
 	AABB bbQuad;
-	
+
 	if (bCheckCollide)
 	{
 		bbQuad.m_xv3Maximum = { (float)m_xmi3Center.x + m_uHalfWidth, (float)m_xmi3Center.y, (float)m_xmi3Center.z + m_uHalfLength };
 		bbQuad.m_xv3Minimum = { (float)m_xmi3Center.x - m_uHalfWidth, (float)m_xmi3Center.y, (float)m_xmi3Center.z - m_uHalfLength };
 
-		if (AABB::CollisionAABBBy2D(bbObj, bbQuad) == false) 
+		if (AABB::CollisionAABBBy2D(bbObj, bbQuad) == false)
 			return Location(LOC_NONE);
 	}
 	bbQuad.m_xv3Maximum = { (float)m_xmi3Center.x, (float)m_xmi3Center.y, (float)m_xmi3Center.z };
@@ -393,7 +388,7 @@ void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGame
 	if (!m_bLeaf) //말단노드 아니면 계산해서 넣는다.
 	{
 		Location loc = IsContained(pObject, false);
-	
+
 		if (loc == Location::LOC_ALL)
 		{
 			for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
@@ -402,7 +397,7 @@ void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGame
 			return;
 		}
 
-		else 
+		else
 			m_pNodes[loc]->FindContainedObjects_InChilds(pObject, vcArray);
 	}
 
@@ -414,7 +409,7 @@ void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGame
 QuadTree * QuadTree::EntityObject(CGameObject * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
-	
+
 	if (eLoc != Location::LOC_ALL)
 		return m_pNodes[eLoc]->EntityObject(pObject);
 
@@ -433,12 +428,11 @@ void QuadTree::DeleteObject(CGameObject * pObject)
 	m_vpObjectList.erase(it);
 }
 
-
 QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 {
 	CGameObject * pObj = pObject;
 	Location eContain = IsContained(pObj, true);
-	
+
 	if (eContain != Location::LOC_ALL) // 다른 이동할 곳이 존재할때만 갱신한다.
 	{
 		if (bStart)	// 시작지이면 리스트에서 제거한다.
@@ -446,13 +440,12 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 			vector<CGameObject*>::iterator it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
 			m_vpObjectList.erase(it);
 		}
-
 		if (eContain == Location::LOC_NONE) // 충돌하지 않으면 부모로 올라가 찾아본다.
 			return m_pNodes[Location::LOC_PARENT]->RenewalObject(pObj, false);
 
 		if (!m_bLeaf)	// 말단 노드가 아니면 하위 노드를 찾아본다.
 			return m_pNodes[eContain]->RenewalObject(pObj, false);
-		
+
 		// 말단 노드이면 오브젝트를 추가한다.
 		m_vpObjectList.push_back(pObj);
 		pObj = nullptr;
@@ -462,7 +455,6 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 
 	return this;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////////////
 CQuadTreeManager::CQuadTreeManager()
@@ -500,7 +492,6 @@ void CQuadTreeManager::ReleaseQuadTree()
 
 	for (int i = 0; i < m_vcContainedArray.size(); ++i)
 		m_vcContainedArray.pop_back();
-
 }
 
 void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
@@ -540,8 +531,8 @@ void CQuadTreeManager::DeleteStaticObject(CGameObject * pObject)
 }
 
 void CQuadTreeManager::DeleteDynamicObject(CGameObject * pObject)
-{ 
-	auto it = find_if(m_vcDynamicArray.begin(), m_vcDynamicArray.end(), 
+{
+	auto it = find_if(m_vcDynamicArray.begin(), m_vcDynamicArray.end(),
 		[=](const DynamicInfo & a) { return pObject == a.second;});
 	m_vcDynamicArray.erase(it);
 
@@ -563,9 +554,8 @@ UINT CQuadTreeManager::RenewalDynamicObjects()
 		pObject = it->second;
 		pObject->UpdateBoundingBox();
 
-			
 		pTree = pBefore->RenewalObject(pObject, true);
-		
+
 		if (pBefore != pTree)
 		{
 			it->first = pTree;
@@ -582,14 +572,10 @@ void CQuadTreeManager::Update(CCamera * pCamera)
 	FrustumCullObjects(pCamera);
 }
 
-
-
 CCollisionMgr::CCollisionMgr()
 {
 	m_pQuadMgr = &CQuadTreeManager::GetInstance();
-
 }
-
 
 CCollisionMgr::~CCollisionMgr()
 {
@@ -600,4 +586,3 @@ CCollisionMgr & CCollisionMgr::GetInstance()
 	static CCollisionMgr instance;
 	return instance;
 }
-

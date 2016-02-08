@@ -175,8 +175,8 @@ void CCamera::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbCamera);
 
-	bd.ByteWidth = sizeof(VS_CB_CAMERAPOS);
-	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbCameraPos);
+	//bd.ByteWidth = sizeof(VS_CB_CAMERAPOS);
+	//pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbCameraPos);
 }
 
 void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmf44ViewProj)
@@ -193,8 +193,8 @@ void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFL
 	//상수 버퍼를 슬롯(VS_SLOT_CAMERA)에 설정한다.
 	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
 	pd3dDeviceContext->GSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
-	pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
-	pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
+	//pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
+	//pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
 }
 
 void CCamera::UpdateCameraPositionCBBuffer(ID3D11DeviceContext *pd3dDeviceContext)

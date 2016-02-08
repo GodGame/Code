@@ -81,6 +81,7 @@ void CScene::UpdateLights(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	if (m_pLights && m_pd3dcbLights) UpdateShaderVariable(pd3dDeviceContext, m_pLights);
 }
+
 void CScene::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights)
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -96,7 +97,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return false;
 }
 
-bool CScene::ProcessInput()
+bool CScene::ProcessInput(HWND hWnd, float fTime)
 {
 	return false;
 }

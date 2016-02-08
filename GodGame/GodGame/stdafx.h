@@ -3,6 +3,8 @@
 #ifndef __COMMON
 #define __COMMON
 
+#pragma warining(disable : 4244)
+
 #define NOT_PSUPDATE	1<<0
 #define	RS_SHADOWMAP	NOT_PSUPDATE
 
@@ -12,7 +14,7 @@
 
 
 #define NUM_SHADER	4
-#define NUM_THREAD	NUM_SHADER
+#define NUM_THREAD	(NUM_SHADER + 1)
 #define NUM_MRT		6
 
 #define _THREAD
@@ -58,6 +60,8 @@ using namespace DirectX;
 #else
 #define ASSERT(x) x
 #endif
+
+//#define _QUAD_TREE
 
 using namespace std;
 
