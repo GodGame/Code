@@ -696,10 +696,11 @@ void CGameFramework::PostProcess()
 
 		//ShadowMgr.UpdateStaticShadowResource(m_pd3dDeviceContext);
 		//ShadowMgr.UpdateDynamicShadowResource(m_pd3dDeviceContext);
-
-		//gpScene->UpdateLights(m_pd3dDeviceContext);
-		//m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);
-		//m_pSceneShader->Render(m_pd3dDeviceContext, 0, m_pCamera);
+//#ifdef _DEBUG
+		gpScene->UpdateLights(m_pd3dDeviceContext);
+		m_pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dRenderTargetView[MRT_SCENE], nullptr);
+		m_pSceneShader->Render(m_pd3dDeviceContext, 0, m_pCamera);
+//#endif
 #pragma endregion
 		m_pSceneShader->PostProcessingRender(m_pd3dDeviceContext, 0, m_pCamera);
 	}

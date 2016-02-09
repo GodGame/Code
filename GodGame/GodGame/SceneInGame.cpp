@@ -97,10 +97,10 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pPointShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
 		m_ppShaders[3] = pPointShader;
 
-		//CWaterShader * pWaterShader = new CWaterShader();
-		//pWaterShader->CreateShader(pd3dDevice);
-		//pWaterShader->BuildObjects(pd3dDevice, nullptr);
-		//m_ppShaders[4] = pWaterShader;
+		CBillboardShader * pTrees = new CBillboardShader();
+		pTrees->CreateShader(pd3dDevice);
+		pTrees->BuildObjects(pd3dDevice, GetTerrain());
+		m_ppShaders[4] = pTrees;
 
 		CSceneShader * pSceneShader = new CSceneShader();
 		pSceneShader->CreateShader(pd3dDevice);
@@ -238,6 +238,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 
 	m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	m_ppShaders[4]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 	//m_uRenderState = NULL;
@@ -429,16 +430,16 @@ void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * p
 	{
 		m_pPlayerShader->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
 	}
-	if (index == m_nThread - 1)
-	{
-		UpdateLights(pd3dDeviceContext);
-		pd3dDeviceContext->OMSetRenderTargets(1, &(pRenderInfo->ppd3dMrtRTV[MRT_SCENE]), nullptr);
-		ShadowMgr.UpdateStaticShadowResource(pd3dDeviceContext);
-		ShadowMgr.UpdateDynamicShadowResource(pd3dDeviceContext);
-
-		m_pSceneShader->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
-		return;
-	}
+//#ifndef _DEBUG
+	//if (index == m_nThread - 1)
+	//{
+	//	UpdateLights(pd3dDeviceContext);
+	//	pd3dDeviceContext->OMSetRenderTargets(1, &(pRenderInfo->ppd3dMrtRTV[MRT_SCENE]), nullptr);
+	//	ShadowMgr.UpdateStaticShadowResource(pd3dDeviceContext);
+	//	m_pSceneShader->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
+	//	return;
+	//}
+//#endif
 	m_ppShaders[index]->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);
 #else
 	for (int i = 0; i < m_nShaders; i++)

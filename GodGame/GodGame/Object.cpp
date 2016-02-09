@@ -526,12 +526,12 @@ void CSkyBox::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 #endif
 }
 
-CTrees::CTrees(XMFLOAT3 xmf3Pos, XMFLOAT2 xmf2Size) : CGameObject(1)
+CTrees::CTrees(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : CGameObject(1)
 {
-	m_xv3Pos = xmf3Pos;
+	m_xv4InstanceData = XMFLOAT4(pos.x, pos.y, pos.z, (float)fID);
 	m_xv2Size = xmf2Size;
-	m_BoundingBox.m_xv3Maximum = XMFLOAT3(m_xv3Pos.x + (m_xv2Size.x / 2.0f), m_xv3Pos.y + (m_xv2Size.y / 2.0f), m_xv3Pos.z + 1);
-	m_BoundingBox.m_xv3Minimum = XMFLOAT3(m_xv3Pos.x - (m_xv2Size.x / 2.0f), m_xv3Pos.y - (m_xv2Size.y / 2.0f), m_xv3Pos.z - 1);
+	m_BoundingBox.m_xv3Maximum = XMFLOAT3(pos.x + (m_xv2Size.x / 2.0f), pos.y + (m_xv2Size.y / 2.0f), pos.z + 1);
+	m_BoundingBox.m_xv3Minimum = XMFLOAT3(pos.x - (m_xv2Size.x / 2.0f), pos.y - (m_xv2Size.y / 2.0f), pos.z - 1);
 }
 
 bool CTrees::IsVisible(CCamera *pCamera)
@@ -541,6 +541,16 @@ bool CTrees::IsVisible(CCamera *pCamera)
 	if (pCamera)
 	{
 		AABB m_BoundingBox = m_bcMeshBoundingCube;
+		XMVECTOR xmvMin = XMLoadFloat3(&m_BoundingBox.m_xv3Minimum);
+		XMVECTOR xmvMax = XMLoadFloat3(&m_BoundingBox.m_xv3Maximum);
+		XMVECTOR xmvPos = XMLoadFloat4(&m_xv4InstanceData);
+
+		xmvMin += xmvPos;
+		xmvMax += xmvPos;
+
+		XMStoreFloat3(&m_BoundingBox.m_xv3Maximum, xmvMax);
+		XMStoreFloat3(&m_BoundingBox.m_xv3Minimum, xmvMin);
+		//m_BoundingBox.Update(m_xmf44World, &m_BoundingBox);
 		bIsVisible = pCamera->IsInFrustum(&m_BoundingBox);
 	}
 	return(bIsVisible);

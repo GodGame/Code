@@ -275,13 +275,14 @@ public:
 class CTrees : public CGameObject
 {
 	AABB m_BoundingBox;
+	XMFLOAT2 m_xv2Size;
+	XMFLOAT4 m_xv4InstanceData;
 
 public:
-	XMFLOAT3 m_xv3Pos;
-	XMFLOAT2 m_xv2Size;
-
 	CTrees() {}
-	CTrees(XMFLOAT3 xmf3Pos, XMFLOAT2 xmf2Size);
+	CTrees(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size);
 	~CTrees() {}
+
 	bool IsVisible(CCamera *pCamera = nullptr);
+	XMFLOAT4& GetInstanceData() { return m_xv4InstanceData; }
 };

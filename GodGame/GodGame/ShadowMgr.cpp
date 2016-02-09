@@ -132,7 +132,6 @@ void CShadowMgr::BuildShadowMap(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT
 	XMFLOAT3 xmf3LightPos;
 	XMStoreFloat3(&xmf3LightPos, xmvLightPos);
 
-
 	float xl = xmf3LightPos.x - fHalf, xr = xmf3LightPos.x + fHalf;
 	float yb = xmf3LightPos.y - fHalf, yt = xmf3LightPos.y + fHalf;
 	float zn = xmf3LightPos.z - fHalf, zf = xmf3LightPos.z + fHalf;

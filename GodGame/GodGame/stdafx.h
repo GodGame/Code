@@ -3,7 +3,7 @@
 #ifndef __COMMON
 #define __COMMON
 
-#pragma warining(disable : 4244)
+//#pragma warning(disable : 4244)
 
 #define NOT_PSUPDATE	1<<0
 #define	RS_SHADOWMAP	NOT_PSUPDATE
@@ -12,10 +12,15 @@
 #define	FRAME_BUFFER_WIDTH		1280
 #define	FRAME_BUFFER_HEIGHT		960
 
-
-#define NUM_SHADER	4
-#define NUM_THREAD	(NUM_SHADER + 1)
 #define NUM_MRT		6
+#define NUM_SHADER	5
+
+//#ifdef _DEBUG
+#define NUM_THREAD  NUM_SHADER
+//#else
+//#define NUM_THREAD	(NUM_SHADER + 1)
+//#endif
+
 
 #define _THREAD
 

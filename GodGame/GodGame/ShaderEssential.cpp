@@ -210,7 +210,6 @@ void CSceneShader::UpdateShaderReosurces(ID3D11DeviceContext * pd3dDeviceContext
 		m_cbWeights.fWeight[i] = m_cbWeights.fWeight[10 - i];//1.25f * ::GaussianDistribution((float)i, 0, fSigma);
 		//fSum += m_cbWeights.fWeight[i];
 	}
-
 	MapConstantBuffer(pd3dDeviceContext, &m_cbWeights, sizeof(CB_WEIGHT), m_pd3dCBWeight);
 	pd3dDeviceContext->CSSetConstantBuffers(SLOT_CS_CB_WEIGHT, 1, &m_pd3dCBWeight);
 }
@@ -218,11 +217,13 @@ void CSceneShader::UpdateShaderReosurces(ID3D11DeviceContext * pd3dDeviceContext
 void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera /*= nullptr*/)
 {
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	//ShadowMgr.UpdateStaticShadowResource(pd3dDeviceContext);
 	ShadowMgr.UpdateDynamicShadowResource(pd3dDeviceContext);
 
 	//printf("Opt: %d \n", m_iDrawOption);
 	//SetTexture(0, m_ppd3dMrtSrv[m_iDrawOption]);
-	//pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dMrtRtv[0], nullptr);
+	//pd3dDeviceContext->OMSetRenderTargets(1, &m_ppd3dMrtRtv[MRT_SCENE], nullptr);
 	//if (m_iDrawOption == 0)
 	//{
 	UpdateShaders(pd3dDeviceContext);
@@ -262,12 +263,7 @@ void CSceneShader::PostProcessingRender(ID3D11DeviceContext * pd3dDeviceContext,
 
 	// ÀÌ·±...
 	//SceneBlur(pd3dDeviceContext, uRenderState, pCamera);
-	if (m_iDrawOption == 1) {
-		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
-
-		FinalRender(pd3dDeviceContext, nullptr, uRenderState, pCamera);
-	}
-	else if (m_iDrawOption == 0)
+	if (m_iDrawOption == 0)
 	{
 		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
 		Blooming(pd3dDeviceContext, uRenderState, pCamera);
@@ -284,6 +280,11 @@ void CSceneShader::PostProcessingRender(ID3D11DeviceContext * pd3dDeviceContext,
 		ID3D11ShaderResourceView * pSRVArrsy[] = { m_pd3dPostSRV[1], m_pd3dPostScaledSRV[1] };
 		FinalRender(pd3dDeviceContext, pSRVArrsy, uRenderState, pCamera);
 	}
+	else if (m_iDrawOption == 1) 
+	{
+		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
+		FinalRender(pd3dDeviceContext, nullptr, uRenderState, pCamera);
+	}
 	else
 	{
 		pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
@@ -293,14 +294,12 @@ void CSceneShader::PostProcessingRender(ID3D11DeviceContext * pd3dDeviceContext,
 		//		FRAME_BUFFER_WIDTH * 0.125f, FRAME_BUFFER_HEIGHT * 0.125f, pCamera);
 
 		m_pInfoScene->SetTexture(0, m_pd3dBloom16x16SRV);//m_pd3dPostSRV[1]);
-
-														 //		m_pInfoScene->SetTexture(0, m_pd3dPostSRV[0]);
+		//		m_pInfoScene->SetTexture(0, m_pd3dPostSRV[0]);
 		pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
 		m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
 
 		m_pMesh->Render(pd3dDeviceContext, uRenderState);
 	}
-
 	pd3dDeviceContext->CSSetShader(nullptr, nullptr, 0);
 }
 
@@ -359,7 +358,6 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		pd3dDeviceContext->CSSetUnorderedAccessViews(1, 2, pd3dNullUAV, nullptr);
 		pd3dDeviceContext->CSSetShaderResources(0, 1, pd3dNullSRV);
 	}
-
 	{
 		int dim = dimx*dimy;
 		int nNumToReduce = dim;
@@ -463,7 +461,7 @@ void CSceneShader::SceneBlur(ID3D11DeviceContext * pd3dDeviceContext, UINT uRend
 
 	//	pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, 0.0f, 1.0f);
 	ID3D11ShaderResourceView * pd3dSRVArray[] = { m_ppd3dMrtSrv[0], nullptr };
-	for (int i = 0; i < 1; ++i)
+	//for (int i = 0; i < 1; ++i)
 	{
 		pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBlur, nullptr, 0);
 		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostUAV[0], nullptr);
@@ -510,7 +508,7 @@ void CSceneShader::Blooming(ID3D11DeviceContext * pd3dDeviceContext, UINT uRende
 
 	//	pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, 0.0f, 1.0f);
 	ID3D11ShaderResourceView * pd3dSRVArray[] = { m_pd3dBloom4x4SRV, m_csReduce.m_pd3dSRVArray[1] };
-	for (int i = 0; i < 1; ++i)
+	//for (int i = 0; i < 1; ++i)
 	{
 		pd3dDeviceContext->CSSetShader(m_pd3dComputeHorzBloom, nullptr, 0);
 		pd3dDeviceContext->CSSetUnorderedAccessViews(0, 1, &m_pd3dPostUAV[0], nullptr);

@@ -321,21 +321,19 @@ float4 PSInstancedTexturedLightingColor(VS_INSTANCED_TEXTURED_LIGHTING_COLOR_OUT
 }
 
 // 빌보드용--------------------------------------------------------------------------------------------------------------
-VS_BILLBOARD_OUTPUT VSBillboard(VS_BILLBOARD_INPUT input)
+VS_BILLBOARD_OUTPUT VSBillboard(VS_BILLBOARD_INPUT input, uint instID : SV_InstanceID)
 {
 	VS_BILLBOARD_OUTPUT output;
-	float3 test = float3(1006, 200, 308);
 	//output.centerW.xyz = input.posW.xyz;// +input.pos;
-	output.centerW.x = input.posW.x;
-	output.centerW.y = input.posW.y;
-	output.centerW.z = input.posW.z;
-	output.sizeW = input.sizeW;
+	output.centerW   = input.posW;
+	//output.centerW.w = instID;
+	output.sizeW     = input.sizeW;
 	return output;
 }
 
 [maxvertexcount(4)]
 void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
-	uint primID : SV_PrimitiveID,
+	//uint primID : SV_InstanceID,
 	inout TriangleStream<GS_BILLBOARD_OUTPUT> triStream)
 {
 	float3 vUp = float3(0.0f, 1.0f, 0.0f);
@@ -349,12 +347,13 @@ void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
 
 	float3 vWidth = fHalfW * vRight;
 	float3 vHeight = fHalfH * vUp;
+	float3 PosW = input[0].centerW.xyz;
 
 	float4 pVertices[4];
-	pVertices[0] = float4(input[0].centerW + fHalfW * vRight - fHalfH * vUp, 1.0f);
-	pVertices[1] = float4(input[0].centerW + fHalfW * vRight + fHalfH * vUp, 1.0f);
-	pVertices[2] = float4(input[0].centerW - fHalfW * vRight - fHalfH * vUp, 1.0f);
-	pVertices[3] = float4(input[0].centerW - fHalfW * vRight + fHalfH * vUp, 1.0f);
+	pVertices[0] = float4(PosW + vWidth - vHeight, 1.0f);
+	pVertices[1] = float4(PosW + vWidth + vHeight, 1.0f);
+	pVertices[2] = float4(PosW - vWidth - vHeight, 1.0f);
+	pVertices[3] = float4(PosW - vWidth + vHeight, 1.0f);
 
 	float2 pTexCoords[4] = { float2(0.0f, 1.0f), float2(0.0f, 0.0f), float2(1.0f, 1.0f), float2(1.0f, 0.0f) };
 
@@ -365,20 +364,28 @@ void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
 		output.posH = mul(pVertices[i], gmtxViewProjection);
 		output.normalW = vLook;
 		output.texCoord = pTexCoords[i];
-		output.primID = primID;
+		output.primID = input[0].centerW.w;
 		triStream.Append(output);
 	}
 }
 
-float4 PSBillboard(GS_BILLBOARD_OUTPUT input) : SV_Target
+PS_MRT_OUT PSBillboard(GS_BILLBOARD_OUTPUT input) : SV_Target
 {
-	float4 cIllumination = Lighting(input.posW, input.normalW);
+	//float4 cIllumination = Lighting(input.posW, input.normalW);
 	float3 uvw = float3(input.texCoord, (input.primID % 4));
-	//float4 cTexture = gTextureArray.Sample(gSamplerState, uvw);
-	//float4 cColor = cIllumination * cTexture;
-	//cColor.a = cTexture.a;
-	float4 cColor = float4(1.0f, 1.0f, 1.0f, 0.0f);
-	return (cColor);
+	float4 cColor = gTextureArray.Sample(gSamplerState, uvw);
+	//float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
+	if(cColor.a <= 0.15) discard;
+
+	PS_MRT_OUT output;
+
+	output.vNormal = float4(input.normalW, 0.0f/*input.posW.w * gfDepthFar*/);
+	output.vPos = float4(input.posW, 1.0f);
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1);
+	output.vSpec = float4(gMaterial.m_cSpecular.rgb, 0);
+	output.vTxColor = cColor;// gtxtTexture.Sample(gSamplerState, input.texCoord);
+
+	return output;
 }
 
 VS_BILLBOARD_CUBE_OUTPUT VSCubeBillboard(VS_BILLBOARD_CUBE_INPUT input)
@@ -426,7 +433,7 @@ void GSPointCubeInstance(point VS_INSTANCE_CUBE_OUTPUT input[1],
 {
 	float fSize  = input[0].sizeW;
 	float fx, fy, fz;
-	fx           = fy = fz = fSize;
+	fx = fy = fz = fSize;
 	float3 Point = input[0].centerW.xyz;
 
 	float2 pTexCoords[4] = { float2(0.0f, 0.0f), float2(1.0f, 0.0f), float2(0.0f, 1.0f), float2(1.0f, 1.0f) };
@@ -726,7 +733,6 @@ HCS_EDGE4_IN2 CameraHCS(InputPatch<FLOAT3_POS_FLOAT2_TEX, 4> input, uint nPatchI
 
 	output.fTessInsides[0] = CalculateTessFactor(center);
 	output.fTessInsides[1] = output.fTessInsides[0];
-
 	return output;
 }
 
@@ -750,7 +756,6 @@ DETAIL_TERRAIN DSTerrain(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation,
 	OutputPatch<FLOAT3_POS_FLOAT2_TEX, 4> quad)
 {
 	DETAIL_TERRAIN output;
-
 	// uv 조절?
 	// 애초에 터레인 좌표값을 월드 좌표 값으로 넣으므로 월드 변환은 필요가 없다.
 	output.posW = lerp(lerp(quad[0].pos, quad[1].pos, uv.x), lerp(quad[2].pos, quad[3].pos, uv.x), uv.y);
@@ -843,12 +848,6 @@ PS_MRT_OUT PSNormalMap(PS_WORLD_NORMALMAP input)
 	float4 color = gtxtDetailTexture.Sample(gDetailSamplerState, input.tex);
 	//	return (1, 1, 1, 0);
 
-	//input.shadowPos.xyz /= input.shadowPos.w;
-	//float fsDepth = gtxtShadowMap.Sample(gssShadowMap, input.shadowPos.xy).r;
-	//float fShadowFactor = 0.3f;
-	//if (input.shadowPos.z <= (fsDepth + gfBias))
-	//	fShadowFactor = 1.0f;
-
 	PS_MRT_OUT output;
 	output.vNormal = float4(normal, 1.0);
 	output.vPos = float4(input.posW, 1.0);
@@ -894,7 +893,6 @@ HCS_EDGE3_IN1 TriCameraHCS(InputPatch<WORLD_NORMALMAP, 3> input, uint nPatchID :
 	//output.fTessEdges[1] = 0.5f * (input[2].fTessFactor + input[0].fTessFactor);
 	//output.fTessEdges[2] = 0.5f * (input[0].fTessFactor + input[1].fTessFactor);
 	//output.fTessInsides[0] = output.fTessEdges[0];
-
 	return output;
 }
 

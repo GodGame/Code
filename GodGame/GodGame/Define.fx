@@ -346,7 +346,7 @@ struct VS_BILLBOARD_INPUT
 
 struct VS_BILLBOARD_OUTPUT
 {
-	float3 centerW                     : POSITION;
+	float4 centerW                     : POSITION;
 	float2 sizeW                       : SIZE;
 };
 

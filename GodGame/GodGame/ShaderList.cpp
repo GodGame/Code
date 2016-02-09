@@ -141,19 +141,16 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRen
 	VS_VB_INSTANCE *pnCubeInstances = (VS_VB_INSTANCE *)d3dMappedResource.pData;
 	for (int j = 0; j < nCubeObjects; j++)
 	{
-		if (m_ppObjects[j])
+		if (m_ppObjects[j]->IsVisible(pCamera))
 		{
-			if (m_ppObjects[j]->IsVisible(pCamera))
-			{
-				Chae::XMFloat4x4Transpose(&pnCubeInstances[nCubeInstances].m_d3dxTransform, &m_ppObjects[j]->m_xmf44World); // XMFLOAT4X4Transpose(&pnSphereInstances[nSphereInstances++].m_d3dxTransform, &m_ppObjects[j]->m_xmf44World);
-				nCubeInstances++;
-			}
+			Chae::XMFloat4x4Transpose(&pnCubeInstances[nCubeInstances].m_d3dxTransform, &m_ppObjects[j]->m_xmf44World); // XMFLOAT4X4Transpose(&pnSphereInstances[nSphereInstances++].m_d3dxTransform, &m_ppObjects[j]->m_xmf44World);
+			nCubeInstances++;
 		}
 	}
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
 
 	CMesh *pSphereMesh = m_ppObjects[0]->GetMesh();
-	pSphereMesh->RenderInstanced(pd3dDeviceContext, nCubeInstances, 0);
+	pSphereMesh->RenderInstanced(pd3dDeviceContext, uRenderState, nCubeInstances, 0);
 
 	//int nCubeInstances = 0;
 	//pd3dDeviceContext->Map(m_pd3dCubeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
@@ -207,70 +204,61 @@ void CBillboardShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain)
 {
-	//m_nObjects = 0;
 	m_nObjects = m_nTrees = 100;
 
 	XMFLOAT3 xmf3Pos;
-	XMFLOAT2 xmf2Size = XMFLOAT2(20, 50);
+	XMFLOAT2 xmf2Size = XMFLOAT2(40, 40);
 
 	m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
+	m_nInstanceBufferOffset = 0;
 
 	CTrees * pTree = nullptr;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	CHeightMapTerrain * pTerrain = pHeightMapTerrain;
-	int cxTerrain = pTerrain->GetHeightMapWidth();
-	int czTerrain = pTerrain->GetHeightMapLength();
+	int cxTerrain = pTerrain->GetWidth();
+	int czTerrain = pTerrain->GetLength();
 
 	CTreeVertex * pTreeMesh = new CTreeVertex(pd3dDevice, xmf2Size.x, xmf2Size.y);
-
-	for (int i = 0; i < m_nTrees; ++i) {
+	for (int i = 0; i < m_nTrees; ++i) 
+	{
 		float fxTerrain = xmf3Pos.x = rand() % cxTerrain;
 		float fzTerrain = xmf3Pos.z = rand() % czTerrain;
-		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false);
-		//xmf3Pos = XMFLOAT3(1006, 200, 308);
-		pTree = new CTrees(xmf3Pos, xmf2Size);
+		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false) + 18;
+		pTree = new CTrees(xmf3Pos, i, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
 		m_ppObjects[i] = pTree;
 	}
+	m_ppObjects[0]->SetPosition(XMFLOAT3(1006, 200, 308));
 
 	m_pd3dTreeInstanceBuffer = CreateInstanceBuffer(pd3dDevice, m_nTrees, m_nInstanceBufferStride, nullptr);
 	pTreeMesh->AssembleToVertexBuffer(1, &m_pd3dTreeInstanceBuffer, &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
 
-	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0);
-	// 크기 동일
-	ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
+	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0, SET_SHADER_PS);
+	// 크기 동일'
+	//ID3D11ShaderResourceView * pd3dsrvArray = nullptr;
+	ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 4);
 	//HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Tree01.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
 	//if (FAILED(hr)) printf("오류 \n");
 
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
 	m_pTexture->SetTexture(0, pd3dsrvArray);
-	m_pTexture->SetSampler(0, pd3dSamplerState);
+	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	pd3dsrvArray->Release();
-	pd3dSamplerState->Release();
 }
 
 void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
-
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
-	//	pCamera->UpdateCameraPositionCBBuffer(pd3dDeviceContext);
 
-	//m_ppObjects[0]->Render(pd3dDeviceContext, nullptr);
-	int nTreeObject = m_nTrees;
+	if (uRenderState & NOT_PSUPDATE)
+	{
+		AllRender(pd3dDeviceContext, uRenderState, pCamera);
+		return;
+	}
+
+	//	pCamera->UpdateCameraPositionCBBuffer(pd3dDeviceContext);
 
 	int nTreeInstance = 0;
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -278,26 +266,23 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	VS_VB_WORLD_POSITION *pnTreeInstances = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
 
 	CTrees * pTree = nullptr;
-	XMFLOAT3 xmf3Pos;
-	for (int j = 0; j < nTreeObject; j++)
+	XMFLOAT4 xmfInstanceData;
+	for (int j = 0; j < m_nTrees; ++j)
 	{
-		if (m_ppObjects[j])
-		{
-			pTree = (CTrees*)m_ppObjects[j];
+		pTree = (CTrees*)m_ppObjects[j];
 
-			if (pTree->IsVisible(pCamera))
-			{
-				xmf3Pos = pTree->m_xv3Pos;
-				pnTreeInstances[nTreeInstance].m_xv3Position = XMFLOAT4(xmf3Pos.x, xmf3Pos.y, xmf3Pos.z, 1.0f);
-				printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
-				nTreeInstance++;
-			}
+		if (pTree->IsVisible(pCamera))
+		{
+			xmfInstanceData = pTree->GetInstanceData();
+			pnTreeInstances[nTreeInstance].m_xv3Position = XMFLOAT4(xmfInstanceData.x, xmfInstanceData.y, xmfInstanceData.z, xmfInstanceData.w);
+			printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
+			nTreeInstance++;
 		}
 	}
 	pd3dDeviceContext->Unmap(m_pd3dTreeInstanceBuffer, 0);
 
 	CMesh *pTreeMesh = m_ppObjects[0]->GetMesh();
-	pTreeMesh->RenderInstanced(pd3dDeviceContext, nTreeInstance, 0);
+	pTreeMesh->RenderInstanced(pd3dDeviceContext, uRenderState, nTreeInstance, 0);
 }
 
 void CBillboardShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera)
@@ -321,6 +306,27 @@ void CBillboardShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceConte
 
 void CBillboardShader::AnimateObjects(float fTimeElapsed)
 {
+}
+void CBillboardShader::AllRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dTreeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	VS_VB_WORLD_POSITION *pnTreeInstances = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
+
+	CTrees * pTree = nullptr;
+	XMFLOAT4 xmfInstanceData;
+	for (int j = 0; j < m_nTrees; ++j)
+	{
+		pTree = (CTrees*)m_ppObjects[j];
+
+		xmfInstanceData = pTree->GetInstanceData();
+		pnTreeInstances[j].m_xv3Position = XMFLOAT4(xmfInstanceData.x, xmfInstanceData.y, xmfInstanceData.z, xmfInstanceData.w);
+		//printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
+	}
+	pd3dDeviceContext->Unmap(m_pd3dTreeInstanceBuffer, 0);
+
+	CMesh *pTreeMesh = m_ppObjects[0]->GetMesh();
+	pTreeMesh->RenderInstanced(pd3dDeviceContext, uRenderState, m_nTrees, 0);
 }
 #pragma endregion
 
@@ -486,7 +492,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 	m_pMaterial = pMat;//pMaterial;
 	pMat->AddRef();//if (pMaterial) pMaterial->AddRef();
-	m_nObjects = m_nCubes = 1000;
+	m_nObjects = m_nCubes = 500;
 
 	XMFLOAT3 xmf3Pos;
 	XMFLOAT2 xmf2Size = XMFLOAT2(20, 40);

@@ -141,22 +141,18 @@ void LumAdapted(uint3 Gid : SV_GroupID, uint3 DTid : SV_DispatchThreadID, uint3 
 			fAdaptedAverage += lums[i];
 			iGreater += (lums[i] >= fAccum);
 		}
-
-		fAdaptedAverage *= 0.0625;
-		fAdaptedAverage = fAdaptedAverage * g_param.x + g_param.y;
+		fAdaptedAverage = (0.0625f * fAdaptedAverage) * g_param.x + g_param.y;
 
 		float fResult = 0;
 		if (iGreater >= (framesnum - 0.01f))
 		{
 			float ftau = 0.4f * g_param.w;
 			fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
-			//fResult = fResult * g_param.x + g_param.y;
 		}
 		else if (iGreater <= 0.1f)
 		{
 			float ftau = 0.05f * g_param.w;
 			fResult = fAdapted + (fAdaptedAverage - fAccum) * (1 - exp(ftau));
-			//fResult = fResult * g_param.x + g_param.y;
 		}
 		else
 		{

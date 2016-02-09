@@ -99,19 +99,19 @@ void CTexture::UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, UINT nTextures)
 {
 	D3DX11_IMAGE_LOAD_INFO d3dxImageLoadInfo;
-	d3dxImageLoadInfo.Width = D3DX11_FROM_FILE;
-	d3dxImageLoadInfo.Height = D3DX11_FROM_FILE;
-	d3dxImageLoadInfo.Depth = D3DX11_FROM_FILE;
-	d3dxImageLoadInfo.FirstMipLevel = 0;
-	d3dxImageLoadInfo.MipLevels = D3DX11_FROM_FILE;
-	d3dxImageLoadInfo.Usage = D3D11_USAGE_STAGING;
-	d3dxImageLoadInfo.BindFlags = 0;
+	d3dxImageLoadInfo.Width          = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.Height         = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.Depth          = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.FirstMipLevel  = 0;
+	d3dxImageLoadInfo.MipLevels      = D3DX11_FROM_FILE;
+	d3dxImageLoadInfo.Usage          = D3D11_USAGE_STAGING;
+	d3dxImageLoadInfo.BindFlags      = 0;
 	d3dxImageLoadInfo.CpuAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
-	d3dxImageLoadInfo.MiscFlags = 0;
-	d3dxImageLoadInfo.Format = DXGI_FORMAT_FROM_FILE; //DXGI_FORMAT_R8G8B8A8_UNORM
-	d3dxImageLoadInfo.Filter = D3DX11_FILTER_NONE;
-	d3dxImageLoadInfo.MipFilter = D3DX11_FILTER_LINEAR;
-	d3dxImageLoadInfo.pSrcInfo = 0;
+	d3dxImageLoadInfo.MiscFlags      = 0;
+	d3dxImageLoadInfo.Format         = DXGI_FORMAT_FROM_FILE; //DXGI_FORMAT_R8G8B8A8_UNORM
+	d3dxImageLoadInfo.Filter         = D3DX11_FILTER_NONE;
+	d3dxImageLoadInfo.MipFilter      = D3DX11_FILTER_LINEAR;
+	d3dxImageLoadInfo.pSrcInfo       = 0;
 
 	ID3D11Texture2D **ppd3dTextures = new ID3D11Texture2D*[nTextures];
 	_TCHAR pstrTextureName[80];
@@ -123,17 +123,17 @@ ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDe
 	ppd3dTextures[0]->GetDesc(&d3dTexure2DDesc);
 
 	D3D11_TEXTURE2D_DESC d3dTexture2DArrayDesc;
-	d3dTexture2DArrayDesc.Width = d3dTexure2DDesc.Width;
-	d3dTexture2DArrayDesc.Height = d3dTexure2DDesc.Height;
-	d3dTexture2DArrayDesc.MipLevels = d3dTexure2DDesc.MipLevels;
-	d3dTexture2DArrayDesc.ArraySize = nTextures;
-	d3dTexture2DArrayDesc.Format = d3dTexure2DDesc.Format;
-	d3dTexture2DArrayDesc.SampleDesc.Count = 1;
+	d3dTexture2DArrayDesc.Width              = d3dTexure2DDesc.Width;
+	d3dTexture2DArrayDesc.Height             = d3dTexure2DDesc.Height;
+	d3dTexture2DArrayDesc.MipLevels          = d3dTexure2DDesc.MipLevels;
+	d3dTexture2DArrayDesc.ArraySize          = nTextures;
+	d3dTexture2DArrayDesc.Format             = d3dTexure2DDesc.Format;
+	d3dTexture2DArrayDesc.SampleDesc.Count   = 1;
 	d3dTexture2DArrayDesc.SampleDesc.Quality = 0;
-	d3dTexture2DArrayDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dTexture2DArrayDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	d3dTexture2DArrayDesc.CPUAccessFlags = 0;
-	d3dTexture2DArrayDesc.MiscFlags = 0;
+	d3dTexture2DArrayDesc.Usage              = D3D11_USAGE_DEFAULT;
+	d3dTexture2DArrayDesc.BindFlags          = D3D11_BIND_SHADER_RESOURCE;
+	d3dTexture2DArrayDesc.CPUAccessFlags     = 0;
+	d3dTexture2DArrayDesc.MiscFlags          = 0;
 
 	ID3D11Texture2D *pd3dTexture2DArray;
 	pd3dDevice->CreateTexture2D(&d3dTexture2DArrayDesc, 0, &pd3dTexture2DArray);
@@ -155,11 +155,11 @@ ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDe
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dTextureSRVDesc;
 	ZeroMemory(&d3dTextureSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
 	d3dTextureSRVDesc.Format = d3dTexture2DArrayDesc.Format;
-	d3dTextureSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+	d3dTextureSRVDesc.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 	d3dTextureSRVDesc.Texture2DArray.MostDetailedMip = 0;
-	d3dTextureSRVDesc.Texture2DArray.MipLevels = d3dTexture2DArrayDesc.MipLevels;
+	d3dTextureSRVDesc.Texture2DArray.MipLevels       = d3dTexture2DArrayDesc.MipLevels;
 	d3dTextureSRVDesc.Texture2DArray.FirstArraySlice = 0;
-	d3dTextureSRVDesc.Texture2DArray.ArraySize = nTextures;
+	d3dTextureSRVDesc.Texture2DArray.ArraySize       = nTextures;
 
 	ID3D11ShaderResourceView *pd3dsrvTextureArray;
 	pd3dDevice->CreateShaderResourceView(pd3dTexture2DArray, &d3dTextureSRVDesc, &pd3dsrvTextureArray);
@@ -695,7 +695,7 @@ void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceC
 
 void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * pBuffer)
 {
-	static D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	memcpy(d3dMappedResource.pData, data, size);
 	pd3dDeviceContext->Unmap(pBuffer, 0);
@@ -703,7 +703,7 @@ void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, siz
 
 void MapMatrixConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT4X4 & matrix, ID3D11Buffer * pBuffer)
 {
-	static D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	XMFLOAT4X4 *pcbWorldMatrix = (XMFLOAT4X4*)d3dMappedResource.pData;
 	Chae::XMFloat4x4Transpose(pcbWorldMatrix, &matrix); //XMFLOAT4X4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld);

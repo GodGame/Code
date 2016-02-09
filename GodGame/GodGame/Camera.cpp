@@ -169,9 +169,9 @@ void CCamera::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(VS_CB_VIEWPROJECTION);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.Usage          = D3D11_USAGE_DYNAMIC;
+	bd.ByteWidth      = sizeof(VS_CB_VIEWPROJECTION);
+	bd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbCamera);
 

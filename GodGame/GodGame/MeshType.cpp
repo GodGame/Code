@@ -90,12 +90,9 @@ void CMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)
 	if (!(uRenderState & RS_SHADOWMAP)) pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
 
 	if (m_pd3dIndexBuffer)
-	{
 		pd3dDeviceContext->DrawIndexed(m_nIndices, m_nStartIndex, m_nBaseVertex);
-	}
 	else
 		pd3dDeviceContext->Draw(m_nVertices, m_nStartVertex);
-
 }
 
 void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, int nInstances, int nStartInstance)
@@ -104,7 +101,7 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, m_ppd3dVertexBuffers, m_pnVertexStrides, m_pnVertexOffsets);
 	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
 	pd3dDeviceContext->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
-	if(uRenderState == 0 )
+	if (uRenderState == 0)
 		pd3dDeviceContext->RSSetState(m_pd3dRasterizerState);
 
 	//객체들의 인스턴스들을 렌더링한다. 
@@ -112,7 +109,6 @@ void CMesh::RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 		pd3dDeviceContext->DrawIndexedInstanced(m_nIndices, nInstances, m_nStartIndex, m_nBaseVertex, nStartInstance);
 	else
 		pd3dDeviceContext->DrawInstanced(m_nVertices, nInstances, m_nStartVertex, nStartInstance);
-
 }
 
 
@@ -121,8 +117,8 @@ void CMesh::CreateRasterizerState(ID3D11Device *pd3dDevice)
 	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
 	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
 	//래스터라이저 단계에서 컬링(은면 제거)을 하지 않도록 래스터라이저 상태를 생성한다.
-	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
-	d3dRasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+	d3dRasterizerDesc.CullMode        = D3D11_CULL_NONE;
+	d3dRasterizerDesc.FillMode        = D3D11_FILL_WIREFRAME;
 	d3dRasterizerDesc.DepthClipEnable = true;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }

@@ -83,7 +83,11 @@ void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
+#ifdef _QUAD_TREE
 		if (m_ppObjects[j]->IsVisible())
+#else
+		if (m_ppObjects[j]->IsVisible(pCamera))
+#endif
 		{
 			//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
 			//if (m_ppObjects[j]->IsVisible(pCamera)) {
@@ -259,7 +263,7 @@ void CShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLO
 	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
 	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 	//pd3dDeviceContext->HSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
-	pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
+	//pd3dDeviceContext->DSSetConstantBuffers(CB_SLOT_WORLD_MATRIX, 1, &m_pd3dcbWorldMatrix);
 }
 
 void CShader::ReleaseShaderVariables()
@@ -506,6 +510,9 @@ void CDetailTexturedIlluminatedShader::CreateShader(ID3D11Device *pd3dDevice)
 
 CInstanceShader::CInstanceShader()
 {
+	m_nInstanceBufferOffset = 0;
+	m_nInstanceBufferStride = 0;
+
 }
 
 CInstanceShader::~CInstanceShader()
