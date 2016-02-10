@@ -219,6 +219,12 @@
     <FxCompile Include="Shadow.fx">
       <Filter>Global\0_Effects\PostProcessing</Filter>
     </FxCompile>
+    <FxCompile Include="BillBoard.fx">
+      <Filter>Global\0_Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="Common.fx">
+      <Filter>Global\0_Effects</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt">

@@ -130,11 +130,11 @@ void CShadowMgr::BuildShadowMap(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT
 	xmvLightPos = XMVector3TransformCoord(xmvLightPos, xmtxShadowView);
 
 	XMFLOAT3 xmf3LightPos;
-	XMStoreFloat3(&xmf3LightPos, xmvLightPos);
+	XMStoreFloat3(&m_xmf3LightPos, xmvLightPos);
 
-	float xl = xmf3LightPos.x - fHalf, xr = xmf3LightPos.x + fHalf;
-	float yb = xmf3LightPos.y - fHalf, yt = xmf3LightPos.y + fHalf;
-	float zn = xmf3LightPos.z - fHalf, zf = xmf3LightPos.z + fHalf;
+	float xl = m_xmf3LightPos.x - fHalf, xr = m_xmf3LightPos.x + fHalf;
+	float yb = m_xmf3LightPos.y - fHalf, yt = m_xmf3LightPos.y + fHalf;
+	float zn = m_xmf3LightPos.z - fHalf, zf = m_xmf3LightPos.z + fHalf;
 
 	XMMATRIX xmtxShadowProj = XMMatrixOrthographicOffCenterLH(xl, xr, yb, yt, zn, zf);
 	static const XMMATRIX xmtxCoord
@@ -152,7 +152,7 @@ void CShadowMgr::BuildShadowMap(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT
 
 void CShadowMgr::SetStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
 {
-	pCamera->UpdateShaderVariables(pd3dDeviceContext, m_xmf44ShadowVP/*xmf44LightViewProj*/);
+	pCamera->UpdateShaderVariables(pd3dDeviceContext, m_xmf44ShadowVP/*xmf44LightViewProj*/, m_xmf3LightPos);
 	pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
 	pd3dDeviceContext->RSSetState(m_pd3dShadowRS);
 	pd3dDeviceContext->RSSetViewports(1, &m_d3dxShadowMapViewport);
@@ -190,7 +190,7 @@ void CShadowMgr::UpdateStaticShadowResource(ID3D11DeviceContext * pd3dDeviceCont
 
 void CShadowMgr::SetDynamicShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
 {
-	pCamera->UpdateShaderVariables(pd3dDeviceContext, m_xmf44ShadowVP/*xmf44LightViewProj*/);
+	pCamera->UpdateShaderVariables(pd3dDeviceContext, m_xmf44ShadowVP/*xmf44LightViewProj*/, m_xmf3LightPos);
 	pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
 	pd3dDeviceContext->RSSetState(m_pd3dShadowRS);
 	pd3dDeviceContext->RSSetViewports(1, &m_d3dxShadowMapViewport);

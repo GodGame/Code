@@ -38,7 +38,7 @@ void CPlayer::CreateShaderVariables(ID3D11Device *pd3dDevice)
 void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	//플레이어의 현재 카메라의 UpdateShaderVariables() 멤버 함수를 호출한다.
-	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext, m_pCamera->GetViewProjectionMatrix());
+	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext, m_pCamera->GetViewProjectionMatrix(), m_pCamera->GetPosition());
 	//printf("Player : %0.2f %0.2f %0.2f \n", m_xmf44World._41, m_xmf44World._42, m_xmf44World._43);
 	//cout << "player" << endl;
 	//cout << "bb max : " << m_bcMeshBoundingCube.m_xv3Maximum.x << ", " << m_bcMeshBoundingCube.m_xv3Maximum.y << ", " << m_bcMeshBoundingCube.m_xv3Maximum.z << endl;
@@ -332,6 +332,48 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 {
 	SetActive(true);
 	CGameObject::Render(pd3dDeviceContext, uRenderState, pCamera);
+}
+
+void CPlayer::Animate(float fTimeElapsed)
+{
+	UINT uSize = m_uSize;
+	m_uSize = 200.0f;
+	QUADMgr.IsCollide(this);
+	m_uSize = uSize;
+}
+
+void CPlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_COLLIDE:
+		return;
+	case eMessage::MSG_COLLIDED:
+		return;
+	case eMessage::MSG_NORMAL:
+		return;
+	}
+}
+
+void CPlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG)
+{
+	CGameObject * pObj = nullptr;
+
+	switch (eMSG)
+	{
+	case eMessage::MSG_NORMAL:
+		return;
+		// 반대로 메세지 전송하도록 하자
+	case eMessage::MSG_COLLIDE:
+		//pObj = dynamic_cast<CAbsorbMarble*>(toObj);
+		if (dynamic_cast<CAbsorbMarble*>(toObj))
+			QUADMgr.DeleteStaticObject(toObj);
+		toObj->GetGameMessage(this, MSG_COLLIDED);
+		return;
+	case eMessage::MSG_COLLIDED:
+		toObj->GetGameMessage(this, MSG_COLLIDE);
+		return;
+	}
 }
 
 ///////////////////

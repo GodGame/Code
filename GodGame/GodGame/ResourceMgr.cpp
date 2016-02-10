@@ -2,7 +2,6 @@
 #include "MyInline.h"
 #include "ResourceMgr.h"
 
-
 CTexture::CTexture(int nTextures, int nSamplers, int nTextureStartSlot, int nSamplerStartSlot, SETSHADER nSetInfo)
 {
 	m_nReferences = 0;
@@ -96,7 +95,7 @@ void CTexture::UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 	if (m_uTextureSet & SET_SHADER_CS) pd3dDeviceContext->CSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
 }
 
-ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, UINT nTextures)
+ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device * pd3dDevice, wchar_t * ppstrFilePaths, wchar_t * ppstrFormat, UINT nTextures)
 {
 	D3DX11_IMAGE_LOAD_INFO d3dxImageLoadInfo;
 	d3dxImageLoadInfo.Width          = D3DX11_FROM_FILE;
@@ -115,8 +114,9 @@ ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDe
 
 	ID3D11Texture2D **ppd3dTextures = new ID3D11Texture2D*[nTextures];
 	_TCHAR pstrTextureName[80];
-	for (UINT i = 0; i < nTextures; i++) {
-		_stprintf_s(pstrTextureName, 80, _T("%s%02d.png"), ppstrFilePaths, i + 1);
+	for (UINT i = 0; i < nTextures; i++)
+	{
+		_stprintf_s(pstrTextureName, 80, _T("%s%02d.%s"), ppstrFilePaths, i + 1, ppstrFormat);
 		D3DX11CreateTextureFromFile(pd3dDevice, pstrTextureName, &d3dxImageLoadInfo, 0, (ID3D11Resource **)&ppd3dTextures[i], 0);
 	}
 	D3D11_TEXTURE2D_DESC d3dTexure2DDesc;
@@ -154,7 +154,7 @@ ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDe
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dTextureSRVDesc;
 	ZeroMemory(&d3dTextureSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-	d3dTextureSRVDesc.Format = d3dTexture2DArrayDesc.Format;
+	d3dTextureSRVDesc.Format                         = d3dTexture2DArrayDesc.Format;
 	d3dTextureSRVDesc.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
 	d3dTextureSRVDesc.Texture2DArray.MostDetailedMip = 0;
 	d3dTextureSRVDesc.Texture2DArray.MipLevels       = d3dTexture2DArrayDesc.MipLevels;
@@ -166,17 +166,15 @@ ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device *pd3dDe
 
 	if (pd3dTexture2DArray) pd3dTexture2DArray->Release();
 
-	for (UINT i = 0; i < nTextures; i++) if (ppd3dTextures[i]) ppd3dTextures[i]->Release();
+	for (UINT i = 0; i < nTextures; i++)
+		if (ppd3dTextures[i])
+			ppd3dTextures[i]->Release();
 	delete[] ppd3dTextures;
 
 	if (pd3dDeviceContext) pd3dDeviceContext->Release();
 
 	return(pd3dsrvTextureArray);
 }
-
-
-
-
 
 CTextureMgr::CTextureMgr() : CMgr<CTexture>()
 {
@@ -218,39 +216,39 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.MinLOD         = 0;
 		d3dSamplerDesc.MaxLOD         = 0;
 
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_wrap", 0);
 		pd3dSamplerState->Release();
 	}
 	{
-		d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_point_wrap", 0);
 		pd3dSamplerState->Release();
 	}
 	{
-		d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR; // D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR; // D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_point_wrap", 0);
 		pd3dSamplerState->Release();
 	}
 	{
-		d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		d3dSamplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_CLAMP;
-		d3dSamplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_CLAMP;
-		d3dSamplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_CLAMP;
+		d3dSamplerDesc.Filter   = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
 		pd3dSamplerState->Release();
 	}
 	{
-		d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_point_clamp", 0);
 		pd3dSamplerState->Release();
@@ -264,7 +262,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.MaxAnisotropy  = 1;
 		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;//D3D11_COMPARISON_NEVER;
 
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "scs_point_border", 0);
 		pd3dSamplerState->Release();
@@ -274,7 +272,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		d3dSamplerDesc.MaxAnisotropy  = 1;
 
-		hr                            = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
+		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 		ASSERT(SUCCEEDED(hr));
 		InsertSamplerState(pd3dSamplerState, "ss_point_border", 0);
 		pd3dSamplerState->Release();
@@ -307,7 +305,7 @@ void CTextureMgr::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	CTexture * pTexture = m_mpList[name];
 	if (pTexture)
 	{
-		if(pTexture->IsSampler() && pTexture->IsSRV()) pTexture->UpdateShaderVariable(pd3dDeviceContext);
+		if (pTexture->IsSampler() && pTexture->IsSRV()) pTexture->UpdateShaderVariable(pd3dDeviceContext);
 		else if (pTexture->IsSRV()) pTexture->UpdateTextureShaderVariable(pd3dDeviceContext);
 		else if (pTexture->IsSampler()) pTexture->UpdateSamplerShaderVariable(pd3dDeviceContext);
 	}
@@ -372,18 +370,13 @@ CMaterial::~CMaterial()
 {
 }
 
-
-
 CMaterialMgr::CMaterialMgr() : CMgr<CMaterial>()
 {
-
 }
 
 CMaterialMgr::~CMaterialMgr()
 {
-
 }
-
 
 CMaterialMgr & CMaterialMgr::GetInstance()
 {
@@ -444,6 +437,12 @@ void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext
 
 void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
 {
+	CreatePostProcessViews(pd3dDevice, pd3dDeviceContext);
+	CreateViewsInGame(pd3dDevice, pd3dDeviceContext);
+}
+
+void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
+{
 	HRESULT hResult;
 	ID3D11DepthStencilView	  * pDSV = nullptr;
 	ID3D11ShaderResourceView  * pSRV = nullptr;
@@ -477,29 +476,29 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 	//생성한 깊이 버퍼(Depth Buffer)에 대한 뷰를 생성한다.
 	D3D11_DEPTH_STENCIL_VIEW_DESC d3dViewDesc;
 	ZeroMemory(&d3dViewDesc, sizeof(D3D11_DEPTH_STENCIL_VIEW_DESC));
-	d3dViewDesc.Format                 = DXGI_FORMAT_D32_FLOAT;//d3d2DBufferDesc.Format;
-	d3dViewDesc.ViewDimension          = D3D11_DSV_DIMENSION_TEXTURE2D;
-	d3dViewDesc.Texture2D.MipSlice     = 0;
+	d3dViewDesc.Format = DXGI_FORMAT_D32_FLOAT;//d3d2DBufferDesc.Format;
+	d3dViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	d3dViewDesc.Texture2D.MipSlice = 0;
 	//ASSERT(SUCCEEDED((hResult        = m_pd3dDevice->CreateDepthStencilView(m_pd3dDepthStencilBuffer, &d3dViewDesc, &m_pd3dDepthStencilView))));
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC d3dSRVDesc;
 	ZeroMemory(&d3dSRVDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-	d3dSRVDesc.ViewDimension           = D3D11_SRV_DIMENSION_TEXTURE2D;
-	d3dSRVDesc.Texture2D.MipLevels     = 1;
-	d3dSRVDesc.Format                  = DXGI_FORMAT_R32_FLOAT;
-	//if (FAILED(hResult               = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_DEPTH], &d3dSRVDesc, &m_pd3dMRTSRV[MRT_DEPTH]))) 
+	d3dSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	d3dSRVDesc.Texture2D.MipLevels = 1;
+	d3dSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	//if (FAILED(hResult               = m_pd3dDevice->CreateShaderResourceView(m_ppd3dMRTtx[MRT_DEPTH], &d3dSRVDesc, &m_pd3dMRTSRV[MRT_DEPTH])))
 	//	return(false);
 
-	d3d2DBufferDesc.BindFlags          = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC d3dUAVDesc;
 	ZeroMemory(&d3dUAVDesc, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-	d3dUAVDesc.ViewDimension           = D3D11_UAV_DIMENSION_TEXTURE2D;
-	d3dUAVDesc.Format                  = DXGI_FORMAT_R8G8B8A8_UNORM;
-	d3dUAVDesc.Texture2D.MipSlice      = 0;
+	d3dUAVDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+	d3dUAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	d3dUAVDesc.Texture2D.MipSlice = 0;
 
 	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
-	d3d2DBufferDesc.Width  = FRAME_BUFFER_WIDTH * 0.25f;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.25f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.25f;
 	{
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
@@ -519,7 +518,7 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "su2d_post1"); pSRV->Release();
 		InsertUAV(pUAV, "su2d_post1"); pUAV->Release();
 	}
-	d3d2DBufferDesc.Width  = FRAME_BUFFER_WIDTH * 0.0625f;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625f;
 	{
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
@@ -539,9 +538,9 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "su2d_postscaled1"); pSRV->Release();
 		InsertUAV(pUAV, "su2d_postscaled1"); pUAV->Release();
 	}
-	d3d2DBufferDesc.Width     = FRAME_BUFFER_WIDTH * 0.25f;
-	d3d2DBufferDesc.Height    = FRAME_BUFFER_HEIGHT * 0.25f;
-	d3dRTVDesc.ViewDimension  = D3D11_RTV_DIMENSION_TEXTURE2DMS;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.25f;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.25f;
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	{
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
@@ -552,7 +551,7 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "sr2d_bloom4x4"); pSRV->Release();
 		InsertRTV(pRTV, "sr2d_bloom4x4"); pRTV->Release();
 	}
-	d3d2DBufferDesc.Width  = FRAME_BUFFER_WIDTH * 0.0625;//0.125f;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625;//0.125f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625;//0.125f;
 	{
 		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
@@ -563,10 +562,10 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "sr2d_bloom16x16"); pSRV->Release();
 		InsertRTV(pRTV, "sr2d_bloom16x16"); pRTV->Release();
 	}
-	d3d2DBufferDesc.Width     = FRAME_BUFFER_WIDTH;
-	d3d2DBufferDesc.Height    = FRAME_BUFFER_HEIGHT;
+	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH;
+	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT;
 
-	d3dRTVDesc.ViewDimension  = D3D11_RTV_DIMENSION_TEXTURE2D;
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;// | D3D11_BIND_UNORDERED_ACCESS;
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	//{
@@ -582,11 +581,11 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 	// Create two buffers for ping-ponging in the reduction operation used for calculating luminance
 	D3D11_BUFFER_DESC DescBuffer;
 	ZeroMemory(&DescBuffer, sizeof(D3D11_BUFFER_DESC));
-	DescBuffer.BindFlags           = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-	DescBuffer.ByteWidth           = int(ceil(FRAME_BUFFER_WIDTH / 8.0f) * ceil(FRAME_BUFFER_HEIGHT / 8.0f)) * sizeof(float);
-	DescBuffer.MiscFlags           = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	DescBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	DescBuffer.ByteWidth = int(ceil(FRAME_BUFFER_WIDTH / 8.0f) * ceil(FRAME_BUFFER_HEIGHT / 8.0f)) * sizeof(float);
+	DescBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	DescBuffer.StructureByteStride = sizeof(float);
-	DescBuffer.Usage               = D3D11_USAGE_DEFAULT;
+	DescBuffer.Usage = D3D11_USAGE_DEFAULT;
 	{
 		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer1)));
 		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer2)));
@@ -601,10 +600,10 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 	// Create UAV on the above two buffers object
 	D3D11_UNORDERED_ACCESS_VIEW_DESC DescUAV;
 	ZeroMemory(&DescUAV, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-	DescUAV.Format              = DXGI_FORMAT_UNKNOWN;
-	DescUAV.ViewDimension       = D3D11_UAV_DIMENSION_BUFFER;
+	DescUAV.Format = DXGI_FORMAT_UNKNOWN;
+	DescUAV.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
 	DescUAV.Buffer.FirstElement = 0;
-	DescUAV.Buffer.NumElements  = DescBuffer.ByteWidth / sizeof(float);
+	DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
 	{
 		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer1, &DescUAV, &pUAV)));
 		InsertUAV(pUAV, "su_reduce1"); pUAV->Release();
@@ -614,10 +613,10 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 	// Create resource view for the two buffers object
 	D3D11_SHADER_RESOURCE_VIEW_DESC DescRV;
 	ZeroMemory(&DescRV, sizeof(DescRV));
-	DescRV.Format              = DXGI_FORMAT_UNKNOWN;
-	DescRV.ViewDimension       = D3D11_SRV_DIMENSION_BUFFER;
+	DescRV.Format = DXGI_FORMAT_UNKNOWN;
+	DescRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 	DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
-	DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
+	DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;
 	{
 		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer1, &DescRV, &pSRV)));
 		InsertSRV(pSRV, "su_reduce1"); pSRV->Release();
@@ -625,10 +624,10 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 		InsertSRV(pSRV, "su_reduce2"); pSRV->Release();
 	}
 	{
-		DescBuffer.ByteWidth       = sizeof(float) * 16;
+		DescBuffer.ByteWidth = sizeof(float) * 16;
 		DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
 		DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
-		DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
+		DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;
 
 		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer3)));
 		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer3, &DescUAV, &pUAV)));
@@ -667,7 +666,38 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 	//	ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(m_csBloom.m_pd3dCBBufferArray[i], &DescRV, &m_csBloom.m_pd3dSRVArray[i])));
 	//	ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(m_csBloom.m_pd3dCBBufferArray[i], &DescUAV, &m_csBloom.m_pd3dUAVArray[i])));
 	//}
+}
 
+void CViewManager::CreateViewsInGame(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
+{
+	HRESULT hResult;
+	ID3D11DepthStencilView	  * pDSV = nullptr;
+	ID3D11ShaderResourceView  * pSRV = nullptr;
+	ID3D11UnorderedAccessView * pUAV = nullptr;
+	ID3D11RenderTargetView    * pRTV = nullptr;
+
+	ID3D11Texture2D * pTx2D = nullptr;
+	ID3D11Buffer    * pBuffer1, *pBuffer2, *pBuffer3;
+	pBuffer1 = pBuffer2 = pBuffer3 = nullptr;
+
+	D3D11_RENDER_TARGET_VIEW_DESC d3dRTVDesc;
+	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	d3dRTVDesc.Texture2D.MipSlice = 0;
+	d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	D3D11_TEXTURE2D_DESC d3d2DBufferDesc;
+	ZeroMemory(&d3d2DBufferDesc, sizeof(D3D11_TEXTURE2D_DESC));
+	d3d2DBufferDesc.Width              = FRAME_BUFFER_WIDTH;
+	d3d2DBufferDesc.Height             = FRAME_BUFFER_HEIGHT;
+	d3d2DBufferDesc.MipLevels          = 1;
+	d3d2DBufferDesc.ArraySize          = 1;
+	d3d2DBufferDesc.Format             = DXGI_FORMAT_R32_TYPELESS;//DXGI_FORMAT_D24_UNORM_S8_UINT;
+	d3d2DBufferDesc.SampleDesc.Count   = 1;
+	d3d2DBufferDesc.SampleDesc.Quality = 0;
+	d3d2DBufferDesc.Usage              = D3D11_USAGE_DEFAULT;
+	d3d2DBufferDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;// | D3D11_BIND_SHADER_RESOURCE;
+	d3d2DBufferDesc.CPUAccessFlags     = 0;
+	d3d2DBufferDesc.MiscFlags          = 0;
 }
 
 void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
@@ -690,7 +720,6 @@ void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer)));
 	InsertBuffer(pd3dBuffer, "cs_float4x4");
 	pd3dBuffer->Release();
-
 }
 
 void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * pBuffer)

@@ -108,7 +108,6 @@ class CCamera;
 class QuadTree
 {
 public:
-	
 
 private:
 	vector<CGameObject*> m_vpObjectList;
@@ -140,14 +139,16 @@ public:
 	QuadTree* RenewalObject(CGameObject * pObject, bool bStart = true);
 	void DeleteObject(CGameObject * pObject);
 	
+	bool SphereCollision(CGameObject * pTarget);
 //s	bool ReleaseTree();
 };
 
 class CCamera;
 class CQuadTreeManager
 {
-private:
+public:
 	typedef pair<QuadTree*, CGameObject*> DynamicInfo;
+private:
 	CQuadTreeManager();
 	~CQuadTreeManager();
 
@@ -178,6 +179,8 @@ public:
 
 	void Update(CCamera * pCamera);
 	vector<CGameObject*>* GetContainedObjectList(CGameObject * pObject);
+
+	vector<DynamicInfo>::iterator GetDynamicInfo(CGameObject * pObject);
 };
 
 class CCollisionMgr

@@ -6,13 +6,10 @@ SamplerComparisonState gsComShadow : register(s4);
 SamplerState gsShadow : register(s3);
 //b4 : Particle
 
-
 cbuffer stShadow
 {
 	static float gfBias = 0.0006f;
 };
-
-
 
 float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowMap,*/ float4 shadowPos)
 {
@@ -42,14 +39,14 @@ float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowM
 	return (percentLit *= 0.11112f);
 }
 
-float CalcOneShadowFactor( float4 shadowPos, float fMinFactor)
+float CalcOneShadowFactor(float4 shadowPos, float fMinFactor)
 {
 	float3 shadowPosH = shadowPos.xyz;// / shadowPos.w;
 	//shadowPosH.x = shadowPosH.x * 0.5f + 0.5f;
 	//shadowPosH.y = shadowPosH.y * -0.5f + 0.5f;
 
-	float fsDepth = 
-		min(gtxtShadowMap.Sample(gsShadow, shadowPosH.xy).r, 
+	float fsDepth =
+		min(gtxtShadowMap.Sample(gsShadow, shadowPosH.xy).r,
 			gtxtStaticShadow.Sample(gsShadow, shadowPosH.xy).r);
 
 	float fShadowFactor = fMinFactor;

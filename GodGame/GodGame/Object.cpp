@@ -56,7 +56,7 @@ void CGameObject::SetTexture(CTexture *pTexture, bool beforeRelease)
 
 void CGameObject::UpdateBoundingBox()
 {
-	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());
+	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());//&m_ppMeshes[0]->GetBoundingCube());
 }
 
 void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
@@ -72,6 +72,17 @@ void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
 	{
 		AABB bcBoundingCube = pMesh->GetBoundingCube();
 		m_bcMeshBoundingCube.Union(&bcBoundingCube);
+		m_bcMeshBoundingCube.Update(m_xmf44World, nullptr);
+
+		XMVECTOR xmvMax = XMLoadFloat3(&m_bcMeshBoundingCube.m_xv3Maximum);
+		XMVECTOR xmvMin = XMLoadFloat3(&m_bcMeshBoundingCube.m_xv3Minimum);
+
+		xmvMax = xmvMax - xmvMin;
+		xmvMax = XMVector3Length(xmvMax);
+
+		float fSize;
+		XMStoreFloat(&fSize, xmvMax);
+		m_uSize = (UINT)(fSize / 3.0f);
 	}
 }
 
@@ -128,7 +139,7 @@ void CGameObject::SetPosition(float x, float y, float z)
 	m_xmf44World._42 = y;
 	m_xmf44World._43 = z;
 }
-void CGameObject::SetPosition(XMFLOAT3 xv3Position)
+void CGameObject::SetPosition(XMFLOAT3& xv3Position)
 {
 	m_xmf44World._41 = xv3Position.x;
 	m_xmf44World._42 = xv3Position.y;
@@ -236,9 +247,12 @@ void CGameObject::SendGameMessage(CGameObject * toObj, eMessage eMSG)
 	{
 	case eMessage::MSG_NORMAL:
 		return;
+	// 반대로 메세지 전송하도록 하자
 	case eMessage::MSG_COLLIDE:
+		toObj->GetGameMessage(this, MSG_COLLIDED);
 		return;
 	case eMessage::MSG_COLLIDED:
+		toObj->GetGameMessage(this, MSG_COLLIDE);
 		return;
 	}
 }
@@ -329,7 +343,7 @@ void CRevolvingObject::Animate(float fTimeElapsed)
 	//m_xmf44World = m_xmf44World * mtxRotate;
 }
 
-CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3 xv3Scale)
+CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3& xv3Scale)
 {
 	m_nWidth = nWidth;
 	m_nLength = nLength;
@@ -362,7 +376,7 @@ CHeightMap::~CHeightMap()
 	m_pHeightMapImage = nullptr;
 }
 
-XMFLOAT3 CHeightMap::GetHeightMapNormal(int x, int z)
+XMFLOAT3& CHeightMap::GetHeightMapNormal(int x, int z)
 {
 	//지형의 x-좌표와 z-좌표가 지형(높이 맵)의 범위를 벗어나면 지형의 법선 벡터는 y-축 방향 벡터이다.
 	if ((x < 0.0f) || (z < 0.0f) || (x >= m_nWidth) || (z >= m_nLength)) return(XMFLOAT3(0.0f, 1.0f, 0.0f));
@@ -526,33 +540,57 @@ void CSkyBox::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 #endif
 }
 
-CTrees::CTrees(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : CGameObject(1)
+CBillboardObject::CBillboardObject(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : CGameObject(1)
 {
 	m_xv4InstanceData = XMFLOAT4(pos.x, pos.y, pos.z, (float)fID);
 	m_xv2Size = xmf2Size;
-	m_BoundingBox.m_xv3Maximum = XMFLOAT3(pos.x + (m_xv2Size.x / 2.0f), pos.y + (m_xv2Size.y / 2.0f), pos.z + 1);
-	m_BoundingBox.m_xv3Minimum = XMFLOAT3(pos.x - (m_xv2Size.x / 2.0f), pos.y - (m_xv2Size.y / 2.0f), pos.z - 1);
+	SetPosition(pos);
 }
 
-bool CTrees::IsVisible(CCamera *pCamera)
+//void CBillboardObject::UpdateBoundingBox()
+//{
+//	XMFLOAT3 pos = GetPosition();
+//
+//	m_bcMeshBoundingCube.m_xv3Maximum = XMFLOAT3(pos.x + (m_xv2Size.x * 0.5f), pos.y + (m_xv2Size.y * 0.5f), pos.z + 1);
+//	m_bcMeshBoundingCube.m_xv3Minimum = XMFLOAT3(pos.x - (m_xv2Size.x * 0.5f), pos.y - (m_xv2Size.y * 0.5f), pos.z - 1);
+//}
+
+void CBillboardObject::SetPosition(XMFLOAT3 & xv3Position)
 {
-	bool bIsVisible = true;
+	XMFLOAT3 pos = xv3Position;
+	CGameObject::SetPosition(pos);
+	m_xv4InstanceData.x = pos.x;
+	m_xv4InstanceData.y = pos.y;
+	m_xv4InstanceData.z = pos.z;
+	//m_bcMeshBoundingCube.m_xv3Maximum = XMFLOAT3(pos.x + (m_xv2Size.x * 0.5f), pos.y + (m_xv2Size.y * 0.5f), pos.z + 1);
+	//m_bcMeshBoundingCube.m_xv3Minimum = XMFLOAT3(pos.x - (m_xv2Size.x * 0.5f), pos.y - (m_xv2Size.y * 0.5f), pos.z - 1);
+}
+
+bool CBillboardObject::IsVisible(CCamera *pCamera)
+{
+	bool bIsVisible = m_bActive;
 
 	if (pCamera)
 	{
-		AABB m_BoundingBox = m_bcMeshBoundingCube;
-		XMVECTOR xmvMin = XMLoadFloat3(&m_BoundingBox.m_xv3Minimum);
-		XMVECTOR xmvMax = XMLoadFloat3(&m_BoundingBox.m_xv3Maximum);
+		AABB BoundingBox = m_bcMeshBoundingCube;
+		XMVECTOR xmvMin = XMLoadFloat3(&BoundingBox.m_xv3Minimum);
+		XMVECTOR xmvMax = XMLoadFloat3(&BoundingBox.m_xv3Maximum);
 		XMVECTOR xmvPos = XMLoadFloat4(&m_xv4InstanceData);
 
 		xmvMin += xmvPos;
 		xmvMax += xmvPos;
 
-		XMStoreFloat3(&m_BoundingBox.m_xv3Maximum, xmvMax);
-		XMStoreFloat3(&m_BoundingBox.m_xv3Minimum, xmvMin);
+		XMStoreFloat3(&BoundingBox.m_xv3Maximum, xmvMax);
+		XMStoreFloat3(&BoundingBox.m_xv3Minimum, xmvMin);
 		//m_BoundingBox.Update(m_xmf44World, &m_BoundingBox);
-		bIsVisible = pCamera->IsInFrustum(&m_BoundingBox);
+		bIsVisible = pCamera->IsInFrustum(&BoundingBox);
 	}
+
+	XMFLOAT3 xmfPos = GetPosition();
+	m_xv4InstanceData.x = xmfPos.x;
+	m_xv4InstanceData.y = xmfPos.y;
+	m_xv4InstanceData.z = xmfPos.z;
+
 	return(bIsVisible);
 }
 
@@ -703,4 +741,96 @@ void CParticle::Enable()
 void CParticle::Disable()
 {
 	m_bEnable = false;
+}
+
+CAbsorbMarble::CAbsorbMarble() : CBillboardObject()
+{
+	m_bAbsorb          = false;
+	m_fAbsorbTime      = 0.0f;
+	m_fSpeed		   = 30.0f;
+	m_pTargetObject    = nullptr;
+
+	m_xvRandomVelocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+}
+
+CAbsorbMarble::~CAbsorbMarble()
+{
+}
+
+void CAbsorbMarble::Initialize()
+{
+	m_bAbsorb          = false;
+	m_fAbsorbTime      = 0.0f;
+	m_fSpeed           = 0.0f;
+	m_pTargetObject    = nullptr;
+
+	m_xvRandomVelocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+}
+
+void CAbsorbMarble::SetTarget(CGameObject * pGameObject)
+{
+	if (!m_bAbsorb)
+	{
+		m_pTargetObject = pGameObject;
+		m_bAbsorb = true;
+
+		m_xvRandomVelocity.x = Chae::RandomFloat(0, 1);
+		m_xvRandomVelocity.y = Chae::RandomFloat(0, 1);
+		m_xvRandomVelocity.z = Chae::RandomFloat(0, 1);
+
+		m_fSpeed = rand() % 40 + 20.0f;
+
+		Chae::XMFloat3Normalize(&m_xvRandomVelocity);
+	}
+}
+
+void CAbsorbMarble::Animate(float fTimeElapsed)
+{
+	if (m_bAbsorb)
+	{
+		m_fAbsorbTime += fTimeElapsed;
+		XMVECTOR xmvToTarget = XMLoadFloat3(&m_pTargetObject->GetPosition());
+		XMVECTOR xvPos = XMLoadFloat3(&CBillboardObject::GetPosition());
+		xmvToTarget = xmvToTarget - xvPos;
+		xmvToTarget = XMVector3Normalize(xmvToTarget);
+
+		XMVECTOR xvSpeed = XMVectorReplicate(m_fSpeed);
+
+		xvPos = (0.5f * xmvToTarget * m_fAbsorbTime * m_fAbsorbTime) + (xvSpeed * m_fAbsorbTime) + xvPos;
+		XMFLOAT3 xmfPos;
+		XMStoreFloat3(&xmfPos, xvPos);
+		CBillboardObject::SetPosition(xmfPos);
+
+		XMVECTOR lengthSq = XMVector3LengthSq(xmvToTarget - xvPos);
+		float flengthSq;
+		XMStoreFloat(&flengthSq, lengthSq);
+
+		if (flengthSq <= 100.0f)
+		{
+			SendGameMessage(this, eMessage::MSG_COLLIDE);
+		}
+	}
+}
+
+void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		return;
+	case eMessage::MSG_CULL_OUT:
+		m_bActive = false;
+		return;
+	case eMessage::MSG_COLLIDE:
+		SetPosition(XMFLOAT3(rand() % 2048, 100, rand() % 2048));
+		Initialize();
+		QUADMgr.EntityStaticObject(this);
+		return;
+	case eMessage::MSG_COLLIDED:
+		SetTarget(byObj);
+		return;
+	case eMessage::MSG_NORMAL:
+		return;
+	}
 }

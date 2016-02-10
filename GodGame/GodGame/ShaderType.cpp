@@ -301,14 +301,19 @@ CGameObject * CShader::GetObj(int num) {
 
 void CShader::EntityAllStaticObjects()
 {
+	CQuadTreeManager & pMgr = QUADMgr;
 	for (int i = 0; i < m_nObjects; ++i)
-		QUADMgr.EntityStaticObject(m_ppObjects[i]);
+	{
+		m_ppObjects[i]->UpdateBoundingBox();
+		pMgr.EntityStaticObject(m_ppObjects[i]);
+	}
 }
 
 void CShader::EntityAllDynamicObjects()
 {
+	CQuadTreeManager & pMgr = QUADMgr;
 	for (int i = 0; i < m_nObjects; ++i)
-		QUADMgr.EntityDynamicObject(m_ppObjects[i]);
+		pMgr.EntityDynamicObject(m_ppObjects[i]);
 }
 
 ID3D11ShaderResourceView * CShader::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)

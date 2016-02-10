@@ -93,7 +93,7 @@ public:
 	void MakeViewProjectionMatrix();
 	//상수 버퍼를 생성하고 내용을 갱신하는 멤버 함수를 선언한다.
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxViewProj);
+	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxViewProj, XMFLOAT3 & xmfCameraPos);
 //	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
 	void UpdateCameraPositionCBBuffer(ID3D11DeviceContext *pd3dDeviceContext);
 	

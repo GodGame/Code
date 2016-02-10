@@ -533,7 +533,7 @@ CMirrorMesh::~CMirrorMesh()
 {
 }
 
-CTreeVertex::CTreeVertex(ID3D11Device *pd3dDevice, float fWSize, float fHSize) : CMesh(pd3dDevice)
+CBillBoardVertex::CBillBoardVertex(ID3D11Device *pd3dDevice, float fWSize, float fHSize) : CMesh(pd3dDevice)
 {
 	m_nVertices = 1;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
@@ -577,7 +577,7 @@ CTreeVertex::CTreeVertex(ID3D11Device *pd3dDevice, float fWSize, float fHSize) :
 	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+fWSize, +fHSize, +1);
 }
 
-CTreeVertex::~CTreeVertex()
+CBillBoardVertex::~CBillBoardVertex()
 {
 }
 

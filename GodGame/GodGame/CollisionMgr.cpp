@@ -241,7 +241,6 @@ void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, Quad
 		m_bLeaf = true;
 		return;
 	}
-
 	UINT uNextHalfWidth = (m_uHalfWidth >> 1);
 	UINT uNextHalfLength = (m_uHalfLength >> 1);
 
@@ -277,41 +276,32 @@ void QuadTree::FrustumCulling(CCamera * pCamera)
 	XMFLOAT3 xmfMin = XMFLOAT3(m_xmi3Center.x - m_uHalfWidth, -1000.0f, m_xmi3Center.z - m_uHalfLength);
 	XMFLOAT3 xmfMax = XMFLOAT3(m_xmi3Center.x + m_uHalfWidth, 1000.0f, m_xmi3Center.z + m_uHalfLength);
 
-	bool bVisible;
+	m_bCulled = !(pCamera->IsInFrustum(xmfMin, xmfMax));
+	if (m_bCulled) return;
+	CGameObject * pObj = nullptr;
+
 	if (m_uHalfLength > 512.0f)
 	{
-		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
-		CGameObject * pObj = nullptr;
 		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
 		{
 			pObj = (*it);
-			pObj->UpdateBoundingBox();
+			//pObj->UpdateBoundingBox();
 			AABB & bb = pObj->m_bcMeshBoundingCube;
-			pObj->GetGameMessage(nullptr, eMessage::MSG_CULL_IN);// SetActive(pCamera->IsInFrustum(&bb));
+			if (pCamera->IsInFrustum(&bb))
+				pObj->GetGameMessage(nullptr, eMessage::MSG_CULL_IN);// SetActive(pCamera->IsInFrustum(&bb));
 		}
 	}
 	else
 	{
-		bVisible = pCamera->IsInFrustum(xmfMin, xmfMax);
-		if (!bVisible) return;
-		CGameObject * pObj = nullptr;
-
 		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
 		{
-			//pObj = (*it);
-			//pObj->UpdateBoundingBox();
-			//AABB & bb = pObj->m_bcMeshBoundingCube;
-			//pObj->SetActive(pCamera->IsInFrustum(&bb)); //bVisible);
 			(*it)->GetGameMessage(nullptr, eMessage::MSG_CULL_IN);
 		}
 	}
-	m_bCulled = !(bVisible);
-
-	if (m_bCulled || m_bLeaf) return;
+	if (m_bLeaf) return;
 
 	for (int i = 0; i < 4; ++i)
 		m_pNodes[i]->FrustumCulling(pCamera);
-
 	/*for (int i = 0; i < 4; ++i)
 		m_pNodes[i]->PreCutCulling();*/
 }
@@ -373,7 +363,6 @@ Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
 		ASSERT(SUCCEEDED(1));
 		break;
 	}
-
 	if (bbObj.m_xv3Maximum.x > bbQuad.m_xv3Maximum.x) return Location::LOC_ALL;
 	if (bbObj.m_xv3Maximum.z > bbQuad.m_xv3Maximum.z) return Location::LOC_ALL;
 
@@ -396,11 +385,9 @@ void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGame
 
 			return;
 		}
-
 		else
 			m_pNodes[loc]->FindContainedObjects_InChilds(pObject, vcArray);
 	}
-
 	else
 		for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
 			vcArray.push_back(*it);
@@ -410,9 +397,8 @@ QuadTree * QuadTree::EntityObject(CGameObject * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
 
-	if (eLoc != Location::LOC_ALL)
+	if (eLoc != Location::LOC_ALL && !m_bLeaf)
 		return m_pNodes[eLoc]->EntityObject(pObject);
-
 	m_vpObjectList.push_back(pObject);
 	return this;
 }
@@ -421,11 +407,42 @@ void QuadTree::DeleteObject(CGameObject * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
 
-	if (eLoc != Location::LOC_ALL)
+	if (eLoc != Location::LOC_ALL && !m_bLeaf) 
+	{
 		m_pNodes[eLoc]->EntityObject(pObject);
-
+		return;
+	}
 	auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
 	m_vpObjectList.erase(it);
+}
+
+bool QuadTree::SphereCollision(CGameObject * pTarget)
+{
+	bool bCheck = false;
+	if (m_pNodes[LOC_PARENT])
+		bCheck = m_pNodes[LOC_PARENT]->SphereCollision(pTarget);
+
+	CGameObject * pObject = nullptr;
+	BoundingSphere target, objbb;
+	target.Center = pTarget->GetPosition();
+	target.Radius = pTarget->GetSize();
+
+	for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
+	{
+		pObject = *it;
+		if (pTarget != pObject)
+		{
+			objbb.Center = pObject->GetPosition();
+			objbb.Radius = pObject->GetSize();
+			if (target.Intersects(objbb))
+			{
+				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
+				if (!bCheck) bCheck = true;
+				//CGameObject::MessageObjToObj(pTarget, pObject, eMessage::MSG_COLLIDE)
+			}
+		}
+	}
+	return bCheck;
 }
 
 QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
@@ -447,12 +464,16 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 			return m_pNodes[eContain]->RenewalObject(pObj, false);
 
 		// 말단 노드이면 오브젝트를 추가한다.
+		pObj->UpdateBoundingBox();
 		m_vpObjectList.push_back(pObj);
 		pObj = nullptr;
 	}
 
-	if (pObj && bStart == false) m_vpObjectList.push_back(pObj);
-
+	if (pObj && bStart == false)
+	{
+		pObj->UpdateBoundingBox();
+		m_vpObjectList.push_back(pObj);
+	}
 	return this;
 }
 
@@ -501,7 +522,10 @@ void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
 
 bool CQuadTreeManager::IsCollide(CGameObject * pObject)
 {
-	return false;
+	QuadTree * pTree = GetDynamicInfo(pObject)->first;
+	bool bResult = pTree->SphereCollision(pObject);
+
+	return bResult;
 }
 
 vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pObject)
@@ -511,6 +535,12 @@ vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pOb
 	if (m_pRootTree) m_pRootTree->FindContainedObjects_InChilds(pObject, m_vcContainedArray);
 
 	return &m_vcContainedArray;
+}
+
+vector<pair<QuadTree*, CGameObject*>>::iterator CQuadTreeManager::GetDynamicInfo(CGameObject * pObject)
+{
+	return find_if(m_vcDynamicArray.begin(), m_vcDynamicArray.end(),
+		[=](const DynamicInfo & a) { return pObject == a.second;});
 }
 
 QuadTree * CQuadTreeManager::EntityStaticObject(CGameObject * pObject)
@@ -532,8 +562,7 @@ void CQuadTreeManager::DeleteStaticObject(CGameObject * pObject)
 
 void CQuadTreeManager::DeleteDynamicObject(CGameObject * pObject)
 {
-	auto it = find_if(m_vcDynamicArray.begin(), m_vcDynamicArray.end(),
-		[=](const DynamicInfo & a) { return pObject == a.second;});
+	auto it = GetDynamicInfo(pObject);
 	m_vcDynamicArray.erase(it);
 
 	m_pRootTree->DeleteObject(pObject);

@@ -1,5 +1,17 @@
 #include "Define.fx"
 
+struct VS_SCENE_INPUT
+{
+	float3 pos			: POSITION;
+	float2 tex			: TEXCOORD;
+};
+
+struct PS_SCENE_INPUT
+{
+	float4 pos			: SV_POSITION;
+	float2 tex			: TEXCOORD;
+};
+
 Texture2D gtxtSSAO	   : register(t25);
 
 struct SSAO_PSIN
@@ -47,7 +59,7 @@ SSAO_PSIN VSSCeneSpaceAmbient(VS_SCENE_INPUT input)
 {
 	SSAO_PSIN output = (SSAO_PSIN)0;
 	output.posH = float4(input.pos, 1.0f);
-	output.ToFarPlane = gFrustumCorners[max(sign(input.tex.x) , 0) + max(sign(input.tex.y * 2), 0 )].xyz;
+	output.ToFarPlane = gFrustumCorners[max(sign(input.tex.x), 0) + max(sign(input.tex.y * 2), 0)].xyz;
 	output.Tex = input.tex;
 
 	return output;
@@ -78,7 +90,7 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 	[unroll]
 	for (int i = 0; i < NUM_SSAO_OFFSET; ++i)
 	{
-		// 미리 만들어 둔 상수 오프셋 벡터들은 고르게 분포 되어있다. 
+		// 미리 만들어 둔 상수 오프셋 벡터들은 고르게 분포 되어있다.
 		// (즉, 오프셋의 벡터들은 같은 방향으로 뭉쳐있지 않다.)
 		// 이들을 하나의 무작위 벡터 기준으로 반사시키면 무작위 벡터들이 만들어 진다.
 		float3 offset = reflect(gOffsetVectors[i].xyz, randVec);
@@ -108,10 +120,10 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 		float3 r = (rz / q.z) * q;
 
 		//return float4(r, 1);
-		/* 
+		/*
 		r이 p를 가리는지 판정.
 		   내적 dot(n, normalize(r - p))는 잠재적 차폐점 r이 평면 plane(p, n) 앞쪽으로 얼마나 앞에 있는지를 나타낸다.
-		   더 앞에 있을 수록, 차폐도의 가중치를 더 크게 잡는다. 이렇게 하면 r이 시선과 직각인 평면 (p, n)에 있을때 
+		   더 앞에 있을 수록, 차폐도의 가중치를 더 크게 잡는다. 이렇게 하면 r이 시선과 직각인 평면 (p, n)에 있을때
 		   시점 기준의 깊이 값 차이 때문에 r이 p를 가린다고 잘못 판정하는 상황도 방지된다.
 
 		   차폐도는 현재 점 p와 차폐점 r 사이의 거리에 의존한다.
@@ -130,5 +142,3 @@ float4 PSSCeneSpaceAmbient(SSAO_PSIN input) :SV_Target
 	//SSAO가 좀 더 극명한 효과를 내도록 거듭 제곱를 이용해 대비를 강화한다.
 	return saturate(pow(access, 4.0f));
 }
-
-

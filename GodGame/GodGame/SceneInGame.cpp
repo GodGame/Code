@@ -119,7 +119,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 		m_pCamera->GenerateViewMatrix();
 	}
-
 	CreateShaderVariables(pd3dDevice);
 	BuildStaticShadowMap(pd3dDeviceContext);
 }
@@ -234,7 +233,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	CShadowMgr * pSdwMgr = &ShadowMgr;
 	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf - 1000.0f, 0.0f, fHalf), XMFLOAT3(fHalf, fHalf, fHalf), fHalf);
 
-	UINT uRenderState = NOT_PSUPDATE;
+	UINT uRenderState = (RS_SHADOWMAP);
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 
 	m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
@@ -250,7 +249,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 
 void CSceneInGame::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 {
-	UINT uRenderState = NOT_PSUPDATE;
+	UINT uRenderState = (NOT_PSUPDATE | RS_SHADOWMAP);
 
 	ShadowMgr.SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 

@@ -5,8 +5,8 @@
 
 //#pragma warning(disable : 4244)
 
-#define NOT_PSUPDATE	1<<0
-#define	RS_SHADOWMAP	NOT_PSUPDATE
+#define NOT_PSUPDATE	0x01
+#define	RS_SHADOWMAP	0x02
 
 #define PI		3.141592
 #define	FRAME_BUFFER_WIDTH		1280
@@ -66,7 +66,7 @@ using namespace DirectX;
 #define ASSERT(x) x
 #endif
 
-//#define _QUAD_TREE
+#define _QUAD_TREE
 
 using namespace std;
 

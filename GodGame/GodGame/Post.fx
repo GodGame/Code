@@ -1,10 +1,23 @@
-
-#include "Define.fx"
+#include "Light.fx"
+#include "Common.fx"
 #include "Shadow.fx"
 #include "PostDefine.fx"
 
 ///Texture2D txScreen : register(t0);
 //SamplerState gScreenSampler : register(s0);
+
+struct VS_SCENE_INPUT
+{
+	float3 pos			: POSITION;
+	float2 tex			: TEXCOORD;
+};
+
+struct PS_SCENE_INPUT
+{
+	float4 pos			: SV_POSITION;
+	float2 tex			: TEXCOORD;
+};
+
 
 cbuffer cbPS : register(b0)
 {

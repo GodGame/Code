@@ -76,11 +76,11 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 };
 
-class CTreeVertex : public CMesh
+class CBillBoardVertex : public CMesh
 {
 public:
-	CTreeVertex(ID3D11Device *pd3dDevice, float fWSize, float fHSize);
-	~CTreeVertex();
+	CBillBoardVertex(ID3D11Device *pd3dDevice, float fWSize, float fHSize);
+	~CBillBoardVertex();
 };
 
 class CPoint2DMesh : public CMesh

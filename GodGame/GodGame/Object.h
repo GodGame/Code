@@ -101,8 +101,9 @@ public:
 	void SetMaterial(CMaterial *pMaterial);
 	XMFLOAT4	m_xmfPlane;
 
-private:
-	unsigned int	m_nReferences : 31;
+protected:
+	UINT	m_uSize : 16;
+	UINT	m_nReferences : 15;
 	bool	m_bActive : 1;
 
 public:
@@ -122,7 +123,7 @@ public:
 	CTexture *m_pTexture;
 	void SetTexture(CTexture *pTexture, bool beforeRelease = true);
 	void SetActive(bool bActive = false) { m_bActive = bActive; }
-	void UpdateBoundingBox();
+	virtual void UpdateBoundingBox();
 
 	void SetMesh(CMesh *pMesh, int nIndex = 0);
 
@@ -131,10 +132,11 @@ public:
 	//virtual void RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera);
 
 	virtual void SetPosition(float x, float y, float z);
-	virtual void SetPosition(XMFLOAT3 xv3Position);
-	virtual void SetPosition(XMVECTOR * xv3Position);
+	virtual void SetPosition(XMFLOAT3& xv3Position);
+	virtual void SetPosition(XMVECTOR* xv3Position);
 
 	XMFLOAT3 GetPosition();
+	UINT GetSize() { return m_uSize; }
 
 public:
 	bool IsVisible(CCamera *pCamera = nullptr);
@@ -217,14 +219,14 @@ private:
 	XMFLOAT3 m_xv3Scale;
 
 public:
-	CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3 xv3Scale);
+	CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3& xv3Scale);
 	~CHeightMap(void);
 
 	//높이 맵 이미지에서 (x, z) 위치의 픽셀 값에 기반한 지형의 높이를 반환한다.
 	float GetHeight(float x, float z, bool bReverseQuad = false);
 	//높이 맵 이미지에서 (x, z) 위치의 법선 벡터를 반환한다.
-	XMFLOAT3 GetHeightMapNormal(int x, int z);
-	XMFLOAT3 GetScale() { return(m_xv3Scale); }
+	XMFLOAT3& GetHeightMapNormal(int x, int z);
+	XMFLOAT3& GetScale() { return(m_xv3Scale); }
 
 	BYTE *GetHeightMapImage() { return(m_pHeightMapImage); }
 	int GetHeightMapWidth() { return(m_nWidth); }
@@ -250,12 +252,12 @@ private:
 public:
 	//지형의 실제 높이를 반환한다. 높이 맵의 높이에 스케일을 곱한 값이다.
 	float GetHeight(float x, float z, bool bReverseQuad = false) { return(m_pHeightMap->GetHeight(x, z, bReverseQuad) * m_xv3Scale.y); }
-	XMFLOAT3 GetNormal(float x, float z) { return(m_pHeightMap->GetHeightMapNormal(int(x / m_xv3Scale.x), int(z / m_xv3Scale.z))); }
+	XMFLOAT3& GetNormal(float x, float z) { return(m_pHeightMap->GetHeightMapNormal(int(x / m_xv3Scale.x), int(z / m_xv3Scale.z))); }
 
 	int GetHeightMapWidth() { return(m_pHeightMap->GetHeightMapWidth()); }
 	int GetHeightMapLength() { return(m_pHeightMap->GetHeightMapLength()); }
 
-	XMFLOAT3 GetScale() { return(m_xv3Scale); }
+	XMFLOAT3& GetScale() { return(m_xv3Scale); }
 	//지형의 실제 크기(가로/세로)를 반환한다. 높이 맵의 크기에 스케일을 곱한 값이다.
 	float GetWidth() { return(m_nWidth * m_xv3Scale.x); }
 	float GetLength() { return(m_nLength * m_xv3Scale.z); }
@@ -272,17 +274,39 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 };
 
-class CTrees : public CGameObject
+class CBillboardObject : public CGameObject
 {
-	AABB m_BoundingBox;
+//	AABB m_BoundingBox;
 	XMFLOAT2 m_xv2Size;
 	XMFLOAT4 m_xv4InstanceData;
 
 public:
-	CTrees() {}
-	CTrees(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size);
-	~CTrees() {}
+	CBillboardObject() {}
+	CBillboardObject(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size);
+	~CBillboardObject() {}
 
+//	virtual void UpdateBoundingBox();
+	virtual void SetPosition(XMFLOAT3& xv3Position);
 	bool IsVisible(CCamera *pCamera = nullptr);
 	XMFLOAT4& GetInstanceData() { return m_xv4InstanceData; }
+};
+
+class CAbsorbMarble : public CBillboardObject
+{
+	bool	m_bAbsorb;
+	float	m_fAbsorbTime;
+	float	m_fSpeed;
+
+	CGameObject * m_pTargetObject;
+	XMFLOAT3 m_xvRandomVelocity;
+
+public:
+	CAbsorbMarble();
+	~CAbsorbMarble();
+
+	void Initialize();
+	void SetTarget(CGameObject * pGameObject);
+
+	virtual void Animate(float fTimeElapsed);
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
 };

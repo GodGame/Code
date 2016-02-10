@@ -197,9 +197,9 @@ void CBillboardShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSBillboard", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"Effect.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSBillboardTextureArray", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
 }
 
 void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain)
@@ -212,20 +212,20 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 	m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
 	m_nInstanceBufferOffset = 0;
 
-	CTrees * pTree = nullptr;
+	CBillboardObject * pTree = nullptr;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	CHeightMapTerrain * pTerrain = pHeightMapTerrain;
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 
-	CTreeVertex * pTreeMesh = new CTreeVertex(pd3dDevice, xmf2Size.x, xmf2Size.y);
+	CBillBoardVertex * pTreeMesh = new CBillBoardVertex(pd3dDevice, xmf2Size.x, xmf2Size.y);
 	for (int i = 0; i < m_nTrees; ++i) 
 	{
 		float fxTerrain = xmf3Pos.x = rand() % cxTerrain;
 		float fzTerrain = xmf3Pos.z = rand() % czTerrain;
 		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false) + 18;
-		pTree = new CTrees(xmf3Pos, i, xmf2Size);
+		pTree = new CBillboardObject(xmf3Pos, i, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
 		m_ppObjects[i] = pTree;
 	}
@@ -237,7 +237,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0, SET_SHADER_PS);
 	// 크기 동일'
 	//ID3D11ShaderResourceView * pd3dsrvArray = nullptr;
-	ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 4);
+	ID3D11ShaderResourceView * pd3dsrvArray = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), _T("png"), 4);
 	//HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Tree01.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
 	//if (FAILED(hr)) printf("오류 \n");
 
@@ -252,12 +252,11 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 
-	if (uRenderState & NOT_PSUPDATE)
+	if (uRenderState & RS_SHADOWMAP)
 	{
 		AllRender(pd3dDeviceContext, uRenderState, pCamera);
 		return;
 	}
-
 	//	pCamera->UpdateCameraPositionCBBuffer(pd3dDeviceContext);
 
 	int nTreeInstance = 0;
@@ -265,16 +264,15 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	pd3dDeviceContext->Map(m_pd3dTreeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_VB_WORLD_POSITION *pnTreeInstances = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
 
-	CTrees * pTree = nullptr;
-	XMFLOAT4 xmfInstanceData;
+	CBillboardObject * pTree = nullptr;
+	//XMFLOAT4 xmfInstanceData;
 	for (int j = 0; j < m_nTrees; ++j)
 	{
-		pTree = (CTrees*)m_ppObjects[j];
+		pTree = (CBillboardObject*)m_ppObjects[j];
 
 		if (pTree->IsVisible(pCamera))
 		{
-			xmfInstanceData = pTree->GetInstanceData();
-			pnTreeInstances[nTreeInstance].m_xv3Position = XMFLOAT4(xmfInstanceData.x, xmfInstanceData.y, xmfInstanceData.z, xmfInstanceData.w);
+			pnTreeInstances[nTreeInstance].m_xv3Position = pTree->GetInstanceData();
 			printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
 			nTreeInstance++;
 		}
@@ -313,15 +311,12 @@ void CBillboardShader::AllRender(ID3D11DeviceContext * pd3dDeviceContext, UINT u
 	pd3dDeviceContext->Map(m_pd3dTreeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_VB_WORLD_POSITION *pnTreeInstances = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
 
-	CTrees * pTree = nullptr;
+	CBillboardObject * pTree = nullptr;
 	XMFLOAT4 xmfInstanceData;
 	for (int j = 0; j < m_nTrees; ++j)
 	{
-		pTree = (CTrees*)m_ppObjects[j];
-
-		xmfInstanceData = pTree->GetInstanceData();
-		pnTreeInstances[j].m_xv3Position = XMFLOAT4(xmfInstanceData.x, xmfInstanceData.y, xmfInstanceData.z, xmfInstanceData.w);
-		//printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
+		pTree = (CBillboardObject*)m_ppObjects[j];
+		pnTreeInstances[j].m_xv3Position = pTree->GetInstanceData();
 	}
 	pd3dDeviceContext->Unmap(m_pd3dTreeInstanceBuffer, 0);
 
@@ -466,20 +461,28 @@ CPointInstanceShader::~CPointInstanceShader()
 
 void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 {
+#ifdef DRAW_GS_SPHERE
 	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
 		{ "INFO",		 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
-	//D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
-	//{
-	//	{ "SIZE", 0, DXGI_FORMAT_R32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	//	{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
-	//};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSPointSphereInstance", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSPointInstance", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"Effect.fx", "GSPointSphereInstance", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSPointSphereInstance", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSPointInstance", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSPointSphereInstance", "gs_5_0", &m_pd3dGeometryShader);
+#else
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSBillboard", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
+#endif
 }
 
 void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
@@ -506,15 +509,22 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	CHeightMapTerrain * pTerrain = pHeightMapTerrain;
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
-
+#ifdef DRAW_GS_SPHERE
 	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 20, 5);
+#else
+	CBillBoardVertex * pPointMesh = new CBillBoardVertex(pd3dDevice, 5, 5);
+#endif
 	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
 	{
-		pObject = new CGameObject(1);
 		float fx = rand() % cxTerrain;
 		float fz = rand() % czTerrain;
 		float fy = pTerrain->GetHeight(fx, fz) + 10;
+#ifdef DRAW_GS_SPHERE
+		pObject = new CGameObject(1);//CBillboardObject(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5) );
+#else
+		pObject = new CBillboardObject(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5));
+#endif
 		pObject->SetMesh(pPointMesh);
 		//pObject->SetMaterial(pMat);
 		pObject->SetPosition(fx, fy, fz);
@@ -523,7 +533,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		QUADMgr.EntityStaticObject(pObject);
 	}
 
-	m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350));
+	//m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350));
 	//m_ppObjects[1]->SetPosition(XMFLOAT3(1085, 180, 260));
 	//m_ppObjects[2]->SetPosition(XMFLOAT3(1115, 180, 265));
 	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255));
@@ -535,26 +545,13 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	m_pTexture = new CTexture(1, 1, 0, 0);
 	ID3D11ShaderResourceView * pd3dsrvArray;
 	//ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Marble01.jpg"), nullptr, nullptr, &pd3dsrvArray, nullptr);
+	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/lightsphere1.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
 	ASSERT(SUCCEEDED(hr));
 
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
 	m_pTexture->SetTexture(0, pd3dsrvArray);
-	m_pTexture->SetSampler(0, pd3dSamplerState);
+	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	pd3dsrvArray->Release();
-	pd3dSamplerState->Release();
 }
 
 void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -564,15 +561,14 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 
-	//m_ppObjects[0]->Render(pd3dDeviceContext, nullptr);
-	//int nTreeObject = m_nCubes;
-
 	int nCubeInstance = 0;
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(m_pd3dCubeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_VB_WORLD_POSITION *pnTreeInstance = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
 
 	XMFLOAT3 xmf3Pos;
+
+#ifdef DRAW_GS_SPHERE
 	for (int j = 0; j < m_nCubes; j++)
 	{
 #ifdef _QUAD_TREE
@@ -587,8 +583,25 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 			nCubeInstance++;
 		}
 		m_ppObjects[j]->SetActive(false);
-
 	}
+#else
+	CBillboardObject * pTree = nullptr;
+	for (int j = 0; j < m_nCubes; ++j)
+	{
+		pTree = (CBillboardObject*)m_ppObjects[j];
+
+#ifdef _QUAD_TREE
+		if (pTree->IsVisible(nullptr))// if (m_ppObjects[j]->IsVisible(pCamera))//			{
+#else
+		if (pTree->IsVisible(pCamera))
+#endif
+		{
+			pnTreeInstance[nCubeInstance].m_xv3Position = pTree->GetInstanceData();
+			nCubeInstance++;
+		}
+		m_ppObjects[j]->SetActive(false);
+	}
+#endif
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
 
 	cout << nCubeInstance << "개 그렸습니다." << endl;
@@ -599,6 +612,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 
 void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 {
+	/*	
 	if (GetAsyncKeyState('O') & 0x0001)
 	{
 		m_ppObjects[0]->SetPosition(XMFLOAT3(8, 0, 0));
@@ -606,6 +620,17 @@ void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 	else if (GetAsyncKeyState('P') & 0x0001)
 	{
 		m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350));
+	}
+	*/
+	//CBillboardObject * pTree = nullptr;
+	for (int i = 0; i < m_nCubes; ++i)
+	{
+		m_ppObjects[i]->Animate(fTimeElapsed);
+		//pTree = (CBillboardObject*)m_ppObjects[i];
+		//if (pTree->IsVisible(nullptr))
+		//{
+
+		//}
 	}
 }
 #pragma endregion

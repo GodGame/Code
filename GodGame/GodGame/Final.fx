@@ -1,12 +1,12 @@
 #include "PostDefine.fx"
 
-Texture2D<float4> gTex : register(t0);
+Texture2D<float4> gTex      : register(t0);
 StructuredBuffer<float> lum : register(t1);
-Texture2D bloom : register(t2);
-Texture2D bloom16x16 : register(t3);
+Texture2D bloom             : register(t2);
+Texture2D bloom16x16        : register(t3);
 
-SamplerState PointSampler : register (s0);
-SamplerState LinearSampler : register (s1);
+SamplerState PointSampler   : register (s0);
+SamplerState LinearSampler  : register (s1);
 
 #define	FRAME_BUFFER_WIDTH		1280
 #define	FRAME_BUFFER_HEIGHT		960

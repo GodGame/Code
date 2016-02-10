@@ -78,9 +78,11 @@ void CCamera::SetViewport(ID3D11DeviceContext * pd3dDeviceContext, DWORD nWidth,
 	viewport.MaxDepth      = 1.0f;
 	pd3dDeviceContext->RSSetViewports(1, &viewport);
 }
+
 void CCamera::Update(XMFLOAT3& xv3LookAt, float fTimeElapsed)
 {
 }
+
 void CCamera::GenerateViewMatrix()
 {
 	XMMATRIX xmtxView = XMMatrixLookAtLH(XMLoadFloat3(&m_xv3Position), XMLoadFloat3(&m_pPlayer->GetPosition()), XMLoadFloat3(&m_xv3Up));
@@ -179,14 +181,13 @@ void CCamera::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	//pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbCameraPos);
 }
 
-void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmf44ViewProj)
+void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmf44ViewProj, XMFLOAT3 & xmfCameraPos)
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	/*상수 버퍼의 메모리 주소를 가져와서 카메라 변환 행렬과 투영 변환 행렬을 복사한다. 쉐이더에서 행렬의 행과 열이 바뀌는 것에 주의하라.*/
 	pd3dDeviceContext->Map(m_pd3dcbCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	VS_CB_VIEWPROJECTION *pcbViewProjection = (VS_CB_VIEWPROJECTION *)d3dMappedResource.pData;
-	XMFLOAT3 xmPos = GetPosition();
-	pcbViewProjection->m_xf3CameraPos = XMFLOAT4(xmPos.x, xmPos.y, xmPos.z, 1.0f);
+	pcbViewProjection->m_xf3CameraPos = XMFLOAT4(xmfCameraPos.x, xmfCameraPos.y, xmfCameraPos.z, 1);//XMFLOAT4(xmPos.x, xmPos.y, xmPos.z, 1.0f);
 	Chae::XMFloat4x4Transpose(&pcbViewProjection->m_xmf44View, &xmf44ViewProj);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
 	pd3dDeviceContext->Unmap(m_pd3dcbCamera, 0);
 

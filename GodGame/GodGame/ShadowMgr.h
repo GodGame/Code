@@ -16,6 +16,7 @@ class CShadowMgr
 private:
 	int m_iStaticMapSlot;
 	int m_iMapSlot;
+	XMFLOAT3 m_xmf3LightPos;
 
 	ID3D11DepthStencilView * m_pd3dDSVShadowMap;
 	ID3D11ShaderResourceView * m_pd3dSRVShadowMap;

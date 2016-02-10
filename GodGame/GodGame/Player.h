@@ -94,6 +94,10 @@ public:
 	virtual void OnPrepareRender();
 	//플레이어의 카메라가 3인칭 카메라일 때 플레이어 메쉬를 렌더링한다.
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+	virtual void Animate(float fTimeElapsed);
+
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
+	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG);
 };
 
 class CTerrainPlayer : public CPlayer
