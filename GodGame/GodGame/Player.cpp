@@ -257,7 +257,6 @@ CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode,
 		pNewCamera = new CThirdPersonCamera(m_pCamera);
 		pNewCamera->SetTimeLag(0.25f);
 		pNewCamera->SetOffset(XMFLOAT3(0.0f, 20.0f, -50.0f));
-
 		break;
 	case SPACESHIP_CAMERA:
 		pNewCamera = new CSpaceShipCamera(m_pCamera);
@@ -282,8 +281,8 @@ CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode,
 	{
 		/*새로운 카메라의 모드가 스페이스-쉽 모드의 카메라이고 현재 카메라 모드가 1인칭 또는 3인칭 카메라이면 플레이어의 로컬 축을 현재 카메라의 로컬 축과 같게 만든다.*/
 		m_xv3Right = m_pCamera->GetRightVector();
-		m_xv3Up = m_pCamera->GetUpVector();
-		m_xv3Look = m_pCamera->GetLookVector();
+		m_xv3Up    = m_pCamera->GetUpVector();
+		m_xv3Look  = m_pCamera->GetLookVector();
 	}
 
 	if (pNewCamera)
@@ -337,8 +336,14 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 void CPlayer::Animate(float fTimeElapsed)
 {
 	UINT uSize = m_uSize;
-	m_uSize = 200.0f;
-	QUADMgr.IsCollide(this);
+	m_uSize = 100.0f;
+	vector<CGameObject*> vcArray = QUADMgr.IsCollide(this);
+	//for (auto it = vcArray.begin(); it != vcArray.end(); ++it)
+	//{
+	//	vcArray.
+	//}
+	QUADMgr.ContainedErase();
+	
 	m_uSize = uSize;
 }
 
@@ -366,8 +371,8 @@ void CPlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG)
 		// 반대로 메세지 전송하도록 하자
 	case eMessage::MSG_COLLIDE:
 		//pObj = dynamic_cast<CAbsorbMarble*>(toObj);
-		if (dynamic_cast<CAbsorbMarble*>(toObj))
-			QUADMgr.DeleteStaticObject(toObj);
+		//if (dynamic_cast<CAbsorbMarble*>(toObj))
+		//	QUADMgr.DeleteStaticObject(toObj);
 		toObj->GetGameMessage(this, MSG_COLLIDED);
 		return;
 	case eMessage::MSG_COLLIDED:

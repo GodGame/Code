@@ -523,7 +523,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 #ifdef DRAW_GS_SPHERE
 		pObject = new CGameObject(1);//CBillboardObject(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5) );
 #else
-		pObject = new CBillboardObject(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5));
+		pObject = new CAbsorbMarble(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5));
 #endif
 		pObject->SetMesh(pPointMesh);
 		//pObject->SetMaterial(pMat);

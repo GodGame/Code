@@ -407,7 +407,6 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 		//m_pLights->m_pLights[3].m_xv3Position = pPlayer->GetPosition();
 		//m_pLights->m_pLights[3].m_xv3Position.y += 40.0f; //+XMFLOAT3(0.0f, 40.0f, 0.0f);
 	}
-
 	for (int i = 0; i < m_nShaders; i++)
 	{
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);

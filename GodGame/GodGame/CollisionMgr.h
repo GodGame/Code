@@ -139,7 +139,7 @@ public:
 	QuadTree* RenewalObject(CGameObject * pObject, bool bStart = true);
 	void DeleteObject(CGameObject * pObject);
 	
-	bool SphereCollision(CGameObject * pTarget);
+	bool SphereCollision(CGameObject * pTarget, vector<CGameObject*> & vcContainedArray);
 //s	bool ReleaseTree();
 };
 
@@ -175,7 +175,10 @@ public:
 public:
 	UINT RenewalDynamicObjects();
 	void FrustumCullObjects(CCamera * pCamera);
-	bool IsCollide(CGameObject * pObject);
+	vector<CGameObject*>& IsCollide(CGameObject * pObject);
+
+	UINT ContainedErase();
+
 
 	void Update(CCamera * pCamera);
 	vector<CGameObject*>* GetContainedObjectList(CGameObject * pObject);

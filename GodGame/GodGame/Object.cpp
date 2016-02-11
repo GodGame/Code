@@ -745,12 +745,12 @@ void CParticle::Disable()
 
 CAbsorbMarble::CAbsorbMarble() : CBillboardObject()
 {
-	m_bAbsorb          = false;
-	m_fAbsorbTime      = 0.0f;
-	m_fSpeed		   = 30.0f;
-	m_pTargetObject    = nullptr;
+	Initialize();
+}
 
-	m_xvRandomVelocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+CAbsorbMarble::CAbsorbMarble(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : CBillboardObject(pos, fID, xmf2Size)
+{
+	Initialize();
 }
 
 CAbsorbMarble::~CAbsorbMarble()
@@ -778,7 +778,7 @@ void CAbsorbMarble::SetTarget(CGameObject * pGameObject)
 		m_xvRandomVelocity.y = Chae::RandomFloat(0, 1);
 		m_xvRandomVelocity.z = Chae::RandomFloat(0, 1);
 
-		m_fSpeed = rand() % 40 + 20.0f;
+		m_fSpeed = rand() % 10 + 10.0f;
 
 		Chae::XMFloat3Normalize(&m_xvRandomVelocity);
 	}
@@ -789,25 +789,26 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 	if (m_bAbsorb)
 	{
 		m_fAbsorbTime += fTimeElapsed;
-		XMVECTOR xmvToTarget = XMLoadFloat3(&m_pTargetObject->GetPosition());
+		XMVECTOR xmvTarget = XMLoadFloat3(&m_pTargetObject->GetPosition());
 		XMVECTOR xvPos = XMLoadFloat3(&CBillboardObject::GetPosition());
-		xmvToTarget = xmvToTarget - xvPos;
-		xmvToTarget = XMVector3Normalize(xmvToTarget);
+		XMVECTOR xmvToTarget = xmvTarget - xvPos;
+		xmvToTarget = XMVector3Normalize(xmvToTarget) * 2.0f;
 
 		XMVECTOR xvSpeed = XMVectorReplicate(m_fSpeed);
+		XMVECTOR xvRandom = XMLoadFloat3(&m_xvRandomVelocity);
 
-		xvPos = (0.5f * xmvToTarget * m_fAbsorbTime * m_fAbsorbTime) + (xvSpeed * m_fAbsorbTime) + xvPos;
+		xvPos = (0.5f * xmvToTarget * m_fAbsorbTime * m_fAbsorbTime) + (xvRandom * m_fAbsorbTime) + xvPos;
 		XMFLOAT3 xmfPos;
 		XMStoreFloat3(&xmfPos, xvPos);
 		CBillboardObject::SetPosition(xmfPos);
 
-		XMVECTOR lengthSq = XMVector3LengthSq(xmvToTarget - xvPos);
+		XMVECTOR lengthSq = XMVector3LengthSq(xmvTarget - xvPos);
 		float flengthSq;
 		XMStoreFloat(&flengthSq, lengthSq);
 
-		if (flengthSq <= 100.0f)
+		if (flengthSq < 100.0f && m_fAbsorbTime > 0.3f)
 		{
-			SendGameMessage(this, eMessage::MSG_COLLIDE);
+			GetGameMessage(this, eMessage::MSG_COLLIDE);
 		}
 	}
 }
@@ -833,4 +834,16 @@ void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG)
 	case eMessage::MSG_NORMAL:
 		return;
 	}
+}
+
+bool CAbsorbMarble::IsVisible(CCamera *pCamera)
+{
+	bool bIsVisible = m_bActive;
+
+	if (pCamera)
+		bIsVisible = CBillboardObject::IsVisible(pCamera);
+	else if (!bIsVisible || m_bAbsorb)
+		bIsVisible = m_bActive = true;
+
+	return(bIsVisible);
 }

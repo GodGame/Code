@@ -139,7 +139,7 @@ public:
 	UINT GetSize() { return m_uSize; }
 
 public:
-	bool IsVisible(CCamera *pCamera = nullptr);
+	virtual bool IsVisible(CCamera *pCamera = nullptr);
 
 	//로컬 x-축, y-축, z-축 방향으로 이동한다.
 	void MoveStrafe(float fDistance = 1.0f);
@@ -287,7 +287,7 @@ public:
 
 //	virtual void UpdateBoundingBox();
 	virtual void SetPosition(XMFLOAT3& xv3Position);
-	bool IsVisible(CCamera *pCamera = nullptr);
+	virtual bool IsVisible(CCamera *pCamera = nullptr);
 	XMFLOAT4& GetInstanceData() { return m_xv4InstanceData; }
 };
 
@@ -302,11 +302,13 @@ class CAbsorbMarble : public CBillboardObject
 
 public:
 	CAbsorbMarble();
+	CAbsorbMarble(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size);
 	~CAbsorbMarble();
 
 	void Initialize();
 	void SetTarget(CGameObject * pGameObject);
 
+	virtual bool IsVisible(CCamera *pCamera = nullptr);
 	virtual void Animate(float fTimeElapsed);
 	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
 };

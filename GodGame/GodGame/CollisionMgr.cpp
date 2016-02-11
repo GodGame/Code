@@ -3,9 +3,9 @@
 #include "Object.h"
 #include "Camera.h"
 #include <algorithm>
-//typedef pair<QuadTree*, CGameObject*> DynamicInfo;
-//static vector<CGameObject*> gvcContainedArray;
-//static vector<DynamicInfo> gvDynamicArray;
+
+vector<CGameObject*> gvcCollideList;
+
 
 void AABB::Union(XMFLOAT3& xv3Minimum, XMFLOAT3& xv3Maximum)
 {
@@ -327,7 +327,7 @@ Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
 		bbQuad.m_xv3Maximum = { (float)m_xmi3Center.x + m_uHalfWidth, (float)m_xmi3Center.y, (float)m_xmi3Center.z + m_uHalfLength };
 		bbQuad.m_xv3Minimum = { (float)m_xmi3Center.x - m_uHalfWidth, (float)m_xmi3Center.y, (float)m_xmi3Center.z - m_uHalfLength };
 
-		if (AABB::CollisionAABBBy2D(bbObj, bbQuad) == false)
+		if (!AABB::CollisionAABBBy2D(bbObj, bbQuad))
 			return Location(LOC_NONE);
 	}
 	bbQuad.m_xv3Maximum = { (float)m_xmi3Center.x, (float)m_xmi3Center.y, (float)m_xmi3Center.z };
@@ -399,6 +399,7 @@ QuadTree * QuadTree::EntityObject(CGameObject * pObject)
 
 	if (eLoc != Location::LOC_ALL && !m_bLeaf)
 		return m_pNodes[eLoc]->EntityObject(pObject);
+
 	m_vpObjectList.push_back(pObject);
 	return this;
 }
@@ -409,18 +410,18 @@ void QuadTree::DeleteObject(CGameObject * pObject)
 
 	if (eLoc != Location::LOC_ALL && !m_bLeaf) 
 	{
-		m_pNodes[eLoc]->EntityObject(pObject);
+		m_pNodes[eLoc]->DeleteObject(pObject);
 		return;
 	}
 	auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
 	m_vpObjectList.erase(it);
 }
 
-bool QuadTree::SphereCollision(CGameObject * pTarget)
+bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*> & vcContainedArray)
 {
 	bool bCheck = false;
 	if (m_pNodes[LOC_PARENT])
-		bCheck = m_pNodes[LOC_PARENT]->SphereCollision(pTarget);
+		bCheck = m_pNodes[LOC_PARENT]->SphereCollision(pTarget, vcContainedArray);
 
 	CGameObject * pObject = nullptr;
 	BoundingSphere target, objbb;
@@ -437,7 +438,9 @@ bool QuadTree::SphereCollision(CGameObject * pTarget)
 			if (target.Intersects(objbb))
 			{
 				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
-				if (!bCheck) bCheck = true;
+				vcContainedArray.push_back(pObject);
+				if (!bCheck) 
+					bCheck = true;
 				//CGameObject::MessageObjToObj(pTarget, pObject, eMessage::MSG_COLLIDE)
 			}
 		}
@@ -456,6 +459,7 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 		{
 			vector<CGameObject*>::iterator it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
 			m_vpObjectList.erase(it);
+			pObj->UpdateBoundingBox();
 		}
 		if (eContain == Location::LOC_NONE) // 충돌하지 않으면 부모로 올라가 찾아본다.
 			return m_pNodes[Location::LOC_PARENT]->RenewalObject(pObj, false);
@@ -464,7 +468,7 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 			return m_pNodes[eContain]->RenewalObject(pObj, false);
 
 		// 말단 노드이면 오브젝트를 추가한다.
-		pObj->UpdateBoundingBox();
+	//	pObj->UpdateBoundingBox();
 		m_vpObjectList.push_back(pObj);
 		pObj = nullptr;
 	}
@@ -482,7 +486,7 @@ CQuadTreeManager::CQuadTreeManager()
 {
 	m_pRootTree = nullptr;
 
-	m_vcContainedArray.reserve(200);
+	m_vcContainedArray.reserve(1000);
 	m_vcDynamicArray.reserve(100);
 }
 
@@ -520,19 +524,35 @@ void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
 	m_pRootTree->FrustumCulling(pCamera);
 }
 
-bool CQuadTreeManager::IsCollide(CGameObject * pObject)
+vector<CGameObject*>& CQuadTreeManager::IsCollide(CGameObject * pObject)
 {
+	m_vcContainedArray.clear();
 	QuadTree * pTree = GetDynamicInfo(pObject)->first;
-	bool bResult = pTree->SphereCollision(pObject);
+	pTree->SphereCollision(pObject, m_vcContainedArray);
 
-	return bResult;
+	return m_vcContainedArray;
+}
+
+UINT CQuadTreeManager::ContainedErase()
+{
+	UINT sz = m_vcContainedArray.size();
+	if (sz > 0) 
+	{
+		for (int i = sz - 1; i >= 0; --i)
+		{
+			m_pRootTree->DeleteObject(m_vcContainedArray[i]);
+			m_vcContainedArray.pop_back();
+		}
+	}
+	return sz;
 }
 
 vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pObject)
 {
 	m_vcContainedArray.clear();
 
-	if (m_pRootTree) m_pRootTree->FindContainedObjects_InChilds(pObject, m_vcContainedArray);
+	if (m_pRootTree) 
+		m_pRootTree->FindContainedObjects_InChilds(pObject, m_vcContainedArray);
 
 	return &m_vcContainedArray;
 }
