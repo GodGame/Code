@@ -57,6 +57,8 @@ using namespace DirectX;
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
+#include <list>
 #include <time.h>
 //#include <ASSERT.h>
 
@@ -69,6 +71,11 @@ using namespace DirectX;
 #define _QUAD_TREE
 
 using namespace std;
+
+ostream& operator<<(ostream& os, XMFLOAT3 & xmf3);
+ostream& operator<<(ostream& os, XMFLOAT4 & xmf4);
+
+ostream& operator<<(ostream& os, XMFLOAT4X4 & mtx);
 
 
 #endif

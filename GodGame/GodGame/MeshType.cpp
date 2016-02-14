@@ -50,7 +50,7 @@ CMesh::~CMesh()
 
 void CMesh::AssembleToVertexBuffer(int nBuffers, ID3D11Buffer **ppd3dBuffers, UINT *pnBufferStrides, UINT *pnBufferOffsets)
 {
-	printf("1");
+	//printf("1");
 	ID3D11Buffer **ppd3dNewVertexBuffers = new ID3D11Buffer*[m_nBuffers + nBuffers];
 	UINT *pnNewVertexStrides = new UINT[m_nBuffers + nBuffers];
 	UINT *pnNewVertexOffsets = new UINT[m_nBuffers + nBuffers];

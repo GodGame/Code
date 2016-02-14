@@ -123,14 +123,11 @@ void VerticalBloom(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThrea
 													  //		gtxtResult[vDispatchThreadID.xy] = gTextureCache2[vGroupThreadID.y];
 }
 
-
 [numthreads(256, 1, 1)]
 void HorizonBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThreadID : SV_DispatchThreadID)
 {
-	//uint2 ftLength = gtxtInput.Length;
-	float fLum = lum[0] * T_INVERSE;// *(g_Inverse + 0.01f);
-	float4 vColor;
-	if (vGroupThreadID.x  < 5)
+	//float fLum = lum[0] * T_INVERSE;
+	if (vGroupThreadID.x < 5)
 	{
 		int x = max(vDispatchThreadID.x - 5, 0);
 		gTextureCache[vGroupThreadID.x] = gtxtInput[int2(x, vDispatchThreadID.y)];
@@ -144,31 +141,21 @@ void HorizonBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThreadI
 
 	GroupMemoryBarrierWithGroupSync();
 
-	float4 cBluerredColor = float4(0, 0, 0, 0);//float4(1, 1, 1, 1);
-	float4 pickColor;
-	//	if (gTextureCache[vGroupThreadID.x].a >= gThreshold) {
+	float4 cBluerredColor = float4(0, 0, 0, 0);
 
 	[unroll]
 	for (int i = -5; i <= 5; ++i)
 	{
 		int k = vGroupThreadID.x + 5 + i;
-		pickColor = gTextureCache[k];
-		cBluerredColor += gWeights[i + 5] * pickColor;// *pickColor.aaaa;
+		cBluerredColor += gWeights[i + 5] * gTextureCache[k];
 	}
 
-	gtxtResult[vDispatchThreadID.xy] = cBluerredColor; //*gWeights[6];
-													   //	}
-													   //	else
-													   //		gtxtResult[vDispatchThreadID.xy] = gTextureCache[vGroupThreadID.x];
+	gtxtResult[vDispatchThreadID.xy] = cBluerredColor;
 }
-
 
 [numthreads(1, 240, 1)]
 void VerticalBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThreadID : SV_DispatchThreadID)
 {
-	//uint2 ftLength = gtxtInput.Length;
-	//float fLum = lum[0] * T_INVERSE;// *(g_Inverse + 0.01f);
-
 	if (vGroupThreadID.y  < 5)
 	{
 		int y = max(vDispatchThreadID.y - 5, 0);
@@ -183,19 +170,45 @@ void VerticalBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThread
 
 	GroupMemoryBarrierWithGroupSync();
 
-	float4 cBluerredColor = float4(0, 0, 0, 0);//float4(1, 1, 1, 1);
-	float4 pickColor;
-	//	if (gTextureCache2[vGroupThreadID.y].a >= gThreshold) {
+	float4 cBluerredColor = float4(0, 0, 0, 0);
+
 	[unroll]
 	for (int i = -5; i <= 5; ++i)
 	{
 		int k = vGroupThreadID.y + 5 + i;
-		pickColor = gTextureCache2[k];
-		cBluerredColor += gWeights[i + 5] * pickColor;// *pickColor.aaaa;
+		cBluerredColor += gWeights[i + 5] * gTextureCache2[k];
 	}
 
-	gtxtResult[vDispatchThreadID.xy] = cBluerredColor;// *gWeights[6];
-													  //	}
-													  //	else
-													  //		gtxtResult[vDispatchThreadID.xy] = gTextureCache2[vGroupThreadID.y];
+	gtxtResult[vDispatchThreadID.xy] = cBluerredColor;
+}
+
+cbuffer convolution2// : register(b1)
+{
+	static float gRadialSample[10] = { -0.08f, -0.05f, -0.03f, -0.02f, -0.01f, 0.01f, 0.02f, 0.03f, 0.05f, 0.08f};
+};
+#define BlurWidth 5.0f
+
+[numthreads(32, 32, 1)]
+void RadialBlur(uint3 vGroupThreadID : SV_GroupThreadID, uint3 vDispatchThreadID : SV_DispatchThreadID)
+{
+	float2 Size = g_inputSize;
+	float2 uv = float2(vDispatchThreadID.xy) / Size;
+	float2 dir = 0.5f - uv;
+	float dist = length(dir);
+	dir = dir / dist;
+
+	float4 diffuse = gtxtInput[vDispatchThreadID.xy];
+	float4 cBluerredColor = diffuse;
+
+	[unroll]
+	for (int i = 0; i < 10; ++i)
+	{
+		cBluerredColor += gtxtInput[uint2((uv + dir * gRadialSample[i]) * Size)];
+	}
+	cBluerredColor *= 1.0f / 11.0f;
+
+	float T = dist * BlurWidth;
+	T = clamp(T, 0.0f, 1.0f);
+
+	gtxtResult[vDispatchThreadID.xy] = diffuse * (1.0f - T) + (cBluerredColor * T);
 }

@@ -497,7 +497,7 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3dUAVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	d3dUAVDesc.Texture2D.MipSlice = 0;
 
-	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;//DXGI_FORMAT_R8G8B8A8_UNORM;
+	d3dUAVDesc.Format = d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.25f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.25f;
 	{
@@ -568,6 +568,25 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;// | D3D11_BIND_UNORDERED_ACCESS;
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "sr2d_PostResult"); pSRV->Release();
+		InsertRTV(pRTV, "sr2d_PostResult"); pRTV->Release();
+	}
+	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+	{
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
+		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		if (pTx2D) pTx2D->Release();
+
+		InsertSRV(pSRV, "su2d_radial"); pSRV->Release();
+		InsertUAV(pUAV, "su2d_radial"); pUAV->Release();
+	}
 	//{
 	//	ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
 	//	ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
@@ -581,11 +600,11 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	// Create two buffers for ping-ponging in the reduction operation used for calculating luminance
 	D3D11_BUFFER_DESC DescBuffer;
 	ZeroMemory(&DescBuffer, sizeof(D3D11_BUFFER_DESC));
-	DescBuffer.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-	DescBuffer.ByteWidth = int(ceil(FRAME_BUFFER_WIDTH / 8.0f) * ceil(FRAME_BUFFER_HEIGHT / 8.0f)) * sizeof(float);
-	DescBuffer.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	DescBuffer.BindFlags           = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	DescBuffer.ByteWidth           = int(ceil(FRAME_BUFFER_WIDTH / 8.0f) * ceil(FRAME_BUFFER_HEIGHT / 8.0f)) * sizeof(float);
+	DescBuffer.MiscFlags           = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
 	DescBuffer.StructureByteStride = sizeof(float);
-	DescBuffer.Usage = D3D11_USAGE_DEFAULT;
+	DescBuffer.Usage               = D3D11_USAGE_DEFAULT;
 	{
 		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer1)));
 		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer2)));
@@ -600,10 +619,10 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	// Create UAV on the above two buffers object
 	D3D11_UNORDERED_ACCESS_VIEW_DESC DescUAV;
 	ZeroMemory(&DescUAV, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
-	DescUAV.Format = DXGI_FORMAT_UNKNOWN;
-	DescUAV.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+	DescUAV.Format              = DXGI_FORMAT_UNKNOWN;
+	DescUAV.ViewDimension       = D3D11_UAV_DIMENSION_BUFFER;
 	DescUAV.Buffer.FirstElement = 0;
-	DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
+	DescUAV.Buffer.NumElements  = DescBuffer.ByteWidth / sizeof(float);
 	{
 		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer1, &DescUAV, &pUAV)));
 		InsertUAV(pUAV, "su_reduce1"); pUAV->Release();
@@ -613,10 +632,10 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	// Create resource view for the two buffers object
 	D3D11_SHADER_RESOURCE_VIEW_DESC DescRV;
 	ZeroMemory(&DescRV, sizeof(DescRV));
-	DescRV.Format = DXGI_FORMAT_UNKNOWN;
-	DescRV.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+	DescRV.Format              = DXGI_FORMAT_UNKNOWN;
+	DescRV.ViewDimension       = D3D11_SRV_DIMENSION_BUFFER;
 	DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
-	DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;
+	DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
 	{
 		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer1, &DescRV, &pSRV)));
 		InsertSRV(pSRV, "su_reduce1"); pSRV->Release();
@@ -627,7 +646,7 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 		DescBuffer.ByteWidth = sizeof(float) * 16;
 		DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
 		DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
-		DescRV.Buffer.NumElements = DescUAV.Buffer.NumElements;
+		DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
 
 		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer3)));
 		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer3, &DescUAV, &pUAV)));

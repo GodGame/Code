@@ -77,19 +77,6 @@ public:
 	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 };
 
-enum eMessage
-{
-	MSG_NONE = -1,
-	MSG_NORMAL = 0,
-	MSG_COLLIDE,
-	MSG_COLLIDED,
-	MSG_DAMAGED,
-	MSG_GETPOINT,
-
-	MSG_CULL_OUT,
-	MSG_CULL_IN
-};
-
 class CGameObject
 {
 public:
@@ -112,10 +99,10 @@ public:
 
 	XMFLOAT4X4	 m_xmf44World;
 	//객체가 가지는 메쉬들에 대한 포인터와 그 개수이다.
-	CMesh **m_ppMeshes;
-	int m_nMeshes;
-	AABB m_bcMeshBoundingCube;
-	//AABB m_bcMeshBoundingCube;
+	CMesh **     m_ppMeshes;
+	int          m_nMeshes;
+	AABB         m_bcMeshBoundingCube;
+	//AABB       m_bcMeshBoundingCube;
 
 public:
 	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
@@ -268,7 +255,7 @@ public:
 class CSkyBox : public CGameObject
 {
 public:
-	CSkyBox(ID3D11Device *pd3dDevice);
+	CSkyBox(ID3D11Device *pd3dDevice, UINT uImageNum);
 	virtual ~CSkyBox();
 
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);

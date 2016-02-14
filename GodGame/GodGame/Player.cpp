@@ -22,6 +22,8 @@ CPlayer::CPlayer(int nMeshes) : CGameObject(nMeshes)
 	m_fRoll                 = 0.0f;
 	m_fYaw                  = 0.0f;
 
+	m_nEnergy = 0;
+
 	m_pPlayerUpdatedContext = nullptr;
 	m_pCameraUpdatedContext = nullptr;
 }
@@ -173,11 +175,11 @@ void CPlayer::Rotate(float x, float y, float z)
 	}
 
 	/*회전으로 인해 플레이어의 로컬 x-축, y-축, z-축이 서로 직교하지 않을 수 있으므로 z-축(LookAt 벡터)을 기준으로 하여 서로 직교하고 단위벡터가 되도록 한다.*/
-	xmvLook = XMVector3Normalize(xmvLook);
+	xmvLook  = XMVector3Normalize(xmvLook);
 	xmvRight = XMVector3Cross(xmvUp, xmvLook);
 	xmvRight = XMVector3Normalize(xmvRight);
-	xmvUp = XMVector3Cross(xmvLook, xmvRight);
-	xmvUp = XMVector3Normalize(xmvUp);
+	xmvUp    = XMVector3Cross(xmvLook, xmvRight);
+	xmvUp    = XMVector3Normalize(xmvUp);
 
 	XMStoreFloat3(&m_xv3Right, xmvRight);
 	XMStoreFloat3(&m_xv3Up, xmvUp);
@@ -336,8 +338,10 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 void CPlayer::Animate(float fTimeElapsed)
 {
 	UINT uSize = m_uSize;
-	m_uSize = 100.0f;
-	vector<CGameObject*> vcArray = QUADMgr.IsCollide(this);
+	m_uSize = 50.0f;
+	vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
+	m_nEnergy += vcArray.size();
+	cout << "에너지 : " << m_nEnergy << endl;
 	//for (auto it = vcArray.begin(); it != vcArray.end(); ++it)
 	//{
 	//	vcArray.

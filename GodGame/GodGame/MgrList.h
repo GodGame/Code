@@ -6,7 +6,7 @@
 #include "ResourceMgr.h"
 #include "ShadowMgr.h"
 #include "CollisionMgr.h"
-
+#include "EventMgr.h"
 
 class CManagers
 {
@@ -17,6 +17,12 @@ public:
 		TXMgr.BuildResources(pd3dDevice);
 		MaterialMgr.BuildResources(pd3dDevice);
 		ShadowMgr.CreateShadowDevice(pd3dDevice);
+	}
+
+	static void Update(CCamera * pCamera, float fFrameTime)
+	{
+		QUADMgr.Update(pCamera);
+		EVENTMgr.Update(fFrameTime);
 	}
 };
 

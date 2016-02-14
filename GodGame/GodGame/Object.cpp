@@ -508,9 +508,9 @@ CHeightMapTerrain::~CHeightMapTerrain()
 }
 
 #define SKYBOX_CUBE
-CSkyBox::CSkyBox(ID3D11Device *pd3dDevice) : CGameObject(1)
+CSkyBox::CSkyBox(ID3D11Device *pd3dDevice, UINT uImageNum) : CGameObject(1)
 {
-	CSkyBoxMesh *pSkyBoxMesh = new CSkyBoxMesh(pd3dDevice, 20.0f, 20.0f, 20.0f);
+	CSkyBoxMesh *pSkyBoxMesh = new CSkyBoxMesh(pd3dDevice, uImageNum, 20.0f, 20.0f, 20.0f);
 	SetMesh(pSkyBoxMesh, 0);
 }
 
@@ -572,18 +572,19 @@ bool CBillboardObject::IsVisible(CCamera *pCamera)
 
 	if (pCamera)
 	{
-		AABB BoundingBox = m_bcMeshBoundingCube;
-		XMVECTOR xmvMin = XMLoadFloat3(&BoundingBox.m_xv3Minimum);
-		XMVECTOR xmvMax = XMLoadFloat3(&BoundingBox.m_xv3Maximum);
-		XMVECTOR xmvPos = XMLoadFloat4(&m_xv4InstanceData);
+		m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());
+	//	AABB BoundingBox = m_bcMeshBoundingCube;
+		//XMVECTOR xmvMin = XMLoadFloat3(&BoundingBox.m_xv3Minimum);
+		//XMVECTOR xmvMax = XMLoadFloat3(&BoundingBox.m_xv3Maximum);
+		//XMVECTOR xmvPos = XMLoadFloat4(&m_xv4InstanceData);
 
-		xmvMin += xmvPos;
-		xmvMax += xmvPos;
+		//xmvMin += xmvPos;
+		//xmvMax += xmvPos;
 
-		XMStoreFloat3(&BoundingBox.m_xv3Maximum, xmvMax);
-		XMStoreFloat3(&BoundingBox.m_xv3Minimum, xmvMin);
+		//XMStoreFloat3(&BoundingBox.m_xv3Maximum, xmvMax);
+		//XMStoreFloat3(&BoundingBox.m_xv3Minimum, xmvMin);
 		//m_BoundingBox.Update(m_xmf44World, &m_BoundingBox);
-		bIsVisible = pCamera->IsInFrustum(&BoundingBox);
+		bIsVisible = pCamera->IsInFrustum(&m_bcMeshBoundingCube);
 	}
 
 	XMFLOAT3 xmfPos = GetPosition();
@@ -774,13 +775,19 @@ void CAbsorbMarble::SetTarget(CGameObject * pGameObject)
 		m_pTargetObject = pGameObject;
 		m_bAbsorb = true;
 
-		m_xvRandomVelocity.x = Chae::RandomFloat(0, 1);
-		m_xvRandomVelocity.y = Chae::RandomFloat(0, 1);
-		m_xvRandomVelocity.z = Chae::RandomFloat(0, 1);
+		XMVECTOR xmvTarget = XMLoadFloat3(&m_pTargetObject->GetPosition());
+		XMVECTOR xvPos = XMLoadFloat3(&CBillboardObject::GetPosition());
+		XMVECTOR xmvFromTarget = xvPos - xmvTarget;
+		xmvFromTarget = XMVector3Normalize(xmvFromTarget);
+		XMStoreFloat3(&m_xvRandomVelocity, xmvFromTarget);
+
+		m_xvRandomVelocity.y = abs(m_xvRandomVelocity.y);
+		//m_xvRandomVelocity.x = Chae::RandomFloat(0, 1);
+		//m_xvRandomVelocity.y = Chae::RandomFloat(0, 1);
+		//m_xvRandomVelocity.z = Chae::RandomFloat(0, 1);
 
 		m_fSpeed = rand() % 10 + 10.0f;
 
-		Chae::XMFloat3Normalize(&m_xvRandomVelocity);
 	}
 }
 

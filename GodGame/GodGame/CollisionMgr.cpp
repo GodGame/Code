@@ -4,8 +4,14 @@
 #include "Camera.h"
 #include <algorithm>
 
-vector<CGameObject*> gvcCollideList;
+//int giTreeNum = 0;
 
+ostream & operator<<(ostream & os, AABB & bb)
+{
+	os << "MAX : " << bb.m_xv3Maximum << endl;
+	os << "MIN : " << bb.m_xv3Minimum;
+	return os;
+}
 
 void AABB::Union(XMFLOAT3& xv3Minimum, XMFLOAT3& xv3Maximum)
 {
@@ -92,8 +98,8 @@ bool AABB::CollisionAABBBy2D(AABB & one, AABB & two)
 {
 	if (one.m_xv3Minimum.x > two.m_xv3Maximum.x) return false;
 	if (one.m_xv3Minimum.z > two.m_xv3Maximum.z) return false;
-	if (two.m_xv3Minimum.x > two.m_xv3Maximum.x) return false;
-	if (two.m_xv3Minimum.z > two.m_xv3Maximum.z) return false;
+	if (two.m_xv3Minimum.x > one.m_xv3Maximum.x) return false;
+	if (two.m_xv3Minimum.z > one.m_xv3Maximum.z) return false;
 
 	return true;
 }
@@ -217,6 +223,9 @@ QuadTree::QuadTree()
 
 	m_bLeaf = false;
 	m_bCulled = true;
+
+	m_uTreeNum = 0;
+	m_uTreeLevel = 0;
 }
 
 QuadTree::~QuadTree()
@@ -224,11 +233,11 @@ QuadTree::~QuadTree()
 	for (int i = 0; i < 4; ++i) if (m_pNodes[i]) delete m_pNodes[i];
 }
 
-void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
+void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent, UINT uLevel)
 {
 	static UINT nBuilds = 0;
-	nBuilds++;
-	cout << nBuilds << endl;
+	m_uTreeNum = nBuilds++;
+	m_uTreeLevel = uLevel;
 
 	m_pNodes[Location::LOC_PARENT] = pParent;
 
@@ -247,26 +256,26 @@ void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, Quad
 	XMFLOAT3 xmf3Temp = { 0, 0, 0 };
 	xmf3Temp.x = (float)m_xmi3Center.x - uNextHalfWidth;
 	xmf3Temp.z = (float)m_xmi3Center.z - uNextHalfLength;
-	m_pNodes[Location::LOC_LB] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+	m_pNodes[Location::LOC_LB] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this, m_uTreeLevel + 1);
 
 	xmf3Temp.x = (float)m_xmi3Center.x + uNextHalfWidth;
 	xmf3Temp.z = (float)m_xmi3Center.z - uNextHalfLength;
-	m_pNodes[Location::LOC_RB] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+	m_pNodes[Location::LOC_RB] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this, m_uTreeLevel + 1);
 
 	xmf3Temp.x = (float)m_xmi3Center.x - uNextHalfWidth;
 	xmf3Temp.z = (float)m_xmi3Center.z + uNextHalfLength;
-	m_pNodes[Location::LOC_LT] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+	m_pNodes[Location::LOC_LT] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this, m_uTreeLevel + 1);
 
 	xmf3Temp.x = (float)m_xmi3Center.x + uNextHalfWidth;
 	xmf3Temp.z = (float)m_xmi3Center.z + uNextHalfLength;
-	m_pNodes[Location::LOC_RT] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this);
+	m_pNodes[Location::LOC_RT] = QuadTree::CreateQuadTrees(xmf3Temp, m_uHalfWidth, m_uHalfLength, this, m_uTreeLevel + 1);
 }
 
-QuadTree * QuadTree::CreateQuadTrees(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
+QuadTree * QuadTree::CreateQuadTrees(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent, UINT uLevel)
 {
 	QuadTree * pTree = new QuadTree();
 
-	pTree->BuildNodes(xmf3Center, uWidth, uLength, pParent);
+	pTree->BuildNodes(xmf3Center, uWidth, uLength, pParent, uLevel);
 
 	return pTree;
 }
@@ -401,6 +410,7 @@ QuadTree * QuadTree::EntityObject(CGameObject * pObject)
 		return m_pNodes[eLoc]->EntityObject(pObject);
 
 	m_vpObjectList.push_back(pObject);
+	cout << "등록 : " << m_uTreeNum << endl;
 	return this;
 }
 
@@ -417,36 +427,52 @@ void QuadTree::DeleteObject(CGameObject * pObject)
 	m_vpObjectList.erase(it);
 }
 
-bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*> & vcContainedArray)
+void QuadTree::EraseObject(CGameObject * pObject)
+{
+	auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
+	m_vpObjectList.erase(it);
+}
+
+bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*>* pContainedArray)
 {
 	bool bCheck = false;
 	if (m_pNodes[LOC_PARENT])
-		bCheck = m_pNodes[LOC_PARENT]->SphereCollision(pTarget, vcContainedArray);
+		bCheck |= m_pNodes[LOC_PARENT]->SphereCollision(pTarget, pContainedArray, true);
 
-	CGameObject * pObject = nullptr;
-	BoundingSphere target, objbb;
-	target.Center = pTarget->GetPosition();
-	target.Radius = pTarget->GetSize();
-
-	for (auto it = m_vpObjectList.begin(); it != m_vpObjectList.end(); ++it)
+	if (!m_bLeaf)
 	{
-		pObject = *it;
-		if (pTarget != pObject)
-		{
-			objbb.Center = pObject->GetPosition();
-			objbb.Radius = pObject->GetSize();
-			if (target.Intersects(objbb))
-			{
-				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
-				vcContainedArray.push_back(pObject);
-				if (!bCheck) 
-					bCheck = true;
-				//CGameObject::MessageObjToObj(pTarget, pObject, eMessage::MSG_COLLIDE)
-			}
-		}
+		for (int i = 0; i < 4; ++i)
+			bCheck |= m_pNodes[i]->SphereCollision(pTarget, pContainedArray, false);
 	}
+
+	if (pContainedArray)
+		bCheck |= COLLISION.SphereCollisionOneToMul(pTarget, m_vpObjectList, *pContainedArray);
+	else
+		bCheck |= COLLISION.SphereCollisionOneToMul(pTarget, m_vpObjectList);
+
 	return bCheck;
 }
+
+bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*> * pContainedArray, bool bIsUp)
+{
+	bool bCheck = false;
+	if (bIsUp && m_pNodes[LOC_PARENT])
+		bCheck |= m_pNodes[LOC_PARENT]->SphereCollision(pTarget, pContainedArray, true);
+
+	if (!bIsUp && !m_bLeaf)
+	{
+		for (int i = 0; i < 4; ++i)
+			bCheck |= m_pNodes[i]->SphereCollision(pTarget, pContainedArray, false);
+	}
+
+	if (pContainedArray)
+		bCheck |= COLLISION.SphereCollisionOneToMul(pTarget, m_vpObjectList, *pContainedArray);
+	else
+		bCheck |= COLLISION.SphereCollisionOneToMul(pTarget, m_vpObjectList);
+
+	return bCheck;
+}
+
 
 QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 {
@@ -475,7 +501,7 @@ QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
 
 	if (pObj && bStart == false)
 	{
-		pObj->UpdateBoundingBox();
+		//pObj->UpdateBoundingBox();
 		m_vpObjectList.push_back(pObj);
 	}
 	return this;
@@ -504,7 +530,7 @@ CQuadTreeManager & CQuadTreeManager::GetInstance()
 void CQuadTreeManager::BuildQuadTree(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent)
 {
 	if (nullptr == m_pRootTree)
-		m_pRootTree = QuadTree::CreateQuadTrees(xmf3Center, uWidth, uLength, pParent);
+		m_pRootTree = QuadTree::CreateQuadTrees(xmf3Center, uWidth, uLength, pParent, 0);
 }
 
 void CQuadTreeManager::ReleaseQuadTree()
@@ -524,13 +550,27 @@ void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
 	m_pRootTree->FrustumCulling(pCamera);
 }
 
-vector<CGameObject*>& CQuadTreeManager::IsCollide(CGameObject * pObject)
+vector<CGameObject*>& CQuadTreeManager::CollisionCheckList(CGameObject * pObject)
 {
 	m_vcContainedArray.clear();
 	QuadTree * pTree = GetDynamicInfo(pObject)->first;
-	pTree->SphereCollision(pObject, m_vcContainedArray);
+	
+	if (pTree->m_uTreeLevel > 3)
+		pTree = pTree->GetParentNode();
+	
+	pTree->SphereCollision(pObject, &m_vcContainedArray);
 
 	return m_vcContainedArray;
+}
+
+bool CQuadTreeManager::CollisionCheck(CGameObject * pObject)
+{
+	QuadTree * pTree = GetDynamicInfo(pObject)->first;
+
+	if (pTree->m_uTreeLevel > 3)
+		pTree = pTree->GetParentNode();
+
+	return pTree->SphereCollision(pObject, nullptr);
 }
 
 UINT CQuadTreeManager::ContainedErase()
@@ -597,17 +637,17 @@ UINT CQuadTreeManager::RenewalDynamicObjects()
 
 	for (auto it = m_vcDynamicArray.begin(); it != m_vcDynamicArray.end(); ++it)
 	{
-		pBefore = it->first;
+		pBefore = it->first;	
 		if (pBefore->IsCulled()) continue;
 
 		pObject = it->second;
 		pObject->UpdateBoundingBox();
-
 		pTree = pBefore->RenewalObject(pObject, true);
 
 		if (pBefore != pTree)
 		{
 			it->first = pTree;
+			cout << "새로운 트리 넘버 : " << pTree->m_uTreeNum << endl;
 			++uCountRenewal;
 		}
 	}
@@ -635,3 +675,75 @@ CCollisionMgr & CCollisionMgr::GetInstance()
 	static CCollisionMgr instance;
 	return instance;
 }
+
+CGameObject* CCollisionMgr::SphereCollisionObject(CGameObject * pTarget, vector<CGameObject*>& vcObjList)
+{
+	CGameObject * pObject = nullptr;
+	m_bbSphereTarget.Center = pTarget->GetPosition();
+	m_bbSphereTarget.Radius = pTarget->GetSize();
+
+	for (auto it = vcObjList.begin(); it != vcObjList.end(); ++it)
+	{
+		pObject = *it;
+		if (pTarget != pObject)
+		{
+			m_bbSphereOther.Center = pObject->GetPosition();
+			m_bbSphereOther.Radius = pObject->GetSize();
+			if (m_bbSphereTarget.Intersects(m_bbSphereOther))
+			{
+				return pObject;
+			}
+		}
+	}
+	return nullptr;
+}
+
+bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameObject*>& vcObjList)
+{
+	bool bCheck = false;
+	CGameObject * pObject = nullptr;
+	m_bbSphereTarget.Center = pTarget->GetPosition();
+	m_bbSphereTarget.Radius = pTarget->GetSize();
+
+	for (auto it = vcObjList.begin(); it != vcObjList.end(); ++it)
+	{
+		pObject = *it;
+		if (pTarget != pObject)
+		{
+			m_bbSphereOther.Center = pObject->GetPosition();
+			m_bbSphereOther.Radius = pObject->GetSize();
+			if (m_bbSphereTarget.Intersects(m_bbSphereOther))
+			{
+				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
+				if (!bCheck) bCheck = !bCheck;
+			}
+		}
+	}
+	return bCheck;
+}
+
+bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameObject*>& vcObjList, vector<CGameObject*>& vcContained)
+{
+	bool bCheck = false;
+	CGameObject * pObject = nullptr;
+	m_bbSphereTarget.Center = pTarget->GetPosition();
+	m_bbSphereTarget.Radius = pTarget->GetSize();
+
+	for (auto it = vcObjList.begin(); it != vcObjList.end(); ++it)
+	{
+		pObject = *it;
+		if (pTarget != pObject)
+		{
+			m_bbSphereOther.Center = pObject->GetPosition();
+			m_bbSphereOther.Radius = pObject->GetSize();
+			if (m_bbSphereTarget.Intersects(m_bbSphereOther))
+			{
+				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
+				vcContained.push_back(pObject);
+				if (!bCheck) bCheck = !bCheck;
+			}
+		}
+	}
+	return bCheck;
+}
+

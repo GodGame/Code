@@ -115,6 +115,9 @@
     <ClInclude Include="SceneTitle.h">
       <Filter>Local\3_Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="EventMgr.h">
+      <Filter>Global\2_Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -171,6 +174,9 @@
     <ClCompile Include="SceneTitle.cpp">
       <Filter>Local\3_Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="EventMgr.cpp">
+      <Filter>Global\2_Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GodGame.rc">
@@ -210,9 +216,6 @@
     <FxCompile Include="SSAO.fx">
       <Filter>Global\0_Effects\PostProcessing</Filter>
     </FxCompile>
-    <FxCompile Include="Final.fx">
-      <Filter>Global\0_Effects\PostProcessing</Filter>
-    </FxCompile>
     <FxCompile Include="PostDefine.fx">
       <Filter>Global\0_Effects\PostProcessing</Filter>
     </FxCompile>
@@ -224,6 +227,9 @@
     </FxCompile>
     <FxCompile Include="Common.fx">
       <Filter>Global\0_Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="Final.fx">
+      <Filter>Global\0_Effects\PostProcessing</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

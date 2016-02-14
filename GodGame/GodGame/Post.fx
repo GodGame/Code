@@ -64,12 +64,10 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	float4 color;
 	if (diffuse.a == 0.0)
 	{
-		color = txColor;
-		color = lerp(txColor, gFogColor, 0.9f);
+		color = FogColor(txColor, 0.9f);
 	}
 	else
 	{
-		//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
 		float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
 
 		float fShadowFactor = 0.3f;
@@ -78,19 +76,10 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 #else
 		fShadowFactor = CalcOneShadowFactor(shadowPos, fShadowFactor);
 #endif
-		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
-		//return float4(ColorToLum(color), 1);
-		//color += DirectLighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular);
-
-		color *= txColor;
-		//color = GammaToneMapping(color);
-		//color.a = fLightingAmount;
-		//color = pow(color, 2.2);
+		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular) * txColor;
 		float distance = length(pos - gvCameraPosition.xyz);
-
-		float fogLerp = saturate((distance - gFogStart) / gFogRange);
-		// Blend the fog color and the lit color.
-		color = lerp(color, gFogColor, fogLerp);
+		color = FogLerp(color, distance);
+		//color = FogExp(color, distance, 0.88f);
 	}
 #ifdef LUMCOLOR
 	color   = float4(LumToColor(color), 1);//float4(LumToColor(ColorToLum(rgb)), 1);

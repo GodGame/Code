@@ -68,7 +68,7 @@ protected:
 	CTexture *m_pSkyboxTexture;
 
 public:
-	CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth = 20.0f, float fHeight = 20.0f, float fDepth = 20.0f);
+	CSkyBoxMesh(ID3D11Device *pd3dDevice, UINT uImageNum, float fWidth = 20.0f, float fHeight = 20.0f, float fDepth = 20.0f);
 	virtual ~CSkyBoxMesh();
 
 	void OnChangeSkyBoxTextures(ID3D11Device *pd3dDevice, int nIndex = 0);

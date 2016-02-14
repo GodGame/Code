@@ -54,6 +54,29 @@ struct POST_CS
 	ID3D11Buffer              * m_pd3dCBBuffer;
 };
 
+struct POST_CS_VIEWS
+{
+	ID3D11ComputeShader       * m_pd3dComputeShader;
+	ID3D11UnorderedAccessView * m_pd3dUAV;
+	ID3D11ShaderResourceView  * m_pd3dSRV;
+	ID3D11RenderTargetView    * m_pd3dRTV;
+
+	POST_CS_VIEWS()
+	{
+		m_pd3dComputeShader = nullptr;
+		m_pd3dUAV           = nullptr;
+		m_pd3dSRV           = nullptr;
+		m_pd3dRTV           = nullptr;
+	}
+	~POST_CS_VIEWS()
+	{
+		if (m_pd3dComputeShader) m_pd3dComputeShader->Release();
+		if (m_pd3dUAV) m_pd3dUAV->Release();
+		if (m_pd3dSRV) m_pd3dSRV->Release();
+		if (m_pd3dRTV) m_pd3dRTV->Release();
+	}
+};
+
 template <int num>
 class POST_CS_NUM
 {
@@ -136,32 +159,40 @@ private:
 
 	//ID3D11ShaderResourceView * m_pd3dShadowSrv;
 
-	ID3D11RenderTargetView    * m_pd3dBackRTV;
+	ID3D11RenderTargetView     * m_pd3dBackRTV;
 
-	ID3D11RenderTargetView    * m_pd3dBloom4x4RTV;
-	ID3D11ShaderResourceView  * m_pd3dBloom4x4SRV;
-	ID3D11RenderTargetView    * m_pd3dBloom16x16RTV;
-	ID3D11ShaderResourceView  * m_pd3dBloom16x16SRV;
+	ID3D11RenderTargetView     * m_pd3dBloom4x4RTV;
+	ID3D11ShaderResourceView   * m_pd3dBloom4x4SRV;
+	ID3D11RenderTargetView     * m_pd3dBloom16x16RTV;
+	ID3D11ShaderResourceView   * m_pd3dBloom16x16SRV;
 
-	ID3D11UnorderedAccessView * m_pd3dPostUAV[2];
-	ID3D11ShaderResourceView  * m_pd3dPostSRV[2];
-	ID3D11UnorderedAccessView * m_pd3dPostScaledUAV[2];
-	ID3D11ShaderResourceView  * m_pd3dPostScaledSRV[2];
+	ID3D11UnorderedAccessView  * m_pd3dPostUAV[2];
+	ID3D11ShaderResourceView   * m_pd3dPostSRV[2];
+	ID3D11UnorderedAccessView  * m_pd3dPostScaledUAV[2];
+	ID3D11ShaderResourceView   * m_pd3dPostScaledSRV[2];
+	// 블룸 및 블러 자원들
+	ID3D11ComputeShader        * m_pd3dComputeHorzBlur;
+	ID3D11ComputeShader        * m_pd3dComputeVertBlur;
+	ID3D11ComputeShader        * m_pd3dComputeHorzBloom;
+	ID3D11ComputeShader        * m_pd3dComputeVertBloom;
+	
+	ID3D11Buffer               * m_pd3dCBComputeInfo;
+	ID3D11Buffer               * m_pd3dCBBloomInfo;
+	// 광적응 자원들
+	ID3D11ComputeShader        * m_pd3dCSAdaptLum;
+	ID3D11ComputeShader        * m_pd3dCSReduceToSingle;
+	ID3D11ShaderResourceView   * m_pd3dLastReducedSRV;
+	ID3D11UnorderedAccessView  * m_pd3dLastReducedUAV;
+	POST_CS_REPEATABLE           m_csReduce;
+	// Final을 걸쳐 그려질 View들
+	ID3D11RenderTargetView     * m_pd3dPostRenderRTV;
+	ID3D11ShaderResourceView   * m_pd3dPostRenderSRV;
 
-	ID3D11ComputeShader       * m_pd3dComputeHorzBlur;
-	ID3D11ComputeShader       * m_pd3dComputeVertBlur;
-	ID3D11ComputeShader       * m_pd3dComputeHorzBloom;
-	ID3D11ComputeShader       * m_pd3dComputeVertBloom;
+	ID3D11ComputeShader		   * m_pd3dCSRadialBlur;
+	ID3D11UnorderedAccessView  * m_pd3dRadialUAV;
+	ID3D11ShaderResourceView   * m_pd3dRadialSRV;
 
-	ID3D11Buffer              * m_pd3dCBComputeInfo;
-	ID3D11Buffer              * m_pd3dCBBloomInfo;
-
-	ID3D11ComputeShader       * m_pd3dCSAdaptLum;
-	ID3D11ComputeShader       * m_pd3dCSReduceToSingle;
-	ID3D11ShaderResourceView  * m_pd3dLastReducedSRV;
-	ID3D11UnorderedAccessView * m_pd3dLastReducedUAV;
-	POST_CS_REPEATABLE          m_csReduce;
-	//	POST_CS_BLOOMING        m_csBloom;
+	//POST_CS_VIEWS				m_csRadialBlur;
 
 public:
 	CSceneShader();
@@ -172,18 +203,22 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 	void PostProcessingRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG);
+	virtual void SendGameMessage(CShader * toObj, eMessage eMSG);
+
 public:
-	void FinalRender(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV[], UINT uRenderState, CCamera *pCamera = nullptr);
+	void ScreenRender    (ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pScreenSRV, UINT uRenderState);
+	void HDRFinalRender  (ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pBloomSRV[], UINT uRenderState, CCamera *pCamera = nullptr);
 	void MeasureLuminance(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	void SceneBlur(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	void Blooming(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	void DumpMap(ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pSRVsource, ID3D11RenderTargetView * pRTVTarget, DWORD dFrameWidth, DWORD dFrameHeight, CCamera * pCamera);
+	void SceneBlur       (ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	void Blooming        (ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	void DumpMap         (ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pSRVsource, ID3D11RenderTargetView * pRTVTarget, DWORD dFrameWidth, DWORD dFrameHeight, CCamera * pCamera);
+	void RadialBlur      (ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 public:
 	void SetTexture(int index, ID3D11ShaderResourceView * m_pSceneSRV);
 	void SetInfoTextures(ID3D11DeviceContext *pd3dDeviceContext);
-
-	//void SetLightSRV(ID3D11ShaderResourceView * pSRV) { m_pd3dShadowSrv = pSRV; }
 	void SetDrawOption(int iOpt) { m_iDrawOption = iOpt; }
 	int GetDrawOption() { return m_iDrawOption; }
 

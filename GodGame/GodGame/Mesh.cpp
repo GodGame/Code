@@ -283,7 +283,7 @@ void CTerrainPartMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	CMesh::Render(pd3dDeviceContext, uRenderState);
 }
 
-CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshTextured(pd3dDevice)
+CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, UINT uImageNum, float fWidth, float fHeight, float fDepth) : CMeshTextured(pd3dDevice)
 {
 	//스카이 박스는 6개의 면(사각형), 사각형은 정점 4개, 그러므로 24개의 정점이 필요하다.
 	m_nVertices = 24;
@@ -351,24 +351,24 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	::ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
-	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth      = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	::ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = m_pxv3Positions;
+	d3dBufferData.pSysMem        = m_pxv3Positions;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
 
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
-	d3dBufferData.pSysMem = pxv2TexCoords;
+	d3dBufferDesc.ByteWidth      = sizeof(XMFLOAT2)* m_nVertices;
+	d3dBufferData.pSysMem        = pxv2TexCoords;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
 
 	delete[] pxv2TexCoords;
 
 	ID3D11Buffer *pd3dBuffers[1] = { m_pd3dPositionBuffer };
-	UINT pnBufferStrides[1] = { sizeof(XMFLOAT3)};
-	UINT pnBufferOffsets[1] = { 0 };
+	UINT pnBufferStrides[1]      = { sizeof(XMFLOAT3)};
+	UINT pnBufferOffsets[1]      = { 0 };
 	AssembleToVertexBuffer(1, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
 
 	//삼각형 스트립으로 사각형 1개를 그리기 위해 인덱스는 4개가 필요하다.
@@ -381,43 +381,43 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	m_pnIndices[3] = 2;
 
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = sizeof(UINT)* m_nIndices;
-	d3dBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	d3dBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth      = sizeof(UINT)* m_nIndices;
+	d3dBufferDesc.BindFlags      = D3D11_BIND_INDEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = m_pnIndices;
+	d3dBufferData.pSysMem        = m_pnIndices;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
 
 	D3D11_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
 	ZeroMemory(&d3dDepthStencilDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
 	//스카이 박스 사각형들은 깊이 버퍼 알고리즘을 적용하지 않고 깊이 버퍼를 변경하지 않는다.
-	d3dDepthStencilDesc.DepthEnable = false;
-	d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	d3dDepthStencilDesc.DepthFunc = D3D11_COMPARISON_NEVER;
-	d3dDepthStencilDesc.StencilEnable = false;
-	d3dDepthStencilDesc.StencilReadMask = 0xFF;
-	d3dDepthStencilDesc.StencilWriteMask = 0xFF;
-	d3dDepthStencilDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	d3dDepthStencilDesc.DepthEnable                  = false;
+	d3dDepthStencilDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ZERO;
+	d3dDepthStencilDesc.DepthFunc                    = D3D11_COMPARISON_NEVER;
+	d3dDepthStencilDesc.StencilEnable                = false;
+	d3dDepthStencilDesc.StencilReadMask              = 0xFF;
+	d3dDepthStencilDesc.StencilWriteMask             = 0xFF;
+	d3dDepthStencilDesc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
 	d3dDepthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-	d3dDepthStencilDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	d3dDepthStencilDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	d3dDepthStencilDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	d3dDepthStencilDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-	d3dDepthStencilDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	d3dDepthStencilDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	d3dDepthStencilDesc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
+	d3dDepthStencilDesc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
+	d3dDepthStencilDesc.BackFace.StencilFailOp       = D3D11_STENCIL_OP_KEEP;
+	d3dDepthStencilDesc.BackFace.StencilDepthFailOp  = D3D11_STENCIL_OP_DECR;
+	d3dDepthStencilDesc.BackFace.StencilPassOp       = D3D11_STENCIL_OP_KEEP;
+	d3dDepthStencilDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
 	pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dDepthStencilState);
 
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
+	d3dSamplerDesc.AddressU              = D3D11_TEXTURE_ADDRESS_CLAMP;
+	d3dSamplerDesc.AddressV              = D3D11_TEXTURE_ADDRESS_CLAMP;
+	d3dSamplerDesc.AddressW              = D3D11_TEXTURE_ADDRESS_CLAMP;
+	d3dSamplerDesc.Filter                = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	d3dSamplerDesc.ComparisonFunc        = D3D11_COMPARISON_NEVER;
+	d3dSamplerDesc.MinLOD                = 0;
+	d3dSamplerDesc.MaxLOD                = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 
 	m_pSkyboxTexture = new CTexture(1, 1, TX_SLOT_CUBE_TEXTURE, SS_SLOT_CUBE_SAMPLER_STATE);
@@ -426,7 +426,7 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight, 
 	pd3dSamplerState->Release();
 	m_pSkyboxTexture->AddRef();
 
-	OnChangeSkyBoxTextures(pd3dDevice, 6);
+	OnChangeSkyBoxTextures(pd3dDevice, uImageNum);
 
 	//CMesh::CreateRasterizerState(pd3dDevice);
 }

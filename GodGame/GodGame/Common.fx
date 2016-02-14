@@ -43,19 +43,19 @@ cbuffer cbWorldMatrix : register(b1)
 
 cbuffer cbTerrain
 {
-	static int gWorldCell = 256;
-	static int gHegiht = 512;
-	static float gCameraMax = 500.0f;
-	static float gCameraMin = 20.0f;
+	static int gWorldCell     = 256;
+	static int gHegiht        = 512;
+	static float gCameraMax   = 500.0f;
+	static float gCameraMin   = 20.0f;
 
 	static float gScaleHeight = 32.0f;
 };
 
 cbuffer cbFixed
 {
-	static float  gFogStart = 20.0f;
-	static float  gFogRange = 400.0f;
-	static float4 gFogColor = float4(0.5, 0.4, 0.3, 0.0);
+	static float  gFogStart        = 20.0f;
+	static float  gFogRangeInverse = 1 / 400.0f;
+	static float4 gFogColor        = float4(0.1, 0.1, 0.15, 0.0);
 };
 
 cbuffer cbQuad 
@@ -98,3 +98,22 @@ struct PS_MRT_OUT
 	float4 vNormal  : SV_Target4;
 	//float4 vDepth : SV_Target4;
 };
+
+float4 FogColor(float4 color, float flerp)
+{
+	return lerp(color, gFogColor, flerp);
+}
+
+float4 FogExp(float4 color, float distance, float fFogDestiny)
+{
+	float fRate = 1.1f - saturate((distance - gFogStart) * gFogRangeInverse);
+	float f = exp(-(fRate * fFogDestiny));
+	return lerp(color, gFogColor, f);
+}
+
+float4 FogLerp(float4 color, float distance)
+{
+	float f = saturate((distance - gFogStart) * gFogRangeInverse);
+	return lerp(color, gFogColor, f);
+}
+

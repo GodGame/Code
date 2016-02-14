@@ -36,6 +36,8 @@ protected:
 	CCamera *m_pCamera;
 
 public:
+	int m_nEnergy;
+
 	CPlayer(int nMeshes = 1);
 	virtual ~CPlayer();
 

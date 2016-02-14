@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CollisionMgr.h" />
+    <ClInclude Include="EventMgr.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="GodGame.h" />
     <ClInclude Include="MgrList.h" />
@@ -190,6 +191,7 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionMgr.cpp" />
+    <ClCompile Include="EventMgr.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />

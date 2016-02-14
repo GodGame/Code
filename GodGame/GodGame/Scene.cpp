@@ -69,6 +69,33 @@ void CScene::ReleaseShaderVariables()
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
 }
 
+void CScene::GetGameMessage(CScene * byObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	default:
+		return;
+	}
+}
+
+void CScene::SendGameMessage(CScene * toObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	default:
+		return;
+	}
+}
+
+void CScene::MessageObjToObj(CScene * byObj, CScene * toObj, eMessage eMSG)
+{
+	switch (eMSG)
+	{
+	default:
+		return;
+	}
+}
+
 void CScene::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 {
 }

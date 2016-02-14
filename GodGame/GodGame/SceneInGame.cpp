@@ -17,6 +17,8 @@ CSceneInGame::~CSceneInGame()
 
 void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
 {
+	EVENTMgr.Initialize();
+
 	m_nMRT = NUM_MRT;
 	m_nThread = NUM_THREAD;
 
@@ -414,6 +416,7 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 #ifdef _QUAD_TREE
 	QUADMgr.Update(m_pCamera);
 #endif
+	EVENTMgr.Update(fTimeElapsed);
 }
 
 void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)

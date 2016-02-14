@@ -270,10 +270,11 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	{
 		pTree = (CBillboardObject*)m_ppObjects[j];
 
+		//pTree->SetActive(true);
 		if (pTree->IsVisible(pCamera))
 		{
 			pnTreeInstances[nTreeInstance].m_xv3Position = pTree->GetInstanceData();
-			printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
+		//	printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
 			nTreeInstance++;
 		}
 	}
@@ -530,15 +531,8 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		pObject->SetPosition(fx, fy, fz);
 		m_ppObjects[i] = pObject;
 
-		QUADMgr.EntityStaticObject(pObject);
+		//QUADMgr.EntityStaticObject(pObject);
 	}
-
-	//m_ppObjects[0]->SetPosition(XMFLOAT3(1098, 190, 350));
-	//m_ppObjects[1]->SetPosition(XMFLOAT3(1085, 180, 260));
-	//m_ppObjects[2]->SetPosition(XMFLOAT3(1115, 180, 265));
-	//m_ppObjects[3]->SetPosition(XMFLOAT3(1100, 180, 255));
-	//m_ppObjects[4]->SetPosition(XMFLOAT3(1140, 180, 265));
-
 	m_pd3dCubeInstanceBuffer = CreateInstanceBuffer(pd3dDevice, m_nCubes, m_nInstanceBufferStride, nullptr);
 	pPointMesh->AssembleToVertexBuffer(1, &m_pd3dCubeInstanceBuffer, &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
 
@@ -604,7 +598,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 #endif
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
 
-	cout << nCubeInstance << "개 그렸습니다." << endl;
+//	cout << nCubeInstance << "개 그렸습니다." << endl;
 
 	CMesh *pCubeMesh = m_ppObjects[0]->GetMesh();
 	pCubeMesh->RenderInstanced(pd3dDeviceContext, uRenderState, nCubeInstance, 0);
