@@ -102,7 +102,6 @@ public:
 	CMesh **     m_ppMeshes;
 	int          m_nMeshes;
 	AABB         m_bcMeshBoundingCube;
-	//AABB       m_bcMeshBoundingCube;
 
 public:
 	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
@@ -118,9 +117,9 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 	//virtual void RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera);
 
-	virtual void SetPosition(float x, float y, float z);
-	virtual void SetPosition(XMFLOAT3& xv3Position);
-	virtual void SetPosition(XMVECTOR* xv3Position);
+	void SetPosition(float x, float y, float z);
+	void SetPosition(XMFLOAT3& xv3Position);
+	void SetPosition(XMVECTOR* xv3Position);
 
 	XMFLOAT3 GetPosition();
 	UINT GetSize() { return m_uSize; }
@@ -154,6 +153,29 @@ public:
 	//월드 좌표계의 픽킹 광선을 생성한다.
 	int PickObjectByRayIntersection(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxView, MESHINTERSECTINFO *pd3dxIntersectInfo);
 #endif
+};
+// 스스로 움직이지 못하는 고정된 객체
+class CStaticObject : public CGameObject
+{
+protected:
+
+public:
+	CStaticObject(int nMeshes);
+	virtual ~CStaticObject();
+};
+// 스스로 움직일 수 있는 유동적인 객체
+class CDynamicObject : public CGameObject
+{
+public:
+	CDynamicObject(int nMeshes);
+	virtual ~CDynamicObject();
+
+protected:
+	XMFLOAT3 m_xv3Velocity;
+
+public:
+	void SetVelocity(const XMFLOAT3& xv3Velocity) { m_xv3Velocity = xv3Velocity; }
+	const XMFLOAT3& GetVelocity() const { return(m_xv3Velocity); }
 };
 
 class CRotatingObject : public CGameObject
@@ -263,17 +285,15 @@ public:
 
 class CBillboardObject : public CGameObject
 {
-//	AABB m_BoundingBox;
 	XMFLOAT2 m_xv2Size;
 	XMFLOAT4 m_xv4InstanceData;
 
 public:
-	CBillboardObject() {}
+	CBillboardObject() : CGameObject(1) {};
 	CBillboardObject(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size);
 	~CBillboardObject() {}
 
-//	virtual void UpdateBoundingBox();
-	virtual void SetPosition(XMFLOAT3& xv3Position);
+	void UpdateInstanceData();
 	virtual bool IsVisible(CCamera *pCamera = nullptr);
 	XMFLOAT4& GetInstanceData() { return m_xv4InstanceData; }
 };

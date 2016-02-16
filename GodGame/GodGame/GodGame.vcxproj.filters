@@ -118,6 +118,9 @@
     <ClInclude Include="EventMgr.h">
       <Filter>Global\2_Managers</Filter>
     </ClInclude>
+    <ClInclude Include="GameInfo.h">
+      <Filter>Local\5_ObjectsAndCamera</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -176,6 +179,9 @@
     </ClCompile>
     <ClCompile Include="EventMgr.cpp">
       <Filter>Global\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameInfo.cpp">
+      <Filter>Local\5_ObjectsAndCamera</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

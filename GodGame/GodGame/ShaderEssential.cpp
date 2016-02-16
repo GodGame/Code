@@ -285,8 +285,9 @@ void CSceneShader::AnimateObjects(float fTimeElapsed)
 	if (gpPlayer && !gbStartEffect &&gpPlayer->m_nEnergy > 10)
 	{
 		GetGameMessage(this, MSG_EFFECT_GLARE_ON);
-		EVENTMgr.ShaderDelayMessage(2.5f, MSG_EFFECT_GLARE_OFF, (CShader*)this);
-		EVENTMgr.ShaderDelayMessage(2.0f, MSG_CULL_OUT, (CShader*)this);
+		EVENTMgr.InsertDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SHADER, (void*)this); //ShaderDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, (CShader*)this);
+		EVENTMgr.InsertDelayMessage(2.0f, MSG_CULL_OUT, CGameEventMgr::MSG_TYPE_SHADER, (void*)this);
+	//	EVENTMgr.ShaderDelayMessage(2.0f, MSG_CULL_OUT, (CShader*)this);
 	}
 	m_fFrameTime = fTimeElapsed;
 	if (gbStartEffect) m_fTotalTime += fTimeElapsed;

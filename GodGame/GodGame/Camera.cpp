@@ -190,7 +190,7 @@ void CCamera::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext, XMFL
 	pcbViewProjection->m_xf3CameraPos = XMFLOAT4(xmfCameraPos.x, xmfCameraPos.y, xmfCameraPos.z, 1);//XMFLOAT4(xmPos.x, xmPos.y, xmPos.z, 1.0f);
 	Chae::XMFloat4x4Transpose(&pcbViewProjection->m_xmf44View, &xmf44ViewProj);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
 	pd3dDeviceContext->Unmap(m_pd3dcbCamera, 0);
-
+	
 	//상수 버퍼를 슬롯(VS_SLOT_CAMERA)에 설정한다.
 	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);
 	pd3dDeviceContext->GSSetConstantBuffers(CB_SLOT_VIEWPROJECTION, 1, &m_pd3dcbCamera);

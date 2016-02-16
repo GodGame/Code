@@ -643,8 +643,8 @@ void CGameFramework::Render()
 		m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 	#ifdef _THREAD
-	if (m_nRenderThreads <= 1) ImmediateRender();
-		else DeferredRender();
+	if (m_nRenderThreads < 1) ImmediateRender();	
+	else DeferredRender();
 	#else
 		ImmediateRender();
 	#endif

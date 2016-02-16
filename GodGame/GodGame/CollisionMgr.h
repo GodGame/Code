@@ -162,6 +162,7 @@ public:
 private:
 	CQuadTreeManager();
 	~CQuadTreeManager();
+	CQuadTreeManager& operator=(const CQuadTreeManager&);
 
 private:
 	QuadTree * m_pRootTree;
@@ -175,8 +176,6 @@ public:
 	void ReleaseQuadTree();
 
 	QuadTree * GetRootTree() { return m_pRootTree; }
-
-public:
 	QuadTree* EntityStaticObject(CGameObject* pObject);
 	QuadTree* EntityDynamicObject(CGameObject* pObject);
 
@@ -203,6 +202,7 @@ class CCollisionMgr
 {
 	CCollisionMgr();
 	~CCollisionMgr();
+	CCollisionMgr& operator=(const CCollisionMgr&);
 
 	CQuadTreeManager * m_pQuadMgr;
 	BoundingSphere m_bbSphereTarget, m_bbSphereOther;

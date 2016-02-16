@@ -34,10 +34,10 @@ private:
 	ID3D11RasterizerState * m_pd3dShadowRS;
 	ID3D11RasterizerState * m_pd3dNormalRS;
 
-
 private:
 	CShadowMgr();
 	~CShadowMgr();
+	CShadowMgr& operator=(const CShadowMgr&);
 
 public:
 	static CShadowMgr& GetInstance();

@@ -5,14 +5,21 @@
 
 #include "stdafx.h"
 
-enum eMessage
+enum eMessage : BYTE
 {
-	MSG_NONE = -1,
+//	MSG_NONE = -1,
 	MSG_NORMAL = 0,
 	MSG_COLLIDE,
 	MSG_COLLIDED,
+
 	MSG_DAMAGED,
 	MSG_GETPOINT,
+
+	MSG_BUFF_ON,
+	MSG_BUFF_OFF,
+	
+	MSG_DEBUFF_ON,
+	MSG_DEBUFF_OFF,
 
 	MSG_CULL_OUT,
 	MSG_CULL_IN,
@@ -23,64 +30,59 @@ enum eMessage
 	MSG_EFFECT_RADIAL_OFF
 };
 
-template <class T>
-struct cMessage
+//template <class T>
+class cMessage
 {
-public:
+protected:
 	float		 m_fLastTime;
 	eMessage	 m_eMessage;
-	T*			 m_pToObj;
-	T*			 m_pByObj;
 	void*		 m_pExtra;
 
 public:
-	bool operator<(const cMessage<T> & emsg)  { return m_flasttime < emsg.m_flasttime;  };
-	bool operator<(float ftime)               { return m_flasttime < ftime;             };
-	bool operator>(const cMessage<T> & emsg)  { return m_flasttime > emsg.m_flasttime;  };
-	bool operator>(float ftime)               { return m_flasttime > ftime;             };
-	bool operator==(const cMessage<T> & emsg) { return m_flasttime == emsg.m_flasttime; };
-	bool operator==(float ftime)              { return m_flasttime == ftime;            };
+	float GetLastTime() const { return m_fLastTime; }
+
+	bool operator<(const cMessage & emsg)     { return m_fLastTime < emsg.m_fLastTime;  }
+	bool operator<(float ftime)               { return m_fLastTime < ftime;             }
+	bool operator>(const cMessage & emsg)     { return m_fLastTime > emsg.m_fLastTime;  }
+	bool operator>(float ftime)               { return m_fLastTime > ftime;             }
+	bool operator==(const cMessage & emsg)    { return m_fLastTime == emsg.m_fLastTime; }
+	bool operator==(float ftime)              { return m_fLastTime == ftime;            }
 
 	bool IsTerminal(float fTime) const        { return m_fLastTime < fTime; }
+
+	virtual bool MessageUpdate(float fTime) const { return false; }
 };
 
-template <class T>
-bool operator<(const cMessage<T> & left, const cMessage<T> & right)
+template<class T>
+class cMessageSystem : public cMessage
 {
-	return left.m_fLastTime < right.m_fLastTime;
-}
-
-template <class T>
-class cMessageMgr
-{
-	set<cMessage<T>>	   m_mpMessageList;
+protected:
+	T*		 m_pToObj;
+	T*		 m_pByObj;
 
 public:
-	cMessageMgr() { }
-	void Initialize() { m_mpMessageList.clear(); }
-
-	void InsertDelayMessage(cMessage<T> & cMsg)
+	cMessageSystem<T>(float fLastTime, eMessage eMsg, T * pToObj, T * pByObj, void * extra)
 	{
-		cMessage<T> msg = cMsg;
-		m_mpMessageList.insert(msg);
+		m_fLastTime = fLastTime;
+		m_eMessage  = eMsg;
+		m_pToObj    = pToObj;
+		m_pByObj    = pByObj;
+		m_pExtra    = extra;
 	}
-	void Update(float fCurrentTime)
-	{
-		if (m_mpMessageList.size() > 0)
-		{
-			auto it = m_mpMessageList.begin();
-			if (it->IsTerminal(fCurrentTime))
-			{
-				if (it->m_pByObj)
-					(it->m_pByObj)->SendGameMessage(it->m_pToObj, it->m_eMessage);
-				else
-					(it->m_pToObj)->GetGameMessage(nullptr, it->m_eMessage);
 
-				m_mpMessageList.erase(it);
-			}
+	virtual bool MessageUpdate(float fTime) const
+	{
+		if (IsTerminal(fTime)) 
+		{
+			if (m_pByObj) m_pByObj->SendGameMessage(m_pToObj, m_eMessage);
+			else		  m_pToObj->GetGameMessage(nullptr, m_eMessage);
+			return true;
 		}
+		return false;
 	}
 };
+
+bool operator<(const cMessage & left, const cMessage & right);
 
 class CScene;
 class CShader;
@@ -89,21 +91,25 @@ class CGameEventMgr
 {
 private:
 	float	m_fCurrentTime;
-
-	cMessageMgr<CScene>         m_mgrScene;
-	cMessageMgr<CShader>        m_mgrShader;
-	cMessageMgr<CGameObject>    m_mgrObject;
+	set<cMessage*>	   m_mpMessageList;
 
 private:
 	CGameEventMgr();
 	~CGameEventMgr();
+	CGameEventMgr& operator=(const CGameEventMgr&);
 
 public:
-	static CGameEventMgr& GetInstance();
+	enum MSGType : BYTE
+	{
+		MSG_TYPE_NONE = 0,
+		MSG_TYPE_SCENE,
+		MSG_TYPE_SHADER,
+		MSG_TYPE_OBJECT
+	};
 
-	void SceneDelayMessage(float fDelayeTime, eMessage eMsg, CScene * pToScene, CScene * pByScene = nullptr, void * extra = nullptr);
-	void ShaderDelayMessage(float fDelayeTime, eMessage eMsg, CShader* pToShader, CShader * pByShader = nullptr, void * extra = nullptr);
-	void ObjectDelayMessage(float fDelayeTime, eMessage eMsg, CGameObject* pToObj, CGameObject * pByObject = nullptr, void * extra = nullptr);
+	static CGameEventMgr& GetInstance();
+	// ByObj를 채워넣으면 SendGameMessage를 호출하며, 채워넣지 않으면 GetGameMessage만 호출한다.
+	void InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType eType, void * pToObj, void * pByObj = nullptr, void * extra = nullptr);
 
 	void Initialize();
 	void Update(float fFrameTime);

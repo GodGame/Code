@@ -2,7 +2,7 @@
 #include "MyInline.h"
 #include "Player.h"
 
-CPlayer::CPlayer(int nMeshes) : CGameObject(nMeshes)
+CPlayer::CPlayer(int nMeshes) : CDynamicObject(nMeshes)
 {
 	m_pCamera               = nullptr;
 
@@ -12,7 +12,6 @@ CPlayer::CPlayer(int nMeshes) : CGameObject(nMeshes)
 	m_xv3Up                 = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	m_xv3Look               = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
-	m_xv3Velocity           = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_xv3Gravity            = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_fMaxVelocityXZ        = 0.0f;
 	m_fMaxVelocityY         = 0.0f;
@@ -474,7 +473,7 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 5.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 7.0f;
 	if (xv3CameraPosition.y < fHeight)
 	{
 		xv3CameraPosition.y = fHeight;
@@ -486,4 +485,13 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 			p3rdPersonCamera->SetLookAt(GetPosition());
 		}
 	}
+}
+
+CInGamePlayer::CInGamePlayer(int m_nMeshes)
+{
+	ZeroMemory(&m_nEnergies, sizeof(m_nEnergies));
+}
+
+CInGamePlayer::~CInGamePlayer()
+{
 }

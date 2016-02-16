@@ -4,7 +4,7 @@
 
 #include "MgrType.h"
 
-typedef UINT SETSHADER;
+typedef BYTE SETSHADER;
 #define SET_SHADER_NONE 0
 #define SET_SHADER_VS	(1 << 0)
 #define SET_SHADER_HS	(1 << 1)
@@ -13,9 +13,6 @@ typedef UINT SETSHADER;
 #define SET_SHADER_PS	(1 << 4)
 #define SET_SHADER_CS	(1 << 5)
 
-// TODO: 프로그램에 필요한 추가 헤더는 여기에서 참조합니다.
-
-//게임 객체는 하나 이상의 텍스쳐를 가질 수 있다. CTexture는 텍스쳐를 관리하기 위한 클래스이다.
 class CTexture
 {
 public:
@@ -71,14 +68,10 @@ public:
 
 class CTextureMgr : public CMgr<CTexture>
 {
-//#define SLOT_TOTAL 64//128
-
 private:
 	CTextureMgr();
 	virtual ~CTextureMgr();
-
-	//ID3D11ShaderResourceView * m_pd3dSRVSlotList[SLOT_TOTAL];
-
+	CTextureMgr& operator=(const CTextureMgr&);
 public:
 	static CTextureMgr& GetInstance();
 	bool InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, string name, UINT uSlotNum, SETSHADER nSetInfo = SET_SHADER_PS);
@@ -86,9 +79,7 @@ public:
 
 	ID3D11ShaderResourceView * GetShaderResourceView(string name)  { return m_mpList[name]->GetSRV(0);}
 	ID3D11SamplerState * GetSamplerState(string name)              { return m_mpList[name]->GetSampler(0);}
-
 	//void RegisterSRVSlot(ID3D11ShaderResourceView UINT nSlot)
-
 public:
 	virtual void BuildResources(ID3D11Device *pd3dDevice);
 	void BuildSamplers(ID3D11Device *pd3dDevice);
@@ -155,7 +146,7 @@ class CViewManager
 
 	CViewManager() {}
 	~CViewManager() {}
-
+	CViewManager& operator=(const CViewManager&);
 public:
 	static CViewManager& GetInstance();
 
@@ -188,11 +179,9 @@ public:
 
 	void BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 };
-
 #define ViewMgr CViewManager::GetInstance()
 
 void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * pBuffer);
 void MapMatrixConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT4X4 & matrix, ID3D11Buffer * pBuffer);
-
 
 #endif

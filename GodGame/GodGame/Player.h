@@ -1,8 +1,10 @@
 #pragma once
 #include "Object.h"
 //#include "Camera.h"
+#include "GameInfo.h"
 
-class CPlayer : public CGameObject
+
+class CPlayer : public CDynamicObject
 {
 protected:
 	//플레이어의 위치 벡터, x-축(Right), y-축(Up), z-축(Look) 벡터이다.
@@ -16,8 +18,6 @@ protected:
 	float    m_fYaw;
 	float    m_fRoll;
 
-	//플레이어의 이동 속도를 나타내는 벡터이다.
-	XMFLOAT3 m_xv3Velocity;
 	//플레이어에 작용하는 중력을 나타내는 벡터이다.
 	XMFLOAT3 m_xv3Gravity;
 	//xz-평면에서 (한 프레임 동안) 플레이어의 이동 속력의 최대값을 나타낸다.
@@ -31,7 +31,6 @@ protected:
 	LPVOID   m_pPlayerUpdatedContext;
 	//카메라의 위치가 바뀔 때마다 호출되는 OnCameraUpdated() 함수에서 사용하는 데이터이다.
 	LPVOID   m_pCameraUpdatedContext;
-
 	//플레이어에 현재 설정된 카메라이다.
 	CCamera *m_pCamera;
 
@@ -58,13 +57,11 @@ public:
 	void SetGravity(const XMFLOAT3& xv3Gravity) { m_xv3Gravity = xv3Gravity; }
 	void SetMaxVelocityXZ(float fMaxVelocity) { m_fMaxVelocityXZ = fMaxVelocity; }
 	void SetMaxVelocityY(float fMaxVelocity) { m_fMaxVelocityY = fMaxVelocity; }
-	void SetVelocity(const XMFLOAT3& xv3Velocity) { m_xv3Velocity = xv3Velocity; }
 
 	/*플레이어의 위치를 xv3Position 위치로 설정한다. xv3Position 벡터에서 현재 플레이어의 위치 벡터를 빼면 현재 플레이어의 위치에서 xv3Position 방향으로의 방향 벡터가 된다. 현재 플레이어의 위치에서 이 방향 벡터 만큼 이동한다.*/
 	void InitPosition(XMFLOAT3 xv3Position);
 	void SetPosition(XMFLOAT3& xv3Position);
 
-	const XMFLOAT3& GetVelocity() const { return(m_xv3Velocity); }
 	float GetYaw() const { return(m_fYaw); }
 	float GetPitch() const { return(m_fPitch); }
 	float GetRoll() const { return(m_fRoll); }
@@ -112,4 +109,18 @@ public:
 
 	virtual void OnPlayerUpdated(float fTimeElapsed);
 	virtual void OnCameraUpdated(float fTimeElapsed);
+};
+
+class CInGamePlayer : public CTerrainPlayer
+{
+	ElementEnergy	m_nEnergies;
+	StatusInfo		m_Status;
+
+public:
+	CInGamePlayer(int m_nMeshes);
+	virtual ~CInGamePlayer();
+
+public:
+	ElementEnergy & GetEnergyNum() { return m_nEnergies; }
+	//void AddEnergy(Element)
 };

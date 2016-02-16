@@ -3,6 +3,11 @@
 
 #include "Scene.h"
 
+bool operator<(const cMessage & left, const cMessage & right)
+{
+	return left.GetLastTime() < right.GetLastTime();
+}
+
 CGameEventMgr::CGameEventMgr()
 {
 }
@@ -17,36 +22,52 @@ CGameEventMgr & CGameEventMgr::GetInstance()
 	return instance;
 }
 
-void CGameEventMgr::SceneDelayMessage(float fDelayeTime, eMessage eMsg, CScene * pToScene, CScene * pByScene, void * extra)
+void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType eType, void* pToObj, void * pByObj, void * extra)
 {
-	cMessage<CScene> msg{ m_fCurrentTime + fDelayeTime, eMsg, pToScene, pByScene, extra };
-	m_mgrScene.InsertDelayMessage(msg);
-}
+	switch (eType)
+	{
+	case MSGType::MSG_TYPE_OBJECT:
+		m_mpMessageList.insert(new cMessageSystem<CGameObject>
+			(m_fCurrentTime + fDelayeTime, eMsg, (CGameObject*)pToObj, (CGameObject*)pByObj, extra));
+		return;
 
-void CGameEventMgr::ShaderDelayMessage(float fDelayeTime, eMessage eMsg, CShader * pToShader, CShader * pByShader, void * extra)
-{
-	cMessage<CShader> msg{ m_fCurrentTime + fDelayeTime, eMsg, pToShader, pByShader, extra };
-	m_mgrShader.InsertDelayMessage(msg);
-}
+	case MSGType::MSG_TYPE_SHADER:
+		m_mpMessageList.insert(new cMessageSystem<CShader>
+			(m_fCurrentTime + fDelayeTime, eMsg, (CShader*)pToObj, (CShader*)pByObj, extra));
+		return;
 
-void CGameEventMgr::ObjectDelayMessage(float fDelayeTime, eMessage eMsg, CGameObject * pToObj, CGameObject * pByObject, void * extra)
-{
-	cMessage<CGameObject> msg{ m_fCurrentTime + fDelayeTime, eMsg, pToObj, pByObject, extra };
-	m_mgrObject.InsertDelayMessage(msg);
+	case MSGType::MSG_TYPE_SCENE:
+		m_mpMessageList.insert(new cMessageSystem<CScene>
+			(m_fCurrentTime + fDelayeTime, eMsg, (CScene*)pToObj, (CScene*)pByObj, extra));
+		return;
+
+	case MSGType::MSG_TYPE_NONE:
+		return;
+
+	default:
+		ASSERT(SUCCEEDED(1));
+	}
 }
 
 void CGameEventMgr::Initialize()
 {
 	m_fCurrentTime = 0.0f;
-	m_mgrScene.Initialize();
-	m_mgrShader.Initialize();
-	m_mgrObject.Initialize();
+
+	for (auto it = m_mpMessageList.begin(); it != m_mpMessageList.end(); ++it)
+		delete (*it);
+
+	m_mpMessageList.clear();
 }
 
 void CGameEventMgr::Update(float fFrameTime)
 {
 	m_fCurrentTime += fFrameTime;
-	m_mgrScene.Update(m_fCurrentTime);
-	m_mgrShader.Update(m_fCurrentTime);
-	m_mgrObject.Update(m_fCurrentTime);
+
+	if (m_mpMessageList.size() > 0)
+	{
+		auto it = m_mpMessageList.begin();
+
+		if ((*it)->MessageUpdate(m_fCurrentTime))
+			m_mpMessageList.erase(it);
+	}
 }
