@@ -829,13 +829,13 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 {
 	D3D11_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
 	ZeroMemory(&d3dDepthStencilDesc, sizeof(d3dDepthStencilDesc));
-	d3dDepthStencilDesc.DepthEnable = false;
-	d3dDepthStencilDesc.StencilEnable = false;
+	d3dDepthStencilDesc.DepthEnable    = false;
+	d3dDepthStencilDesc.StencilEnable  = false;
 	d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 	pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dSODepthStencilState);
 
-	d3dDepthStencilDesc.DepthEnable = true;
-	d3dDepthStencilDesc.StencilEnable = false;
+	d3dDepthStencilDesc.DepthEnable    = true;
+	d3dDepthStencilDesc.StencilEnable  = false;
 	d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; //D3D11_DEPTH_WRITE_MASK_ZERO;
 	pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dDepthStencilState);
 
@@ -844,26 +844,26 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 	d3dBlendStateDesc.IndependentBlendEnable = false;
 	int index = 0;
 	ZeroMemory(&d3dBlendStateDesc.RenderTarget[index], sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
-	d3dBlendStateDesc.AlphaToCoverageEnable = true;
-	d3dBlendStateDesc.RenderTarget[index].BlendEnable = true;
-	d3dBlendStateDesc.RenderTarget[index].SrcBlend = D3D11_BLEND_SRC_ALPHA;// D3D11_BLEND_ONE;
-	d3dBlendStateDesc.RenderTarget[index].DestBlend = D3D11_BLEND_ONE;
-	d3dBlendStateDesc.RenderTarget[index].BlendOp = D3D11_BLEND_OP_ADD;
-	d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha = D3D11_BLEND_ZERO;
-	d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha = D3D11_BLEND_ZERO;
-	d3dBlendStateDesc.RenderTarget[index].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	d3dBlendStateDesc.AlphaToCoverageEnable                     = true;
+	d3dBlendStateDesc.RenderTarget[index].BlendEnable           = true;
+	d3dBlendStateDesc.RenderTarget[index].SrcBlend              = D3D11_BLEND_SRC_ALPHA;// D3D11_BLEND_ONE;
+	d3dBlendStateDesc.RenderTarget[index].DestBlend             = D3D11_BLEND_ONE;
+	d3dBlendStateDesc.RenderTarget[index].BlendOp               = D3D11_BLEND_OP_ADD;
+	d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha         = D3D11_BLEND_ZERO;
+	d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha        = D3D11_BLEND_ZERO;
+	d3dBlendStateDesc.RenderTarget[index].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 	d3dBlendStateDesc.RenderTarget[index].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;//D3D11_COLOR_WRITE_ENABLE_RED | D3D11_COLOR_WRITE_ENABLE_ALPHA;
 	pd3dDevice->CreateBlendState(&d3dBlendStateDesc, &m_pd3dBlendState);
 
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	d3dSamplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
 	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
+	d3dSamplerDesc.MinLOD         = 0;
+	d3dSamplerDesc.MaxLOD         = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &m_pd3dSamplerState);
 }
 
@@ -876,31 +876,33 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	m_ppParticle = new CParticle*[m_nObjects];
 
 	CB_PARTICLE cbParticle;
-	cbParticle.m_fLifeTime = 1.0f;
-	cbParticle.m_vAccel = XMFLOAT3(0, 10, 0);
-	cbParticle.m_vParticleEmitPos = XMFLOAT3(1105, 180, 250);
+	cbParticle.m_fLifeTime         = 1.0f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, 10, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1105, 180, 250);
 	cbParticle.m_vParticleVelocity = XMFLOAT3(15, 15, 15);
-	cbParticle.m_fNewTime = 0.005f;
+	cbParticle.m_fNewTime          = 0.005f;
 
 	m_ppParticle[0] = new CParticle();
-	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, 20.0, 400);
+	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, 20.0, 800);
+	//m_ppParticle[0]->Enable();
+
+	cbParticle.m_fLifeTime         = 1.0f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, 20, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1105, 180, 250);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(15, 15, 15);
+	cbParticle.m_fNewTime          = 0.005f;
 
 	m_ppParticle[1] = new CParticle();
-	cbParticle.m_fLifeTime = 1.0f;
-	cbParticle.m_vAccel = XMFLOAT3(0, 20, 0);
-	cbParticle.m_vParticleEmitPos = XMFLOAT3(1105, 180, 250);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(15, 15, 15);
-	cbParticle.m_fNewTime = 0.005f;
-	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, 1.0f, 400);
+	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, 1.0f, 800);
 
-	m_pd3dRandomSRV = CShader::CreateRandomTexture1DSRV(pd3dDevice);
+	m_pd3dRandomSRV = ViewMgr.GetSRV("srv_random1d");// CShader::CreateRandomTexture1DSRV(pd3dDevice);
 
 	m_nImages = 1;
 	m_ppd3dParticleImageSRV = new ID3D11ShaderResourceView*[m_nImages];
 
 	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice,
 		_T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &m_ppd3dParticleImageSRV[0], nullptr);
-	if (FAILED(hr)) printf("오류");
+	ASSERT(SUCCEEDED(hr));
 }
 
 void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -913,7 +915,7 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dSODepthStencilState, 0);
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (m_ppParticle[i]->IsAble() == false) continue;
+		if (!m_ppParticle[i]->IsAble()) continue;
 		UpdateShaderVariable(pd3dDeviceContext, m_ppParticle[i]);
 		m_ppParticle[i]->StreamOut(pd3dDeviceContext);
 	}
@@ -929,7 +931,7 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (m_ppParticle[i]->IsAble() == false) continue;
+		if (!m_ppParticle[i]->IsAble()) continue;
 		m_ppParticle[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
@@ -939,7 +941,7 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (m_ppParticle[i]->IsAble() == false) continue;
+		if (!m_ppParticle[i]->IsAble()) continue;
 		m_ppParticle[i]->Update(fTimeElapsed);
 	}
 }
@@ -964,7 +966,7 @@ void CParticleShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 	CB_PARTICLE *pcbParticle = (CB_PARTICLE *)d3dMappedResource.pData;
 	memcpy(pcbParticle, pParticle->GetCBParticle(), sizeof(CB_PARTICLE));
 	//*pcbParticle = *pParticle->GetCBParticle();
-	//cout << pcbParticle->m_fTime << "// " << pcbParticle->m_fTimeStep << "// " << pcbParticle->m_vParticleEmitPos.x << ", " << pcbParticle->m_vParticleEmitPos.y << ", "<< pcbParticle->m_vParticleEmitPos.z << endl;
+	cout << "Particl : " << pcbParticle->m_fGameTime << "// life : " << pcbParticle->m_fLifeTime << "// emit pos : " << pcbParticle->m_vParticleEmitPos << endl;
 	pd3dDeviceContext->Unmap(m_pd3dcbGameInfo, 0);
 
 	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
@@ -981,7 +983,7 @@ void CParticleShader::SOSetState(ID3D11DeviceContext * pd3dDeviceContext)
 	pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dSODepthStencilState, 0);
 
-	pd3dDeviceContext->GSSetShaderResources(9, 1, &m_pd3dRandomSRV);
+	pd3dDeviceContext->GSSetShaderResources(TX_SLOT_RANDOM1D, 1, &m_pd3dRandomSRV);
 	pd3dDeviceContext->GSSetSamplers(8, 1, &m_pd3dSamplerState);
 
 	pd3dDeviceContext->RSSetState(nullptr);

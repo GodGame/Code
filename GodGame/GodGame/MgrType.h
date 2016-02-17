@@ -20,7 +20,6 @@ public:
 		}
 	}
 
-
 public:
 	virtual void InsertObject(Target* pObject, string name) 
 	{ 

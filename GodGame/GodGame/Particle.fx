@@ -1,7 +1,6 @@
 #include "Define.fx"
 
-
-Texture2D gtxtColor  : register(t8);
+Texture2D gtxtColor     : register(t8);
 SamplerState gPTSampler : register(s8);
 
 #define PARTICLE_TYPE_EMITTER	0
@@ -10,40 +9,40 @@ SamplerState gPTSampler : register(s8);
 cbuffer cbParticleInfo : register(b4)
 {
 	float3 gvParticleEmitPos;
-	float gfTime;
+	float  gfTime;
 	float3 gvParticleVelocity;
-	float gfLifeTime;
+	float  gfLifeTime;
 	float3 gvAccel;
-	float gfTimeStep;
-	float gfNewTime;	
+	float  gfTimeStep;
+	float  gfNewTime;
 	float2 gNewSize;
-	float gbEnable;
-
+	float  gbEnable;
 };
 
 struct PARTICLE_INPUT
 {
-	float3 pos : POSITION;
+	float3 pos      : POSITION;
 	float3 velocity : VELOCITY;
-	float2 size : SIZE;
-	float age : AGE;
-	uint type : TYPE;
-};
-struct PARTICLE_GSIN
-{
-	float3 pos : POSITION;
-	float2 size : SIZE;
-	float4 color : COLOR;
-	uint type : TYPE;
-};
-struct PARTICLE_PSIN
-{
-	float4 posH : SV_POSITION;
-	float3 posW : POSITION;
-	float4 color : COLOR;
-	float2 tex : TEXCOORD;
+	float2 size     : SIZE;
+	float  age      : AGE;
+	uint   type     : TYPE;
 };
 
+struct PARTICLE_GSIN
+{
+	float3 pos   : POSITION;
+	float2 size  : SIZE;
+	float4 color : COLOR;
+	uint   type  : TYPE;
+};
+
+struct PARTICLE_PSIN
+{
+	float4 posH  : SV_POSITION;
+	float3 posW  : POSITION;
+	float4 color : COLOR;
+	float2 tex   : TEXCOORD;
+};
 
 PARTICLE_INPUT VSParticleSO(PARTICLE_INPUT input)
 {
@@ -64,14 +63,14 @@ void GSParticleSO(point PARTICLE_INPUT input[1], inout PointStream<PARTICLE_INPU
 			vRandom *= gvParticleVelocity;
 
 			PARTICLE_INPUT particle = (PARTICLE_INPUT)0;
-			particle.pos = gvParticleEmitPos.xyz;
-			particle.velocity = vRandom;
-			//float size = clamp(input[0].age - gfLifeTime, 2.0f, 6.0f);
-			particle.size = gNewSize;
-			particle.age = 0.0f;
-			particle.type = PARTICLE_TYPE_FLARE;
+			particle.pos            = gvParticleEmitPos.xyz;
+			particle.velocity       = vRandom;
+			//float size            = clamp(input[0].age - gfLifeTime, 2.0f, 6.0f);
+			particle.size           = gNewSize;
+			particle.age            = 0.0f;
+			particle.type           = PARTICLE_TYPE_FLARE;
 			Pout.Append(particle);
-			
+
 			input[0].age = 0.0f;
 		}
 		Pout.Append(input[0]);
@@ -122,9 +121,9 @@ void GSParticleDraw(point PARTICLE_GSIN input[1], inout TriangleStream<PARTICLE_
 	if (input[0].type == PARTICLE_TYPE_EMITTER) return;
 	//if (input[0].color.a <= 0.0001f) return;
 
-	float3 vLook = normalize(gf3CameraPos.xyz - input[0].pos);
+	float3 vLook  = normalize(gf3CameraPos.xyz - input[0].pos);
 	float3 vRight = normalize(cross(float3(0.0f, 1.0f, 0.0f), vLook));
-	float3 vUp = cross(vLook, vRight);
+	float3 vUp    = cross(vLook, vRight);
 
 	float fHalfWidth = 0.5f * input[0].size.x, fHalfHeight = 0.5f * input[0].size.y;
 	float4 vQuad[4];
@@ -150,11 +149,11 @@ PS_MRT_OUT PSParticleDraw(PARTICLE_PSIN input)
 
 	float4 cColor = gtxtTexture.Sample(gSamplerState, input.tex);
 	//if (cColor.a < 0.05) discard;
-	output.vNormal = float4(0, 0, 0, 0);
-	output.vPos = float4(input.posW, 1);
+	output.vNormal  = float4(0, 0, 0, 0);
+	output.vPos     = float4(input.posW, 1);
 	output.vDiffuse = float4(0, 0, 0, 1);// cColor;
-	output.vSpec = float4(0, 0, 0, 1);
-	output.vTxColor = (cColor *input.color);
-		//cColor;//(gtxtTxColor.Load(int3(100, 100, 0)));
+	output.vSpec    = float4(0, 0, 0, 1);
+	output.vTxColor = (cColor * input.color);
+	//cColor;//(gtxtTxColor.Load(int3(100, 100, 0)));
 	return(output);
 }

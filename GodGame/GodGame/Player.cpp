@@ -429,7 +429,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 		SetMaxVelocityXZ(300.0f);
 		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
-		m_pCamera->SetTimeLag(0.25f);
+		m_pCamera->SetTimeLag(0.35f);
 		m_pCamera->SetOffset(XMFLOAT3(0.0f, 20.0f, -50.0f));
 		m_pCamera->GenerateProjectionMatrix(1.01f, 1000.0f, ASPECT_RATIO, 60.0f);
 		break;
@@ -442,10 +442,10 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 {
 	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pPlayerUpdatedContext;
-	XMFLOAT3 xv3Scale = pTerrain->GetScale();
-	XMFLOAT3 xv3PlayerPosition = GetPosition();
-	int z = (int)(xv3PlayerPosition.z / xv3Scale.z);
-	bool bReverseQuad = ((z % 2) != 0);
+	XMFLOAT3 xv3Scale           = pTerrain->GetScale();
+	XMFLOAT3 xv3PlayerPosition  = GetPosition();
+	int z                       = (int)(xv3PlayerPosition.z / xv3Scale.z);
+	bool bReverseQuad = !(z % 2);//((z % 2) != 0);
 	/*높이 맵에서 플레이어의 현재 위치 (x, z)의 y 값을 구한다. 그리고 플레이어 메쉬의 높이가 12이고 플레이어의 중심이 직육면체의 가운데이므로 y 값에 메쉬의 높이의 절반을 더하면 플레이어의 위치가 된다.*/
 	float fHeight = pTerrain->GetHeight(xv3PlayerPosition.x, xv3PlayerPosition.z, bReverseQuad) + 6.0f;
 //	cout << "높이는 : " << fHeight << endl;
@@ -464,16 +464,16 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 {
 	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pCameraUpdatedContext;
-	XMFLOAT3 xv3Scale = pTerrain->GetScale();
-	CCamera *pCamera = GetCamera();
-	XMFLOAT3 xv3CameraPosition = pCamera->GetPosition();
-	int z = (int)(xv3CameraPosition.z / xv3Scale.z);
-	bool bReverseQuad = ((z % 2) != 0);
+	XMFLOAT3 xv3Scale           = pTerrain->GetScale();
+	CCamera *pCamera            = GetCamera();
+	XMFLOAT3 xv3CameraPosition  = pCamera->GetPosition();
+	int z                       = (int)(xv3CameraPosition.z / xv3Scale.z);
+	bool bReverseQuad = !(z % 2);//((z % 2) != 1);
 	/*높이 맵에서 카메라의 현재 위치 (x, z)의 높이(y 값)를 구한다. 이 값이 카메라의 위치에 해당하는 지형의 높이 보다 작으면 카메라가 땅속에 있게 된다.
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 7.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 8.0f;
 	if (xv3CameraPosition.y < fHeight)
 	{
 		xv3CameraPosition.y = fHeight;
@@ -490,8 +490,19 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 CInGamePlayer::CInGamePlayer(int m_nMeshes)
 {
 	ZeroMemory(&m_nEnergies, sizeof(m_nEnergies));
+
+	m_pBuff = nullptr;
+	m_pDebuff = nullptr;
 }
 
 CInGamePlayer::~CInGamePlayer()
 {
+	if (m_pBuff) delete m_pBuff;
+	if (m_pDebuff) delete m_pDebuff;
+}
+
+void CInGamePlayer::BuildObject()
+{
+	if (!m_pBuff) m_pBuff = new CBuff();
+	if (!m_pDebuff) m_pDebuff = new CDeBuff();
 }

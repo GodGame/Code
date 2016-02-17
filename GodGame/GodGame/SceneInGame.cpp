@@ -84,16 +84,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
 		m_ppShaders[2] = pStaticObjectsShader;
 
-		//CNormalShader * pNmShader = new CNormalShader();
-		//pNmShader->CreateShader(pd3dDevice);
-		//pNmShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
-		//m_ppShaders[2] = pNmShader;
-
-		//CParticleShader *pParticleShader = new CParticleShader();
-		//pParticleShader->CreateShader(pd3dDevice);
-		//pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
-		//m_ppShaders[3] = pParticleShader;
-
 		CPointInstanceShader *pPointShader = new CPointInstanceShader();
 		pPointShader->CreateShader(pd3dDevice);
 		pPointShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
@@ -103,6 +93,11 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pTrees->CreateShader(pd3dDevice);
 		pTrees->BuildObjects(pd3dDevice, GetTerrain());
 		m_ppShaders[4] = pTrees;
+
+		CParticleShader *pParticleShader = new CParticleShader();
+		pParticleShader->CreateShader(pd3dDevice);
+		pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
+		m_ppShaders[5] = pParticleShader;
 
 		CSceneShader * pSceneShader = new CSceneShader();
 		pSceneShader->CreateShader(pd3dDevice);
@@ -213,6 +208,7 @@ void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	d3dBufferDesc.ByteWidth      = sizeof(LIGHTS);
 	d3dBufferDesc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem        = m_pLights;
@@ -284,7 +280,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case 'Z':
 			if (m_pLights->m_pLights[1].m_bEnable) m_pLights->m_pLights[1].m_bEnable = false;
 			else m_pLights->m_pLights[1].m_bEnable = true;
-			//((CParticleShader*)m_ppShaders[3])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
+
 			break;
 		case 'N':
 			pMat = MaterialMgr.GetObjects("White");
@@ -310,6 +306,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case 'B':
 			if (bIsKeyDown == false) bIsKeyDown = true;
 			else bIsKeyDown = false;
+			break;
+		case 'X' :
+			((CParticleShader*)m_ppShaders[5])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
 			break;
 			//case VK_SPACE:
 			//	FRAMEWORK.ChangeGameScene(new CSceneTitle());

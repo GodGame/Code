@@ -13,7 +13,7 @@
 #define	FRAME_BUFFER_HEIGHT		960
 
 #define NUM_MRT		6
-#define NUM_SHADER	5
+#define NUM_SHADER	6
 
 //#ifdef _DEBUG
 #define NUM_THREAD  NUM_SHADER

@@ -80,11 +80,12 @@ public:
 	void BuffPop();
 
 public:
-	void OnPlusDamage() { m_eBuff |= BUFF_PLUS_DAMAGE; PlayerDelayMessage(BUFF_PLUS_DAMAGE, m_fTimePlusDamage); }
+	void OnPlusDamage()   { m_eBuff |= BUFF_PLUS_DAMAGE; PlayerDelayMessage(BUFF_PLUS_DAMAGE, m_fTimePlusDamage); }
 	void DownPlusDamage() { m_eBuff &= ~BUFF_PLUS_DAMAGE; }
-	bool IsPlusDamage() { return m_eBuff & BUFF_PLUS_DAMAGE; }
-	void OnCastUp() { m_eBuff |= BUFF_CAST; PlayerDelayMessage(BUFF_CAST, m_fTimeCast); }
-	void DownCastUp() { m_eBuff &= ~BUFF_CAST; }
+	bool IsPlusDamage()   { return m_eBuff & BUFF_PLUS_DAMAGE; }
+	void OnCastUp()       { m_eBuff |= BUFF_CAST; PlayerDelayMessage(BUFF_CAST, m_fTimeCast); }
+	void DownCastUp()     { m_eBuff &= ~BUFF_CAST; }
+	bool IsCastUp()       { return m_eBuff & BUFF_PLUS_DAMAGE; }
 };
 
 class StatusInfo
@@ -101,21 +102,30 @@ private:
 	UINT	m_uGamePoint    : 18;
 	UINT	m_uGold         : 18;
 
-	UINT	m_uHP           : 17;
-	UINT	m_uAttackDamage : 17;
+	UINT	m_uAttackDamage : 10;
+	UINT	m_uHP           : 10;
+	UINT	m_uStamina	    : 6;
+	UINT	m_nShields		: 6;
+	UINT    m_bRange		: 1;
+	UINT    m_bUnbeatable   : 1;
 	UINT    m_bCanJump      : 1;
 	UINT	m_bAlive        : 1;
+
+	float	m_fAttackSpeed;
+	float	m_fAttackRange;
 
 public:
 	StatusInfo();
 	~StatusInfo();
 
-	WORD GetGold() { return m_uGold; }
+	WORD GetGold()  { return m_uGold; }
 	WORD GetPoint() { return m_uGamePoint; }
+	WORD GetHP()	{ return m_uHP; }
 };
 
 struct ElementEnergy
 {
+	BYTE m_nSum;
 	BYTE m_nDarkness;
 	BYTE m_nLight;
 	BYTE m_nFire;

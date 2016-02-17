@@ -39,6 +39,7 @@ public:
 
 	CPlayer(int nMeshes = 1);
 	virtual ~CPlayer();
+	virtual void BuildObject() {}
 
 	//플레이어의 현재 카메라를 설정하고 반환하는 멤버 함수를 선언한다.
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
@@ -116,9 +117,13 @@ class CInGamePlayer : public CTerrainPlayer
 	ElementEnergy	m_nEnergies;
 	StatusInfo		m_Status;
 
+	CBuff		  * m_pBuff;
+	CDeBuff       * m_pDebuff;
+
 public:
 	CInGamePlayer(int m_nMeshes);
 	virtual ~CInGamePlayer();
+	virtual void BuildObject();
 
 public:
 	ElementEnergy & GetEnergyNum() { return m_nEnergies; }

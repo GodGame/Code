@@ -107,16 +107,17 @@ public:
 
 class CParticleShader : public CShader
 {
-	ID3D11VertexShader * m_pd3dVSSO;
-	ID3D11GeometryShader * m_pd3dGSSO;
-private:
-	ID3D11DepthStencilState * m_pd3dSODepthStencilState;
-	ID3D11DepthStencilState * m_pd3dDepthStencilState;
+	ID3D11VertexShader       * m_pd3dVSSO;
+	ID3D11GeometryShader     * m_pd3dGSSO;
 
-	ID3D11BlendState * m_pd3dBlendState;
+private:
+	ID3D11DepthStencilState  * m_pd3dSODepthStencilState;
+	ID3D11DepthStencilState  * m_pd3dDepthStencilState;
+
+	ID3D11BlendState         * m_pd3dBlendState;
 
 	ID3D11ShaderResourceView * m_pd3dRandomSRV;
-	ID3D11SamplerState * m_pd3dSamplerState;
+	ID3D11SamplerState       * m_pd3dSamplerState;
 
 	ID3D11ShaderResourceView ** m_ppd3dParticleImageSRV;
 	int m_nImages;

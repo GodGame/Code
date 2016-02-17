@@ -195,15 +195,15 @@ void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
 	BuildSamplers(pd3dDevice);
 	BuildTextures(pd3dDevice);
 
-	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	pd3dsrvTexture = CTextureMgr::CreateRandomTexture1DSRV(pd3dDevice);
-	InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", TX_SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
-	pd3dsrvTexture->Release();
+	//ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
+	//pd3dsrvTexture = CTextureMgr::CreateRandomTexture1DSRV(pd3dDevice);
+	//InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", TX_SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
+	//pd3dsrvTexture->Release();
 }
 
 void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 {
-	HRESULT hr;
+	HRESULT hr = 0;
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
@@ -281,7 +281,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 
 void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 {
-	HRESULT hr;
+	HRESULT hr = 0;
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	{
 		hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
@@ -329,34 +329,6 @@ bool CTextureMgr::InsertSamplerState(ID3D11SamplerState * pSamplerState, string 
 	pTexture->SetSampler(0, pSamplerState);
 	m_mpList[name] = pTexture;
 	return true;
-}
-
-ID3D11ShaderResourceView * CTextureMgr::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)
-{
-	XMFLOAT4 RandomValue[1024];
-	for (int i = 0; i < 1024; ++i)
-		RandomValue[i] = XMFLOAT4(Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f));
-	D3D11_SUBRESOURCE_DATA d3dSubresourceData;
-	d3dSubresourceData.pSysMem          = RandomValue;
-	d3dSubresourceData.SysMemPitch      = sizeof(XMFLOAT4) * 1024;
-	d3dSubresourceData.SysMemSlicePitch = 0;
-
-	D3D11_TEXTURE1D_DESC d3dTextureDesc;
-	ZeroMemory(&d3dTextureDesc, sizeof(D3D11_TEXTURE1D_DESC));
-	d3dTextureDesc.Width                = 1024;
-	d3dTextureDesc.MipLevels            = 1;
-	d3dTextureDesc.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	d3dTextureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
-	d3dTextureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
-	d3dTextureDesc.ArraySize            = 1;
-
-	ID3D11Texture1D * pd3dTexture;
-	pd3dDevice->CreateTexture1D(&d3dTextureDesc, &d3dSubresourceData, &pd3dTexture);
-
-	ID3D11ShaderResourceView * pd3dsrvTexutre;
-	pd3dDevice->CreateShaderResourceView(pd3dTexture, nullptr, &pd3dsrvTexutre);
-	pd3dTexture->Release();
-	return(pd3dsrvTexutre);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -423,6 +395,34 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "Terrain");
 }
 
+ID3D11ShaderResourceView * CViewManager::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)
+{
+	XMFLOAT4 RandomValue[1024];
+	for (int i = 0; i < 1024; ++i)
+		RandomValue[i] = XMFLOAT4(Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f), Chae::RandomFloat(-1.0f, 1.0f));
+	D3D11_SUBRESOURCE_DATA d3dSubresourceData;
+	d3dSubresourceData.pSysMem          = RandomValue;
+	d3dSubresourceData.SysMemPitch      = sizeof(XMFLOAT4) * 1024;
+	d3dSubresourceData.SysMemSlicePitch = 0;
+
+	D3D11_TEXTURE1D_DESC d3dTextureDesc;
+	ZeroMemory(&d3dTextureDesc, sizeof(D3D11_TEXTURE1D_DESC));
+	d3dTextureDesc.Width                = 1024;
+	d3dTextureDesc.MipLevels            = 1;
+	d3dTextureDesc.Format               = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	d3dTextureDesc.Usage                = D3D11_USAGE_IMMUTABLE;
+	d3dTextureDesc.BindFlags            = D3D11_BIND_SHADER_RESOURCE;
+	d3dTextureDesc.ArraySize            = 1;
+
+	ID3D11Texture1D * pd3dTexture;
+	pd3dDevice->CreateTexture1D(&d3dTextureDesc, &d3dSubresourceData, &pd3dTexture);
+
+	ID3D11ShaderResourceView * pd3dsrvTexutre;
+	pd3dDevice->CreateShaderResourceView(pd3dTexture, nullptr, &pd3dsrvTexutre);
+	pd3dTexture->Release();
+	return(pd3dsrvTexutre);
+}
+
 CViewManager & CViewManager::GetInstance()
 {
 	static CViewManager instance;
@@ -439,11 +439,16 @@ void CViewManager::BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * p
 {
 	CreatePostProcessViews(pd3dDevice, pd3dDeviceContext);
 	CreateViewsInGame(pd3dDevice, pd3dDeviceContext);
+
+	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
+	pd3dsrvTexture = CViewManager::CreateRandomTexture1DSRV(pd3dDevice);
+	InsertSRV(pd3dsrvTexture, "srv_random1d");// TX_SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
+	pd3dsrvTexture->Release();
 }
 
 void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
 {
-	HRESULT hResult;
+	HRESULT hResult = 0;
 	ID3D11DepthStencilView	  * pDSV = nullptr;
 	ID3D11ShaderResourceView  * pSRV = nullptr;
 	ID3D11UnorderedAccessView * pUAV = nullptr;
@@ -689,7 +694,7 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 
 void CViewManager::CreateViewsInGame(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
 {
-	HRESULT hResult;
+	HRESULT hResult = 0;
 	ID3D11DepthStencilView	  * pDSV = nullptr;
 	ID3D11ShaderResourceView  * pSRV = nullptr;
 	ID3D11UnorderedAccessView * pUAV = nullptr;

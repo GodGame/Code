@@ -74,9 +74,16 @@ StatusInfo::StatusInfo()
 	m_uGold				 = 0;
 
 	m_uHP				 = 0;
+	m_uStamina			 = 0;
+	m_nShields			 = 0;
 	m_uAttackDamage		 = 0;
-	m_bCanJump			 = 0;
-	m_bAlive			 = 0;
+	m_bRange		     = false;
+	m_bUnbeatable        = false;
+	m_bCanJump			 = false;
+	m_bAlive			 = false;
+
+	m_fAttackSpeed		 = 0.0f;
+	m_fAttackRange		 = 0.0f;
 }
 
 StatusInfo::~StatusInfo()

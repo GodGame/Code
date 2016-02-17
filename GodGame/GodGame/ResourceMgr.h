@@ -79,15 +79,13 @@ public:
 
 	ID3D11ShaderResourceView * GetShaderResourceView(string name)  { return m_mpList[name]->GetSRV(0);}
 	ID3D11SamplerState * GetSamplerState(string name)              { return m_mpList[name]->GetSampler(0);}
-	//void RegisterSRVSlot(ID3D11ShaderResourceView UINT nSlot)
+
 public:
 	virtual void BuildResources(ID3D11Device *pd3dDevice);
 	void BuildSamplers(ID3D11Device *pd3dDevice);
 	void BuildTextures(ID3D11Device *pd3dDevice);
 
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, string name);
-
-	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
 };
 
 #define TXMgr CTextureMgr::GetInstance()
@@ -172,6 +170,8 @@ public:
 	void EraseBuffer(string name) { m_mgrBuffer.EraseObjects(name); }
 
 public:
+	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
+
 	void BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);

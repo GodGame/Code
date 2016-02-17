@@ -628,29 +628,29 @@ void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float f
 {
 	m_fDurability = fDurability;
 
-	m_bEnable = true;
-	m_bInitilize = true;
+	m_bEnable     = false;
+	m_bInitilize  = true;
 
-	m_nVertices = 1;
+	m_nVertices           = 1;
 	ZeroMemory(&m_cParticle, sizeof(CB_PARTICLE));
 	m_cParticle.m_xmf3Pos = info.m_vParticleEmitPos;
-	m_cParticle.m_uType = PARTICLE_TYPE_EMITTER;
+	m_cParticle.m_uType   = PARTICLE_TYPE_EMITTER;
 
 	m_cbParticle.m_vParticleVelocity = info.m_vParticleVelocity;
-	m_cbParticle.m_vAccel = info.m_vAccel;
-	m_cbParticle.m_vParticleEmitPos = info.m_vParticleEmitPos;
-	m_cbParticle.m_fLifeTime = info.m_fLifeTime;
-	m_cbParticle.m_fNewTime = info.m_fNewTime;
-	m_cbParticle.m_bEnable = 1;
-	m_cbParticle.m_NewSize = XMFLOAT2(4, 4);
+	m_cbParticle.m_vAccel            = info.m_vAccel;
+	m_cbParticle.m_vParticleEmitPos  = info.m_vParticleEmitPos;
+	m_cbParticle.m_fLifeTime         = info.m_fLifeTime;
+	m_cbParticle.m_fNewTime          = info.m_fNewTime;
+	m_cbParticle.m_bEnable           = 1;
+	m_cbParticle.m_NewSize           = XMFLOAT2(4, 4);
 
 	m_nVertexStrides = sizeof(PATICLE_INFO);
 	//cout << m_nVertexStrides << endl;
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO) * 2;
+	d3dBufferDesc.Usage     = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO) *2;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;// | D3D11_BIND_STREAM_OUTPUT;
 
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
@@ -701,8 +701,8 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 
 void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	ID3D11Buffer * pd3dBuffer = m_pd3dDrawVertexBuffer;
-	m_pd3dDrawVertexBuffer = m_pd3dStreamOutVertexBuffer;
+	ID3D11Buffer * pd3dBuffer   = m_pd3dDrawVertexBuffer;
+	m_pd3dDrawVertexBuffer      = m_pd3dStreamOutVertexBuffer;
 	m_pd3dStreamOutVertexBuffer = pd3dBuffer;
 
 	UINT strides[] = { m_nVertexStrides };
@@ -710,9 +710,6 @@ void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState
 	pd3dDeviceContext->SOSetTargets(1, pd3dBuffers, 0);
 	pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, strides, &m_nVertexOffsets);
 	pd3dDeviceContext->DrawAuto();
-
-	//pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dInitialVertexBuffer, Strides, Offsets);
-	//pd3dDeviceContext->Draw(1, 0);
 }
 
 void CParticle::Update(float fTimeElapsed)
