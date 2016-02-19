@@ -34,6 +34,8 @@ protected:
 	//플레이어에 현재 설정된 카메라이다.
 	CCamera *m_pCamera;
 
+	CScene * m_pScene;
+
 public:
 	int m_nEnergy;
 
@@ -44,7 +46,7 @@ public:
 	//플레이어의 현재 카메라를 설정하고 반환하는 멤버 함수를 선언한다.
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
 	CCamera *GetCamera() { return(m_pCamera); }
-
+	void SetScene(CScene* pScene) { m_pScene = pScene; }
 	//플레이어의 상수 버퍼를 생성하고 갱신하는 멤버 함수를 선언한다.
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
@@ -96,8 +98,8 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 	virtual void Animate(float fTimeElapsed);
 
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
-	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG);
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra);
+	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
 };
 
 class CTerrainPlayer : public CPlayer

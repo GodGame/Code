@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "MyInline.h"
 #include "Player.h"
+#include "Scene.h"
 
 CPlayer::CPlayer(int nMeshes) : CDynamicObject(nMeshes)
 {
@@ -25,6 +26,8 @@ CPlayer::CPlayer(int nMeshes) : CDynamicObject(nMeshes)
 
 	m_pPlayerUpdatedContext = nullptr;
 	m_pCameraUpdatedContext = nullptr;
+
+	m_pScene = nullptr;
 }
 
 CPlayer::~CPlayer()
@@ -337,33 +340,36 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 void CPlayer::Animate(float fTimeElapsed)
 {
 	UINT uSize = m_uSize;
-	m_uSize = 50.0f;
-	vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
-	m_nEnergy += vcArray.size();
+	m_uSize = 40.0f;
+	//vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
+	//QUADMgr.ContainedErase();
+	QUADMgr.CollisionCheck(this);
 	cout << "¿¡³ÊÁö : " << m_nEnergy << endl;
-	//for (auto it = vcArray.begin(); it != vcArray.end(); ++it)
-	//{
-	//	vcArray.
-	//}
-	QUADMgr.ContainedErase();
-	
 	m_uSize = uSize;
 }
 
-void CPlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG)
+void CPlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
+	case eMessage::MSG_GET_SOUL:
+		++m_nEnergy;
+		m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
+		return;
 	case eMessage::MSG_COLLIDE:
 		return;
 	case eMessage::MSG_COLLIDED:
 		return;
 	case eMessage::MSG_NORMAL:
 		return;
+	case eMessage::MSG_COLLIDE_LOCATION:
+		
+		//toObj->GetGameMessage(this, MSG_COLLIDE);
+		return;
 	}
 }
 
-void CPlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG)
+void CPlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra)
 {
 	CGameObject * pObj = nullptr;
 

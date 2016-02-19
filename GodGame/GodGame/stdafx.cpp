@@ -6,6 +6,12 @@
 
 // TODO: 필요한 추가 헤더는
 // 이 파일이 아닌 STDAFX.H에서 참조합니다.
+ostream& operator<<(ostream& os, XMFLOAT2 & xmf2)
+{
+	os << xmf2.x << ", " << xmf2.y;
+	return os;
+}
+
 ostream& operator<<(ostream& os, XMFLOAT3 & xmf3)
 {
 	os << xmf3.x << ", " << xmf3.y << ", " << xmf3.z;

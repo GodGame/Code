@@ -94,7 +94,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pTrees->BuildObjects(pd3dDevice, GetTerrain());
 		m_ppShaders[4] = pTrees;
 
-		CParticleShader *pParticleShader = new CParticleShader();
+		CParticleShader * pParticleShader = new CParticleShader();
 		pParticleShader->CreateShader(pd3dDevice);
 		pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
 		m_ppShaders[5] = pParticleShader;
@@ -304,8 +304,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 			break;
 		case 'B':
-			if (bIsKeyDown == false) bIsKeyDown = true;
-			else bIsKeyDown = false;
+			bIsKeyDown = !bIsKeyDown;
 			break;
 		case 'X' :
 			((CParticleShader*)m_ppShaders[5])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
@@ -330,12 +329,12 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime)
 		/*키보드의 상태 정보를 반환한다. 화살표 키(‘→’, ‘←’, ‘↑’, ‘↓’)를 누르면 플레이어를 오른쪽/왼쪽(로컬 x-축), 앞/뒤(로컬 z-축)로 이동한다. ‘Page Up’과 ‘Page Down’ 키를 누르면 플레이어를 위/아래(로컬 y-축)로 이동한다.*/
 		if (GetKeyboardState(pKeyBuffer))
 		{
-			if (pKeyBuffer[VK_UP] & 0xF0) dwDirection |= DIR_FORWARD;
-			if (pKeyBuffer[VK_DOWN] & 0xF0) dwDirection |= DIR_BACKWARD;
-			if (pKeyBuffer[VK_LEFT] & 0xF0) dwDirection |= DIR_LEFT;
+			if (pKeyBuffer[VK_UP]    & 0xF0) dwDirection |= DIR_FORWARD;
+			if (pKeyBuffer[VK_DOWN]  & 0xF0) dwDirection |= DIR_BACKWARD;
+			if (pKeyBuffer[VK_LEFT]  & 0xF0) dwDirection |= DIR_LEFT;
 			if (pKeyBuffer[VK_RIGHT] & 0xF0) dwDirection |= DIR_RIGHT;
 			if (pKeyBuffer[VK_PRIOR] & 0xF0) dwDirection |= DIR_UP;
-			if (pKeyBuffer[VK_NEXT] & 0xF0) dwDirection |= DIR_DOWN;
+			if (pKeyBuffer[VK_NEXT]  & 0xF0) dwDirection |= DIR_DOWN;
 		}
 		float cxDelta = 0.0f, cyDelta = 0.0f;
 		POINT ptCursorPos;
@@ -491,4 +490,25 @@ CHeightMapTerrain *CSceneInGame::GetTerrain()
 {
 	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[1];
 	return(pTerrainShader->GetTerrain());
+}
+
+void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_PARTICLE_ON:
+		((CParticleShader*)m_ppShaders[5])->ParticleOn((XMFLOAT3*)extra);
+		return;
+	default:
+		return;
+	}
+}
+
+void CSceneInGame::SendGameMessage(CScene * toObj, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	default:
+		return;
+	}
 }

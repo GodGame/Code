@@ -221,7 +221,7 @@ XMFLOAT3 CGameObject::GetRight()
 	return(xv3Right);
 }
 
-void CGameObject::GetGameMessage(CGameObject * byObj, eMessage eMSG)
+void CGameObject::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -240,7 +240,7 @@ void CGameObject::GetGameMessage(CGameObject * byObj, eMessage eMSG)
 	}
 }
 
-void CGameObject::SendGameMessage(CGameObject * toObj, eMessage eMSG)
+void CGameObject::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -256,7 +256,7 @@ void CGameObject::SendGameMessage(CGameObject * toObj, eMessage eMSG)
 	}
 }
 
-void CGameObject::MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG)
+void CGameObject::MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG, void * extra)
 {
 	byObj->SendGameMessage(toObj, eMSG);
 	toObj->GetGameMessage(byObj, eMSG);
@@ -597,24 +597,24 @@ bool CBillboardObject::IsVisible(CCamera *pCamera)
 
 CParticle::CParticle()
 {
-	m_pd3dInitialVertexBuffer = nullptr;
+	m_pd3dInitialVertexBuffer   = nullptr;
 	m_pd3dStreamOutVertexBuffer = nullptr;
-	m_pd3dDrawVertexBuffer = nullptr;
+	m_pd3dDrawVertexBuffer      = nullptr;
 
-	m_nVertices = 0;
-	m_nStartVertex = 0;
-	m_nVertexStrides = 0;
-	m_nVertexOffsets = 0;
+	//m_nVertices                 = 0;
+	m_nStartVertex              = 0;
+	m_nVertexStrides            = 0;
+	m_nVertexOffsets            = 0;
 
-	m_fDurability = 0;
+	m_fDurability               = 0;
 
 	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
-	ZeroMemory(&m_cParticle, sizeof(PATICLE_INFO));
+	ZeroMemory(&m_cParticle, sizeof(PARTICLE_INFO));
 
 	m_bInitilize = false;
-	m_bEnable = false;
-
-	m_pd3dQuery = nullptr;
+	m_bEnable    = false;
+	m_bMove      = false;
+	//m_pd3dQuery = nullptr;
 }
 
 CParticle::~CParticle()
@@ -624,62 +624,69 @@ CParticle::~CParticle()
 	if (m_pd3dInitialVertexBuffer) m_pd3dInitialVertexBuffer->Release();
 }
 
-void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float fDurability, int iMaxParticle)
+void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, int iMaxParticle)
 {
 	m_fDurability = fDurability;
+	m_velocity = Velocity;
+	 
+	if (Chae::XMFloat3NorValue(m_velocity.xmf3Velocity, 0.0f)) m_bMove = true;
+	if (Chae::XMFloat3NorValue(m_velocity.xmf3Accelate, 0.0f)) m_bUseAccel = true;
 
 	m_bEnable     = false;
 	m_bInitilize  = true;
 
-	m_nVertices           = 1;
-	ZeroMemory(&m_cParticle, sizeof(CB_PARTICLE));
-	m_cParticle.m_xmf3Pos = info.m_vParticleEmitPos;
-	m_cParticle.m_uType   = PARTICLE_TYPE_EMITTER;
+	//m_nVertices           = 1;
+	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
+	ZeroMemory(&m_cParticle, sizeof(PARTICLE_INFO));
+	//m_cParticle.m_xmf2Size = XMFLOAT2(0, 0);
+	//m_cParticle.m_fAge = 0.0f;
+	//m_cParticle.m_xmf3Velocity = XMFLOAT3(0, 0, 0);
+	//m_cParticle.m_xmf3Pos            = info.m_vParticleEmitPos;
+	//m_cParticle.m_uType              = PARTICLE_TYPE_EMITTER;
 
 	m_cbParticle.m_vParticleVelocity = info.m_vParticleVelocity;
 	m_cbParticle.m_vAccel            = info.m_vAccel;
 	m_cbParticle.m_vParticleEmitPos  = info.m_vParticleEmitPos;
 	m_cbParticle.m_fLifeTime         = info.m_fLifeTime;
 	m_cbParticle.m_fNewTime          = info.m_fNewTime;
-	m_cbParticle.m_bEnable           = 1;
-	m_cbParticle.m_NewSize           = XMFLOAT2(4, 4);
+	m_cbParticle.m_bEnable           = 1.0f;
+	m_cbParticle.m_MaxSize           = XMFLOAT2(6, 6);
 
-	m_nVertexStrides = sizeof(PATICLE_INFO);
-	//cout << m_nVertexStrides << endl;
+	m_velocity.xmf3InitPos           = m_cbParticle.m_vParticleEmitPos;
+	m_nVertexStrides                 = sizeof(PARTICLE_INFO);
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
 	d3dBufferDesc.Usage     = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO) *2;
+	d3dBufferDesc.ByteWidth = m_nVertexStrides;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;// | D3D11_BIND_STREAM_OUTPUT;
 
+	HRESULT hr = 0;
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = &m_cParticle;// pQuadPatchVertices;
-	HRESULT hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dInitialVertexBuffer);
-	if (FAILED(hr)) printf("버퍼생성 실패");
+	ASSERT_S(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dInitialVertexBuffer));
 
-	d3dBufferDesc.ByteWidth = sizeof(PATICLE_INFO) * iMaxParticle;
+	d3dBufferDesc.ByteWidth = m_nVertexStrides * iMaxParticle;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_STREAM_OUTPUT;
 
 	// SO으로 받을 버퍼는 서브리소스 데이터 값을 nullptr로 해야한다!!
-	hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dStreamOutVertexBuffer);
-	if (FAILED(hr)) printf("버퍼생성 실패");
-	hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dDrawVertexBuffer);
-	if (FAILED(hr)) printf("버퍼생성 실패");
+	ASSERT_S(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dStreamOutVertexBuffer));
+	ASSERT_S(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dDrawVertexBuffer));
 
-	D3D11_QUERY_DESC qd;
-	qd.Query = D3D11_QUERY_SO_STATISTICS;
-	qd.MiscFlags = D3D11_QUERY_MISC_PREDICATEHINT;
+	//D3D11_QUERY_DESC qd;
+	//qd.Query = D3D11_QUERY_SO_STATISTICS;
+	//qd.MiscFlags = D3D11_QUERY_MISC_PREDICATEHINT;
 
-	//HRESULT hr = pd3dDevice->CreateQuery(&qd, &m_pd3dQuery);
-	//if (FAILED(hr)) printf("실패했습니다.");
+	//ASSERT_S(pd3dDevice->CreateQuery(&qd, &m_pd3dQuery));
+	
 }
 
 void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	pd3dDeviceContext->SOSetTargets(1, &m_pd3dStreamOutVertexBuffer, &m_nVertexOffsets);
-	UINT strides[] = { m_nVertexStrides * 2 };
+	// 원인은 무엇인가??
+	static const UINT strides[] = { (m_nVertexStrides * 3) };
 	//pd3dDeviceContext->Begin(m_pd3dQuery);
 	if (m_bInitilize)
 	{
@@ -701,44 +708,67 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 
 void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	ID3D11Buffer * pd3dBuffer   = m_pd3dDrawVertexBuffer;
-	m_pd3dDrawVertexBuffer      = m_pd3dStreamOutVertexBuffer;
-	m_pd3dStreamOutVertexBuffer = pd3dBuffer;
+	swap(m_pd3dDrawVertexBuffer, m_pd3dStreamOutVertexBuffer);
 
-	UINT strides[] = { m_nVertexStrides };
-	ID3D11Buffer * pd3dBuffers[1] = { nullptr };
-	pd3dDeviceContext->SOSetTargets(1, pd3dBuffers, 0);
-	pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, strides, &m_nVertexOffsets);
+//	const static UINT strides[] = { m_nVertexStrides };
+	pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, &m_nVertexStrides, &m_nVertexOffsets);
 	pd3dDeviceContext->DrawAuto();
 }
 
 void CParticle::Update(float fTimeElapsed)
 {
 	m_cbParticle.m_fGameTime += fTimeElapsed;
-	m_cbParticle.m_fTimeStep = fTimeElapsed;
-	m_cbParticle.m_NewSize = XMFLOAT2(rand() % 4 * 2, rand() % 4 * 2);
+	m_cbParticle.m_fTimeStep  = fTimeElapsed;
+	float fGameTime           = m_cbParticle.m_fGameTime;
+	//m_cbParticle.m_NewSize    = XMFLOAT2(rand() % 4 * 2, rand() % 4 * 2);
 
-	if (m_cbParticle.m_fGameTime > m_fDurability + m_cbParticle.m_fLifeTime)
+	if (m_bMove)
+	{
+		XMVECTOR xmvVelocity;
+		XMVECTOR xmvPos;
+
+		if (m_bUseAccel)
+		{
+			xmvVelocity = (0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) + XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime;
+			xmvPos      = xmvVelocity + XMLoadFloat3(&m_velocity.xmf3InitPos);
+		}
+		else
+		{
+			xmvVelocity = XMLoadFloat3(&m_velocity.xmf3Velocity) * fTimeElapsed;
+			xmvPos      = xmvVelocity + XMLoadFloat3(&m_cbParticle.m_vParticleEmitPos);
+		}
+		XMStoreFloat3(&m_cbParticle.m_vParticleEmitPos, xmvPos);
+		cout << "pos : " << m_cbParticle.m_vParticleEmitPos << endl;
+	}
+
+	if (fGameTime > m_fDurability + m_cbParticle.m_fLifeTime)
 	{
 		m_cbParticle.m_fGameTime = 0.0f;
 		Disable();
 	}
-	else if (m_cbParticle.m_fGameTime > m_fDurability)
+
+	else if (fGameTime > m_fDurability)
 	{
 		m_cbParticle.m_bEnable = 0;
 	}
 }
 
-void CParticle::Enable()
+bool CParticle::Enable(XMFLOAT3 * pos)
 {
-	m_bEnable = true;
-	m_bInitilize = true;
+	if (pos) SetEmitPosition(*pos);
+
+
+	m_velocity.xmf3InitPos = *pos;
+	m_bEnable              = true;
+	m_bInitilize           = true;
 	m_cbParticle.m_bEnable = 1;
+	return true;
 }
 
-void CParticle::Disable()
+bool CParticle::Disable()
 {
 	m_bEnable = false;
+	return true;
 }
 
 CAbsorbMarble::CAbsorbMarble() : CBillboardObject()
@@ -787,14 +817,14 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 {
 	if (m_bAbsorb)
 	{
-		m_fAbsorbTime += fTimeElapsed;
-		XMVECTOR xmvTarget = XMLoadFloat3(&m_pTargetObject->GetPosition());
-		XMVECTOR xvPos = XMLoadFloat3(&CBillboardObject::GetPosition());
+		m_fAbsorbTime		+= fTimeElapsed;
+		XMVECTOR xmvTarget   = XMLoadFloat3(&m_pTargetObject->GetPosition());
+		XMVECTOR xvPos       = XMLoadFloat3(&CBillboardObject::GetPosition());
 		XMVECTOR xmvToTarget = xmvTarget - xvPos;
-		xmvToTarget = XMVector3Normalize(xmvToTarget) * 2.0f;
+		xmvToTarget          = XMVector3Normalize(xmvToTarget) * 2.0f;
 
-		XMVECTOR xvSpeed = XMVectorReplicate(m_fSpeed);
-		XMVECTOR xvRandom = XMLoadFloat3(&m_xvRandomVelocity);
+		XMVECTOR xvSpeed     = XMVectorReplicate(m_fSpeed);
+		XMVECTOR xvRandom    = XMLoadFloat3(&m_xvRandomVelocity);
 
 		xvPos = (0.5f * xmvToTarget * m_fAbsorbTime * m_fAbsorbTime) + (xvRandom * m_fAbsorbTime) + xvPos;
 		XMFLOAT3 xmfPos;
@@ -813,7 +843,7 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 	}
 }
 
-void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG)
+void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -824,6 +854,8 @@ void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG)
 		m_bActive = false;
 		return;
 	case eMessage::MSG_COLLIDE:
+		m_pTargetObject->GetGameMessage(this, eMessage::MSG_GET_SOUL, &CBillboardObject::GetPosition());
+
 		SetPosition(XMFLOAT3(rand() % 2048, 100, rand() % 2048));
 		CBillboardObject::UpdateInstanceData();
 		Initialize();

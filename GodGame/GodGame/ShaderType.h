@@ -69,9 +69,9 @@ public:
 	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	
-	virtual void GetGameMessage(CShader * byObj, eMessage eMSG);
-	virtual void SendGameMessage(CShader * toObj, eMessage eMSG);
-	static  void MessageObjToObj(CShader * byObj, CShader * toObj, eMessage eMSG);
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CShader * toObj, eMessage eMSG, void * extra = nullptr);
+	static  void MessageObjToObj(CShader * byObj, CShader * toObj, eMessage eMSG, void * extra = nullptr);
 
 	virtual CGameObject * GetObj(int num = 0);
 #ifdef PICKING

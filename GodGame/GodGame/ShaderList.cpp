@@ -375,18 +375,15 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 
 	CTexture *pSwordTexture = new CTexture(3, 1, 0, 0);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_d.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	ASSERT(SUCCEEDED(hr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_d.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	pSwordTexture->SetTexture(0, pd3dsrvTexture);
 	pd3dsrvTexture->Release();
 
-	hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_n.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	ASSERT(SUCCEEDED(hr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_n.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	pSwordTexture->SetTexture(1, pd3dsrvTexture);
 	pd3dsrvTexture->Release();
 
-	hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_s.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	ASSERT(SUCCEEDED(hr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_s.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	pSwordTexture->SetTexture(2, pd3dsrvTexture);
 	pd3dsrvTexture->Release();
 
@@ -488,9 +485,9 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
 {
-	CMaterial * pMat = new CMaterial();
-	pMat->m_Material.m_xcAmbient = XMFLOAT4(100, 100, 100, 10);
-	pMat->m_Material.m_xcDiffuse = XMFLOAT4(100, 100, 100, 10);
+	CMaterial * pMat              = new CMaterial();
+	pMat->m_Material.m_xcAmbient  = XMFLOAT4(100, 100, 100, 10);
+	pMat->m_Material.m_xcDiffuse  = XMFLOAT4(100, 100, 100, 10);
 	pMat->m_Material.m_xcSpecular = XMFLOAT4(100, 100, 100, 10);
 	pMat->m_Material.m_xcEmissive = XMFLOAT4(100, 100, 100, 10);
 
@@ -539,8 +536,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	m_pTexture = new CTexture(1, 1, 0, 0);
 	ID3D11ShaderResourceView * pd3dsrvArray;
 	//ID3D11ShaderResourceView * pd3dsrvArray = m_pTexture->CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), 1);
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/lightsphere1.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
-	ASSERT(SUCCEEDED(hr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/lightsphere1.png"), nullptr, nullptr, &pd3dsrvArray, nullptr));
 
 	m_pTexture->SetTexture(0, pd3dsrvArray);
 	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
@@ -681,23 +677,23 @@ void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	d3dSamplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
 	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
+	d3dSamplerDesc.MinLOD         = 0;
+	d3dSamplerDesc.MaxLOD         = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 
 	CTexture * pTexture = new CTexture(2, 2, 0, 0, (SET_SHADER_VS | SET_SHADER_DS | SET_SHADER_PS));
 	ID3D11ShaderResourceView * pd3dsrvArray;
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/stones_nmap.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/stones_nmap.png"), nullptr, nullptr, &pd3dsrvArray, nullptr));
 	pTexture->SetTexture(0, pd3dsrvArray);
 	pTexture->SetSampler(0, pd3dSamplerState);
 	pd3dsrvArray->Release();
 
-	hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/stone.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/stone.png"), nullptr, nullptr, &pd3dsrvArray, nullptr));
 	pTexture->SetTexture(1, pd3dsrvArray);
 	pTexture->SetSampler(1, pd3dSamplerState);
 	pd3dsrvArray->Release();
@@ -759,18 +755,18 @@ void CNormalShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 CParticleShader::CParticleShader() : CShader()
 {
 	m_pd3dSODepthStencilState = nullptr;
-	m_pd3dDepthStencilState = nullptr;
-	m_pd3dBlendState = nullptr;
+	m_pd3dDepthStencilState   = nullptr;
+	m_pd3dBlendState          = nullptr;
 
-	m_nObjects = 0;
+	m_nObjects                = 0;
 
-	m_ppParticle = nullptr;
-	m_pd3dcbGameInfo = nullptr;
+	m_ppParticle              = nullptr;
+	m_pd3dcbGameInfo          = nullptr;
 
-	m_pd3dRandomSRV = nullptr;
-	m_pd3dSamplerState = nullptr;
-	m_ppd3dParticleImageSRV = nullptr;
-	m_nImages = 0;
+	m_pd3dRandomSRV           = nullptr;
+	m_pd3dSamplerState        = nullptr;
+	m_ppd3dParticleImageSRV   = nullptr;
+	m_nImages                 = 0;
 }
 
 CParticleShader::~CParticleShader()
@@ -800,9 +796,9 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "VELOCITY", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "AGE", 0, DXGI_FORMAT_R32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TYPE", 0, DXGI_FORMAT_R32_UINT, 0, 36, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "SIZE",     0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "AGE",      0, DXGI_FORMAT_R32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TYPE",     0, DXGI_FORMAT_R32_FLOAT, 0, 36, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
 
@@ -872,77 +868,112 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
 
-	m_nObjects = 2;
+	m_nObjects = 3;
 	m_ppParticle = new CParticle*[m_nObjects];
 
 	CB_PARTICLE cbParticle;
-	cbParticle.m_fLifeTime         = 1.0f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, 10, 0);
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+
+	cbParticle.m_fLifeTime         = 0.5f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, 60, 0);
 	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1105, 180, 250);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(15, 15, 15);
-	cbParticle.m_fNewTime          = 0.005f;
+	cbParticle.m_vParticleVelocity = XMFLOAT3(20, 20, 20);
+	cbParticle.m_fNewTime          = 0.001f;
+
+	MoveVelocity mov = MoveVelocity();
+	//mov.xmf3Velocity = XMFLOAT3(0, 20, 0);
+	//mov.xmf3Accelate = XMFLOAT3(0, -80, 0);
 
 	m_ppParticle[0] = new CParticle();
-	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, 20.0, 800);
+	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 800);//(pd3dDevice, cbParticle, 20.0, 800);
 	//m_ppParticle[0]->Enable();
 
-	cbParticle.m_fLifeTime         = 1.0f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, 20, 0);
-	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1105, 180, 250);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(15, 15, 15);
-	cbParticle.m_fNewTime          = 0.005f;
-
 	m_ppParticle[1] = new CParticle();
-	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, 1.0f, 800);
+	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 800);
+
+	m_ppParticle[2] = new CParticle();
+	m_ppParticle[2]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 800);
+
+	//m_ppParticle[3] = new CParticle();
+	//m_ppParticle[3]->Initialize(pd3dDevice, cbParticle, 0.2f, 200);
+
+	//m_ppParticle[4] = new CParticle();
+	//m_ppParticle[4]->Initialize(pd3dDevice, cbParticle, 0.2f, 200);
 
 	m_pd3dRandomSRV = ViewMgr.GetSRV("srv_random1d");// CShader::CreateRandomTexture1DSRV(pd3dDevice);
+
+	m_vcAbleParticleArray.reserve(m_nObjects);
+	m_vcUsingParticleArray.reserve(m_nObjects);
 
 	m_nImages = 1;
 	m_ppd3dParticleImageSRV = new ID3D11ShaderResourceView*[m_nImages];
 
-	HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice,
-		_T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &m_ppd3dParticleImageSRV[0], nullptr);
-	ASSERT(SUCCEEDED(hr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice,
+		_T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &m_ppd3dParticleImageSRV[0], nullptr));
 }
 
 void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
+	static ID3D11Buffer * nullBuffers[1] = { nullptr };
+	UINT index = 0;
+
 	pd3dDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	pd3dDeviceContext->IASetInputLayout(m_pd3dVertexLayout);
 
 	CParticleShader::SOSetState(pd3dDeviceContext);
 
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dSODepthStencilState, 0);
-	for (int i = 0; i < m_nObjects; ++i)
+
+	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
-		if (!m_ppParticle[i]->IsAble()) continue;
-		UpdateShaderVariable(pd3dDeviceContext, m_ppParticle[i]);
-		m_ppParticle[i]->StreamOut(pd3dDeviceContext);
+		UpdateShaderVariable(pd3dDeviceContext, it->second);
+		it->second->StreamOut(pd3dDeviceContext);
 	}
+	//for (int i = 0; i < m_nObjects; ++i)
+	//{
+	//	if (!m_ppParticle[i]->IsAble()) continue;
+	//	UpdateShaderVariable(pd3dDeviceContext, m_ppParticle[i]);
+	//	m_ppParticle[i]->StreamOut(pd3dDeviceContext);
+	//}
+	pd3dDeviceContext->SOSetTargets(1, nullBuffers, 0);
 
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
 	pd3dDeviceContext->GSSetShader(m_pd3dGeometryShader, nullptr, 0);
 	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, nullptr, 0);
 
-	pd3dDeviceContext->PSSetShaderResources(0, m_nImages, m_ppd3dParticleImageSRV);
+	pd3dDeviceContext->PSSetShaderResources(0, 1, &m_ppd3dParticleImageSRV[0]);
 	pd3dDeviceContext->PSSetSamplers(0, 1, &m_pd3dSamplerState);
 
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dDepthStencilState, 0);
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
-	for (int i = 0; i < m_nObjects; ++i)
+	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
-		if (!m_ppParticle[i]->IsAble()) continue;
-		m_ppParticle[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+		//pd3dDeviceContext->PSSetShaderResources(0, 1, &m_ppd3dParticleImageSRV[i]);
+		it->second->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
+	//for (int i = 0; i < m_nObjects; ++i)
+	//{
+	//	if (!m_ppParticle[i]->IsAble()) continue;
+	//	//pd3dDeviceContext->PSSetShaderResources(0, 1, &m_ppd3dParticleImageSRV[i]);
+	//	m_ppParticle[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+	//}
 	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 }
 
 void CParticleShader::AnimateObjects(float fTimeElapsed)
 {
+	m_vcAbleParticleArray.clear();
+	m_vcUsingParticleArray.clear();
+
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (!m_ppParticle[i]->IsAble()) continue;
-		m_ppParticle[i]->Update(fTimeElapsed);
+		if (!m_ppParticle[i]->IsAble()) 
+			m_vcAbleParticleArray.push_back(m_ppParticle[i]);
+		else
+		{
+			m_ppParticle[i]->Update(fTimeElapsed);
+			m_vcUsingParticleArray.push_back(ParticleInfo(i, m_ppParticle[i]));
+		}
 	}
 }
 
@@ -950,13 +981,11 @@ void CParticleShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	D3D11_BUFFER_DESC bd;
 	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof(CB_PARTICLE);
-	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.Usage          = D3D11_USAGE_DYNAMIC;
+	bd.ByteWidth      = sizeof(CB_PARTICLE);
+	bd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	HRESULT hr = pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbGameInfo);
-	if (FAILED(hr))
-		printf("오류입니다!!");
+	ASSERT_S(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbGameInfo));
 }
 
 void CParticleShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CParticle * pParticle)
@@ -966,7 +995,7 @@ void CParticleShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 	CB_PARTICLE *pcbParticle = (CB_PARTICLE *)d3dMappedResource.pData;
 	memcpy(pcbParticle, pParticle->GetCBParticle(), sizeof(CB_PARTICLE));
 	//*pcbParticle = *pParticle->GetCBParticle();
-	cout << "Particl : " << pcbParticle->m_fGameTime << "// life : " << pcbParticle->m_fLifeTime << "// emit pos : " << pcbParticle->m_vParticleEmitPos << endl;
+//	cout << "Particl : " << pcbParticle->m_fGameTime << "// life : " << pcbParticle->m_fTimeStep << "// emit pos : " << pcbParticle->m_vParticleEmitPos << endl;
 	pd3dDeviceContext->Unmap(m_pd3dcbGameInfo, 0);
 
 	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
@@ -976,8 +1005,8 @@ void CParticleShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 
 void CParticleShader::SOSetState(ID3D11DeviceContext * pd3dDeviceContext)
 {
-	pd3dDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	pd3dDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	//pd3dDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	//pd3dDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	pd3dDeviceContext->VSSetShader(m_pd3dVSSO, nullptr, 0);
 	pd3dDeviceContext->GSSetShader(m_pd3dGSSO, nullptr, 0);
 	pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);

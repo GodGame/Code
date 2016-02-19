@@ -11,6 +11,11 @@ enum eMessage : BYTE
 	MSG_NORMAL = 0,
 	MSG_COLLIDE,
 	MSG_COLLIDED,
+	MSG_COLLIDE_LOCATION,
+
+	MSG_PARTICLE_ON,
+
+	MSG_GET_SOUL,
 
 	MSG_DAMAGED,
 	MSG_GETPOINT,
@@ -74,8 +79,8 @@ public:
 	{
 		if (IsTerminal(fTime)) 
 		{
-			if (m_pByObj) m_pByObj->SendGameMessage(m_pToObj, m_eMessage);
-			else		  m_pToObj->GetGameMessage(nullptr, m_eMessage);
+			if (m_pByObj) m_pByObj->SendGameMessage(m_pToObj, m_eMessage, m_pExtra);
+			else		  m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
 			return true;
 		}
 		return false;

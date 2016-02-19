@@ -63,19 +63,23 @@ using namespace DirectX;
 //#include <ASSERT.h>
 
 #ifdef _DEBUG
-#define ASSERT(x) assert(x) 
+#define ASSERT(x)   assert(x) 
+#define ASSERT_S(x) assert(SUCCEEDED(x))
+#define ASSERT_F(x) assert(FAILED(x))
 #else
-#define ASSERT(x) x
+#define ASSERT(x)   x
+#define ASSERT_S(x) x
+#define ASSERT_F(x) x
 #endif
 
 #define _QUAD_TREE
 
 using namespace std;
 
+ostream& operator<<(ostream& os, XMFLOAT2 & xmf2);
 ostream& operator<<(ostream& os, XMFLOAT3 & xmf3);
 ostream& operator<<(ostream& os, XMFLOAT4 & xmf4);
 
 ostream& operator<<(ostream& os, XMFLOAT4X4 & mtx);
-
 
 #endif

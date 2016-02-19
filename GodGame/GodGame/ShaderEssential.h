@@ -204,8 +204,8 @@ public:
 	virtual void AnimateObjects(float fTimeElapsed);
 	void PostProcessingRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
-	virtual void GetGameMessage(CShader * byObj, eMessage eMSG);
-	virtual void SendGameMessage(CShader * toObj, eMessage eMSG);
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CShader * toObj, eMessage eMSG, void * extra = nullptr);
 
 public:
 	void ScreenRender    (ID3D11DeviceContext *pd3dDeviceContext, ID3D11ShaderResourceView * pScreenSRV, UINT uRenderState);

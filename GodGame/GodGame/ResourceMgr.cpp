@@ -203,7 +203,6 @@ void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
 
 void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 {
-	HRESULT hr = 0;
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
@@ -216,22 +215,19 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.MinLOD         = 0;
 		d3dSamplerDesc.MaxLOD         = 0;
 
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_wrap", 0);
 		pd3dSamplerState->Release();
 	}
 	{
 		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "ss_point_wrap", 0);
 		pd3dSamplerState->Release();
 	}
 	{
 		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR; // D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_point_wrap", 0);
 		pd3dSamplerState->Release();
 	}
@@ -241,15 +237,13 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 		d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
 
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "ss_linear_clamp", 0);
 		pd3dSamplerState->Release();
 	}
 	{
 		d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "ss_point_clamp", 0);
 		pd3dSamplerState->Release();
 	}
@@ -262,8 +256,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.MaxAnisotropy  = 1;
 		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;//D3D11_COMPARISON_NEVER;
 
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "scs_point_border", 0);
 		pd3dSamplerState->Release();
 	}
@@ -272,8 +265,7 @@ void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
 		d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 		d3dSamplerDesc.MaxAnisotropy  = 1;
 
-		hr = pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState));
 		InsertSamplerState(pd3dSamplerState, "ss_point_border", 0);
 		pd3dSamplerState->Release();
 	}
@@ -284,15 +276,12 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	HRESULT hr = 0;
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	{
-		hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-		ASSERT(SUCCEEDED(hr));
-
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 		InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
 		pd3dsrvTexture->Release();
 	}
 	{
-		hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-		ASSERT(SUCCEEDED(hr));
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 
 		InsertShaderResourceView(pd3dsrvTexture, "srv_title_jpg", 0);
 		pd3dsrvTexture->Release();
@@ -506,18 +495,18 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.25f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.25f;
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "su2d_post0"); pSRV->Release();
 		InsertUAV(pUAV, "su2d_post0"); pUAV->Release();
 	}
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "su2d_post1"); pSRV->Release();
@@ -526,18 +515,18 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625f;
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "su2d_postscaled0"); pSRV->Release();
 		InsertUAV(pUAV, "su2d_postscaled0"); pUAV->Release();
 	}
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "su2d_postscaled1"); pSRV->Release();
@@ -548,9 +537,9 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3dRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "sr2d_bloom4x4"); pSRV->Release();
@@ -559,9 +548,9 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3d2DBufferDesc.Width = FRAME_BUFFER_WIDTH * 0.0625;//0.125f;
 	d3d2DBufferDesc.Height = FRAME_BUFFER_HEIGHT * 0.0625;//0.125f;
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "sr2d_bloom16x16"); pSRV->Release();
@@ -574,9 +563,9 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;// | D3D11_BIND_UNORDERED_ACCESS;
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateRenderTargetView(pTx2D, &d3dRTVDesc, &pRTV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "sr2d_PostResult"); pSRV->Release();
@@ -584,9 +573,9 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	}
 	d3d2DBufferDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 	{
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV)));
-		ASSERT(SUCCEEDED(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV)));
+		ASSERT_S(hResult = pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pTx2D));
+		ASSERT_S(hResult = pd3dDevice->CreateShaderResourceView(pTx2D, &d3dSRVDesc, &pSRV));
+		ASSERT_S(hResult = pd3dDevice->CreateUnorderedAccessView(pTx2D, &d3dUAVDesc, &pUAV));
 		if (pTx2D) pTx2D->Release();
 
 		InsertSRV(pSRV, "su2d_radial"); pSRV->Release();
@@ -611,8 +600,8 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	DescBuffer.StructureByteStride = sizeof(float);
 	DescBuffer.Usage               = D3D11_USAGE_DEFAULT;
 	{
-		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer1)));
-		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer2)));
+		ASSERT_S(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer1));
+		ASSERT_S(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer2));
 	}
 	//{
 	//	// This Buffer is for reduction on CPU
@@ -629,9 +618,9 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	DescUAV.Buffer.FirstElement = 0;
 	DescUAV.Buffer.NumElements  = DescBuffer.ByteWidth / sizeof(float);
 	{
-		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer1, &DescUAV, &pUAV)));
+		ASSERT_S(pd3dDevice->CreateUnorderedAccessView(pBuffer1, &DescUAV, &pUAV));
 		InsertUAV(pUAV, "su_reduce1"); pUAV->Release();
-		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer2, &DescUAV, &pUAV)));
+		ASSERT_S(pd3dDevice->CreateUnorderedAccessView(pBuffer2, &DescUAV, &pUAV));
 		InsertUAV(pUAV, "su_reduce2"); pUAV->Release();
 	}
 	// Create resource view for the two buffers object
@@ -642,9 +631,9 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 	DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
 	DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
 	{
-		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer1, &DescRV, &pSRV)));
+		ASSERT_S(pd3dDevice->CreateShaderResourceView(pBuffer1, &DescRV, &pSRV));
 		InsertSRV(pSRV, "su_reduce1"); pSRV->Release();
-		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer2, &DescRV, &pSRV)));
+		ASSERT_S(pd3dDevice->CreateShaderResourceView(pBuffer2, &DescRV, &pSRV));
 		InsertSRV(pSRV, "su_reduce2"); pSRV->Release();
 	}
 	{
@@ -735,13 +724,13 @@ void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	desc.ByteWidth = sizeof(XMFLOAT4);
 	desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;// 0;
-	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer)));
+	ASSERT_S(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer));
 
 	InsertBuffer(pd3dBuffer, "cs_float4");
 	pd3dBuffer->Release();
 
 	desc.ByteWidth = sizeof(XMFLOAT4X4);
-	ASSERT(SUCCEEDED(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer)));
+	ASSERT_S(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer));
 	InsertBuffer(pd3dBuffer, "cs_float4x4");
 	pd3dBuffer->Release();
 }

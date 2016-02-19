@@ -32,6 +32,9 @@ public:
 
 	virtual void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
 	virtual void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
+
+	virtual void GetGameMessage(CScene * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CScene * toObj, eMessage eMSG, void * extra = nullptr);
 public:
 #ifdef PICKING
 	CGameObject *PickObjectPointedByCursor(int xClient, int yClient);

@@ -40,10 +40,10 @@ public:
 public:
 	void OnSlow()     { m_eDebuff |= DEBUFF_SLOW; PlayerDelayMessage(DEBUFF_SLOW, m_fTimeSlow); }
 	void DownSlow()   { m_eDebuff &= ~DEBUFF_SLOW; }
-	bool IsSlow()	  { return m_eDebuff & DEBUFF_SLOW;}
+	bool IsSlow()	  { return DEBUFF_SLOW & m_eDebuff;}
 	void OnFreeze()   { m_eDebuff |= DEBUFF_FREEZE;  PlayerDelayMessage(DEBUFF_FREEZE, m_fTimeFreeze);}
 	void DownFreeze() { m_eDebuff &= ~DEBUFF_FREEZE; }
-	bool IsFreeze()   { return m_eDebuff & DEBUFF_FREEZE; }
+	bool IsFreeze()   { return DEBUFF_FREEZE & m_eDebuff; }
 };
 
 class CBuff
@@ -82,10 +82,10 @@ public:
 public:
 	void OnPlusDamage()   { m_eBuff |= BUFF_PLUS_DAMAGE; PlayerDelayMessage(BUFF_PLUS_DAMAGE, m_fTimePlusDamage); }
 	void DownPlusDamage() { m_eBuff &= ~BUFF_PLUS_DAMAGE; }
-	bool IsPlusDamage()   { return m_eBuff & BUFF_PLUS_DAMAGE; }
+	bool IsPlusDamage()   { return BUFF_PLUS_DAMAGE & m_eBuff; }
 	void OnCastUp()       { m_eBuff |= BUFF_CAST; PlayerDelayMessage(BUFF_CAST, m_fTimeCast); }
 	void DownCastUp()     { m_eBuff &= ~BUFF_CAST; }
-	bool IsCastUp()       { return m_eBuff & BUFF_PLUS_DAMAGE; }
+	bool IsCastUp()       { return BUFF_PLUS_DAMAGE & m_eBuff; }
 };
 
 class StatusInfo

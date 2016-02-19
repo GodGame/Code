@@ -15,7 +15,7 @@ cbuffer cbParticleInfo : register(b4)
 	float3 gvAccel;
 	float  gfTimeStep;
 	float  gfNewTime;
-	float2 gNewSize;
+	float2 gMaxSize;
 	float  gbEnable;
 };
 
@@ -25,7 +25,7 @@ struct PARTICLE_INPUT
 	float3 velocity : VELOCITY;
 	float2 size     : SIZE;
 	float  age      : AGE;
-	uint   type     : TYPE;
+	float  type     : TYPE;
 };
 
 struct PARTICLE_GSIN
@@ -49,24 +49,22 @@ PARTICLE_INPUT VSParticleSO(PARTICLE_INPUT input)
 	return input;
 }
 
-[maxvertexcount(2)]
+[maxvertexcount(4)]
 void GSParticleSO(point PARTICLE_INPUT input[1], inout PointStream<PARTICLE_INPUT> Pout)
 {
 	input[0].age += gfTimeStep;
 
-	if (gbEnable > 0 && input[0].type == PARTICLE_TYPE_EMITTER)
+	if (input[0].type == PARTICLE_TYPE_EMITTER)
 	{
-		if (input[0].age > gfNewTime)
+		if (gbEnable == 1 && input[0].age > gfNewTime)
 		{
 			float3 vRandom = gtxtRandom.SampleLevel(gPTSampler, gfTime, 0).xyz;
 			vRandom = normalize(vRandom);
-			vRandom *= gvParticleVelocity;
 
-			PARTICLE_INPUT particle = (PARTICLE_INPUT)0;
-			particle.pos            = gvParticleEmitPos.xyz;
-			particle.velocity       = vRandom;
-			//float size            = clamp(input[0].age - gfLifeTime, 2.0f, 6.0f);
-			particle.size           = gNewSize;
+			PARTICLE_INPUT particle;// = (PARTICLE_INPUT)0;
+			particle.pos		    = gvParticleEmitPos.xyz;// -(vRandom * 2);// +(gvParticleVelocity * gfTime);
+			particle.size			= uint2(gMaxSize * abs(vRandom.z)).xy + 3;//, abs(vRandom.y) * gMaxSize.y + 2;
+			particle.velocity       = vRandom * gvParticleVelocity;
 			particle.age            = 0.0f;
 			particle.type           = PARTICLE_TYPE_FLARE;
 			Pout.Append(particle);
@@ -77,7 +75,7 @@ void GSParticleSO(point PARTICLE_INPUT input[1], inout PointStream<PARTICLE_INPU
 	}
 	else
 	{
-		if (input[0].age <= gfLifeTime)
+		if (input[0].age < gfLifeTime)
 			Pout.Append(input[0]);
 	}
 }
@@ -107,7 +105,7 @@ PARTICLE_GSIN VSParticleDraw(PARTICLE_INPUT input)
 	output.pos = (0.5f * gvAccel * t * t) + (input.velocity * t) + input.pos;
 
 	float fOpacity = 1.0f - smoothstep(0.0f, 1.0f, t / gfLifeTime);
-	output.color = float4(fOpacity, fOpacity, fOpacity, fOpacity);
+	output.color = fOpacity.rrrr;//float4(fOpacity, fOpacity, fOpacity, fOpacity);
 
 	output.size = input.size;
 	output.type = input.type;

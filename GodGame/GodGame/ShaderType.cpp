@@ -96,13 +96,13 @@ void CShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 		}
 	}
 }
-void CShader::GetGameMessage(CShader * byObj, eMessage eMSG)
+void CShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
 }
-void CShader::SendGameMessage(CShader * toObj, eMessage eMSG)
+void CShader::SendGameMessage(CShader * toObj, eMessage eMSG, void * extra)
 {
 }
-void CShader::MessageObjToObj(CShader * byObj, CShader * toObj, eMessage eMSG)
+void CShader::MessageObjToObj(CShader * byObj, CShader * toObj, eMessage eMSG, void * extra)
 {
 }
 
@@ -110,8 +110,6 @@ void CShader::MessageObjToObj(CShader * byObj, CShader * toObj, eMessage eMSG)
 
 void CShader::CreateVertexShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11VertexShader **ppd3dVertexShader, D3D11_INPUT_ELEMENT_DESC *pd3dInputLayout, UINT nElements, ID3D11InputLayout **ppd3dVertexLayout)
 {
-	HRESULT hResult;
-
 	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
@@ -119,20 +117,18 @@ void CShader::CreateVertexShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFil
 
 	ID3DBlob *pd3dShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
 	/*파일(pszFileName)에서 쉐이더 함수(pszShaderName)를 컴파일하여 컴파일된 쉐이더 코드의 메모리 주소(pd3dShaderBlob)를 반환한다.*/
-	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dShaderBlob, &pd3dErrorBlob, nullptr)))
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
 		//컴파일된 쉐이더 코드의 메모리 주소에서 정점-쉐이더를 생성한다.
-		pd3dDevice->CreateVertexShader(pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), nullptr, ppd3dVertexShader);
+		ASSERT_S(pd3dDevice->CreateVertexShader(pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), nullptr, ppd3dVertexShader));
 		//컴파일된 쉐이더 코드의 메모리 주소와 입력 레이아웃에서 정점 레이아웃을 생성한다.
-		pd3dDevice->CreateInputLayout(pd3dInputLayout, nElements, pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), ppd3dVertexLayout);
+		ASSERT_S(pd3dDevice->CreateInputLayout(pd3dInputLayout, nElements, pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), ppd3dVertexLayout));
 		pd3dShaderBlob->Release();
 	}
 }
 
 void CShader::CreatePixelShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11PixelShader **ppd3dPixelShader)
 {
-	HRESULT hResult;
-
 	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
@@ -140,27 +136,25 @@ void CShader::CreatePixelShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFile
 
 	ID3DBlob *pd3dShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
 	/*파일(pszFileName)에서 쉐이더 함수(pszShaderName)를 컴파일하여 컴파일된 쉐이더 코드의 메모리 주소(pd3dShaderBlob)를 반환한다.*/
-	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dShaderBlob, &pd3dErrorBlob, nullptr)))
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
 		//컴파일된 쉐이더 코드의 메모리 주소에서 픽셀-쉐이더를 생성한다.
-		pd3dDevice->CreatePixelShader(pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), nullptr, ppd3dPixelShader);
+		ASSERT_S(pd3dDevice->CreatePixelShader(pd3dShaderBlob->GetBufferPointer(), pd3dShaderBlob->GetBufferSize(), nullptr, ppd3dPixelShader));
 		pd3dShaderBlob->Release();
 	}
 }
 
 void CShader::CreateGeometryShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11GeometryShader **ppd3dGeometryShader)
 {
-	HRESULT hResult;
-
 	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
 
 	ID3DBlob *pd3dGeometryShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
-	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dGeometryShaderBlob, &pd3dErrorBlob, nullptr)))
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dGeometryShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
-		pd3dDevice->CreateGeometryShader(pd3dGeometryShaderBlob->GetBufferPointer(), pd3dGeometryShaderBlob->GetBufferSize(), nullptr, ppd3dGeometryShader);
+		ASSERT_S(pd3dDevice->CreateGeometryShader(pd3dGeometryShaderBlob->GetBufferPointer(), pd3dGeometryShaderBlob->GetBufferSize(), nullptr, ppd3dGeometryShader));
 		pd3dGeometryShaderBlob->Release();
 	}
 }
@@ -168,75 +162,61 @@ void CShader::CreateGeometryShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszF
 void CShader::CreateGeometryStreamOutShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11GeometryShader **ppd3dGeometryShader,
 	D3D11_SO_DECLARATION_ENTRY * pSODeclaration, UINT NumEntries, UINT *pBufferStrides, UINT NumStrides, UINT RasterizedStream)
 {
-	HRESULT hResult;
-
 	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
 
 	ID3DBlob *pd3dGeometryShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
-	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dGeometryShaderBlob, &pd3dErrorBlob, nullptr)))
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dGeometryShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
-		HRESULT hr = pd3dDevice->CreateGeometryShaderWithStreamOutput(pd3dGeometryShaderBlob->GetBufferPointer(), pd3dGeometryShaderBlob->GetBufferSize(),
-			pSODeclaration, NumEntries, pBufferStrides, NumStrides, RasterizedStream, nullptr, ppd3dGeometryShader);
-		if (FAILED(hr))
-			printf("실패했습니다.");
+		ASSERT_S(pd3dDevice->CreateGeometryShaderWithStreamOutput(pd3dGeometryShaderBlob->GetBufferPointer(), pd3dGeometryShaderBlob->GetBufferSize(),
+			pSODeclaration, NumEntries, pBufferStrides, NumStrides, RasterizedStream, nullptr, ppd3dGeometryShader));
 		pd3dGeometryShaderBlob->Release();
 	}
 }
 
 void CShader::CreateHullShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11HullShader **ppd3dHullShader)
 {
-	HRESULT hResult;
-
 	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
 	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
 
 	ID3DBlob *pd3dHullShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
-	if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dHullShaderBlob, &pd3dErrorBlob, nullptr)))
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dHullShaderBlob, &pd3dErrorBlob, nullptr)))
 	{
-		pd3dDevice->CreateHullShader(pd3dHullShaderBlob->GetBufferPointer(), pd3dHullShaderBlob->GetBufferSize(), nullptr, ppd3dHullShader);
+		ASSERT_S(pd3dDevice->CreateHullShader(pd3dHullShaderBlob->GetBufferPointer(), pd3dHullShaderBlob->GetBufferSize(), nullptr, ppd3dHullShader));
 		pd3dHullShaderBlob->Release();
 	}
 }
 
 void CShader::CreateDomainShaderFromFile(ID3D11Device *pd3dDevice, WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11DomainShader **ppd3dDomainShader)
 {
-	{
-		HRESULT hResult;
-
-		DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
-		dwShaderFlags |= D3DCOMPILE_DEBUG;
+	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
 
-		ID3DBlob *pd3dDomainShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
-		if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dDomainShaderBlob, &pd3dErrorBlob, nullptr)))
-		{
-			pd3dDevice->CreateDomainShader(pd3dDomainShaderBlob->GetBufferPointer(), pd3dDomainShaderBlob->GetBufferSize(), nullptr, ppd3dDomainShader);
-			pd3dDomainShaderBlob->Release();
-		}
+	ID3DBlob *pd3dDomainShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dDomainShaderBlob, &pd3dErrorBlob, nullptr)))
+	{
+		ASSERT_S(pd3dDevice->CreateDomainShader(pd3dDomainShaderBlob->GetBufferPointer(), pd3dDomainShaderBlob->GetBufferSize(), nullptr, ppd3dDomainShader));
+		pd3dDomainShaderBlob->Release();
 	}
 }
 void CShader::CreateComputeShaderFromFile(ID3D11Device * pd3dDevice, WCHAR * pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderModel, ID3D11ComputeShader ** ppd3dComputeShader)
 {
-	{
-		HRESULT hResult;
-
-		DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+	DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #if defined(DEBUG) || defined(_DEBUG)
-		dwShaderFlags |= D3DCOMPILE_DEBUG;
+	dwShaderFlags |= D3DCOMPILE_DEBUG;
 #endif
 
-		ID3DBlob *pd3dDomainShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
-		if (SUCCEEDED(hResult = D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dDomainShaderBlob, &pd3dErrorBlob, nullptr)))
-		{
-			pd3dDevice->CreateComputeShader(pd3dDomainShaderBlob->GetBufferPointer(), pd3dDomainShaderBlob->GetBufferSize(), nullptr, ppd3dComputeShader);
-			pd3dDomainShaderBlob->Release();
-		}
+	ID3DBlob *pd3dDomainShaderBlob = nullptr, *pd3dErrorBlob = nullptr;
+	if (SUCCEEDED(D3DX11CompileFromFile(pszFileName, nullptr, nullptr, pszShaderName, pszShaderModel, dwShaderFlags, 0, nullptr, &pd3dDomainShaderBlob, &pd3dErrorBlob, nullptr)))
+	{
+		ASSERT_S(pd3dDevice->CreateComputeShader(pd3dDomainShaderBlob->GetBufferPointer(), pd3dDomainShaderBlob->GetBufferSize(), nullptr, ppd3dComputeShader));
+		pd3dDomainShaderBlob->Release();
 	}
 }
 #pragma endregion CREATE_SHADER_FROM_FILE

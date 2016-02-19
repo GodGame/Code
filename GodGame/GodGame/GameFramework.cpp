@@ -590,6 +590,7 @@ void CGameFramework::BuildObjects(CScene * pScene)
 	{
 		m_pPlayer = m_pPlayerShader->GetPlayer();
 		m_pCamera = m_pPlayer->GetCamera();
+		m_pPlayer->SetScene(pScene);
 	}
 	else
 		CCamera::SetViewport(m_pd3dDeviceContext, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT); // FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f);

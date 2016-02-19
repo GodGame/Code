@@ -13,13 +13,13 @@
 #define PARTICLE_TYPE_EMITTER	0
 #define PARTICLE_TYPE_FLARE		1
 
-struct PATICLE_INFO
+struct PARTICLE_INFO
 {
 	XMFLOAT3 m_xmf3Pos;
 	XMFLOAT3 m_xmf3Velocity;
 	XMFLOAT2 m_xmf2Size;
 	float	 m_fAge;
-	unsigned int	 m_uType;
+	float	 m_uType;
 };
 
 struct CB_PARTICLE
@@ -31,24 +31,29 @@ struct CB_PARTICLE
 	XMFLOAT3 m_vAccel;
 	float m_fTimeStep;
 	float m_fNewTime;
-	XMFLOAT2 m_NewSize;
+	XMFLOAT2 m_MaxSize;
 	float m_bEnable;
 };
 
 class CParticle
 {
-	int m_nVertices;
+	//int m_nVertices;
 	UINT m_nStartVertex;
 	UINT m_nVertexStrides;
 	UINT m_nVertexOffsets;
+
 private:
-	PATICLE_INFO m_cParticle;
+	PARTICLE_INFO m_cParticle;
 	CB_PARTICLE m_cbParticle;
-	ID3D11Query * m_pd3dQuery;
+	//ID3D11Query * m_pd3dQuery;
 
-	bool m_bInitilize;
-	bool m_bEnable;
+	bool m_bInitilize : 1;
+	bool m_bEnable    : 1;
+	bool m_bMove      : 1;
+	bool m_bUseAccel  : 1;
+	//UINT m_bExtra     : 28;
 
+	MoveVelocity m_velocity;
 	float m_fDurability;
 
 	ID3D11Buffer * m_pd3dInitialVertexBuffer;
@@ -61,7 +66,7 @@ public:
 
 	CB_PARTICLE * GetCBParticle() { return &m_cbParticle; }
 	void Update(float fTimeElapsed);
-	void Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, float fDurability, int iMaxParticle);
+	void Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, int iMaxParticle);
 
 	void SetDurabilityTime(float fTime) { m_fDurability = fTime; }
 	void SetLifeTime(float fLifeTime) { m_cbParticle.m_fLifeTime = fLifeTime; }
@@ -70,8 +75,8 @@ public:
 	void SetAccelation(XMFLOAT3 & accel) { m_cbParticle.m_vAccel = accel; }
 
 	bool IsAble() { return m_bEnable; }
-	void Enable();
-	void Disable();
+	bool Enable(XMFLOAT3 * pos = nullptr);
+	bool Disable();
 
 	void StreamOut(ID3D11DeviceContext *pd3dDeviceContext);
 	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
@@ -144,9 +149,9 @@ public:
 	//객체를 렌더링하기 전에 호출되는 함수이다.
 	virtual void OnPrepareRender() { }
 
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
-	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG);
-	static void MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG);
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra = nullptr);
+	static void MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG, void * extra = nullptr);
 #ifdef PICKING
 	//월드 좌표계의 픽킹 광선을 생성한다.
 	void GenerateRayForPicking(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxWorld, XMFLOAT4X4 *pxmtxView, XMFLOAT3 *pxv3PickRayPosition, XMFLOAT3 *pxv3PickRayDirection);
@@ -317,5 +322,5 @@ public:
 
 	virtual bool IsVisible(CCamera *pCamera = nullptr);
 	virtual void Animate(float fTimeElapsed);
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG);
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
 };

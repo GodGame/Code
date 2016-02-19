@@ -126,6 +126,11 @@ private:
 	CParticle    ** m_ppParticle;
 	ID3D11Buffer *  m_pd3dcbGameInfo;
 
+	//typedef CParticle* ParticleInfo;
+	typedef pair<UINT, CParticle*> ParticleInfo;
+	vector<CParticle*>   m_vcAbleParticleArray;
+	vector<ParticleInfo> m_vcUsingParticleArray;
+
 public :
 	CParticleShader();
 	~CParticleShader();
@@ -142,14 +147,19 @@ public :
 
 	void SOSetState(ID3D11DeviceContext * pd3dDeviceContext);
 
-	void SetParticle(int index, XMFLOAT3 * pos = nullptr)
+	bool SetParticle(int index, XMFLOAT3 * pos = nullptr)
 	{ 
-		if (m_ppParticle[index]->IsAble() ) return;
-		if (pos) 
-		{ 
-			m_ppParticle[index]->SetEmitPosition(*pos); 
-		}
-		m_ppParticle[index]->Enable(); 
+		if (m_ppParticle[index]->IsAble() ) return false;
+		return m_ppParticle[index]->Enable(pos); 
 	}
 	CParticle * GetParticle(int index) { return m_ppParticle[index]; }
+
+	void ParticleOn(XMFLOAT3 * pos = nullptr)
+	{
+		if (m_vcAbleParticleArray.size() == 0) return;
+
+		auto it = m_vcAbleParticleArray.end() - 1;
+		(*it)->Enable(pos);
+		m_vcAbleParticleArray.pop_back();
+	}
 };

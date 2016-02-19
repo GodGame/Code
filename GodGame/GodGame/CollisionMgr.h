@@ -7,6 +7,19 @@
 
 enum ePartition { NONE = -1, CULL_OUT = 0, CONTAIN_PART, CONTAIN_ALL };
 
+struct MoveVelocity
+{
+	XMFLOAT3 xmf3InitPos;
+	XMFLOAT3 xmf3Velocity;
+	XMFLOAT3 xmf3Accelate;
+	MoveVelocity()
+	{
+		xmf3InitPos  = XMFLOAT3(0, 0, 0);
+		xmf3Velocity = XMFLOAT3(0, 0, 0);
+		xmf3Accelate = XMFLOAT3(0, 0, 0);
+	}
+};
+
 class AABB
 {
 public:

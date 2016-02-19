@@ -69,7 +69,7 @@ void CScene::ReleaseShaderVariables()
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
 }
 
-void CScene::GetGameMessage(CScene * byObj, eMessage eMSG)
+void CScene::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -78,7 +78,7 @@ void CScene::GetGameMessage(CScene * byObj, eMessage eMSG)
 	}
 }
 
-void CScene::SendGameMessage(CScene * toObj, eMessage eMSG)
+void CScene::SendGameMessage(CScene * toObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -87,7 +87,7 @@ void CScene::SendGameMessage(CScene * toObj, eMessage eMSG)
 	}
 }
 
-void CScene::MessageObjToObj(CScene * byObj, CScene * toObj, eMessage eMSG)
+void CScene::MessageObjToObj(CScene * byObj, CScene * toObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{

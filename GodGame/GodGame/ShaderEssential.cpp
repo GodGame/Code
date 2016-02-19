@@ -292,10 +292,10 @@ void CSceneShader::AnimateObjects(float fTimeElapsed)
 	m_fFrameTime = fTimeElapsed;
 	if (gbStartEffect) m_fTotalTime += fTimeElapsed;
 
-	cout << "SceneFrame : " << m_fTotalTime << endl;
+	//cout << "SceneFrame : " << m_fTotalTime << endl;
 }
 
-void CSceneShader::GetGameMessage(CShader * byObj, eMessage eMSG)
+void CSceneShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -316,7 +316,7 @@ void CSceneShader::GetGameMessage(CShader * byObj, eMessage eMSG)
 	}
 }
 
-void CSceneShader::SendGameMessage(CShader * toObj, eMessage eMSG)
+void CSceneShader::SendGameMessage(CShader * toObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
@@ -327,7 +327,6 @@ void CSceneShader::SendGameMessage(CShader * toObj, eMessage eMSG)
 		return;
 	}
 }
-
 
 void CSceneShader::PostProcessingRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
@@ -748,7 +747,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 
 	CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 4.0f, 12.0f, 4.0f);
-	CTerrainPlayer *pTerrainPlayer = new CTerrainPlayer(1);
+	CTerrainPlayer *pTerrainPlayer = new CInGamePlayer(1);
 
 	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
 	pTerrainPlayer->SetPlayerUpdatedContext(pTerrain);

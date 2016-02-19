@@ -9,6 +9,23 @@
 namespace Chae
 {
 	// 벡터용
+	inline bool XMFloat3OrValue(XMFLOAT3 & val, float f)
+	{
+		return val.x == f || val.y == f || val.z == f;
+	}
+	inline bool XMFloat3AndValue(XMFLOAT3 & val, float f)
+	{
+		return val.x == f && val.y == f && val.z == f;
+	}
+	inline bool XMFloat3NorValue(XMFLOAT3 & val, float f)
+	{
+		return val.x != f || val.y != f || val.z != f;
+	}
+	inline bool XMFloat3NandValue(XMFLOAT3 & val, float f)
+	{
+		return val.x != f && val.y != f && val.z != f;
+	}
+
 	inline void XMFloat3Add(XMFLOAT3 * Result, XMFLOAT3 * v1, XMFLOAT3 * v2)
 	{
 		XMStoreFloat3(Result, XMLoadFloat3(v1) + XMLoadFloat3(v2));
@@ -20,6 +37,10 @@ namespace Chae
 	inline void XMFloat3Mul(XMFLOAT3 * Result, XMFLOAT3 * v1, XMFLOAT3 * v2)
 	{
 		XMStoreFloat3(Result, XMLoadFloat3(v1) * XMLoadFloat3(v2));
+	}
+	inline void XMFloat3Mul(XMFLOAT3 * Result, XMFLOAT3 * v1, float f)
+	{
+		XMStoreFloat3(Result, XMLoadFloat3(v1) * f);
 	}
 	inline void XMFloat3Div(XMFLOAT3 * Result, XMFLOAT3 * v1, XMFLOAT3 * v2)
 	{
@@ -38,6 +59,15 @@ namespace Chae
 	inline void XMFloat3Normalize(XMFLOAT3 * pOut, XMFLOAT3 * pXMF3)
 	{
 		XMStoreFloat3(pOut, XMVector3Normalize(XMLoadFloat3(pXMF3)));
+	}
+	inline void XMVelocityMove(XMFLOAT3 * xmfResult, XMFLOAT3 * xmfVelocity, XMFLOAT3 * xmfPos, float fTime)
+	{
+		XMStoreFloat3(xmfResult, XMLoadFloat3(xmfVelocity) * fTime + XMLoadFloat3(xmfPos));
+	}
+	inline void XMAccelateMove(XMFLOAT3 * xmfResult, XMFLOAT3 * xmfAccel, XMFLOAT3 * xmfVelocity, XMFLOAT3 * xmfPos, float fTime)
+	{
+		XMVECTOR result = 0.5f * XMLoadFloat3(xmfAccel) * fTime * fTime + XMLoadFloat3(xmfVelocity) * fTime + XMLoadFloat3(xmfPos);
+		XMStoreFloat3(xmfResult, result);
 	}
 	// 배열용
 	inline void XMFloat4x4Identity(XMFLOAT4X4 * xmtxTarget)

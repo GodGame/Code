@@ -89,9 +89,9 @@ public:
 	virtual void ReleaseShaderVariables();
 
 public:
-	virtual void GetGameMessage(CScene * byObj, eMessage eMSG);
-	virtual void SendGameMessage(CScene * toObj, eMessage eMSG);
-	static  void MessageObjToObj(CScene * byObj, CScene * toObj, eMessage eMSG);
+	virtual void GetGameMessage(CScene * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CScene * toObj, eMessage eMSG, void * extra = nullptr);
+	static  void MessageObjToObj(CScene * byObj, CScene * toObj, eMessage eMSG, void * extra = nullptr);
 
 	virtual void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
 	virtual void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
