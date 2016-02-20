@@ -286,6 +286,12 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 		InsertShaderResourceView(pd3dsrvTexture, "srv_title_jpg", 0);
 		pd3dsrvTexture->Release();
 	}
+	{
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/cursor1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+
+		InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
+		pd3dsrvTexture->Release();
+	}
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

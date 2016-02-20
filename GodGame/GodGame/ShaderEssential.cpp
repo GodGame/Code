@@ -1248,70 +1248,62 @@ CUIShader::CUIShader() : CShader()
 {
 	m_pBackRTV = nullptr;
 	m_pd3dScreenInfoBuffer = nullptr;
+	m_pMousePoint = nullptr;
 }
 
 CUIShader::~CUIShader()
 {
 	if (m_pBackRTV) m_pBackRTV->Release();
 	if (m_pd3dScreenInfoBuffer) m_pd3dScreenInfoBuffer->Release();
+	if (m_pMousePoint) m_pMousePoint->Release();
 }
 
 void CUIShader::OnPrepareRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)
 {
 	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
-
-	CB_PS UIInfo = { (float)FRAME_BUFFER_WIDTH, (float)FRAME_BUFFER_HEIGHT, 1.0f, 1.0f };
-	MapConstantBuffer(pd3dDeviceContext, &XMFLOAT4(FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0, 0), sizeof(XMFLOAT4), m_pd3dScreenInfoBuffer);
-	pd3dDeviceContext->GSSetConstantBuffers(0, 1, &m_pd3dScreenInfoBuffer);
 }
 
 void CUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
 {
-	m_nObjects = 1;
-	m_ppObjects = new CGameObject*[m_nObjects];
-	m_pBackRTV = pBackRTV;
-	m_pBackRTV->AddRef();
-
-	CPoint2DMesh * pUIMesh  = nullptr;
-	CGameObject  * pObject  = nullptr;
-	CTexture     * pTexture = nullptr;
-
-	XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f) };
-	string   UIName[1] = { {"srv_title_jpg"} };
-
-	//m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
-	//m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
-
-	for (int i = 0; i < m_nObjects; i++)
-	{
-		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
-		pObject = new CGameObject(1);
-		pObject->SetMesh(pUIMesh);
-
-		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
-		pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
-		//	pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_point_wrap"));
-
-		pObject->SetTexture(pTexture);
-		m_ppObjects[i] = pObject;
-	}
-
 	CreateConstantBuffer(pd3dDevice);
 }
 
 void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
 {
+	static const float m_fWidth  = FRAME_BUFFER_WIDTH;
+	static const float m_fHeight = FRAME_BUFFER_HEIGHT;
+
+	CB_PS UIInfo = { m_fWidth, m_fHeight, 1.0f, 1.0f };
+	XMFLOAT3 pos;
+
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pBackRTV, nullptr);
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	ID3D11SamplerState * pSampler = TXMgr.GetSamplerState("ss_point_wrap");
 	pd3dDeviceContext->PSSetSamplers(0, 1, &pSampler);
-	//if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 
 	for (int i = 0; i < m_nObjects; i++)
 	{
-		m_ppObjects[i]->SetActive(true);
+		pos = m_ppObjects[i]->GetPosition();
+		memcpy(&UIInfo.param[2], &pos, sizeof(XMFLOAT2));
+
+		MapConstantBuffer(pd3dDeviceContext, &UIInfo, sizeof(XMFLOAT4), m_pd3dScreenInfoBuffer);
+		pd3dDeviceContext->GSSetConstantBuffers(0, 1, &m_pd3dScreenInfoBuffer);
+
+		//m_ppObjects[i]->SetActive(true);
 		m_ppObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
+
+	if (m_pMousePoint)
+	{
+		pos = m_pMousePoint->GetPosition();
+		memcpy(&UIInfo.param[2], &pos, sizeof(XMFLOAT2));
+
+		MapConstantBuffer(pd3dDeviceContext, &UIInfo, sizeof(XMFLOAT4), m_pd3dScreenInfoBuffer);
+		pd3dDeviceContext->GSSetConstantBuffers(0, 1, &m_pd3dScreenInfoBuffer);
+
+		//m_pMousePoint->SetActive(true);
+		m_pMousePoint->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 }
 
@@ -1332,4 +1324,138 @@ void CUIShader::CreateConstantBuffer(ID3D11Device * pd3dDevice)
 {
 	ASSERT(nullptr != ( m_pd3dScreenInfoBuffer = ViewMgr.GetBuffer("cs_float4") ));
 	m_pd3dScreenInfoBuffer->AddRef();
+}
+
+CTitleScreenShader::CTitleScreenShader() : CUIShader()
+{
+}
+
+CTitleScreenShader::~CTitleScreenShader()
+{
+}
+
+void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+{
+	m_nObjects = 1;
+	m_ppObjects = new CGameObject*[m_nObjects];
+	m_pBackRTV = pBackRTV;
+	m_pBackRTV->AddRef();
+
+	CPoint2DMesh * pUIMesh = nullptr;
+	CGameObject  * pObject = nullptr;
+	CTexture     * pTexture = nullptr;
+
+	XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f) };
+	string   UIName[1] = { { "srv_title_jpg",  } };
+
+	//m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
+	//m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
+		pObject = new CGameObject(1);
+		pObject->SetMesh(pUIMesh);
+
+		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
+
+		pObject->SetTexture(pTexture);
+		pObject->SetActive(true);
+		m_ppObjects[i] = pObject;
+	}
+
+	{
+		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
+		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_mouse1.png"));
+		m_pMousePoint = new CGameObject(1);
+		m_pMousePoint->SetMesh(pUIMesh);
+		m_pMousePoint->SetTexture(pTexture);
+		m_pMousePoint->SetActive(true);
+	}
+	CUIShader::CreateConstantBuffer(pd3dDevice);
+}
+
+void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_MOUSE_DOWN:
+		return;
+	case eMessage::MSG_MOUSE_DOWN_OVER:
+		return;
+	case eMessage::MSG_MOUSE_UP:
+		return;
+	case eMessage::MSG_MOUSE_UP_OVER:
+		return;
+	}
+}
+
+
+CInGameUIShader::CInGameUIShader() : CUIShader()
+{
+}
+
+CInGameUIShader::~CInGameUIShader()
+{
+}
+
+void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+{
+	//m_nObjects = 1;
+	//m_ppObjects = new CGameObject*[m_nObjects];
+	m_pBackRTV = pBackRTV;
+	m_pBackRTV->AddRef();
+
+	CPoint2DMesh * pUIMesh = nullptr;
+	CGameObject  * pObject = nullptr;
+	CTexture     * pTexture = nullptr;
+
+	//XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f) };
+	//string   UIName[1] = { { "srv_title_jpg", } };
+
+	////m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
+	////m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	//for (int i = 0; i < m_nObjects; i++)
+	//{
+	//	pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
+	//	pObject = new CGameObject(1);
+	//	pObject->SetMesh(pUIMesh);
+
+	//	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+	//	pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
+
+	//	pObject->SetTexture(pTexture);
+	//	m_ppObjects[i] = pObject;
+	//}
+
+	{
+		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
+		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_mouse1.png"));
+		m_pMousePoint = new CGameObject(1);
+		m_pMousePoint->SetMesh(pUIMesh);
+		m_pMousePoint->SetTexture(pTexture);
+		m_pMousePoint->SetActive(true);
+	}
+	CUIShader::CreateConstantBuffer(pd3dDevice);
+}
+
+void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_MOUSE_DOWN:
+		return;
+	case eMessage::MSG_MOUSE_DOWN_OVER:
+		m_pMousePoint->SetActive(false);
+		return;
+	case eMessage::MSG_MOUSE_UP:
+		m_pMousePoint->SetActive(true);
+		return;
+	case eMessage::MSG_MOUSE_UP_OVER:
+		return;
+	}
 }

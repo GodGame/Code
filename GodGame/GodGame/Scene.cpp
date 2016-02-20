@@ -50,13 +50,23 @@ void CScene::ReleaseObjects()
 	if (m_pPlayerShader) delete m_pPlayerShader;
 	if (m_pSceneShader) delete m_pSceneShader;
 	if (m_pUIShader) delete m_pUIShader;
+	m_pUIShader = nullptr;
 }
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	static POINT pt;
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+		GetCursorPos(&pt);
+		GetGameMessage(this, eMessage::MSG_MOUSE_DOWN, &pt);
+		break;
+	case WM_LBUTTONUP:
+	case WM_RBUTTONUP:
+		GetCursorPos(&pt);
+		GetGameMessage(this, eMessage::MSG_MOUSE_UP, &pt);
 		//		m_pSelectedObject = PickObjectPointedByCursor(LOWORD(lParam), HIWORD(lParam));
 		break;
 	}
@@ -73,6 +83,10 @@ void CScene::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
+	case eMessage::MSG_MOUSE_DOWN_OVER:
+		return;
+	case eMessage::MSG_MOUSE_UP_OVER:
+		return;
 	default:
 		return;
 	}
@@ -109,6 +123,14 @@ void CScene::UpdateLights(ID3D11DeviceContext *pd3dDeviceContext)
 	if (m_pLights && m_pd3dcbLights) UpdateShaderVariable(pd3dDeviceContext, m_pLights);
 }
 
+void CScene::SendMouseOverMessage(HWND hwnd, POINT & pt)
+{
+	if (GetCapture() == hwnd)
+		m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN_OVER, &pt);	
+	else
+		m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP_OVER, &pt);
+}
+
 void CScene::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights)
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
@@ -124,7 +146,7 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	return false;
 }
 
-bool CScene::ProcessInput(HWND hWnd, float fTime)
+bool CScene::ProcessInput(HWND hWnd, float fTime, POINT & pt)
 {
 	return false;
 }
@@ -143,4 +165,5 @@ void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRender
 
 void CScene::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
 {
+	if (m_pUIShader) m_pUIShader->Render(pd3dDeviceContext, DRAW_AND_ACTIVE, nullptr);
 }

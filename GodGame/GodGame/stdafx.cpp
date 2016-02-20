@@ -6,6 +6,26 @@
 
 // TODO: 필요한 추가 헤더는
 // 이 파일이 아닌 STDAFX.H에서 참조합니다.
+
+ostream& operator<<(ostream& os, POINT & pt)
+{
+	os << pt.x << ", " << pt.y;
+	return os;
+}
+
+ostream& operator<<(ostream& os, RECT & rect)
+{
+	os << rect.left << ", " << rect.bottom << " // " << rect.right << ", " << rect.top;
+	return os;
+}
+
+ostream& operator<<(ostream& os, LPRECT & rect)
+{
+	os << rect->left << ", " << rect->bottom << " // " << rect->right << rect->top;
+	return os;
+}
+
+
 ostream& operator<<(ostream& os, XMFLOAT2 & xmf2)
 {
 	os << xmf2.x << ", " << xmf2.y;

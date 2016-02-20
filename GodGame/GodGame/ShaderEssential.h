@@ -308,6 +308,8 @@ protected:
 	ID3D11RenderTargetView * m_pBackRTV;
 	ID3D11Buffer           * m_pd3dScreenInfoBuffer;
 
+	CGameObject			   * m_pMousePoint;
+
 public:
 	CUIShader();
 	virtual ~CUIShader();
@@ -318,6 +320,31 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
 	void CreateConstantBuffer(ID3D11Device * pd3dDevice);
+
+
+public:
+	void SetMouseCursor(POINT & pt) { m_pMousePoint->SetPosition(XMFLOAT3(pt.x, pt.y, 0)); }
+};
+
+class CTitleScreenShader : public CUIShader
+{
+public:
+	CTitleScreenShader();
+	virtual ~CTitleScreenShader();
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+};
+
+class CInGameUIShader : public CUIShader
+{
+public:
+	CInGameUIShader();
+	virtual ~CInGameUIShader();
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
+
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 };
 
 #endif

@@ -364,18 +364,23 @@ bool CGameFramework::CreateDirect3DDisplay()
 
 void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
+	//static POINT ptCursorPos;
+
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 		//마우스 캡쳐를 하고 현재 마우스 위치를 가져온다.
 		SetCapture(hWnd);
-		//GetCursorPos(&m_ptOldCursorPos);
+		//GetCursorPos(&ptCursorPos);
+		//gpScene->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN, &ptCursorPos);
 		break;
 	case WM_LBUTTONUP:
 	case WM_RBUTTONUP:
 		//마우스 캡쳐를 해제한다.
+		//GetCursorPos(&ptCursorPos);
 		ReleaseCapture();
+		//gpScene->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP, &ptCursorPos);
 		break;
 	case WM_MOUSEMOVE:
 		break;
@@ -610,7 +615,15 @@ void CGameFramework::ReleaseObjects(CScene * pScene)
 void CGameFramework::ProcessInput()
 {
 	bool bProcessedByScene = false;
-	if (gpScene) bProcessedByScene = gpScene->ProcessInput(m_hWnd, m_GameTimer.GetTimeElapsed());
+
+	POINT ptCursorPos;
+	SetCursor(nullptr);
+	GetCursorPos(&ptCursorPos);
+	ScreenToClient(m_hWnd, &ptCursorPos);	// GetCursorPos랑 같이 쓰인다.
+	//ClientToScreen(hWnd, &CTOSPos);	// SetCursorPos랑 같이 쓰인다.
+	gpScene->SetMouseCursor(ptCursorPos);
+
+	if (gpScene) bProcessedByScene = gpScene->ProcessInput(m_hWnd, m_GameTimer.GetTimeElapsed(), ptCursorPos);
 }
 
 void CGameFramework::AnimateObjects()

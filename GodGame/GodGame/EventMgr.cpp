@@ -71,3 +71,44 @@ void CGameEventMgr::Update(float fFrameTime)
 			m_mpMessageList.erase(it);
 	}
 }
+
+UIRectMgr::UIRectMgr()
+{
+}
+
+UIRectMgr::~UIRectMgr()
+{
+}
+
+UIRectMgr & UIRectMgr::GetInstance()
+{
+	static UIRectMgr instance;
+	return instance;
+}
+
+void UIRectMgr::BuildResources()
+{
+	RECT rt;	// left, top, right, bottom
+	rt = { 210, 540, 250, 500 };
+	InsertObject(rt, "title_start");
+   	cout << rt << endl;
+}
+
+bool UIRectMgr::CollisionCheck(XMFLOAT3 & pos, string name)
+{
+	POINT pt{ pos.x, pos.y };
+
+	return CollisionBox(pt, name);
+}
+
+bool UIRectMgr::CollisionBox(POINT & pt, string name)
+{
+	RECT & rt = GetObjects(name);
+
+	if (pt.x > rt.right) return false;
+	if (pt.x < rt.left) return false;
+	if (pt.y > rt.top) return false;
+	if (pt.y < rt.bottom) return false;
+
+	return true;
+}

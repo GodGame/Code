@@ -49,7 +49,7 @@ PARTICLE_INPUT VSParticleSO(PARTICLE_INPUT input)
 	return input;
 }
 
-[maxvertexcount(4)]
+[maxvertexcount(2)]
 void GSParticleSO(point PARTICLE_INPUT input[1], inout PointStream<PARTICLE_INPUT> Pout)
 {
 	input[0].age += gfTimeStep;

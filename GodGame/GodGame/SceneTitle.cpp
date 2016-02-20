@@ -4,6 +4,8 @@
 #include "SceneInGame.h"
 #include "GameFramework.h"
 
+//CTitleScreenShader * pTitle = nullptr;
+
 CSceneTitle::CSceneTitle() : CScene()
 {
 }
@@ -14,32 +16,21 @@ CSceneTitle::~CSceneTitle()
 
 void CSceneTitle::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
 {
-	m_nThread = m_nShaders = 1;
-	m_ppShaders = new CShader*[m_nShaders];
+	m_nThread = m_nShaders = 0;
+	//m_ppShaders = new CShader*[m_nShaders];
 
-	CUIShader * pTitle = new CUIShader(); //new CUIShader();
+	CTitleScreenShader * pTitle = new CTitleScreenShader(); //new CUIShader();
 	pTitle->CreateShader(pd3dDevice);
 	pTitle->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV);
-	m_ppShaders[0] = pTitle;
+	m_pUIShader = pTitle;
+	//m_ppShaders[0] = pTitle;
 
 	CreateShaderVariables(pd3dDevice);
-	BuildStaticShadowMap(pd3dDeviceContext);
 }
 
 void CSceneTitle::ReleaseObjects()
 {
 	CScene::ReleaseObjects();
-}
-
-bool CSceneTitle::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
-{
-	switch (nMessageID)
-	{
-	case WM_LBUTTONDOWN:
-		//		m_pSelectedObject = PickObjectPointedByCursor(LOWORD(lParam), HIWORD(lParam));
-		break;
-	}
-	return false;
 }
 
 void CSceneTitle::CreateShaderVariables(ID3D11Device *pd3dDevice)
@@ -50,6 +41,19 @@ void CSceneTitle::ReleaseShaderVariables()
 {
 	if (m_pLights) delete m_pLights;
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
+}
+
+void CSceneTitle::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_MOUSE_DOWN:
+	case eMessage::MSG_MOUSE_DOWN_OVER:
+	case eMessage::MSG_MOUSE_UP:
+	case eMessage::MSG_MOUSE_UP_OVER:
+		if(m_pUIShader) m_pUIShader->GetGameMessage(nullptr, eMSG, extra);
+		return;
+	}
 }
 
 void CSceneTitle::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, LIGHTS *pLights)
@@ -74,13 +78,15 @@ bool CSceneTitle::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 	return(false);
 }
 
-bool CSceneTitle::ProcessInput(HWND hWnd, float fTime)
+bool CSceneTitle::ProcessInput(HWND hWnd, float fTime, POINT & pt)
 {
 	static UCHAR pKeyBuffer[256];
 	if (GetKeyboardState(pKeyBuffer))
 	{
 		if (pKeyBuffer[VK_SPACE] & 0xF0) FRAMEWORK.ChangeGameScene(new CSceneInGame());
 	}
+
+	//SendMouseOverMessage(hWnd, pt);
 	return false;
 }
 
@@ -90,12 +96,17 @@ void CSceneTitle::AnimateObjects(float fTimeElapsed)
 
 void CSceneTitle::Render(ID3D11DeviceContext * pd3dDeviceContext, RENDER_INFO * pRenderInfo)
 {
-	m_ppShaders[0]->Render(pd3dDeviceContext, 0, nullptr);
+	if (m_ppShaders)
+	{
+		for (int i = 0; i < m_nShaders; ++i)
+			m_ppShaders[i]->Render(pd3dDeviceContext, 0, nullptr);
+	}
 }
 
-void CSceneTitle::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
-{
-}
+//void CSceneTitle::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
+//{
+//	pTitle->Render(pd3dDeviceContext, 0, nullptr);
+//}
 
 #ifdef PICKING
 CGameObject *CScene::PickObjectPointedByCursor(int xClient, int yClient)

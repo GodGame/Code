@@ -70,13 +70,13 @@ GS_UI VS_UI_Draw(float4 input : POSITION)
 	return output;
 }
 
-[maxvertexcount(6)]
+[maxvertexcount(4)]
 void GS_UI_Draw(point GS_UI input[1], inout TriangleStream<PS_UI> triStream)
 {
 	PS_UI output[4];
 
 	float2 fHalfSize = (g_param.x * 0.5f, g_param.y * 0.5f);
-	float2 pos = input[0].DrawInfo.xy; 
+	float2 pos = input[0].DrawInfo.xy + g_param.zw;
 	output[0].posH = float4(pos + float2(-input[0].DrawInfo.z, +input[0].DrawInfo.w), 0, 1);
 	output[1].posH = float4(pos + float2(+input[0].DrawInfo.z, +input[0].DrawInfo.w), 0, 1);
 	output[2].posH = float4(pos + float2(-input[0].DrawInfo.z, -input[0].DrawInfo.w), 0, 1);

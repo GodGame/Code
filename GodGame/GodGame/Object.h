@@ -68,11 +68,11 @@ public:
 	void Update(float fTimeElapsed);
 	void Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, int iMaxParticle);
 
-	void SetDurabilityTime(float fTime) { m_fDurability = fTime; }
-	void SetLifeTime(float fLifeTime) { m_cbParticle.m_fLifeTime = fLifeTime; }
-	void SetEmitPosition(XMFLOAT3 & pos) { m_cbParticle.m_vParticleEmitPos = pos; }
+	void SetDurabilityTime(float fTime)   { m_fDurability = fTime; }
+	void SetLifeTime(float fLifeTime)     { m_cbParticle.m_fLifeTime = fLifeTime; }
+	void SetEmitPosition(XMFLOAT3 & pos)  { m_cbParticle.m_vParticleEmitPos = pos; }
 	void SetEmitDirection(XMFLOAT3 & dir) { m_cbParticle.m_vParticleVelocity = dir; }
-	void SetAccelation(XMFLOAT3 & accel) { m_cbParticle.m_vAccel = accel; }
+	void SetAccelation(XMFLOAT3 & accel)  { m_cbParticle.m_vAccel = accel; }
 
 	bool IsAble() { return m_bEnable; }
 	bool Enable(XMFLOAT3 * pos = nullptr);
@@ -89,9 +89,8 @@ public:
 	virtual ~CGameObject();
 
 	//게임 객체는 하나의 재질을 가질 수 있다.
-	CMaterial *m_pMaterial;
+	CMaterial  * m_pMaterial;
 	void SetMaterial(CMaterial *pMaterial);
-	XMFLOAT4	m_xmfPlane;
 
 protected:
 	UINT	m_uSize : 16;
@@ -148,7 +147,6 @@ public:
 
 	//객체를 렌더링하기 전에 호출되는 함수이다.
 	virtual void OnPrepareRender() { }
-
 	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
 	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra = nullptr);
 	static void MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG, void * extra = nullptr);

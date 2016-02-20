@@ -29,7 +29,7 @@ struct LIGHT
 
 struct LIGHTS
 {
-	LIGHT m_pLights[MAX_LIGHTS];
+	LIGHT    m_pLights[MAX_LIGHTS];
 	XMFLOAT4 m_xcGlobalAmbient;
 	XMFLOAT4 m_xv4CameraPosition;
 };
@@ -52,18 +52,19 @@ class CScene
 {
 protected:
 	CSceneShader *  m_pSceneShader;
-	CShader      *  m_pUIShader;
+	CUIShader    *  m_pUIShader;
 	CShader      ** m_ppShaders;
+
 	int		m_nShaders : 8;
 	int		m_nMRT : 8;
 	int		m_nThread : 16;
 
 	CPlayerShader * m_pPlayerShader;
-	CCamera * m_pCamera;
-	CGameObject *m_pSelectedObject;
+	CCamera       * m_pCamera;
+	CGameObject   * m_pSelectedObject;
 
-	LIGHTS * m_pLights;
-	ID3D11Buffer *m_pd3dcbLights;
+	LIGHTS        * m_pLights;
+	ID3D11Buffer  * m_pd3dcbLights;
 
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다.
 	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
@@ -75,7 +76,7 @@ public:
 
 	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
-	virtual bool ProcessInput(HWND hWnd, float fTime);
+	virtual bool ProcessInput(HWND hWnd, float fTime, POINT & pt);
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo) = 0;
 	virtual void ReleaseObjects();
@@ -117,5 +118,17 @@ public:
 	int GetShaderNumber()       { return m_nShaders; }
 	int GetMRTNumber()          { return m_nMRT; }
 	int GetRenderThreadNumber() { return m_nThread; }
+
+	void SendMouseOverMessage(HWND hwnd, POINT & pt);
+
+	void SetMouseCursor(POINT & pt) 
+	{
+		if (m_pUIShader)
+		{
+			pt.y = FRAME_BUFFER_HEIGHT - pt.y;
+			//cout << "mouse : " << pt << endl;
+			m_pUIShader->SetMouseCursor(pt);
+		}
+	}
 };
 #endif

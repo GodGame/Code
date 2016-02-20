@@ -4,6 +4,7 @@
 #define __EVENT_MGR
 
 #include "stdafx.h"
+#include "MgrType.h"
 
 enum eMessage : BYTE
 {
@@ -12,6 +13,11 @@ enum eMessage : BYTE
 	MSG_COLLIDE,
 	MSG_COLLIDED,
 	MSG_COLLIDE_LOCATION,
+
+	MSG_MOUSE_DOWN,
+	MSG_MOUSE_DOWN_OVER,
+	MSG_MOUSE_UP,
+	MSG_MOUSE_UP_OVER,
 
 	MSG_PARTICLE_ON,
 
@@ -121,4 +127,21 @@ public:
 };
 
 #define EVENTMgr CGameEventMgr::GetInstance()
+
+class UIRectMgr : public CMgrCase<RECT>
+{
+private:
+	UIRectMgr();
+	~UIRectMgr();
+	UIRectMgr& operator=(const UIRectMgr&);
+
+public:
+	static UIRectMgr& GetInstance();
+
+	void BuildResources();
+	bool CollisionCheck(XMFLOAT3 & pos, string name);
+	bool CollisionBox(POINT & pt, string name);
+	inline RECT& GetCollisionBox(string name) { return GetObjects(name);}
+};
+#define UIMgr UIRectMgr::GetInstance()
 #endif

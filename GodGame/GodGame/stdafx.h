@@ -7,6 +7,7 @@
 
 #define NOT_PSUPDATE	0x01
 #define	RS_SHADOWMAP	0x02
+#define DRAW_AND_ACTIVE 0x04
 
 #define PI		3.141592
 #define	FRAME_BUFFER_WIDTH		1280
@@ -75,6 +76,10 @@ using namespace DirectX;
 #define _QUAD_TREE
 
 using namespace std;
+
+ostream& operator<<(ostream& os, POINT & pt);
+ostream& operator<<(ostream& os, RECT  & rect);
+ostream& operator<<(ostream& os, LPRECT  & rect);
 
 ostream& operator<<(ostream& os, XMFLOAT2 & xmf2);
 ostream& operator<<(ostream& os, XMFLOAT3 & xmf3);

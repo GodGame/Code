@@ -116,6 +116,14 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 		m_pCamera->GenerateViewMatrix();
 	}
+	{
+		CInGameUIShader * pUIShader = new CInGameUIShader();
+		pUIShader->CreateShader(pd3dDevice);
+		pUIShader->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV);
+		pUIShader->CreateConstantBuffer(pd3dDevice);
+		m_pUIShader = pUIShader;
+	}
+
 	CreateShaderVariables(pd3dDevice);
 	BuildStaticShadowMap(pd3dDeviceContext);
 }
@@ -125,32 +133,32 @@ void CSceneInGame::ReleaseObjects()
 	CScene::ReleaseObjects();
 	QUADMgr.ReleaseQuadTree();
 }
-
-bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
-{
-	switch (nMessageID)
-	{
-	case WM_LBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-		//마우스 캡쳐를 하고 현재 마우스 위치를 가져온다.
-		//SetCapture(hWnd);
-		GetCursorPos(&m_ptOldCursorPos);
-		//bIsMouseDown = true;
-		break;
-	case WM_LBUTTONUP:
-	case WM_RBUTTONUP:
-		//마우스 캡쳐를 해제한다.
-		//ReleaseCapture();
-		break;
-	case WM_MOUSEMOVE:
-		break;
-	default:
-		//bIsMouseDown = false;
-		break;
-	}
-
-	return false;
-}
+//
+//bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
+//{
+//	switch (nMessageID)
+//	{
+//	case WM_LBUTTONDOWN:
+//	case WM_RBUTTONDOWN:
+//		//마우스 캡쳐를 하고 현재 마우스 위치를 가져온다.
+//		//SetCapture(hWnd);
+//		GetCursorPos(&m_ptOldCursorPos);
+//		//bIsMouseDown = true;
+//		break;
+//	case WM_LBUTTONUP:
+//	case WM_RBUTTONUP:
+//		//마우스 캡쳐를 해제한다.
+//		//ReleaseCapture();
+//		break;
+//	case WM_MOUSEMOVE:
+//		break;
+//	default:
+//		//bIsMouseDown = false;
+//		break;
+//	}
+//
+//	return false;
+//}
 void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	m_pLights = new LIGHTS;
@@ -318,7 +326,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 	return(false);
 }
 
-bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime)
+bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 {
 	static UCHAR pKeyBuffer[256];
 	//GetKeyboardState(pKeyBuffer);
@@ -341,15 +349,17 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime)
 		/*마우스를 캡쳐했으면 마우스가 얼마만큼 이동하였는 가를 계산한다. 마우스 왼쪽 또는 오른쪽 버튼이 눌러질 때의 메시지(WM_LBUTTONDOWN, WM_RBUTTONDOWN)를 처리할 때 마우스를 캡쳐하였다. 그러므로 마우스가 캡쳐된 것은 마우스 버튼이 눌려진 상태를 의미한다. 마우스를 좌우 또는 상하로 움직이면 플레이어를 x-축 또는 y-축으로 회전한다.*/
 		if (GetCapture() == hWnd)
 		{
-			//마우스 커서를 화면에서 없앤다(보이지 않게 한다).
-			SetCursor(nullptr);
+			m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN, nullptr);
 			//현재 마우스 커서의 위치를 가져온다.
 			GetCursorPos(&ptCursorPos);
 			//마우스 버튼이 눌린 채로 이전 위치에서 현재 마우스 커서의 위치까지 움직인 양을 구한다.
+			//cout << pt << endl;
 			cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
 		}
+		else
+			m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP, nullptr);
 		//플레이어를 이동하거나(dwDirection) 회전한다(cxDelta 또는 cyDelta).
 		if (dwDirection || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
@@ -451,6 +461,7 @@ void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * p
 
 void CSceneInGame::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
 {
+	m_pUIShader->Render(pd3dDeviceContext, DRAW_AND_ACTIVE, nullptr);
 }
 
 #ifdef PICKING
@@ -498,6 +509,16 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	{
 	case eMessage::MSG_PARTICLE_ON:
 		((CParticleShader*)m_ppShaders[5])->ParticleOn((XMFLOAT3*)extra);
+		return;
+	case eMessage::MSG_MOUSE_DOWN:
+		m_ptOldCursorPos = *(POINT*)extra;
+	case eMessage::MSG_MOUSE_DOWN_OVER:
+		m_pUIShader->GetGameMessage(nullptr, eMSG, extra);
+		return;
+
+	case eMessage::MSG_MOUSE_UP:
+	case eMessage::MSG_MOUSE_UP_OVER:
+		m_pUIShader->GetGameMessage(nullptr, eMSG, extra);
 		return;
 	default:
 		return;

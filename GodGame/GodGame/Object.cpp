@@ -115,8 +115,12 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 		for (int i = 0; i < m_nMeshes; i++)
 		{
 #ifdef _QUAD_TREE
-			if (m_bActive) m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
-			m_bActive = false;
+			if (m_bActive)
+			{
+				m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+				if(!(uRenderState & DRAW_AND_ACTIVE)) 
+					m_bActive = false;
+			}
 #else
 			bool bIsVisible = true;
 			if (pCamera)
@@ -601,7 +605,7 @@ CParticle::CParticle()
 	m_pd3dStreamOutVertexBuffer = nullptr;
 	m_pd3dDrawVertexBuffer      = nullptr;
 
-	//m_nVertices                 = 0;
+	//m_nVertices               = 0;
 	m_nStartVertex              = 0;
 	m_nVertexStrides            = 0;
 	m_nVertexOffsets            = 0;
@@ -627,7 +631,7 @@ CParticle::~CParticle()
 void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, int iMaxParticle)
 {
 	m_fDurability = fDurability;
-	m_velocity = Velocity;
+	m_velocity    = Velocity;
 	 
 	if (Chae::XMFloat3NorValue(m_velocity.xmf3Velocity, 0.0f)) m_bMove = true;
 	if (Chae::XMFloat3NorValue(m_velocity.xmf3Accelate, 0.0f)) m_bUseAccel = true;

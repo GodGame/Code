@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "GodGame.h"
 #include "GameFramework.h"
@@ -23,7 +22,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-
 
 	// TODO: 여기에 코드를 입력합니다.
 	MSG msg;
@@ -66,7 +64,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		}
 		else
 		{
-			CGameFramework::GetInstance().FrameAdvance();
+			FRAMEWORK.FrameAdvance();
 		}
 	}
 	FreeConsole();
@@ -74,8 +72,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	return (int)msg.wParam;
 }
-
-
 
 //
 //  함수: MyRegisterClass()
