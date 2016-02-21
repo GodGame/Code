@@ -4,21 +4,22 @@
 
 CScene::CScene()
 {
-	m_ppShaders = nullptr;
-	m_pSceneShader = nullptr;
-	m_pPlayerShader = nullptr;
-	m_pUIShader = nullptr;
+	m_ppShaders              = nullptr;
+	m_pSceneShader           = nullptr;
+	m_pPlayerShader          = nullptr;
+	m_pUIShader              = nullptr;
 
-	m_nShaders = 0;
-	m_pCamera = nullptr;
-	m_pSelectedObject = nullptr;
-	m_pd3dcbLights = nullptr;
+	m_nShaders               = 0;
+	m_pCamera                = nullptr;
+	//m_pSelectedObject      = nullptr;
+	m_pd3dcbLights           = nullptr;
 
-	m_pLights = nullptr;
-	m_nMRT = 1;
-	m_nThread = 0;
+	m_pLights                = nullptr;
+	m_nMRT                   = 1;
+	m_nThread                = 0;
 
-	//m_nRenderThreads = 0;
+	EVENTMgr.Initialize();
+	//m_nRenderThreads       = 0;
 
 	//m_pRenderingThreadInfo = nullptr;
 }
@@ -47,27 +48,38 @@ void CScene::ReleaseObjects()
 	}
 	if (m_ppShaders) delete[] m_ppShaders;
 
-	if (m_pPlayerShader) delete m_pPlayerShader;
-	if (m_pSceneShader) delete m_pSceneShader;
-	if (m_pUIShader) delete m_pUIShader;
-	m_pUIShader = nullptr;
+	CShader * pShaderArray[] = { m_pPlayerShader, m_pSceneShader, m_pUIShader };
+	for (int i = 0; i < 3; ++i)
+	{
+		if (pShaderArray[i])
+		{
+			pShaderArray[i]->ReleaseObjects();
+			delete pShaderArray[i];
+		}
+	}
 }
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	static POINT pt;
+	GetCursorPos(&pt);
+	//ScreenToClient(hWnd, &pt);
+	//ClientToScreen(hWnd, &pt);
+
 	switch (nMessageID)
 	{
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
-		GetCursorPos(&pt);
 		GetGameMessage(this, eMessage::MSG_MOUSE_DOWN, &pt);
+		if (m_pUIShader) m_pUIShader->MouseDown(hWnd, pt);
 		break;
 	case WM_LBUTTONUP:
 	case WM_RBUTTONUP:
-		GetCursorPos(&pt);
 		GetGameMessage(this, eMessage::MSG_MOUSE_UP, &pt);
+		if (m_pUIShader) m_pUIShader->MouseDown(hWnd, pt);
 		//		m_pSelectedObject = PickObjectPointedByCursor(LOWORD(lParam), HIWORD(lParam));
+	case WM_MOUSEMOVE:
+		SendMouseOverMessage(hWnd, pt);
 		break;
 	}
 	return false;
@@ -126,7 +138,7 @@ void CScene::UpdateLights(ID3D11DeviceContext *pd3dDeviceContext)
 void CScene::SendMouseOverMessage(HWND hwnd, POINT & pt)
 {
 	if (GetCapture() == hwnd)
-		m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN_OVER, &pt);	
+		m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN_OVER, &pt);
 	else
 		m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP_OVER, &pt);
 }
@@ -155,6 +167,8 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nShaders; i++)
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
+
+	EVENTMgr.Update(fTimeElapsed);
 }
 
 void CScene::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)

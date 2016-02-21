@@ -274,7 +274,7 @@ void CTerrainPartMesh::CreateRasterizerState(ID3D11Device *pd3dDevice)
 	//래스터라이저 단계에서 컬링(은면 제거)을 하지 않도록 래스터라이저 상태를 생성한다.
 	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
 	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;//WIREFRAME;
-	d3dRasterizerDesc.DepthClipEnable =false;
+	d3dRasterizerDesc.DepthClipEnable = false;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
 
@@ -424,7 +424,7 @@ CSkyBoxMesh::CSkyBoxMesh(ID3D11Device *pd3dDevice, UINT uImageNum, float fWidth,
 
 	m_pSkyboxTexture->SetSampler(0, pd3dSamplerState);
 	pd3dSamplerState->Release();
-	m_pSkyboxTexture->AddRef();
+	//m_pSkyboxTexture->AddRef();
 
 	OnChangeSkyBoxTextures(pd3dDevice, uImageNum);
 

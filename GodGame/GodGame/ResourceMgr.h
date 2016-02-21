@@ -25,8 +25,19 @@ private:
 
 public:
 	void AddRef()  { m_nReferences++; }
-	void Release() { if (--m_nReferences <= 0) delete this; }
-
+#ifdef _DEBUG
+	int Release() 
+	{ 
+		if (--m_nReferences < 1) 
+		{
+			delete this;
+			return 0;
+		}
+		return m_nReferences;
+	}
+#else
+	void Release() { if (--m_nReferences < 1) delete this; }
+#endif
 private:
 	//텍스쳐 리소스의 개수이다.
 	int m_nTextures;
@@ -81,6 +92,7 @@ public:
 	ID3D11SamplerState * GetSamplerState(string name)              { return m_mpList[name]->GetSampler(0);}
 
 public:
+	//virtual void ReleaseObjects();
 	virtual void BuildResources(ID3D11Device *pd3dDevice);
 	void BuildSamplers(ID3D11Device *pd3dDevice);
 	void BuildTextures(ID3D11Device *pd3dDevice);
@@ -112,8 +124,19 @@ private:
 
 public:
 	void AddRef() { m_nReferences++; }
+#ifdef _DEBUG
+	int Release()
+	{
+		if (--m_nReferences <= 0)
+		{
+			delete this;
+			return 0;
+		}
+		return m_nReferences;
+	}
+#else
 	void Release() { if (--m_nReferences <= 0) delete this; }
-
+#endif
 	MATERIAL m_Material;
 };
 
@@ -172,6 +195,7 @@ public:
 public:
 	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
 
+	void ReleaseResources();
 	void BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);

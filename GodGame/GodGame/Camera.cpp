@@ -67,6 +67,7 @@ void CCamera::SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD xTopLeft
 	m_d3dViewport.MaxDepth = fMaxZ;
 	pd3dDeviceContext->RSSetViewports(1, &m_d3dViewport);
 }
+
 void CCamera::SetViewport(ID3D11DeviceContext * pd3dDeviceContext, DWORD nWidth, DWORD nHeight)
 {
 	D3D11_VIEWPORT viewport;

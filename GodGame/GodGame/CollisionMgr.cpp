@@ -406,11 +406,11 @@ QuadTree * QuadTree::EntityObject(CGameObject * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
 
-	if (eLoc != Location::LOC_ALL && !m_bLeaf)
+	if (eLoc != LOC_ALL && !m_bLeaf)
 		return m_pNodes[eLoc]->EntityObject(pObject);
 
 	m_vpObjectList.push_back(pObject);
-	cout << "등록 : " << m_uTreeNum << endl;
+	//cout << "등록 : " << m_uTreeNum << endl;
 	return this;
 }
 
@@ -418,18 +418,18 @@ void QuadTree::DeleteObject(CGameObject * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
 
-	if (eLoc != Location::LOC_ALL && !m_bLeaf) 
+	if (eLoc != LOC_ALL && !m_bLeaf) 
 	{
 		m_pNodes[eLoc]->DeleteObject(pObject);
 		return;
 	}
-	auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
-	m_vpObjectList.erase(it);
+
+	EraseObject(pObject);
 }
 
 void QuadTree::EraseObject(CGameObject * pObject)
 {
-	auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
+	auto it = find_if(m_vpObjectList.begin(), m_vpObjectList.end(), [=](const CGameObject * pObj) { return pObject == pObj; });
 	m_vpObjectList.erase(it);
 }
 
@@ -708,7 +708,7 @@ bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameO
 	for (auto it = vcObjList.begin(); it != vcObjList.end(); ++it)
 	{
 		pObject = *it;
-		if (pTarget != pObject)
+		if (pObject->CanCollide(pTarget))
 		{
 			m_bbSphereOther.Center = pObject->GetPosition();
 			m_bbSphereOther.Radius = pObject->GetSize();
@@ -732,7 +732,7 @@ bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameO
 	for (auto it = vcObjList.begin(); it != vcObjList.end(); ++it)
 	{
 		pObject = *it;
-		if (pTarget != pObject)
+		if (pObject->CanCollide(pTarget))
 		{
 			m_bbSphereOther.Center = pObject->GetPosition();
 			m_bbSphereOther.Radius = pObject->GetSize();

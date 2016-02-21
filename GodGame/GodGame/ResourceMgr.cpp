@@ -21,8 +21,12 @@ CTexture::CTexture(int nTextures, int nSamplers, int nTextureStartSlot, int nSam
 
 CTexture::~CTexture()
 {
-	for (int i = 0; i < m_nTextures; i++) if (m_ppd3dsrvTextures[i]) m_ppd3dsrvTextures[i]->Release();
-	for (int i = 0; i < m_nSamplers; i++) if (m_ppd3dSamplerStates[i]) m_ppd3dSamplerStates[i]->Release();
+	for (int i = 0; i < m_nTextures; i++) 
+		if (m_ppd3dsrvTextures[i]) 
+			m_ppd3dsrvTextures[i]->Release();
+	for (int i = 0; i < m_nSamplers; i++) 
+		if (m_ppd3dSamplerStates[i]) 
+			m_ppd3dSamplerStates[i]->Release();
 	if (m_ppd3dsrvTextures) delete[] m_ppd3dsrvTextures;
 	if (m_ppd3dSamplerStates) delete[] m_ppd3dSamplerStates;
 }
@@ -422,6 +426,16 @@ CViewManager & CViewManager::GetInstance()
 {
 	static CViewManager instance;
 	return instance;
+}
+
+void CViewManager::ReleaseResources()
+{
+	m_mgrSrv.ReleaseObjects();
+	m_mgrRtv.ReleaseObjects();
+	m_mgrDsv.ReleaseObjects();
+	m_mgrUav.ReleaseObjects();
+	m_mgrBuffer.ReleaseObjects();
+	m_mgrTex2D.ReleaseObjects();
 }
 
 void CViewManager::BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)

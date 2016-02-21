@@ -16,7 +16,7 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo);
 	virtual void ReleaseObjects();
 
-	virtual void AnimateObjects(float fTimeElapsed);
+	//virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, RENDER_INFO * pRenderInfo);
 	//virtual void UIRender(ID3D11DeviceContext *pd3dDeviceContext);
 

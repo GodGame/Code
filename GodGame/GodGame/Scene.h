@@ -61,7 +61,7 @@ protected:
 
 	CPlayerShader * m_pPlayerShader;
 	CCamera       * m_pCamera;
-	CGameObject   * m_pSelectedObject;
+	//CGameObject   * m_pSelectedObject;
 
 	LIGHTS        * m_pLights;
 	ID3D11Buffer  * m_pd3dcbLights;
@@ -121,13 +121,16 @@ public:
 
 	void SendMouseOverMessage(HWND hwnd, POINT & pt);
 
-	void SetMouseCursor(POINT & pt) 
+	void SetMouseCursor(HWND hWnd, POINT & pt) 
 	{
 		if (m_pUIShader)
 		{
-			pt.y = FRAME_BUFFER_HEIGHT - pt.y;
+			POINT mouse = pt;
+			ScreenToClient(hWnd, &mouse);	// GetCursorPos랑 같이 쓰인다.
+
+			mouse.y = FRAME_BUFFER_HEIGHT - mouse.y;
 			//cout << "mouse : " << pt << endl;
-			m_pUIShader->SetMouseCursor(pt);
+			m_pUIShader->SetMouseCursor(mouse);
 		}
 	}
 };

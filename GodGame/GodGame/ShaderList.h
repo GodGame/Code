@@ -2,7 +2,6 @@
 
 #include "ShaderType.h"
 
-
 class CStaticShader : public CShader
 {
 public:
@@ -65,7 +64,6 @@ public:
 	//ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 };
 
-
 class CPointInstanceShader : public CShader, public CInstanceShader
 {
 private:
@@ -82,8 +80,9 @@ public:
 	virtual void AnimateObjects(float fTimeElapsed);
 	//static void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
 private:
-	CTexture *m_pTexture;
-	CMaterial *m_pMaterial;
+	CTexture  * m_pTexture;
+	CMaterial * m_pMaterial;
+
 public:
 	//인스턴싱 버퍼를 생성한다.
 	//ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
@@ -103,7 +102,6 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 };
-
 
 class CParticleShader : public CShader
 {
@@ -156,10 +154,17 @@ public :
 
 	void ParticleOn(XMFLOAT3 * pos = nullptr)
 	{
-		if (m_vcAbleParticleArray.size() == 0) return;
+		if (m_vcAbleParticleArray.empty()) return;
 
 		auto it = m_vcAbleParticleArray.end() - 1;
 		(*it)->Enable(pos);
 		m_vcAbleParticleArray.pop_back();
+	}
+
+	void ParticleOn(int num, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr)
+	{
+		m_ppParticle[num]->Enable(pos);
+		if (vel) m_ppParticle[num]->SetMoveVelocity(*vel);
+		if (acc) m_ppParticle[num]->SetMoveAccel(*acc);
 	}
 };

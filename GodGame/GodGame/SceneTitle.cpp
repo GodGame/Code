@@ -21,7 +21,7 @@ void CSceneTitle::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * p
 
 	CTitleScreenShader * pTitle = new CTitleScreenShader(); //new CUIShader();
 	pTitle->CreateShader(pd3dDevice);
-	pTitle->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV);
+	pTitle->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV, this);
 	m_pUIShader = pTitle;
 	//m_ppShaders[0] = pTitle;
 
@@ -47,6 +47,9 @@ void CSceneTitle::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
 	{
+	case eMessage::MSG_SCENE_CHANGE:
+		FRAMEWORK.ChangeGameScene(new CSceneInGame());
+		return;
 	case eMessage::MSG_MOUSE_DOWN:
 	case eMessage::MSG_MOUSE_DOWN_OVER:
 	case eMessage::MSG_MOUSE_UP:
@@ -62,8 +65,6 @@ void CSceneTitle::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, L
 
 bool CSceneTitle::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-//	CMaterial * pMat = nullptr;
-
 	switch (nMessageID)
 	{
 	case WM_KEYDOWN:
@@ -81,18 +82,25 @@ bool CSceneTitle::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM
 bool CSceneTitle::ProcessInput(HWND hWnd, float fTime, POINT & pt)
 {
 	static UCHAR pKeyBuffer[256];
+	
+	SendMouseOverMessage(hWnd, pt);
+	
 	if (GetKeyboardState(pKeyBuffer))
 	{
-		if (pKeyBuffer[VK_SPACE] & 0xF0) FRAMEWORK.ChangeGameScene(new CSceneInGame());
+		if (pKeyBuffer[VK_SPACE] & 0xF0)
+		{
+			FRAMEWORK.ChangeGameScene(new CSceneInGame());
+			return true;
+		}
 	}
 
-	//SendMouseOverMessage(hWnd, pt);
 	return false;
 }
 
-void CSceneTitle::AnimateObjects(float fTimeElapsed)
-{
-}
+//void CSceneTitle::AnimateObjects(float fTimeElapsed)
+//{
+//	EVENTMgr.Update(fTimeElapsed);
+//}
 
 void CSceneTitle::Render(ID3D11DeviceContext * pd3dDeviceContext, RENDER_INFO * pRenderInfo)
 {

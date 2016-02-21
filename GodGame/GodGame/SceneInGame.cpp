@@ -17,49 +17,8 @@ CSceneInGame::~CSceneInGame()
 
 void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
 {
-	EVENTMgr.Initialize();
-
-	m_nMRT = NUM_MRT;
-	m_nThread = NUM_THREAD;
-
-	HRESULT hr = 0;
-
-	//텍스쳐 맵핑에 사용할 샘플러 상태 객체를 생성한다.
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD         = 0;
-	d3dSamplerDesc.MaxLOD         = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
-	//텍스쳐 리소스를 생성한다.
-	//ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	//CTexture *pStoneTexture = new CTexture(1, 1, 0, 0);
-	//hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Stone01.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	//if (FAILED(hr)) printf("오류");
-	//pStoneTexture->SetTexture(0, pd3dsrvTexture);
-	//pStoneTexture->SetSampler(0, pd3dSamplerState);
-	//pd3dsrvTexture->Release();
-
-	//CTexture *pBrickTexture = new CTexture(1, 1, 0, 0);
-	//hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick01.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	//if (FAILED(hr)) printf("오류");
-	//pBrickTexture->SetTexture(0, pd3dsrvTexture);
-	//pBrickTexture->SetSampler(0, pd3dSamplerState);
-	//pd3dsrvTexture->Release();
-
-	//CTexture *pWoodTexture = new CTexture(1, 1, 0, 0);
-	//hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Wood01.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
-	//if (FAILED(hr)) printf("오류");
-	//pWoodTexture->SetTexture(0, pd3dsrvTexture);
-	//pWoodTexture->SetSampler(0, pd3dSamplerState);
-	//pd3dsrvTexture->Release();
-	//pd3dSamplerState->Release();
+	m_nMRT     = NUM_MRT;
+	m_nThread  = NUM_THREAD;
 
 	//재질을 생성한다.
 	CMaterial *pRedMaterial   = MaterialMgr.GetObjects("Red");
@@ -67,37 +26,39 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	CMaterial *pBlueMaterial  = MaterialMgr.GetObjects("Blue");
 	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
 	{
+		UINT index = 0;
 		m_nShaders = NUM_SHADER;
 		m_ppShaders = new CShader*[m_nShaders];
 
 		//첫 번째로 그릴 객체는 스카이 박스이다.
-		m_ppShaders[0] = new CSkyBoxShader();
-		m_ppShaders[0]->CreateShader(pd3dDevice);
-		m_ppShaders[0]->BuildObjects(pd3dDevice);
-
-		m_ppShaders[1] = new CTerrainShader();
-		m_ppShaders[1]->CreateShader(pd3dDevice);
-		m_ppShaders[1]->BuildObjects(pd3dDevice);
+		m_ppShaders[index] = new CSkyBoxShader();
+		m_ppShaders[index]->CreateShader(pd3dDevice);
+		m_ppShaders[index++]->BuildObjects(pd3dDevice);
+		
+		m_uHeightMapIndex = index;
+		m_ppShaders[index] = new CTerrainShader();
+		m_ppShaders[index]->CreateShader(pd3dDevice);
+		m_ppShaders[index++]->BuildObjects(pd3dDevice);
 
 		CStaticShader *pStaticObjectsShader = new CStaticShader();
 		pStaticObjectsShader->CreateShader(pd3dDevice);
 		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
-		m_ppShaders[2] = pStaticObjectsShader;
+		m_ppShaders[index++] = pStaticObjectsShader;
 
 		CPointInstanceShader *pPointShader = new CPointInstanceShader();
 		pPointShader->CreateShader(pd3dDevice);
 		pPointShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
-		m_ppShaders[3] = pPointShader;
+		m_ppShaders[index++] = pPointShader;
 
 		CBillboardShader * pTrees = new CBillboardShader();
 		pTrees->CreateShader(pd3dDevice);
 		pTrees->BuildObjects(pd3dDevice, GetTerrain());
-		m_ppShaders[4] = pTrees;
+		m_ppShaders[index++] = pTrees;
 
 		CParticleShader * pParticleShader = new CParticleShader();
 		pParticleShader->CreateShader(pd3dDevice);
 		pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
-		m_ppShaders[5] = pParticleShader;
+		m_ppShaders[index++] = pParticleShader;
 
 		CSceneShader * pSceneShader = new CSceneShader();
 		pSceneShader->CreateShader(pd3dDevice);
@@ -119,8 +80,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	{
 		CInGameUIShader * pUIShader = new CInGameUIShader();
 		pUIShader->CreateShader(pd3dDevice);
-		pUIShader->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV);
-		pUIShader->CreateConstantBuffer(pd3dDevice);
+		pUIShader->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV, this);
 		m_pUIShader = pUIShader;
 	}
 
@@ -220,12 +180,12 @@ void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem        = m_pLights;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dcbLights);
+	if (!m_pd3dcbLights) pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dcbLights);
 }
 
 void CSceneInGame::ReleaseShaderVariables()
 {
-	if (m_pLights) delete m_pLights;
+	if (m_pLights)		delete m_pLights;
 	if (m_pd3dcbLights) m_pd3dcbLights->Release();
 }
 
@@ -246,11 +206,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	m_ppShaders[4]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
-	//m_uRenderState = NULL;
-
 	pSdwMgr->UpdateStaticShadowResource(pd3dDeviceContext);
-	//pSdwMgr->UpdateDynamicShadowResource(m_pd3dDeviceContext);
-	//m_pSceneShader->SetLightSRV(TXMgr.GetShaderResourceView("srv_StaticShaodwMap"));
 }
 
 void CSceneInGame::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
@@ -278,7 +234,7 @@ void CSceneInGame::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, 
 
 bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	CMaterial * pMat = nullptr;
+	CPlayer * pPlayer = nullptr;
 
 	switch (nMessageID)
 	{
@@ -290,32 +246,33 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			else m_pLights->m_pLights[1].m_bEnable = true;
 
 			break;
-		case 'N':
-			pMat = MaterialMgr.GetObjects("White");
-			pMat->m_Material.m_xcAmbient = XMFLOAT4(0, 0, 0, 0);
-			pMat->m_Material.m_xcDiffuse = XMFLOAT4(0, 0, 0, 0);
-			pMat = MaterialMgr.GetObjects("Terrain");
-			pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-			pMat->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-			pMat->m_Material.m_xcSpecular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-			pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-			break;
-		case 'M':
-			pMat = MaterialMgr.GetObjects("White");
-			pMat->m_Material.m_xcAmbient = XMFLOAT4(1, 1, 1, 0);
-			pMat->m_Material.m_xcDiffuse = XMFLOAT4(1, 1, 1, 0);
+		//case 'N':
+		//	pMat = MaterialMgr.GetObjects("White");
+		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0, 0, 0, 0);
+		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(0, 0, 0, 0);
+		//	pMat = MaterialMgr.GetObjects("Terrain");
+		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+		//	pMat->m_Material.m_xcSpecular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+		//	pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		//	break;
+		//case 'M':
+		//	pMat = MaterialMgr.GetObjects("White");
+		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(1, 1, 1, 0);
+		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(1, 1, 1, 0);
 
-			pMat = MaterialMgr.GetObjects("Terrain");
-			pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.8f, 0.7f, 1.0f);
-			pMat->m_Material.m_xcAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-			pMat->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
-			pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-			break;
-		case 'B':
-			bIsKeyDown = !bIsKeyDown;
-			break;
+		//	pMat = MaterialMgr.GetObjects("Terrain");
+		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.8f, 0.7f, 1.0f);
+		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+		//	pMat->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
+		//	pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+		//	break;
+		//case 'B':
+		//	bIsKeyDown = !bIsKeyDown;
+		//	break;
 		case 'X' :
-			((CParticleShader*)m_ppShaders[5])->SetParticle(1, &m_pPlayerShader->GetPlayer()->GetPosition());
+			pPlayer = m_pPlayerShader->GetPlayer();
+			((CParticleShader*)m_ppShaders[5])->ParticleOn(4, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
 			break;
 			//case VK_SPACE:
 			//	FRAMEWORK.ChangeGameScene(new CSceneTitle());
@@ -330,7 +287,22 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 {
 	static UCHAR pKeyBuffer[256];
 	//GetKeyboardState(pKeyBuffer);
+	float cxDelta = 0.0f, cyDelta = 0.0f;
+	/*마우스를 캡쳐했으면 마우스가 얼마만큼 이동하였는 가를 계산한다. 마우스 왼쪽 또는 오른쪽 버튼이 눌러질 때의 메시지(WM_LBUTTONDOWN, WM_RBUTTONDOWN)를 처리할 때 마우스를 캡쳐하였다. 그러므로 마우스가 캡쳐된 것은 마우스 버튼이 눌려진 상태를 의미한다. 마우스를 좌우 또는 상하로 움직이면 플레이어를 x-축 또는 y-축으로 회전한다.*/
+	if (GetCapture() == hWnd)
+	{
+		//현재 마우스 커서의 위치를 가져온다.
+		//GetCursorPos(&ptCursorPos);
+		//마우스 버튼이 눌린 채로 이전 위치에서 현재 마우스 커서의 위치까지 움직인 양을 구한다.
+		cxDelta = (float)(pt.x - m_ptOldCursorPos.x) * 0.5f;
+		cyDelta = (float)(pt.y - m_ptOldCursorPos.y) * 0.5f;
 
+		//ClientToScreen(hWnd, &m_ptOldCursorPos);
+		SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
+		//m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN_OVER, nullptr);
+	}
+	//else
+		//m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP_OVER, nullptr);
 	CPlayer * pPlayer = m_pCamera->GetPlayer();
 	{
 		DWORD dwDirection = 0;
@@ -344,22 +316,6 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 			if (pKeyBuffer[VK_PRIOR] & 0xF0) dwDirection |= DIR_UP;
 			if (pKeyBuffer[VK_NEXT]  & 0xF0) dwDirection |= DIR_DOWN;
 		}
-		float cxDelta = 0.0f, cyDelta = 0.0f;
-		POINT ptCursorPos;
-		/*마우스를 캡쳐했으면 마우스가 얼마만큼 이동하였는 가를 계산한다. 마우스 왼쪽 또는 오른쪽 버튼이 눌러질 때의 메시지(WM_LBUTTONDOWN, WM_RBUTTONDOWN)를 처리할 때 마우스를 캡쳐하였다. 그러므로 마우스가 캡쳐된 것은 마우스 버튼이 눌려진 상태를 의미한다. 마우스를 좌우 또는 상하로 움직이면 플레이어를 x-축 또는 y-축으로 회전한다.*/
-		if (GetCapture() == hWnd)
-		{
-			m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_DOWN, nullptr);
-			//현재 마우스 커서의 위치를 가져온다.
-			GetCursorPos(&ptCursorPos);
-			//마우스 버튼이 눌린 채로 이전 위치에서 현재 마우스 커서의 위치까지 움직인 양을 구한다.
-			//cout << pt << endl;
-			cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
-			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
-			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-		}
-		else
-			m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP, nullptr);
 		//플레이어를 이동하거나(dwDirection) 회전한다(cxDelta 또는 cyDelta).
 		if (dwDirection || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
@@ -378,7 +334,6 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 		//플레이어를 실제로 이동하고 카메라를 갱신한다. 중력과 마찰력의 영향을 속도 벡터에 적용한다.
 		pPlayer->Update(fFrameTime);
 	}
-
 	if (pKeyBuffer[VK_SPACE] & 0xF0)
 	{
 		FRAMEWORK.ChangeGameScene(new CSceneTitle());
@@ -499,7 +454,7 @@ CGameObject *CScene::PickObjectPointedByCursor(int xClient, int yClient)
 
 CHeightMapTerrain *CSceneInGame::GetTerrain()
 {
-	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[1];
+	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[m_uHeightMapIndex];
 	return(pTerrainShader->GetTerrain());
 }
 
@@ -508,6 +463,7 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_PARTICLE_ON:
+		cout << "Particle : " << *(XMFLOAT3*)extra << endl;
 		((CParticleShader*)m_ppShaders[5])->ParticleOn((XMFLOAT3*)extra);
 		return;
 	case eMessage::MSG_MOUSE_DOWN:
@@ -517,8 +473,8 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_MOUSE_UP:
-	case eMessage::MSG_MOUSE_UP_OVER:
 		m_pUIShader->GetGameMessage(nullptr, eMSG, extra);
+	case eMessage::MSG_MOUSE_UP_OVER:
 		return;
 	default:
 		return;

@@ -7,7 +7,7 @@ CMesh::CMesh(ID3D11Device *pd3dDevice)
 {
 	m_nBuffers = 0;
 	m_pd3dPositionBuffer = nullptr;
-	//m_pd3dColorBuffer = nullptr;
+	m_pd3dColorBuffer = nullptr;
 	m_ppd3dVertexBuffers = nullptr;
 
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -37,10 +37,16 @@ CMesh::~CMesh()
 {
 	if (m_pd3dRasterizerState) m_pd3dRasterizerState->Release();
 	if (m_pd3dPositionBuffer) m_pd3dPositionBuffer->Release();
-	//if (m_pd3dColorBuffer) m_pd3dColorBuffer->Release();
+	if (m_pd3dColorBuffer) m_pd3dColorBuffer->Release();
 	if (m_pd3dIndexBuffer) m_pd3dIndexBuffer->Release();
 
-	if (m_ppd3dVertexBuffers) delete[] m_ppd3dVertexBuffers;
+	if (m_ppd3dVertexBuffers)
+	{
+		//for (int i = 0; i < m_nBuffers; ++i)
+			//if (m_ppd3dVertexBuffers[i])
+			//	m_ppd3dVertexBuffers[i]->Release();
+		delete[] m_ppd3dVertexBuffers;
+	}
 	if (m_pnVertexStrides) delete[] m_pnVertexStrides;
 	if (m_pnVertexOffsets) delete[] m_pnVertexOffsets;
 
@@ -1034,7 +1040,6 @@ CPlaneMesh::CPlaneMesh(ID3D11Device * pd3dDevice, int fx, int fy) : CMeshTexture
 	UINT pnBufferStrides[2] = { sizeof(XMFLOAT3), sizeof(XMFLOAT2) };
 	UINT pnBufferOffsets[2] = { 0, 0 };
 	AssembleToVertexBuffer(2, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
-
 
 	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-FLT_MIN, -FLT_MIN, 0);
 	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+FLT_MAX, +FLT_MAX, 0);

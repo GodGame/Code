@@ -12,11 +12,14 @@ struct MoveVelocity
 	XMFLOAT3 xmf3InitPos;
 	XMFLOAT3 xmf3Velocity;
 	XMFLOAT3 xmf3Accelate;
+	float	 fWeightSpeed;
+
 	MoveVelocity()
 	{
 		xmf3InitPos  = XMFLOAT3(0, 0, 0);
 		xmf3Velocity = XMFLOAT3(0, 0, 0);
 		xmf3Accelate = XMFLOAT3(0, 0, 0);
+		fWeightSpeed = 1.0f;
 	}
 };
 

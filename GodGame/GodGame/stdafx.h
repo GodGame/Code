@@ -87,4 +87,77 @@ ostream& operator<<(ostream& os, XMFLOAT4 & xmf4);
 
 ostream& operator<<(ostream& os, XMFLOAT4X4 & mtx);
 
+
+template <class T>
+class MyPriorityPointerQueue
+{
+public:
+	typedef list<T*> PointerType;
+//	typedef PointerType::iterator TypeIt;
+
+private:
+	PointerType _Container;
+
+public:
+	MyPriorityPointerQueue() {}
+	~MyPriorityPointerQueue() {}
+
+	typename  list<T*>::iterator begin() { return _Container.begin(); }
+	typename  list<T*>::iterator end()   { return _Container.end(); }
+	size_t size()  { return _Container.size(); }
+	bool   empty() { return _Container.empty(); }
+	void   clear() { _Container.clear();}
+
+	T* least()
+	{
+		if (_Container.empty())
+			return nullptr;
+
+		auto it = _Container.begin();
+		T* data = *it;
+
+		_Container.erase(it);
+		return data;
+	}
+	T* dequeue() { return least(); }
+
+	T* greatest()
+	{
+		if (_Container.empty())
+			return nullptr;
+
+		auto it = --_Container.end();
+		T* data = *it;
+
+		_Container.erase(it);
+		return data;
+	}
+	T* pop() { return greatest(); }
+
+	void insert(T * data)
+	{
+		T * pTemp = data;
+
+		if (_Container.empty())
+			_Container.push_back(data);
+		else
+		{
+			list<T*>::iterator itEnd = _Container.end();
+			list<T*>::iterator it = _Container.begin();
+
+			while (it != itEnd && !operator<(*pTemp, *(*it)))
+			{
+				it++;
+			}
+			_Container.insert(it, data);
+		}
+	}
+	void enqueue(T * data) { insert(data); }
+	void push(T * data)    { insert(data); }
+
+	void erase(T * data)   { _Container.erase(data); }
+	typename  list<T*>::iterator find(T * data)  { return _Container.find(_Container.begin(), _Container.end(), data); }
+	//	TypeIt find_if(void * p) { return _Container.find_if(_Container.begin(), _Container.end(), p);}
+};
+
 #endif

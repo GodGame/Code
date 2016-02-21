@@ -86,6 +86,17 @@ public:
 	ID3D11ShaderResourceView  * m_pd3dSRVArray[num];
 	ID3D11Buffer              * m_pd3dCBBufferArray[num];
 
+	void ReleaseObjects()
+	{
+		if (m_pd3dComputeShader) m_pd3dComputeShader->Release();
+
+		for (int i = 0; i < num; ++i)
+		{
+			if (m_pd3dCBBufferArray[i])m_pd3dCBBufferArray[i]->Release();
+			if (m_pd3dSRVArray[i]) m_pd3dSRVArray[i]->Release();
+			if (m_pd3dUAVArray[i]) m_pd3dUAVArray[i]->Release();
+		}
+	}
 	POST_CS_NUM<num>()
 	{
 		m_pd3dComputeShader = nullptr;
@@ -305,6 +316,8 @@ public:
 class CUIShader : public CShader
 {
 protected:
+	CScene				   * m_pScene;
+
 	ID3D11RenderTargetView * m_pBackRTV;
 	ID3D11Buffer           * m_pd3dScreenInfoBuffer;
 
@@ -315,15 +328,15 @@ public:
 	virtual ~CUIShader();
 
 	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
 	void CreateConstantBuffer(ID3D11Device * pd3dDevice);
 
-
 public:
-	void SetMouseCursor(POINT & pt) { m_pMousePoint->SetPosition(XMFLOAT3(pt.x, pt.y, 0)); }
+	void SetMouseCursor(POINT & pt) { if (m_pMousePoint) m_pMousePoint->SetPosition(XMFLOAT3(pt.x, pt.y, 0)); }
+	void MouseDown(HWND hwnd, POINT & pt);
 };
 
 class CTitleScreenShader : public CUIShader
@@ -332,7 +345,7 @@ public:
 	CTitleScreenShader();
 	virtual ~CTitleScreenShader();
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 };
 
@@ -342,8 +355,7 @@ public:
 	CInGameUIShader();
 	virtual ~CInGameUIShader();
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV);
-
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 };
 

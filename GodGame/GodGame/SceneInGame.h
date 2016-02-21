@@ -10,6 +10,7 @@ class CSceneInGame : public CScene
 	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
 	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
 	POINT m_ptOldCursorPos;
+	UINT  m_uHeightMapIndex;
 
 public:
 	CSceneInGame();

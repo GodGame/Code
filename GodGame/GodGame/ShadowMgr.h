@@ -42,6 +42,7 @@ private:
 public:
 	static CShadowMgr& GetInstance();
 
+	void ReleaseDevices();
 	void CreateShadowDevice(ID3D11Device * pd3dDevice);
 	void BuildShadowMap(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT3 & Target, XMFLOAT3 & LightPos, float fHalf);
 

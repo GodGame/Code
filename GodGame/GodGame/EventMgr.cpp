@@ -26,6 +26,7 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 {
 	switch (eType)
 	{
+
 	case MSGType::MSG_TYPE_OBJECT:
 		m_mpMessageList.insert(new cMessageSystem<CGameObject>
 			(m_fCurrentTime + fDelayeTime, eMsg, (CGameObject*)pToObj, (CGameObject*)pByObj, extra));
@@ -39,6 +40,7 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 	case MSGType::MSG_TYPE_SCENE:
 		m_mpMessageList.insert(new cMessageSystem<CScene>
 			(m_fCurrentTime + fDelayeTime, eMsg, (CScene*)pToObj, (CScene*)pByObj, extra));
+		cout << "Scene Msg In" << endl;
 		return;
 
 	case MSGType::MSG_TYPE_NONE:
@@ -69,6 +71,7 @@ void CGameEventMgr::Update(float fFrameTime)
 
 		if ((*it)->MessageUpdate(m_fCurrentTime))
 			m_mpMessageList.erase(it);
+			//m_mpMessageList.dequeue();
 	}
 }
 
@@ -88,26 +91,27 @@ UIRectMgr & UIRectMgr::GetInstance()
 
 void UIRectMgr::BuildResources()
 {
-	RECT rt;	// left, top, right, bottom
-	rt = { 210, 540, 250, 500 };
-	InsertObject(rt, "title_start");
-   	cout << rt << endl;
+	UIInfo info;
+	// left, top, right, bottom
+	info.m_rect = { 210, 540, 250, 500 };
+	info.m_msgUI = UIMessage::MSG_UI_TITLE_INSERT_INGAME;
+	InsertObject(info, "ui_title_start");
+
 }
 
 bool UIRectMgr::CollisionCheck(XMFLOAT3 & pos, string name)
 {
 	POINT pt{ pos.x, pos.y };
-
-	return CollisionBox(pt, name);
+	return CollisionCheck(pt, name);
 }
 
-bool UIRectMgr::CollisionBox(POINT & pt, string name)
+bool UIRectMgr::CollisionCheck(POINT & pt, string name)
 {
-	RECT & rt = GetObjects(name);
+	RECT & rt = GetObjects(name).m_rect;
 
-	if (pt.x > rt.right) return false;
-	if (pt.x < rt.left) return false;
-	if (pt.y > rt.top) return false;
+	if (pt.x > rt.right)  return false;
+	if (pt.x < rt.left)   return false;
+	if (pt.y > rt.top)    return false;
 	if (pt.y < rt.bottom) return false;
 
 	return true;

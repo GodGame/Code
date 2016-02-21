@@ -74,6 +74,9 @@ public:
 	void SetEmitDirection(XMFLOAT3 & dir) { m_cbParticle.m_vParticleVelocity = dir; }
 	void SetAccelation(XMFLOAT3 & accel)  { m_cbParticle.m_vAccel = accel; }
 
+	void SetMoveVelocity(XMFLOAT3 & vel) { m_velocity.xmf3Velocity = vel; }
+	void SetMoveAccel(XMFLOAT3 & acc)    { m_velocity.xmf3Accelate = acc; }
+
 	bool IsAble() { return m_bEnable; }
 	bool Enable(XMFLOAT3 * pos = nullptr);
 	bool Disable();
@@ -88,14 +91,15 @@ public:
 	CGameObject(int nMeshes = 0);
 	virtual ~CGameObject();
 
-	//게임 객체는 하나의 재질을 가질 수 있다.
-	CMaterial  * m_pMaterial;
-	void SetMaterial(CMaterial *pMaterial);
-
 protected:
-	UINT	m_uSize : 16;
+	UINT	m_uSize       : 15;
 	UINT	m_nReferences : 15;
-	bool	m_bActive : 1;
+	bool	m_bActive     : 1;
+	bool	m_bUseCollide : 1;
+
+	CGameObject * m_pChild;
+	CGameObject * m_pSibling;
+	CGameObject * m_pParent;
 
 public:
 	void	 AddRef();
@@ -107,12 +111,31 @@ public:
 	int          m_nMeshes;
 	AABB         m_bcMeshBoundingCube;
 
+	//게임 객체는 하나의 재질을 가질 수 있다.
+	CMaterial  * m_pMaterial;
+	void SetMaterial(CMaterial *pMaterial);
+
+public:
+	void SetChild(CGameObject* pObject);
+	void SetSibling(CGameObject * pObject);
+	void SetParent(CGameObject * pObject);
+
+	CGameObject * GetChildObject() { return m_pChild; }
+	CGameObject * GetSiblingObject() { return m_pSibling; }
+	CGameObject * GetParentObject() { return m_pParent; }
+
+	void SuccessSibling();
+	// 부모 형제 자식을 다 끊어버림
+	void ReleaseRelationShip();
+
 public:
 	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
 	//게임 객체는 텍스쳐 가질 수 있다.
 	CTexture *m_pTexture;
 	void SetTexture(CTexture *pTexture, bool beforeRelease = true);
 	void SetActive(bool bActive = false) { m_bActive = bActive; }
+	void SetCollide(bool bCollide) { m_bUseCollide = bCollide; }
+
 	virtual void UpdateBoundingBox();
 
 	void SetMesh(CMesh *pMesh, int nIndex = 0);
@@ -130,6 +153,11 @@ public:
 
 public:
 	virtual bool IsVisible(CCamera *pCamera = nullptr);
+	bool CanCollide(CGameObject * pObj) { 
+		if (!m_bUseCollide) return false;
+		if (this == pObj) return false;
+		return true;
+	}
 
 	//로컬 x-축, y-축, z-축 방향으로 이동한다.
 	void MoveStrafe(float fDistance = 1.0f);
@@ -179,6 +207,21 @@ protected:
 public:
 	void SetVelocity(const XMFLOAT3& xv3Velocity) { m_xv3Velocity = xv3Velocity; }
 	const XMFLOAT3& GetVelocity() const { return(m_xv3Velocity); }
+};
+
+
+class CUIObject : public CGameObject
+{
+	UIInfo m_info;
+
+public:
+	CUIObject(int nMeshes, UIInfo info = UIInfo());
+	virtual ~CUIObject() {}
+
+	bool CollisionCheck(XMFLOAT3 & pos);
+	bool CollisionCheck(POINT & pt);
+
+	UIMessage & GetUIMessage() { return m_info.m_msgUI; }
 };
 
 class CRotatingObject : public CGameObject
@@ -308,7 +351,7 @@ class CAbsorbMarble : public CBillboardObject
 	float	m_fSpeed;
 
 	CGameObject * m_pTargetObject;
-	XMFLOAT3 m_xvRandomVelocity;
+	XMFLOAT3      m_xvRandomVelocity;
 
 public:
 	CAbsorbMarble();

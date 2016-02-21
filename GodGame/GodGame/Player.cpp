@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "MyInline.h"
 #include "Player.h"
-#include "Scene.h"
 
 CPlayer::CPlayer(int nMeshes) : CDynamicObject(nMeshes)
 {
@@ -341,10 +340,11 @@ void CPlayer::Animate(float fTimeElapsed)
 {
 	UINT uSize = m_uSize;
 	m_uSize = 40.0f;
-	//vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
-	//QUADMgr.ContainedErase();
-	QUADMgr.CollisionCheck(this);
-	cout << "에너지 : " << m_nEnergy << endl;
+	vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
+	QUADMgr.ContainedErase();
+	
+	//QUADMgr.CollisionCheck(this);
+	//cout << "에너지 : " << m_nEnergy << endl;
 	m_uSize = uSize;
 }
 
@@ -353,8 +353,11 @@ void CPlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_GET_SOUL:
-		++m_nEnergy;
-		m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
+		cout << "에너지 : " << ++m_nEnergy << endl;;
+		EVENTMgr.InsertDelayMessage(0.0f, MSG_PARTICLE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, extra);
+		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, byObj);
+		//cout << "Player : " << GetPosition() << endl;
+		//m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
 		return;
 	case eMessage::MSG_COLLIDE:
 		return;

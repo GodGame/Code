@@ -97,6 +97,7 @@ public:
 
 	void InitilizeThreads();
 	void ReleaseThreads();
+	void ReleaseThreadInfo();
 	static UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter);
 
 	//디바이스, 스왑 체인, 디바이스 컨텍스트, 디바이스와 관련된 뷰를 생성하는 함수이다. 

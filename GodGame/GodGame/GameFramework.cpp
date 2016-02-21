@@ -5,9 +5,9 @@
 #include "SceneTitle.h"
 //CRITICAL_SECTION m_cs;
 
-bool		 gbChangeScene = false;
+bool		    gbChangeScene = false;
 vector<CScene*> gSceneState;
-CScene       * gpScene = nullptr;
+CScene       *  gpScene = nullptr;
 
 void CGameFramework::ChangeGameScene(CScene * pScene)
 {
@@ -54,6 +54,8 @@ void CGameFramework::PopGameScene()
 
 CGameFramework::CGameFramework()
 {
+	gSceneState.reserve(4);
+
 	m_pd3dDevice     = nullptr;
 	m_pDXGISwapChain = nullptr;
 
@@ -76,9 +78,6 @@ CGameFramework::CGameFramework()
 	//m_pd3dPostProcessing     = nullptr;
 
 	m_pd3dBackRenderTargetView = nullptr;
-
-	gpScene                    = nullptr;
-	gSceneState.reserve(4);
 
 	m_pPlayerShader            = nullptr;
 	m_pPlayer                  = nullptr;
@@ -114,7 +113,6 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	CManagers::BuildManagers(m_pd3dDevice, m_pd3dDeviceContext);
 	//PushGameScene(new CSceneInGame());
 	PushGameScene(new CSceneTitle());
-
 	//InitilizeThreads();
 	return(true);
 }
@@ -132,31 +130,25 @@ void CGameFramework::OnDestroy()
 		delete *it;
 	}
 
+	CManagers::ReleaseManagers();
 	//Direct3D와 관련된 객체를 소멸한다.
 	if (m_pd3dDeviceContext) m_pd3dDeviceContext->ClearState();
 	for (int i = 0; i < NUM_MRT; ++i)
 	{
 		if (m_ppd3dRenderTargetView[i]) m_ppd3dRenderTargetView[i]->Release();
-		if (m_pd3dMRTSRV[i]) m_pd3dMRTSRV[i]->Release();
-		if (m_ppd3dMRTtx[i]) m_ppd3dMRTtx[i]->Release();
+		if (m_pd3dMRTSRV[i])  m_pd3dMRTSRV[i]->Release();
+		if (m_ppd3dMRTtx[i])  m_ppd3dMRTtx[i]->Release();
 		//if (m_pd3dMRTUAV[i]) m_pd3dMRTUAV[i]->Release();
 	}
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
 	if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();
 
-	if (m_pDXGISwapChain) m_pDXGISwapChain->Release();
+	if (m_pDXGISwapChain) cout << m_pDXGISwapChain->Release();
 	if (m_pd3dDeviceContext) m_pd3dDeviceContext->Release();
 	if (m_pd3dDevice) m_pd3dDevice->Release();
 
 #ifdef _THREAD
-	for (int i = 0; i < m_nRenderThreads; ++i)
-	{
-		m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
-		::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
-		::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingEndEvent);
-
-		//::_endthreadex(m_pRenderingThreadInfo[i].m_hRenderingThread[i]);
-	}
+	ReleaseThreads();//ReleaseThreadInfo();
 #endif
 	if (m_pd3dBackRenderTargetView) m_pd3dBackRenderTargetView->Release();
 
@@ -528,9 +520,9 @@ void CGameFramework::InitilizeThreads()
 #ifdef _THREAD
 	//InitializeCriticalSection(&m_cs);
 
-	m_nRenderThreads = gpScene->GetRenderThreadNumber();
+	m_nRenderThreads       = gpScene->GetRenderThreadNumber();
 	m_pRenderingThreadInfo = new RenderingThreadInfo[m_nRenderThreads];
-	m_hRenderingEndEvents = new HANDLE[m_nRenderThreads];
+	m_hRenderingEndEvents  = new HANDLE[m_nRenderThreads];
 
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
@@ -575,8 +567,32 @@ void CGameFramework::ReleaseThreads()
 		::SetEvent(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
 
 	::WaitForMultipleObjects(m_nRenderThreads, m_hRenderingEndEvents, TRUE, INFINITE);
+	ReleaseThreadInfo();
 
 	gbChangeScene = false;
+}
+
+void CGameFramework::ReleaseThreadInfo()
+{
+	for (int i = 0; i < m_nRenderThreads; ++i)
+	{
+		//m_pRenderingThreadInfo[i].m_pd3dDepthStencilView->Release();
+		//m_pRenderingThreadInfo[i].m_pd3dCommandList->Release();
+		//m_pRenderingThreadInfo[i].m_pd3dDeferredContext->Release();
+		::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
+		::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingEndEvent);
+		::CloseHandle(m_pRenderingThreadInfo[i].m_hRenderingThread);
+		//::_endthreadex(m_pRenderingThreadInfo[i].m_hRenderingThread[i]);
+	}
+
+	if (m_nRenderThreads > 0)
+	{
+		delete[] m_pRenderingThreadInfo;
+		m_pRenderingThreadInfo = nullptr;
+
+		delete[] m_hRenderingEndEvents;
+		m_hRenderingEndEvents = nullptr;
+	}
 }
 
 void CGameFramework::BuildObjects(CScene * pScene)
@@ -614,14 +630,15 @@ void CGameFramework::ReleaseObjects(CScene * pScene)
 
 void CGameFramework::ProcessInput()
 {
+	SetCursor(nullptr);
+	
 	bool bProcessedByScene = false;
 
-	POINT ptCursorPos;
-	SetCursor(nullptr);
+	static POINT ptCursorPos;
 	GetCursorPos(&ptCursorPos);
-	ScreenToClient(m_hWnd, &ptCursorPos);	// GetCursorPos랑 같이 쓰인다.
-	//ClientToScreen(hWnd, &CTOSPos);	// SetCursorPos랑 같이 쓰인다.
-	gpScene->SetMouseCursor(ptCursorPos);
+	//ScreenToClient(m_hWnd, &ptCursorPos);	// GetCursorPos랑 같이 쓰인다.
+	//ClientToScreen(m_hWnd, &ptCursorPos);	// SetCursorPos랑 같이 쓰인다.
+	gpScene->SetMouseCursor(m_hWnd, ptCursorPos);
 
 	if (gpScene) bProcessedByScene = gpScene->ProcessInput(m_hWnd, m_GameTimer.GetTimeElapsed(), ptCursorPos);
 }
@@ -778,12 +795,10 @@ UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter)
 		pd3dDeferredContext->FinishCommandList(TRUE, &pRenderingThreadInfo->m_pd3dCommandList);
 		::SetEvent(pRenderingThreadInfo->m_hRenderingEndEvent);
 	}
+	pd3dDeferredContext->Release();
+
 	cout << pRenderingThreadInfo ->m_nRenderingThreadID << "번 Thread를 종료합니다. " << endl;
 	::SetEvent(pRenderingThreadInfo->m_hRenderingEndEvent);
-
-	::CloseHandle(pRenderingThreadInfo->m_hRenderingBeginEvent);
-	::CloseHandle(pRenderingThreadInfo->m_hRenderingEndEvent);
-	::CloseHandle(pRenderingThreadInfo->m_hRenderingThread);
 
 	return 0;
 }

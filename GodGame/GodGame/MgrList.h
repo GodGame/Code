@@ -25,6 +25,15 @@ public:
 		QUADMgr.Update(pCamera);
 		EVENTMgr.Update(fFrameTime);
 	}
+
+	static void ReleaseManagers()
+	{
+		ViewMgr.ReleaseResources();
+		TXMgr.ReleaseObjects();
+		MaterialMgr.ReleaseObjects();
+		ShadowMgr.ReleaseDevices();
+		//UIMgr.R
+	}
 };
 
 #endif

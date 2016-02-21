@@ -67,8 +67,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 			FRAMEWORK.FrameAdvance();
 		}
 	}
-	FreeConsole();
 	FRAMEWORK.OnDestroy();
+	FreeConsole();
 
 	return (int)msg.wParam;
 }
@@ -119,12 +119,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	HWND hMainWnd = CreateWindow(szWindowClass, szTitle, dwStyle, CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance, nullptr);
 	if (!hMainWnd) return(FALSE);
 
+	srand((unsigned)time(nullptr));
 	FRAMEWORK.OnCreate(hInstance, hMainWnd);
 
 	::ShowWindow(hMainWnd, nCmdShow);
 	::UpdateWindow(hMainWnd);
-
-	srand((unsigned)time(nullptr));
 
 	return(TRUE);
 }

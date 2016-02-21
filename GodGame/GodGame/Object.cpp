@@ -17,10 +17,15 @@ CGameObject::CGameObject(int nMeshes)
 	m_bcMeshBoundingCube = AABB();
 
 	m_bActive     = true;
+	m_bUseCollide = false;
 
 	m_nReferences = 0;
 	m_pMaterial   = nullptr;
 	m_pTexture    = nullptr;
+
+	m_pChild      = nullptr;
+	m_pSibling    = nullptr;
+	m_pParent     = nullptr;
 }
 
 CGameObject::~CGameObject()
@@ -42,8 +47,29 @@ void CGameObject::AddRef() { m_nReferences++; }
 
 void CGameObject::Release()
 {
-	if (m_nReferences > 0) m_nReferences--;
-	if (m_nReferences <= 0) delete this;
+	//if (m_nReferences > 0) m_nReferences--;
+	if (--m_nReferences < 1)
+	{
+		ReleaseRelationShip();
+
+		delete this;
+	}
+}
+
+void CGameObject::SuccessSibling()
+{
+	if (m_pParent->m_nReferences < 1) return;
+
+	if (m_pSibling) m_pParent->SetChild(m_pSibling);
+	m_pSibling->Release();
+}
+
+void CGameObject::ReleaseRelationShip()
+{
+	// 루트가 아니라면, 자식은 모두 지우고 형제는 부모에게 넘겨주고 삭제한다.
+	if (m_pChild)   m_pChild->Release();
+	if (m_pParent)	SuccessSibling();
+	if (m_pSibling) m_pSibling->Release();
 }
 
 void CGameObject::SetTexture(CTexture *pTexture, bool beforeRelease)
@@ -203,6 +229,39 @@ void CGameObject::SetMaterial(CMaterial *pMaterial)
 	if (m_pMaterial) m_pMaterial->AddRef();
 }
 
+void CGameObject::SetChild(CGameObject * pObject)
+{
+	CGameObject * pBeforeChild = nullptr;
+	pBeforeChild = m_pChild;
+
+	m_pChild = pObject;
+	if (m_pChild)	m_pChild->AddRef();
+
+	if (pBeforeChild) 
+	{
+		if (m_pChild) m_pChild->SetSibling(pBeforeChild);
+		pBeforeChild->Release();
+	}
+}
+
+void CGameObject::SetSibling(CGameObject * pObject)
+{
+	CGameObject * pBeforeSibling = nullptr;
+	pBeforeSibling = m_pSibling;
+
+	m_pSibling = pObject; 
+	if (m_pSibling) m_pSibling->AddRef();	
+	if (pBeforeSibling) pBeforeSibling->Release();
+}
+
+void CGameObject::SetParent(CGameObject * pObject)
+{
+	m_pParent = pObject;
+	// 단일방향으로 지우기 위해서 부모는 AddRef 호출을 안한다.
+	if (pObject && m_pSibling) m_pSibling->SetParent(pObject);
+	//if (pBeforeParent) pBeforeParent->Release();
+}
+
 XMFLOAT3 CGameObject::GetLookAt()
 {
 	//게임 객체를 로컬 z-축 벡터를 반환한다.
@@ -335,6 +394,36 @@ CDynamicObject::~CDynamicObject()
 {
 }
 
+CUIObject::CUIObject(int nMeshes, UIInfo info) : CGameObject(nMeshes) 
+{
+	if (info.m_msgUI != MSG_UI_NONE)
+	{
+		SetCollide(true);
+	}
+	
+	m_info = info;
+}
+
+bool CUIObject::CollisionCheck(XMFLOAT3 & pos)
+{
+	return CollisionCheck(POINT{ (LONG)pos.x, (LONG)pos.y });
+}
+
+bool CUIObject::CollisionCheck(POINT & pt)
+{
+	if (!m_bUseCollide)		  return false;
+
+	RECT & rect = m_info.m_rect;
+
+	if (pt.x > rect.right)  return false;
+	if (pt.x < rect.left)   return false;
+	if (pt.y > rect.top)    return false;
+	if (pt.y < rect.bottom) return false;
+
+	return true;
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CRotatingObject::CRotatingObject(int nMeshes) : CGameObject(nMeshes)
@@ -399,7 +488,7 @@ CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3& xv3
 CHeightMap::~CHeightMap()
 {
 	if (m_pHeightMapImage) delete[] m_pHeightMapImage;
-	m_pHeightMapImage = nullptr;
+	//m_pHeightMapImage = nullptr;
 }
 
 XMFLOAT3& CHeightMap::GetHeightMapNormal(int x, int z)
@@ -733,7 +822,8 @@ void CParticle::Update(float fTimeElapsed)
 
 		if (m_bUseAccel)
 		{
-			xmvVelocity = (0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) + XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime;
+			xmvVelocity = (m_velocity.fWeightSpeed * 0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) + 
+				(m_velocity.fWeightSpeed * XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime);
 			xmvPos      = xmvVelocity + XMLoadFloat3(&m_velocity.xmf3InitPos);
 		}
 		else
@@ -742,7 +832,6 @@ void CParticle::Update(float fTimeElapsed)
 			xmvPos      = xmvVelocity + XMLoadFloat3(&m_cbParticle.m_vParticleEmitPos);
 		}
 		XMStoreFloat3(&m_cbParticle.m_vParticleEmitPos, xmvPos);
-		cout << "pos : " << m_cbParticle.m_vParticleEmitPos << endl;
 	}
 
 	if (fGameTime > m_fDurability + m_cbParticle.m_fLifeTime)
@@ -760,7 +849,6 @@ void CParticle::Update(float fTimeElapsed)
 bool CParticle::Enable(XMFLOAT3 * pos)
 {
 	if (pos) SetEmitPosition(*pos);
-
 
 	m_velocity.xmf3InitPos = *pos;
 	m_bEnable              = true;
@@ -791,6 +879,8 @@ CAbsorbMarble::~CAbsorbMarble()
 
 void CAbsorbMarble::Initialize()
 {
+	SetCollide(true);
+
 	m_bAbsorb          = false;
 	m_fAbsorbTime      = 0.0f;
 	m_fSpeed           = 0.0f;
@@ -803,6 +893,8 @@ void CAbsorbMarble::SetTarget(CGameObject * pGameObject)
 {
 	if (!m_bAbsorb)
 	{
+		SetCollide(false);
+
 		m_pTargetObject = pGameObject;
 		m_bAbsorb = true;
 
@@ -840,7 +932,7 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 		float flengthSq;
 		XMStoreFloat(&flengthSq, lengthSq);
 
-		if (flengthSq < 100.0f && m_fAbsorbTime > 0.3f)
+		if (flengthSq < 60.0f && m_fAbsorbTime > 0.3f)
 		{
 			GetGameMessage(this, eMessage::MSG_COLLIDE);
 		}
@@ -858,15 +950,24 @@ void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 		m_bActive = false;
 		return;
 	case eMessage::MSG_COLLIDE:
-		m_pTargetObject->GetGameMessage(this, eMessage::MSG_GET_SOUL, &CBillboardObject::GetPosition());
-
+		m_pTargetObject->GetGameMessage(this, eMessage::MSG_GET_SOUL, &GetInstanceData());
 		SetPosition(XMFLOAT3(rand() % 2048, 100, rand() % 2048));
-		CBillboardObject::UpdateInstanceData();
 		Initialize();
-		QUADMgr.EntityStaticObject(this);
+		SetCollide(false);
+		//EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, this);
 		return;
 	case eMessage::MSG_COLLIDED:
 		SetTarget(byObj);
+		return;
+
+	//case eMessage::MSG_QUAD_DELETE:
+
+	//	return;
+	case eMessage::MSG_OBJECT_RENEW:
+		cout << "Renew!!" << endl;
+		CBillboardObject::UpdateInstanceData();
+		SetCollide(true);
+		QUADMgr.EntityStaticObject(this);
 		return;
 	case eMessage::MSG_NORMAL:
 		return;

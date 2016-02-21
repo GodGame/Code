@@ -56,6 +56,10 @@ public:
 	XMFLOAT3 GetUpVector() { return(m_xv3Up); }
 	XMFLOAT3 GetRightVector() { return(m_xv3Right); }
 
+	XMFLOAT3 GetLookVectorInverse() { return XMFLOAT3(-m_xv3Look.x, -m_xv3Look.y, -m_xv3Look.z); }
+	XMFLOAT3 GetUpVectorInverse() { return XMFLOAT3(-m_xv3Up.x, -m_xv3Up.y, -m_xv3Up.z); }
+	XMFLOAT3 GetRightVectorInverse() { return XMFLOAT3(-m_xv3Right.x, -m_xv3Right.y, -m_xv3Right.z); }
+
 	void SetFriction(float fFriction) { m_fFriction = fFriction; }
 	void SetGravity(const XMFLOAT3& xv3Gravity) { m_xv3Gravity = xv3Gravity; }
 	void SetMaxVelocityXZ(float fMaxVelocity) { m_fMaxVelocityXZ = fMaxVelocity; }

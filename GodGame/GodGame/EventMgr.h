@@ -14,10 +14,18 @@ enum eMessage : BYTE
 	MSG_COLLIDED,
 	MSG_COLLIDE_LOCATION,
 
+	MSG_COLLIDE_UI,
+
 	MSG_MOUSE_DOWN,
 	MSG_MOUSE_DOWN_OVER,
 	MSG_MOUSE_UP,
 	MSG_MOUSE_UP_OVER,
+
+	MSG_QUAD_DELETE,
+
+	MSG_SCENE_CHANGE,
+
+	MSG_OBJECT_RENEW,
 
 	MSG_PARTICLE_ON,
 
@@ -94,6 +102,25 @@ public:
 };
 
 bool operator<(const cMessage & left, const cMessage & right);
+//bool operator<(const cMessage * left, const cMessage * right);
+
+class cMessageLessTime
+{
+public:
+	bool operator()(cMessage * p1, cMessage * p2)
+	{
+		return p1->GetLastTime() < p2->GetLastTime();
+	}
+};
+
+class cMessageGreaterTime
+{
+public:
+	bool operator()(cMessage * p1, cMessage * p2)
+	{
+		return p1->GetLastTime() > p2->GetLastTime();
+	}
+};
 
 class CScene;
 class CShader;
@@ -102,7 +129,8 @@ class CGameEventMgr
 {
 private:
 	float	m_fCurrentTime;
-	set<cMessage*>	   m_mpMessageList;
+	set<cMessage*, cMessageLessTime>	   m_mpMessageList;
+	//MyPriorityPointerQueue<cMessage>	   m_mpMessageList;
 
 private:
 	CGameEventMgr();
@@ -128,7 +156,25 @@ public:
 
 #define EVENTMgr CGameEventMgr::GetInstance()
 
-class UIRectMgr : public CMgrCase<RECT>
+enum UIMessage
+{
+	MSG_UI_NONE = 0,
+	MSG_UI_TITLE_INSERT_INGAME
+};
+
+struct UIInfo
+{
+	RECT m_rect;
+	UIMessage m_msgUI;
+
+	UIInfo()
+	{
+		m_rect  = { 0, 0, 0, 0 };
+		m_msgUI = MSG_UI_NONE;
+	}
+};
+
+class UIRectMgr : public CMgrCase<UIInfo>
 {
 private:
 	UIRectMgr();
@@ -140,8 +186,8 @@ public:
 
 	void BuildResources();
 	bool CollisionCheck(XMFLOAT3 & pos, string name);
-	bool CollisionBox(POINT & pt, string name);
-	inline RECT& GetCollisionBox(string name) { return GetObjects(name);}
+	bool CollisionCheck(POINT & pt, string name);
+	inline RECT& GetCollisionBox(string name) { return GetObjects(name).m_rect;}
 };
 #define UIMgr UIRectMgr::GetInstance()
 #endif

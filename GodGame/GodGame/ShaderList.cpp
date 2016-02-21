@@ -87,6 +87,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain
 			pRotatingObject->SetPosition(xPosition, fHeight + (fyPitch * 2), zPosition);
 			pRotatingObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
 			pRotatingObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
+			pRotatingObject->AddRef();
 			m_ppObjects[i++] = pRotatingObject;
 		}
 	}
@@ -179,12 +180,12 @@ CBillboardShader::CBillboardShader() : CShader(), CInstanceShader()
 	m_pTexture = nullptr;
 
 	m_nTrees = 0;
-	//m_pd3dVertexBuffer = nullptr;
+	m_pd3dTreeInstanceBuffer = nullptr;
 }
 
 CBillboardShader::~CBillboardShader()
 {
-	//if (m_pd3dVertexBuffer) m_pd3dVertexBuffer->Release();
+	if (m_pd3dTreeInstanceBuffer) m_pd3dTreeInstanceBuffer->Release();
 	if (m_pTexture) m_pTexture->Release();
 }
 
@@ -227,6 +228,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false) + 18;
 		pTree = new CBillboardObject(xmf3Pos, i, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
+		pTree->AddRef();
 		m_ppObjects[i] = pTree;
 	}
 	m_ppObjects[0]->SetPosition(XMFLOAT3(1006, 200, 308));
@@ -410,6 +412,7 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 		//	pObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
 		pObject->SetTexture(pSwordTexture);
 		pObject->SetMaterial(pMaterial);
+		pObject->AddRef();
 		m_ppObjects[i] = pObject;
 	}
 
@@ -526,6 +529,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		pObject->SetMesh(pPointMesh);
 		//pObject->SetMaterial(pMat);
 		pObject->SetPosition(fx, fy, fz);
+		pObject->AddRef();
 		m_ppObjects[i] = pObject;
 
 		//QUADMgr.EntityStaticObject(pObject);
@@ -616,11 +620,6 @@ void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 	for (int i = 0; i < m_nCubes; ++i)
 	{
 		m_ppObjects[i]->Animate(fTimeElapsed);
-		//pTree = (CBillboardObject*)m_ppObjects[i];
-		//if (pTree->IsVisible(nullptr))
-		//{
-
-		//}
 	}
 }
 #pragma endregion
@@ -714,6 +713,7 @@ void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 			pObject->SetMesh(pPointMesh);
 			pObject->SetPosition(fx, fy, fz);
 			pObject->Rotate(0, (j - 2) * 90, 0);
+			pObject->AddRef();
 			m_ppObjects[(j * 8) + i] = pObject;
 		}
 	}
@@ -771,6 +771,9 @@ CParticleShader::CParticleShader() : CShader()
 
 CParticleShader::~CParticleShader()
 {
+	m_vcAbleParticleArray.clear();
+	m_vcUsingParticleArray.clear();
+
 	for (int i = 0; i < m_nObjects; ++i)
 		delete m_ppParticle[i];
 
@@ -784,10 +787,15 @@ CParticleShader::~CParticleShader()
 
 	if (m_ppd3dParticleImageSRV)
 	{
-		for (int i = 0; i < m_nImages; ++i)
+		for (int i = 0; i < m_nImages; ++i) 
+		{
 			m_ppd3dParticleImageSRV[i]->Release();
+		}
 		delete[] m_ppd3dParticleImageSRV;
 	}
+
+	if (m_pd3dGSSO) m_pd3dGSSO->Release();
+	if (m_pd3dVSSO) m_pd3dVSSO->Release();
 }
 
 void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -805,7 +813,7 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSParticleDraw", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
 	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleDraw", "gs_5_0", &m_pd3dGeometryShader);
 	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSParticleDraw", "ps_5_0", &m_pd3dPixelShader);
-
+	m_pd3dVertexLayout->Release();
 	D3D11_SO_DECLARATION_ENTRY SODeclaration[] =
 	{  // 스트림 번호(인덱스)/ 시멘틱이름/ 출력원소 인덱스(같은이름 시멘틱)/ 출력 시작요소/ 출력 요소(0~3:w)/ 연결된 스트림 출력버퍼(0~3)
 		{ 0, "POSITION", 0, 0, 3, 0 },
@@ -868,7 +876,8 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
 
-	m_nObjects = 3;
+	m_nObjects = 5;
+	m_ppObjects = nullptr;
 	m_ppParticle = new CParticle*[m_nObjects];
 
 	CB_PARTICLE cbParticle;
@@ -885,22 +894,27 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	//mov.xmf3Accelate = XMFLOAT3(0, -80, 0);
 
 	m_ppParticle[0] = new CParticle();
-	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 800);//(pd3dDevice, cbParticle, 20.0, 800);
+	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 200);//(pd3dDevice, cbParticle, 20.0, 800);
 	//m_ppParticle[0]->Enable();
 
 	m_ppParticle[1] = new CParticle();
-	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 800);
+	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 200);
 
 	m_ppParticle[2] = new CParticle();
-	m_ppParticle[2]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 800);
+	m_ppParticle[2]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 200);
 
-	//m_ppParticle[3] = new CParticle();
-	//m_ppParticle[3]->Initialize(pd3dDevice, cbParticle, 0.2f, 200);
+	m_ppParticle[3] = new CParticle();
+	m_ppParticle[3]->Initialize(pd3dDevice, cbParticle, mov, 0.2f, 200);
 
-	//m_ppParticle[4] = new CParticle();
-	//m_ppParticle[4]->Initialize(pd3dDevice, cbParticle, 0.2f, 200);
+	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
+	mov.xmf3Accelate = XMFLOAT3(0, 0, -20);
+	mov.fWeightSpeed = 100.0f;
+
+	m_ppParticle[4] = new CParticle();
+	m_ppParticle[4]->Initialize(pd3dDevice, cbParticle, mov, 5.0f, 800);
 
 	m_pd3dRandomSRV = ViewMgr.GetSRV("srv_random1d");// CShader::CreateRandomTexture1DSRV(pd3dDevice);
+	m_pd3dRandomSRV->AddRef();
 
 	m_vcAbleParticleArray.reserve(m_nObjects);
 	m_vcUsingParticleArray.reserve(m_nObjects);
@@ -967,8 +981,11 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (!m_ppParticle[i]->IsAble()) 
-			m_vcAbleParticleArray.push_back(m_ppParticle[i]);
+		if (!m_ppParticle[i]->IsAble())
+		{
+			if(i != 4)
+				m_vcAbleParticleArray.push_back(m_ppParticle[i]);
+		}
 		else
 		{
 			m_ppParticle[i]->Update(fTimeElapsed);

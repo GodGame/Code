@@ -35,7 +35,6 @@ struct CB_CS
 	XMFLOAT4 param;	// x, y = dispatch , z , w = input size;
 };
 
-
 class CShader
 {
 public:
@@ -86,7 +85,6 @@ protected:
 	ID3D11DomainShader   * m_pd3dDomainShader;
 	//ID3D11ComputeShader  * m_p3dComputeShader;
 protected:
-
 	//쉐이더 객체가 게임 객체들의 리스트를 가진다.
 	CGameObject **m_ppObjects;
 	int m_nObjects;
@@ -159,7 +157,6 @@ public:
 };
 //플레이어를 렌더링하기 위한 쉐이더 클래스이다.
 
-
 class CNormalMapShader : public CShader
 {
 protected:
@@ -187,7 +184,6 @@ public:
 
 	virtual ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 };
-
 
 class CSplatLightingShader : public CTexturedIlluminatedShader
 {

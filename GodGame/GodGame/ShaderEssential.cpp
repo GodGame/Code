@@ -70,8 +70,12 @@ CSceneShader::CSceneShader() : CTexturedShader()
 
 CSceneShader::~CSceneShader()
 {
+	//for (int i = 1; i < NUM_MRT; ++i) m_ppd3dMrtSrv[i]->Release();
+
 	if (m_pMesh) m_pMesh->Release();
 	if (m_pTexture) m_pTexture->Release();
+	if (m_pInfoScene) m_pInfoScene->Release();
+
 	if (m_pd3dDepthStencilState) m_pd3dDepthStencilState->Release();
 
 	if (m_pd3dPSOther) m_pd3dPSOther->Release();
@@ -83,6 +87,7 @@ CSceneShader::~CSceneShader()
 
 	if (m_pd3dBloom4x4RTV) m_pd3dBloom4x4RTV->Release();
 	if (m_pd3dBloom4x4SRV) m_pd3dBloom4x4SRV->Release();
+
 	if (m_pd3dBloom16x16RTV) m_pd3dBloom16x16RTV->Release();
 	if (m_pd3dBloom16x16SRV) m_pd3dBloom16x16SRV->Release();
 
@@ -102,6 +107,7 @@ CSceneShader::~CSceneShader()
 
 	if (m_pd3dCBWeight)m_pd3dCBWeight->Release();
 	if (m_pd3dCBComputeInfo) m_pd3dCBComputeInfo->Release();
+	if (m_pd3dCBBloomInfo) m_pd3dCBBloomInfo->Release();
 
 	if (m_pd3dCSReduceToSingle) m_pd3dCSReduceToSingle->Release();
 	if (m_pd3dCSAdaptLum)m_pd3dCSAdaptLum->Release();
@@ -115,7 +121,9 @@ CSceneShader::~CSceneShader()
 	if (m_pd3dRadialSRV) m_pd3dRadialSRV->Release();
 	if (m_pd3dRadialUAV) m_pd3dRadialUAV->Release();
 	if (m_pd3dCSRadialBlur) m_pd3dCSRadialBlur->Release();
-	//m_csReduce.~POST_CS_REPEATABLE();
+
+	if (m_pd3dBackRTV) m_pd3dBackRTV->Release();
+	//m_csReduce.ReleaseObjects();
 	//m_csBloom.~POST_CS_BLOOMING();
 	//if (m_pcsReduce) delete m_pcsReduce;
 }
@@ -155,11 +163,11 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 
 	m_iDrawOption = nMrtSrv;
 	m_ppd3dMrtSrv = ppd3dMrtSrv;
-	m_pd3dBackRTV = pd3dBackRTV;
+	m_pd3dBackRTV = pd3dBackRTV;	m_pd3dBackRTV->AddRef();
 
-	m_pMesh = new CPlaneMesh(pd3dDevice, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-	m_pTexture = new CTexture(NUM_MRT - 1, 1, 17, 0, SET_SHADER_PS);
-	m_pInfoScene = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+	m_pMesh       = new CPlaneMesh(pd3dDevice, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+	m_pTexture    = new CTexture(NUM_MRT - 1, 1, 17, 0, SET_SHADER_PS);
+	m_pInfoScene  = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 
 	for (int i = 1; i < NUM_MRT; ++i) m_pTexture->SetTexture(i - 1, ppd3dMrtSrv[i]);
 
@@ -205,10 +213,10 @@ void CSceneShader::CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;// 0;
 	HRESULT hr = pd3dDevice->CreateBuffer(&desc, nullptr, &m_pd3dCBWeight);
 
-	ASSERT(nullptr != (m_pd3dCBComputeInfo = ViewMgr.GetBuffer("cs_float4")));
+	ASSERT_S(nullptr != (m_pd3dCBComputeInfo = ViewMgr.GetBuffer("cs_float4")));
 	m_pd3dCBComputeInfo->AddRef();
 
-	ASSERT(nullptr != (m_pd3dCBBloomInfo = ViewMgr.GetBuffer("cs_float4x4")));
+	ASSERT_S(nullptr != (m_pd3dCBBloomInfo = ViewMgr.GetBuffer("cs_float4x4")));
 	m_pd3dCBBloomInfo->AddRef();
 
 //	desc.ByteWidth = sizeof(CB_CS_BLOOM);
@@ -351,7 +359,6 @@ void CSceneShader::PostProcessingRender(ID3D11DeviceContext * pd3dDeviceContext,
 
 	case 1:
 		MeasureLuminance(pd3dDeviceContext, uRenderState, pCamera);
-
 		pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
 		HDRFinalRender(pd3dDeviceContext, nullptr, uRenderState, pCamera);
 		break;
@@ -385,6 +392,7 @@ void CSceneShader::ScreenRender(ID3D11DeviceContext * pd3dDeviceContext, ID3D11S
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pd3dBackRTV, nullptr);
 
 	m_pInfoScene->SetTexture(0, pScreenSRV);
+	//pScreenSRV->Release();
 	pd3dDeviceContext->PSSetShader(m_pd3dPSOther, nullptr, 0);
 	m_pInfoScene->UpdateShaderVariable(pd3dDeviceContext);
 
@@ -729,8 +737,6 @@ void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain)
 {
-	CreateShader(pd3dDevice);
-
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
@@ -738,11 +744,11 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pBrickTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_brick2_jpg"));
 	pBrickTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
-	TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
+	//TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
 
-	CMaterial *pPlayerMaterial = new CMaterial();
-	pPlayerMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	pPlayerMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	CMaterial *pPlayerMaterial               = new CMaterial();
+	pPlayerMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	pPlayerMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	pPlayerMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
 	pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 
@@ -762,8 +768,9 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pTerrainPlayer->SetMesh(pCubeMesh);
 	pTerrainPlayer->SetMaterial(pPlayerMaterial);
 	pTerrainPlayer->SetTexture(pBrickTexture);
+	pTerrainPlayer->AddRef();
 
-	pBrickTexture->Release();
+	//pBrickTexture->Release();
 	m_ppObjects[0] = pTerrainPlayer;
 
 	QUADMgr.EntityDynamicObject(m_ppObjects[0]);
@@ -877,9 +884,9 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	for (int i = 0; i < m_nLayerNumber; ++i)
 	{
-		m_pptxLayerMap[i] = new CTexture(3, 2, 0, 0, SET_SHADER_PS);
-		ppTextureName[i] = new wchar_t[128];
-		ppAlphaName[i] = new wchar_t[128];
+		m_pptxLayerMap[i]  = new CTexture(3, 2, 0, 0, SET_SHADER_PS);
+		ppTextureName[i]   = new wchar_t[128];
+		ppAlphaName[i]     = new wchar_t[128];
 		ppEntityTexture[i] = new wchar_t[128];
 	}
 	ID3D11ShaderResourceView **ppd3dsrvTexture, **ppd3dsrvAlphaTexture;
@@ -896,7 +903,8 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	ppEntityTexture[0] = _T("../Assets/Image/Terrain/Base_Texture.jpg");
 
-	for (int fileIndex = 0; fileIndex < m_nLayerNumber; fileIndex++) {
+	for (int fileIndex = 0; fileIndex < m_nLayerNumber; fileIndex++) 
+	{
 		D3DX11CreateShaderResourceViewFromFile(pd3dDevice, ppTextureName[fileIndex], nullptr, nullptr, &ppd3dsrvTexture[fileIndex], nullptr);
 		m_pptxLayerMap[fileIndex]->SetTexture(0, ppd3dsrvTexture[fileIndex]);
 		m_pptxLayerMap[fileIndex]->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
@@ -928,6 +936,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
 
 	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth + 1, ImageLength + 1, ImageWidth + 1, ImageLength + 1, xv3Scale);
+	m_ppObjects[0]->AddRef();
 
 	XMFLOAT3 xv3Size = XMFLOAT3(ImageWidth * xv3Scale.x, 0, ImageWidth * xv3Scale.z);
 	QUADMgr.BuildQuadTree(XMFLOAT3(xv3Size.x * 0.5f, 0, xv3Size.z * 0.5f), xv3Size.x, xv3Size.z, nullptr);
@@ -979,19 +988,19 @@ void CWaterShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHe
 	ID3D11SamplerState *pd3dSamplerState = nullptr;
 	D3D11_SAMPLER_DESC d3dSamplerDesc;
 	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD = 0;
-	d3dSamplerDesc.MaxLOD = 0;
+	d3dSamplerDesc.Filter                = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	d3dSamplerDesc.AddressU              = D3D11_TEXTURE_ADDRESS_CLAMP;
+	d3dSamplerDesc.AddressV              = D3D11_TEXTURE_ADDRESS_CLAMP;
+	d3dSamplerDesc.AddressW              = D3D11_TEXTURE_ADDRESS_CLAMP;
+	d3dSamplerDesc.ComparisonFunc        = D3D11_COMPARISON_NEVER;
+	d3dSamplerDesc.MinLOD                = 0;
+	d3dSamplerDesc.MaxLOD                = 0;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
 
 	ID3D11SamplerState *pd3dDetailSamplerState = nullptr;
-	d3dSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressU                    = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressV                    = D3D11_TEXTURE_ADDRESS_WRAP;
+	d3dSamplerDesc.AddressW                    = D3D11_TEXTURE_ADDRESS_WRAP;
 	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dDetailSamplerState);
 
 	/////////////////////////////////////////////////
@@ -1045,16 +1054,16 @@ void CWaterShader::SetBlendState(ID3D11Device *pd3dDevice)
 	D3D11_BLEND_DESC	d3dBlendDesc;
 	ZeroMemory(&d3dBlendDesc, sizeof(D3D11_BLEND_DESC));
 
-	d3dBlendDesc.AlphaToCoverageEnable = false;
-	d3dBlendDesc.IndependentBlendEnable = false;
-	d3dBlendDesc.RenderTarget[0].BlendEnable = true;
-	d3dBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	d3dBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
-	d3dBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	d3dBlendDesc.AlphaToCoverageEnable                 = false;
+	d3dBlendDesc.IndependentBlendEnable                = false;
+	d3dBlendDesc.RenderTarget[0].BlendEnable           = true;
+	d3dBlendDesc.RenderTarget[0].SrcBlend              = D3D11_BLEND_ONE;
+	d3dBlendDesc.RenderTarget[0].DestBlend             = D3D11_BLEND_ONE;
+	d3dBlendDesc.RenderTarget[0].BlendOp               = D3D11_BLEND_OP_ADD;
 
-	d3dBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	d3dBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
-	d3dBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	d3dBlendDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
+	d3dBlendDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ONE;
+	d3dBlendDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 	d3dBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;	// 파란색 위주로 한다.
 
 	pd3dDevice->CreateBlendState(&d3dBlendDesc, &m_pd3dWaterBlendState);
@@ -1109,6 +1118,7 @@ void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	CSkyBox *pSkyBox = new CSkyBox(pd3dDevice, 2);
 	m_ppObjects[0] = pSkyBox;
+	pSkyBox->AddRef();
 }
 
 void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -1246,9 +1256,9 @@ void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 
 CUIShader::CUIShader() : CShader()
 {
-	m_pBackRTV = nullptr;
+	m_pBackRTV             = nullptr;
 	m_pd3dScreenInfoBuffer = nullptr;
-	m_pMousePoint = nullptr;
+	m_pMousePoint          = nullptr;
 }
 
 CUIShader::~CUIShader()
@@ -1263,7 +1273,7 @@ void CUIShader::OnPrepareRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uR
 	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
 }
 
-void CUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+void CUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
 	CreateConstantBuffer(pd3dDevice);
 }
@@ -1290,7 +1300,6 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 		MapConstantBuffer(pd3dDeviceContext, &UIInfo, sizeof(XMFLOAT4), m_pd3dScreenInfoBuffer);
 		pd3dDeviceContext->GSSetConstantBuffers(0, 1, &m_pd3dScreenInfoBuffer);
 
-		//m_ppObjects[i]->SetActive(true);
 		m_ppObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 
@@ -1302,7 +1311,6 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 		MapConstantBuffer(pd3dDeviceContext, &UIInfo, sizeof(XMFLOAT4), m_pd3dScreenInfoBuffer);
 		pd3dDeviceContext->GSSetConstantBuffers(0, 1, &m_pd3dScreenInfoBuffer);
 
-		//m_pMousePoint->SetActive(true);
 		m_pMousePoint->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 }
@@ -1322,8 +1330,25 @@ void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
 
 void CUIShader::CreateConstantBuffer(ID3D11Device * pd3dDevice)
 {
-	ASSERT(nullptr != ( m_pd3dScreenInfoBuffer = ViewMgr.GetBuffer("cs_float4") ));
+	if (m_pd3dScreenInfoBuffer) return;
+	ASSERT_S(nullptr != ( m_pd3dScreenInfoBuffer = ViewMgr.GetBuffer("cs_float4") ));
 	m_pd3dScreenInfoBuffer->AddRef();
+}
+
+void CUIShader::MouseDown(HWND hWnd, POINT & pt)
+{
+	POINT point = pt;
+	ScreenToClient(hWnd, &point);
+	point.y = FRAME_BUFFER_HEIGHT - point.y;
+
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		if (((CUIObject*)m_ppObjects[i])->CollisionCheck(point))
+		{
+			GetGameMessage(nullptr, MSG_COLLIDE_UI, &((CUIObject*)m_ppObjects[i])->GetUIMessage());
+			break;
+		}
+	}
 }
 
 CTitleScreenShader::CTitleScreenShader() : CUIShader()
@@ -1334,12 +1359,14 @@ CTitleScreenShader::~CTitleScreenShader()
 {
 }
 
-void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	m_pBackRTV->AddRef();
+	
+	m_pScene = pScene;
 
 	CPoint2DMesh * pUIMesh = nullptr;
 	CGameObject  * pObject = nullptr;
@@ -1354,7 +1381,7 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 	for (int i = 0; i < m_nObjects; i++)
 	{
 		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
-		pObject = new CGameObject(1);
+		pObject = new CUIObject(1, UIMgr.GetObjects("ui_title_start"));
 		pObject->SetMesh(pUIMesh);
 
 		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
@@ -1362,36 +1389,42 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 
 		pObject->SetTexture(pTexture);
 		pObject->SetActive(true);
+		pObject->AddRef();
+
 		m_ppObjects[i] = pObject;
 	}
-
 	{
 		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
 		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 		pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_mouse1.png"));
+
 		m_pMousePoint = new CGameObject(1);
 		m_pMousePoint->SetMesh(pUIMesh);
 		m_pMousePoint->SetTexture(pTexture);
 		m_pMousePoint->SetActive(true);
+		m_pMousePoint->AddRef();
 	}
 	CUIShader::CreateConstantBuffer(pd3dDevice);
 }
 
 void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
+	UIMessage msg = *(UIMessage*)extra;
+
 	switch (eMSG)
 	{
-	case eMessage::MSG_MOUSE_DOWN:
+	case eMessage::MSG_COLLIDE_UI:
+		switch (msg)
+		{
+		case UIMessage::MSG_UI_TITLE_INSERT_INGAME :
+			EVENTMgr.InsertDelayMessage(0.1f, eMessage::MSG_SCENE_CHANGE, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+			return;
+		}
 		return;
-	case eMessage::MSG_MOUSE_DOWN_OVER:
-		return;
-	case eMessage::MSG_MOUSE_UP:
-		return;
-	case eMessage::MSG_MOUSE_UP_OVER:
+	default:
 		return;
 	}
 }
-
 
 CInGameUIShader::CInGameUIShader() : CUIShader()
 {
@@ -1401,12 +1434,14 @@ CInGameUIShader::~CInGameUIShader()
 {
 }
 
-void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV)
+void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
 	//m_nObjects = 1;
 	//m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	m_pBackRTV->AddRef();
+
+	m_pScene = pScene;
 
 	CPoint2DMesh * pUIMesh = nullptr;
 	CGameObject  * pObject = nullptr;
@@ -1430,15 +1465,15 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	//	pObject->SetTexture(pTexture);
 	//	m_ppObjects[i] = pObject;
 	//}
-
 	{
 		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
 		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 		pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_mouse1.png"));
-		m_pMousePoint = new CGameObject(1);
+		m_pMousePoint = new CUIObject(1);
 		m_pMousePoint->SetMesh(pUIMesh);
 		m_pMousePoint->SetTexture(pTexture);
 		m_pMousePoint->SetActive(true);
+		m_pMousePoint->AddRef();
 	}
 	CUIShader::CreateConstantBuffer(pd3dDevice);
 }
@@ -1448,7 +1483,6 @@ void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extr
 	switch (eMSG)
 	{
 	case eMessage::MSG_MOUSE_DOWN:
-		return;
 	case eMessage::MSG_MOUSE_DOWN_OVER:
 		m_pMousePoint->SetActive(false);
 		return;
