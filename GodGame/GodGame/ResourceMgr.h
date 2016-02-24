@@ -156,6 +156,20 @@ public:
 
 #define MaterialMgr CMaterialMgr::GetInstance()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct CB_PARTICLE
+{
+	XMFLOAT3 m_vParticleEmitPos;
+	float m_fGameTime;
+	XMFLOAT3 m_vParticleVelocity;
+	float m_fLifeTime;
+	XMFLOAT3 m_vAccel;
+	float m_fTimeStep;
+	float m_fNewTime;
+	float m_fMaxSize;
+	float m_nIncrease;
+	float m_bEnable;
+};
+
 class CViewManager
 {
 	CMgr<ID3D11ShaderResourceView>    m_mgrSrv;

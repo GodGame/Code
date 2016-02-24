@@ -67,8 +67,9 @@ public:
 	bool operator==(const cMessage & emsg)    { return m_fLastTime == emsg.m_fLastTime; }
 	bool operator==(float ftime)              { return m_fLastTime == ftime;            }
 
-	bool IsTerminal(float fTime) const        { return m_fLastTime < fTime; }
+	inline bool IsTerminal(float fTime) const        { return m_fLastTime < fTime; }
 
+	virtual void MessageExecute() const {}
 	virtual bool MessageUpdate(float fTime) const { return false; }
 };
 
@@ -89,12 +90,17 @@ public:
 		m_pExtra    = extra;
 	}
 
+	virtual void MessageExecute() const
+	{
+		if (m_pByObj)		m_pByObj->SendGameMessage(m_pToObj, m_eMessage, m_pExtra);
+		else		     	m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
+	}
+
 	virtual bool MessageUpdate(float fTime) const
 	{
 		if (IsTerminal(fTime)) 
 		{
-			if (m_pByObj) m_pByObj->SendGameMessage(m_pToObj, m_eMessage, m_pExtra);
-			else		  m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
+			MessageExecute();
 			return true;
 		}
 		return false;

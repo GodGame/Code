@@ -105,8 +105,18 @@ public:
 
 class CParticleShader : public CShader
 {
+// Normal
 	ID3D11VertexShader       * m_pd3dVSSO;
 	ID3D11GeometryShader     * m_pd3dGSSO;
+
+// Rain Particle
+	ID3D11GeometryShader     * m_pd3dStreamRain;
+
+	ID3D11VertexShader		 * m_pd3dVSRainDraw;
+	ID3D11GeometryShader     * m_pd3dGSRainDraw;
+	ID3D11PixelShader		 * m_pd3dPSRainDraw;
+
+	CRainParticle			 * m_pRainParticle;
 
 private:
 	ID3D11DepthStencilState  * m_pd3dSODepthStencilState;
@@ -117,10 +127,11 @@ private:
 	ID3D11ShaderResourceView * m_pd3dRandomSRV;
 	ID3D11SamplerState       * m_pd3dSamplerState;
 
-	ID3D11ShaderResourceView ** m_ppd3dParticleImageSRV;
-	int m_nImages;
+//	ID3D11ShaderResourceView ** m_ppd3dParticleImageSRV;
+//	int m_nImages;
 
 private:
+
 	CParticle    ** m_ppParticle;
 	ID3D11Buffer *  m_pd3dcbGameInfo;
 
@@ -140,10 +151,9 @@ public :
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 
-	void CreateShaderVariables(ID3D11Device *pd3dDevice);
-	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CParticle * pParticle);
-
 	void SOSetState(ID3D11DeviceContext * pd3dDeviceContext);
+
+	void RainDrawShader(ID3D11DeviceContext * pd3dDeviceContext);
 
 	bool SetParticle(int index, XMFLOAT3 * pos = nullptr)
 	{ 

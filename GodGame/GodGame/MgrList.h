@@ -18,6 +18,7 @@ public:
 		MaterialMgr.BuildResources(pd3dDevice);
 		ShadowMgr.CreateShadowDevice(pd3dDevice);
 		UIMgr.BuildResources();
+		EVENTMgr.Initialize();
 	}
 
 	static void Update(CCamera * pCamera, float fFrameTime)

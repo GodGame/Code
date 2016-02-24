@@ -765,8 +765,12 @@ CParticleShader::CParticleShader() : CShader()
 
 	m_pd3dRandomSRV           = nullptr;
 	m_pd3dSamplerState        = nullptr;
-	m_ppd3dParticleImageSRV   = nullptr;
-	m_nImages                 = 0;
+
+	m_pd3dStreamRain		  = nullptr;
+	m_pd3dGSRainDraw		  = nullptr;
+	m_pd3dPSRainDraw		  = nullptr;
+
+	m_pRainParticle			  = nullptr;
 }
 
 CParticleShader::~CParticleShader()
@@ -785,17 +789,14 @@ CParticleShader::~CParticleShader()
 	if (m_pd3dRandomSRV) m_pd3dRandomSRV->Release();
 	if (m_pd3dSamplerState) m_pd3dSamplerState->Release();
 
-	if (m_ppd3dParticleImageSRV)
-	{
-		for (int i = 0; i < m_nImages; ++i) 
-		{
-			m_ppd3dParticleImageSRV[i]->Release();
-		}
-		delete[] m_ppd3dParticleImageSRV;
-	}
-
 	if (m_pd3dGSSO) m_pd3dGSSO->Release();
 	if (m_pd3dVSSO) m_pd3dVSSO->Release();
+
+	if (m_pd3dStreamRain) m_pd3dStreamRain->Release();
+	if (m_pd3dGSRainDraw) m_pd3dGSRainDraw->Release();
+	if (m_pd3dPSRainDraw) m_pd3dPSRainDraw->Release();
+
+	if (m_pRainParticle) delete m_pRainParticle;
 }
 
 void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -814,6 +815,7 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleDraw", "gs_5_0", &m_pd3dGeometryShader);
 	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSParticleDraw", "ps_5_0", &m_pd3dPixelShader);
 	m_pd3dVertexLayout->Release();
+
 	D3D11_SO_DECLARATION_ENTRY SODeclaration[] =
 	{  // 스트림 번호(인덱스)/ 시멘틱이름/ 출력원소 인덱스(같은이름 시멘틱)/ 출력 시작요소/ 출력 요소(0~3:w)/ 연결된 스트림 출력버퍼(0~3)
 		{ 0, "POSITION", 0, 0, 3, 0 },
@@ -825,8 +827,13 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	UINT pBufferStrides[1] = { sizeof(SODeclaration) };
 
 	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSParticleSO", "vs_5_0", &m_pd3dVSSO, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleSO", "gs_5_0", &m_pd3dGSSO,
-		SODeclaration, 5, pBufferStrides, 1, 0);
+	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleSO", "gs_5_0", &m_pd3dGSSO, SODeclaration, 5, pBufferStrides, 1, 0);
+	m_pd3dVertexLayout->Release();
+
+	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSRainSO", "gs_5_0", &m_pd3dStreamRain, SODeclaration, 5, pBufferStrides, 1, 0);
+	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSRainDraw", "vs_5_0", &m_pd3dVSRainDraw, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSRainDraw", "gs_5_0", &m_pd3dGSRainDraw);
+	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSRainDraw", "ps_5_0", &m_pd3dPSRainDraw);
 }
 
 void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
@@ -851,24 +858,16 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 	d3dBlendStateDesc.AlphaToCoverageEnable                     = true;
 	d3dBlendStateDesc.RenderTarget[index].BlendEnable           = true;
 	d3dBlendStateDesc.RenderTarget[index].SrcBlend              = D3D11_BLEND_SRC_ALPHA;// D3D11_BLEND_ONE;
-	d3dBlendStateDesc.RenderTarget[index].DestBlend             = D3D11_BLEND_ONE;
-	d3dBlendStateDesc.RenderTarget[index].BlendOp               = D3D11_BLEND_OP_ADD;
+	d3dBlendStateDesc.RenderTarget[index].DestBlend				=D3D11_BLEND_SRC_COLOR; //D3D11_BLEND_ONE;  
+	d3dBlendStateDesc.RenderTarget[index].BlendOp				= D3D11_BLEND_OP_ADD;
 	d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha         = D3D11_BLEND_ZERO;
 	d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha        = D3D11_BLEND_ZERO;
 	d3dBlendStateDesc.RenderTarget[index].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
 	d3dBlendStateDesc.RenderTarget[index].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;//D3D11_COLOR_WRITE_ENABLE_RED | D3D11_COLOR_WRITE_ENABLE_ALPHA;
 	pd3dDevice->CreateBlendState(&d3dBlendStateDesc, &m_pd3dBlendState);
 
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD         = 0;
-	d3dSamplerDesc.MaxLOD         = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &m_pd3dSamplerState);
+	m_pd3dSamplerState = TXMgr.GetSamplerState("ss_linear_wrap");
+	m_pd3dSamplerState->AddRef();
 }
 
 void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
@@ -880,50 +879,32 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	m_ppObjects = nullptr;
 	m_ppParticle = new CParticle*[m_nObjects];
 
-	CB_PARTICLE cbParticle;
-	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
 
-	cbParticle.m_fLifeTime         = 0.5f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, 60, 0);
-	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1105, 180, 250);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(20, 20, 20);
-	cbParticle.m_fNewTime          = 0.001f;
-
-	MoveVelocity mov = MoveVelocity();
-	//mov.xmf3Velocity = XMFLOAT3(0, 20, 0);
-	//mov.xmf3Accelate = XMFLOAT3(0, -80, 0);
-
-	m_ppParticle[0] = new CParticle();
-	m_ppParticle[0]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 200);//(pd3dDevice, cbParticle, 20.0, 800);
+	m_ppParticle[0] = new CSmokeBoomParticle();
+	m_ppParticle[0]->Initialize(pd3dDevice);//(pd3dDevice, cbParticle, 20.0, 800);
 	//m_ppParticle[0]->Enable();
 
-	m_ppParticle[1] = new CParticle();
-	m_ppParticle[1]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 200);
+	m_ppParticle[1] = new CSmokeBoomParticle();
+	m_ppParticle[1]->Initialize(pd3dDevice);
 
-	m_ppParticle[2] = new CParticle();
-	m_ppParticle[2]->Initialize(pd3dDevice, cbParticle, mov, 0.3f, 200);
+	m_ppParticle[2] = new CSmokeBoomParticle();
+	m_ppParticle[2]->Initialize(pd3dDevice);
 
-	m_ppParticle[3] = new CParticle();
-	m_ppParticle[3]->Initialize(pd3dDevice, cbParticle, mov, 0.2f, 200);
+	m_ppParticle[3] = new CSmokeBoomParticle();
+	m_ppParticle[3]->Initialize(pd3dDevice);
 
-	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
-	mov.xmf3Accelate = XMFLOAT3(0, 0, -20);
-	mov.fWeightSpeed = 100.0f;
+	m_ppParticle[4] = new CFireBallParticle();
+	m_ppParticle[4]->Initialize(pd3dDevice);
 
-	m_ppParticle[4] = new CParticle();
-	m_ppParticle[4]->Initialize(pd3dDevice, cbParticle, mov, 5.0f, 800);
+	//m_pRainParticle = new CRainParticle();
+	//m_pRainParticle->Initialize(pd3dDevice);
+	//m_pRainParticle->Enable();
 
 	m_pd3dRandomSRV = ViewMgr.GetSRV("srv_random1d");// CShader::CreateRandomTexture1DSRV(pd3dDevice);
 	m_pd3dRandomSRV->AddRef();
 
 	m_vcAbleParticleArray.reserve(m_nObjects);
 	m_vcUsingParticleArray.reserve(m_nObjects);
-
-	m_nImages = 1;
-	m_ppd3dParticleImageSRV = new ID3D11ShaderResourceView*[m_nImages];
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice,
-		_T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &m_ppd3dParticleImageSRV[0], nullptr));
 }
 
 void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -940,37 +921,33 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 
 	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
-		UpdateShaderVariable(pd3dDeviceContext, it->second);
 		it->second->StreamOut(pd3dDeviceContext);
 	}
-	//for (int i = 0; i < m_nObjects; ++i)
-	//{
-	//	if (!m_ppParticle[i]->IsAble()) continue;
-	//	UpdateShaderVariable(pd3dDeviceContext, m_ppParticle[i]);
-	//	m_ppParticle[i]->StreamOut(pd3dDeviceContext);
-	//}
+	if (m_pRainParticle && m_pRainParticle->IsAble())
+	{
+		pd3dDeviceContext->GSSetShader(m_pd3dStreamRain, nullptr, 0);
+		m_pRainParticle->StreamOut(pd3dDeviceContext);
+	}
 	pd3dDeviceContext->SOSetTargets(1, nullBuffers, 0);
 
 	pd3dDeviceContext->VSSetShader(m_pd3dVertexShader, nullptr, 0);
 	pd3dDeviceContext->GSSetShader(m_pd3dGeometryShader, nullptr, 0);
 	pd3dDeviceContext->PSSetShader(m_pd3dPixelShader, nullptr, 0);
 
-	pd3dDeviceContext->PSSetShaderResources(0, 1, &m_ppd3dParticleImageSRV[0]);
 	pd3dDeviceContext->PSSetSamplers(0, 1, &m_pd3dSamplerState);
 
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dDepthStencilState, 0);
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
+
 	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
-		//pd3dDeviceContext->PSSetShaderResources(0, 1, &m_ppd3dParticleImageSRV[i]);
 		it->second->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
-	//for (int i = 0; i < m_nObjects; ++i)
-	//{
-	//	if (!m_ppParticle[i]->IsAble()) continue;
-	//	//pd3dDeviceContext->PSSetShaderResources(0, 1, &m_ppd3dParticleImageSRV[i]);
-	//	m_ppParticle[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
-	//}
+	if (m_pRainParticle && m_pRainParticle->IsAble())
+	{
+		RainDrawShader(pd3dDeviceContext);
+		m_pRainParticle->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
 	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 }
 
@@ -992,32 +969,8 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 			m_vcUsingParticleArray.push_back(ParticleInfo(i, m_ppParticle[i]));
 		}
 	}
-}
 
-void CParticleShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
-{
-	D3D11_BUFFER_DESC bd;
-	ZeroMemory(&bd, sizeof(bd));
-	bd.Usage          = D3D11_USAGE_DYNAMIC;
-	bd.ByteWidth      = sizeof(CB_PARTICLE);
-	bd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
-	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	ASSERT_S(pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbGameInfo));
-}
-
-void CParticleShader::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CParticle * pParticle)
-{
-	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dDeviceContext->Map(m_pd3dcbGameInfo, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	CB_PARTICLE *pcbParticle = (CB_PARTICLE *)d3dMappedResource.pData;
-	memcpy(pcbParticle, pParticle->GetCBParticle(), sizeof(CB_PARTICLE));
-	//*pcbParticle = *pParticle->GetCBParticle();
-//	cout << "Particl : " << pcbParticle->m_fGameTime << "// life : " << pcbParticle->m_fTimeStep << "// emit pos : " << pcbParticle->m_vParticleEmitPos << endl;
-	pd3dDeviceContext->Unmap(m_pd3dcbGameInfo, 0);
-
-	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
-	pd3dDeviceContext->VSSetConstantBuffers(0x04, 1, &m_pd3dcbGameInfo);
-	pd3dDeviceContext->GSSetConstantBuffers(0x04, 1, &m_pd3dcbGameInfo);
+	if (m_pRainParticle) m_pRainParticle->Update(fTimeElapsed);
 }
 
 void CParticleShader::SOSetState(ID3D11DeviceContext * pd3dDeviceContext)
@@ -1033,4 +986,11 @@ void CParticleShader::SOSetState(ID3D11DeviceContext * pd3dDeviceContext)
 	pd3dDeviceContext->GSSetSamplers(8, 1, &m_pd3dSamplerState);
 
 	pd3dDeviceContext->RSSetState(nullptr);
+}
+
+void CParticleShader::RainDrawShader(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	pd3dDeviceContext->VSSetShader(m_pd3dVSRainDraw, nullptr, 0);
+	pd3dDeviceContext->GSSetShader(m_pd3dGSRainDraw, nullptr, 0);
+	pd3dDeviceContext->PSSetShader(m_pd3dPSRainDraw, nullptr, 0);
 }

@@ -55,7 +55,7 @@ cbuffer cbFixed
 {
 	static float  gFogStart        = 20.0f;
 	static float  gFogRangeInverse = 1 / 400.0f;
-	static float4 gFogColor        = float4(0.1, 0.1, 0.15, 0.0);
+	static float4 gFogColor        = float4(0.1, 0.1, 0.3, 0.0);
 };
 
 cbuffer cbQuad 
@@ -114,6 +114,7 @@ float4 FogExp(float4 color, float distance, float fFogDestiny)
 float4 FogLerp(float4 color, float distance)
 {
 	float f = saturate((distance - gFogStart) * gFogRangeInverse);
+	//return lerp(color, gFogColor, smoothstep(0, 1, f));
 	return lerp(color, gFogColor, f);
 }
 

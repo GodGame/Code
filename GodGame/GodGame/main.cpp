@@ -15,6 +15,8 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
+CGameFramework * gpFramework = nullptr;
+
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
 	_In_ LPTSTR    lpCmdLine,
@@ -64,10 +66,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		}
 		else
 		{
-			FRAMEWORK.FrameAdvance();
+			gpFramework->FrameAdvance();
 		}
 	}
-	FRAMEWORK.OnDestroy();
+	gpFramework->OnDestroy();
 	FreeConsole();
 
 	return (int)msg.wParam;
@@ -120,7 +122,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	if (!hMainWnd) return(FALSE);
 
 	srand((unsigned)time(nullptr));
-	FRAMEWORK.OnCreate(hInstance, hMainWnd);
+	gpFramework = &FRAMEWORK;
+	gpFramework->OnCreate(hInstance, hMainWnd);
 
 	::ShowWindow(hMainWnd, nCmdShow);
 	::UpdateWindow(hMainWnd);
@@ -178,7 +181,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 	case WM_KEYDOWN:
 	case WM_KEYUP:
-		FRAMEWORK.OnProcessingWindowMessage(hWnd, message, wParam, lParam);
+		gpFramework->OnProcessingWindowMessage(hWnd, message, wParam, lParam);
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);

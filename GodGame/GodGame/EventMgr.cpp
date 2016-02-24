@@ -10,6 +10,7 @@ bool operator<(const cMessage & left, const cMessage & right)
 
 CGameEventMgr::CGameEventMgr()
 {
+	m_fCurrentTime = 0.0f;
 }
 
 CGameEventMgr::~CGameEventMgr()
@@ -65,12 +66,16 @@ void CGameEventMgr::Update(float fFrameTime)
 {
 	m_fCurrentTime += fFrameTime;
 
-	if (m_mpMessageList.size() > 0)
+	if (!m_mpMessageList.empty())
 	{
 		auto it = m_mpMessageList.begin();
 
-		if ((*it)->MessageUpdate(m_fCurrentTime))
+		if ((*it)->IsTerminal(m_fCurrentTime))
+		{
+			cMessage * pMsg = *it;
 			m_mpMessageList.erase(it);
+			pMsg->MessageExecute();
+		}
 			//m_mpMessageList.dequeue();
 	}
 }

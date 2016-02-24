@@ -154,11 +154,11 @@ PS_MRT_OUT PSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_Target
 	//float4 cColor = gtxtTexture.Sample(gSamplerState, input.positionL);
 
 	PS_MRT_OUT output;
-	output.vNormal = float4(0, 0, 0, 0);
-	output.vPos = float4(input.positionL, 1);
-	output.vDiffuse = float4(1, 1, 1, 0);// cColor;
-	output.vSpec = gMaterial.m_cSpecular;
-	output.vTxColor = float4(cColor.xyz, 0);
+	output.vNormal  = float4(0, 0, 0, 0);
+	output.vPos     = float4(0, 0, 0, 0);
+	output.vDiffuse = float4(0, 0, 0, 0);// cColor;
+	output.vSpec    = gMaterial.m_cSpecular;
+	output.vTxColor = float4(FogColor(cColor, 0.8f).rgb, 1);//float4(cColor.xyz, 0);
 	return(output);
 }
 

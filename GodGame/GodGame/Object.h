@@ -22,35 +22,45 @@ struct PARTICLE_INFO
 	float	 m_uType;
 };
 
-struct CB_PARTICLE
+class CEffect
 {
-	XMFLOAT3 m_vParticleEmitPos;
-	float m_fGameTime;
-	XMFLOAT3 m_vParticleVelocity;
-	float m_fLifeTime;
-	XMFLOAT3 m_vAccel;
-	float m_fTimeStep;
-	float m_fNewTime;
-	XMFLOAT2 m_MaxSize;
-	float m_bEnable;
-};
-
-class CParticle
-{
-	//int m_nVertices;
+protected:
 	UINT m_nStartVertex;
 	UINT m_nVertexStrides;
 	UINT m_nVertexOffsets;
 
-private:
-	PARTICLE_INFO m_cParticle;
-	CB_PARTICLE m_cbParticle;
-	//ID3D11Query * m_pd3dQuery;
+	ID3D11ShaderResourceView * m_pd3dSRVImagesArrays;
 
-	bool m_bInitilize : 1;
-	bool m_bEnable    : 1;
-	bool m_bMove      : 1;
-	bool m_bUseAccel  : 1;
+public:
+	CEffect();
+	virtual ~CEffect();
+
+	void SetShaderResourceView(ID3D11ShaderResourceView * pSRV) 
+	{
+		if (m_pd3dSRVImagesArrays) m_pd3dSRVImagesArrays->Release();
+		m_pd3dSRVImagesArrays = pSRV;
+		m_pd3dSRVImagesArrays->AddRef();
+	}
+	inline void UpdateShaderResource(ID3D11DeviceContext * pd3dDeviceContext)
+	{
+		pd3dDeviceContext->PSSetShaderResources(TX_SLOT_TEXTURE_ARRAY, 1, &m_pd3dSRVImagesArrays);
+	}
+	virtual void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResource(pd3dDeviceContext); }
+};
+
+class CParticle : public CEffect
+{
+	//ID3D11Query * m_pd3dQuery;
+private:
+	CB_PARTICLE m_cbParticle;
+
+	bool m_bInitilize   : 1;
+	bool m_bEnable      : 1;
+	bool m_bMove        : 1;
+	bool m_bTerminal	: 1;
+	bool m_bUseAccel    : 1;
+	bool m_bSubordinate : 1;
+
 	//UINT m_bExtra     : 28;
 
 	MoveVelocity m_velocity;
@@ -60,29 +70,78 @@ private:
 	ID3D11Buffer * m_pd3dStreamOutVertexBuffer;
 	ID3D11Buffer * m_pd3dDrawVertexBuffer;
 
+	ID3D11Buffer * m_pd3dCSParticleBuffer;
+
+protected:
+	CParticle   * m_pcNextParticle;
+
 public:
 	CParticle();
-	~CParticle();
+	virtual ~CParticle();
 
 	CB_PARTICLE * GetCBParticle() { return &m_cbParticle; }
 	void Update(float fTimeElapsed);
-	void Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, int iMaxParticle);
+	void MoveUpdate(const float & fGameTime, const float & fTimeElapsed);
+	void LifeUpdate(const float & fGameTime, const float & fTimeElapsed);
 
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+	void SetParticle(CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, UINT uMaxParticle);
+	void CreateParticleBuffer(ID3D11Device *pd3dDevice, PARTICLE_INFO & pcInfo, UINT nMaxNum);
+
+	void StreamOut(ID3D11DeviceContext *pd3dDeviceContext);
+	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+
+	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
+
+public:
 	void SetDurabilityTime(float fTime)   { m_fDurability = fTime; }
 	void SetLifeTime(float fLifeTime)     { m_cbParticle.m_fLifeTime = fLifeTime; }
 	void SetEmitPosition(XMFLOAT3 & pos)  { m_cbParticle.m_vParticleEmitPos = pos; }
 	void SetEmitDirection(XMFLOAT3 & dir) { m_cbParticle.m_vParticleVelocity = dir; }
 	void SetAccelation(XMFLOAT3 & accel)  { m_cbParticle.m_vAccel = accel; }
+	void SetParticleSize(float fSize)     { m_cbParticle.m_fMaxSize = fSize; }
 
-	void SetMoveVelocity(XMFLOAT3 & vel) { m_velocity.xmf3Velocity = vel; }
-	void SetMoveAccel(XMFLOAT3 & acc)    { m_velocity.xmf3Accelate = acc; }
+	void SetMoveVelocity(XMFLOAT3 & vel)  { m_velocity.xmf3Velocity = vel; }
+	void SetMoveAccel(XMFLOAT3 & acc)     { m_velocity.xmf3Accelate = acc; }
 
 	bool IsAble() { return m_bEnable; }
 	bool Enable(XMFLOAT3 * pos = nullptr);
 	bool Disable();
 
-	void StreamOut(ID3D11DeviceContext *pd3dDeviceContext);
-	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+	void NextParticleOn();
+
+	bool IsTermainal() { return (m_pcNextParticle) ? m_pcNextParticle->IsTermainal() : !m_bEnable; }
+	bool IsSubordinative() { return m_bSubordinate; }
+};
+
+class CSmokeBoomParticle : public CParticle
+{
+	static const UINT m_nMaxParticlenum = 200;
+public:
+	CSmokeBoomParticle(){}
+	virtual ~CSmokeBoomParticle(){}
+
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CFireBallParticle : public CParticle
+{
+	static const UINT m_nMaxParticlenum = 600;
+public:
+	CFireBallParticle() {}
+	virtual ~CFireBallParticle() {}
+
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CRainParticle : public CParticle
+{
+	static const UINT m_nMaxParticlenum = 8000;
+public:
+	CRainParticle(){}
+	virtual ~CRainParticle(){}
+
+	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
 
 class CGameObject

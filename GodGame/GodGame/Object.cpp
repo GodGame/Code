@@ -394,6 +394,24 @@ CDynamicObject::~CDynamicObject()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+CEffect::CEffect()
+{
+	m_nStartVertex = 0;
+	m_nVertexOffsets = 0;
+	m_nVertexStrides = 0;
+
+	m_pd3dSRVImagesArrays = nullptr;
+}
+
+CEffect::~CEffect()
+{
+	if (m_pd3dSRVImagesArrays) m_pd3dSRVImagesArrays->Release();
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////
 CUIObject::CUIObject(int nMeshes, UIInfo info) : CGameObject(nMeshes) 
 {
 	if (info.m_msgUI != MSG_UI_NONE)
@@ -688,25 +706,25 @@ bool CBillboardObject::IsVisible(CCamera *pCamera)
 	return(bIsVisible);
 }
 
-CParticle::CParticle()
+CParticle::CParticle() : CEffect()
 {
 	m_pd3dInitialVertexBuffer   = nullptr;
 	m_pd3dStreamOutVertexBuffer = nullptr;
 	m_pd3dDrawVertexBuffer      = nullptr;
 
-	//m_nVertices               = 0;
-	m_nStartVertex              = 0;
-	m_nVertexStrides            = 0;
-	m_nVertexOffsets            = 0;
+	m_pcNextParticle            = nullptr;
 
 	m_fDurability               = 0;
 
 	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
-	ZeroMemory(&m_cParticle, sizeof(PARTICLE_INFO));
 
-	m_bInitilize = false;
-	m_bEnable    = false;
-	m_bMove      = false;
+	m_bInitilize   = false;
+	m_bEnable      = false;
+	m_bMove        = false;
+	m_bTerminal    = false;
+	m_bSubordinate = false;
+
+	m_pd3dCSParticleBuffer = nullptr;
 	//m_pd3dQuery = nullptr;
 }
 
@@ -715,64 +733,73 @@ CParticle::~CParticle()
 	if (m_pd3dDrawVertexBuffer)	m_pd3dDrawVertexBuffer->Release();
 	if (m_pd3dStreamOutVertexBuffer) m_pd3dStreamOutVertexBuffer->Release();
 	if (m_pd3dInitialVertexBuffer) m_pd3dInitialVertexBuffer->Release();
+
+	if (m_pcNextParticle) delete m_pcNextParticle;
+	if (m_pd3dCSParticleBuffer) m_pd3dCSParticleBuffer->Release();
 }
 
-void CParticle::Initialize(ID3D11Device *pd3dDevice, CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, int iMaxParticle)
+void CParticle::Initialize(ID3D11Device *pd3dDevice)
+{
+	CB_PARTICLE cbParticle;
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+	MoveVelocity mov = MoveVelocity();
+
+	CParticle::SetParticle(cbParticle, mov, 1.0f, 200.0f);
+
+	PARTICLE_INFO cParticle;
+	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
+
+	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, 200.0f);
+}
+
+void CParticle::SetParticle(CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, UINT uMaxParticle)
 {
 	m_fDurability = fDurability;
-	m_velocity    = Velocity;
-	 
+	m_velocity = Velocity;
+
 	if (Chae::XMFloat3NorValue(m_velocity.xmf3Velocity, 0.0f)) m_bMove = true;
 	if (Chae::XMFloat3NorValue(m_velocity.xmf3Accelate, 0.0f)) m_bUseAccel = true;
 
-	m_bEnable     = false;
-	m_bInitilize  = true;
-
-	//m_nVertices           = 1;
+	m_bEnable = false;
+	m_bInitilize = true;
 	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
-	ZeroMemory(&m_cParticle, sizeof(PARTICLE_INFO));
-	//m_cParticle.m_xmf2Size = XMFLOAT2(0, 0);
-	//m_cParticle.m_fAge = 0.0f;
-	//m_cParticle.m_xmf3Velocity = XMFLOAT3(0, 0, 0);
-	//m_cParticle.m_xmf3Pos            = info.m_vParticleEmitPos;
-	//m_cParticle.m_uType              = PARTICLE_TYPE_EMITTER;
 
-	m_cbParticle.m_vParticleVelocity = info.m_vParticleVelocity;
-	m_cbParticle.m_vAccel            = info.m_vAccel;
-	m_cbParticle.m_vParticleEmitPos  = info.m_vParticleEmitPos;
-	m_cbParticle.m_fLifeTime         = info.m_fLifeTime;
-	m_cbParticle.m_fNewTime          = info.m_fNewTime;
-	m_cbParticle.m_bEnable           = 1.0f;
-	m_cbParticle.m_MaxSize           = XMFLOAT2(6, 6);
+	m_cbParticle = info;
+	m_cbParticle.m_bEnable = 1.0f;
 
-	m_velocity.xmf3InitPos           = m_cbParticle.m_vParticleEmitPos;
-	m_nVertexStrides                 = sizeof(PARTICLE_INFO);
+	m_velocity.xmf3InitPos = m_cbParticle.m_vParticleEmitPos;
+}
+
+void CParticle::CreateParticleBuffer(ID3D11Device * pd3dDevice, PARTICLE_INFO & pcInfo, UINT nMaxNum)
+{
+	m_nVertexStrides = sizeof(PARTICLE_INFO);
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage     = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	d3dBufferDesc.ByteWidth = m_nVertexStrides;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;// | D3D11_BIND_STREAM_OUTPUT;
 
 	HRESULT hr = 0;
 	D3D11_SUBRESOURCE_DATA d3dBufferData;
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = &m_cParticle;// pQuadPatchVertices;
+	d3dBufferData.pSysMem = &pcInfo;// pQuadPatchVertices;
 	ASSERT_S(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dInitialVertexBuffer));
 
-	d3dBufferDesc.ByteWidth = m_nVertexStrides * iMaxParticle;
+	d3dBufferDesc.ByteWidth = m_nVertexStrides * nMaxNum;
 	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER | D3D11_BIND_STREAM_OUTPUT;
 
 	// SO으로 받을 버퍼는 서브리소스 데이터 값을 nullptr로 해야한다!!
 	ASSERT_S(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dStreamOutVertexBuffer));
 	ASSERT_S(hr = pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dDrawVertexBuffer));
 
+	m_pd3dCSParticleBuffer = ViewMgr.GetBuffer("cs_particle");
+	m_pd3dCSParticleBuffer->AddRef();
 	//D3D11_QUERY_DESC qd;
 	//qd.Query = D3D11_QUERY_SO_STATISTICS;
 	//qd.MiscFlags = D3D11_QUERY_MISC_PREDICATEHINT;
 
 	//ASSERT_S(pd3dDevice->CreateQuery(&qd, &m_pd3dQuery));
-	
 }
 
 void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
@@ -781,16 +808,22 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 	// 원인은 무엇인가??
 	static const UINT strides[] = { (m_nVertexStrides * 3) };
 	//pd3dDeviceContext->Begin(m_pd3dQuery);
-	if (m_bInitilize)
-	{
-		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dInitialVertexBuffer, strides, &m_nVertexOffsets);
-		pd3dDeviceContext->Draw(1, 0);
-		m_bInitilize = false;
-	}
+	if (m_bTerminal)
+		m_pcNextParticle->StreamOut(pd3dDeviceContext);
 	else
 	{
-		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, strides, &m_nVertexOffsets);
-		pd3dDeviceContext->DrawAuto();
+		UpdateShaderVariable(pd3dDeviceContext);
+		if (m_bInitilize)
+		{
+			pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dInitialVertexBuffer, strides, &m_nVertexOffsets);
+			pd3dDeviceContext->Draw(1, 0);
+			m_bInitilize = false;
+		}
+		else
+		{
+			pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, strides, &m_nVertexOffsets);
+			pd3dDeviceContext->DrawAuto();
+		}
 	}
 	//pd3dDeviceContext->End(m_pd3dQuery);
 	//D3D11_QUERY_DATA_SO_STATISTICS d3dSOStatics;
@@ -801,68 +834,195 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 
 void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	swap(m_pd3dDrawVertexBuffer, m_pd3dStreamOutVertexBuffer);
+	if (m_bTerminal)
+	{
+		m_pcNextParticle->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
+	else
+	{
+		swap(m_pd3dDrawVertexBuffer, m_pd3dStreamOutVertexBuffer);
 
-//	const static UINT strides[] = { m_nVertexStrides };
-	pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, &m_nVertexStrides, &m_nVertexOffsets);
-	pd3dDeviceContext->DrawAuto();
+		OnPrepare(pd3dDeviceContext);
+		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, &m_nVertexStrides, &m_nVertexOffsets);
+		pd3dDeviceContext->DrawAuto();
+	}
+}
+
+void CParticle::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dCSParticleBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	CB_PARTICLE *pcbParticle = (CB_PARTICLE *)d3dMappedResource.pData;
+	memcpy(pcbParticle, GetCBParticle(), sizeof(CB_PARTICLE));
+	pd3dDeviceContext->Unmap(m_pd3dCSParticleBuffer, 0);
+
+	pd3dDeviceContext->VSSetConstantBuffers(0x04, 1, &m_pd3dCSParticleBuffer);
+	pd3dDeviceContext->GSSetConstantBuffers(0x04, 1, &m_pd3dCSParticleBuffer);
 }
 
 void CParticle::Update(float fTimeElapsed)
 {
-	m_cbParticle.m_fGameTime += fTimeElapsed;
-	m_cbParticle.m_fTimeStep  = fTimeElapsed;
-	float fGameTime           = m_cbParticle.m_fGameTime;
-	//m_cbParticle.m_NewSize    = XMFLOAT2(rand() % 4 * 2, rand() % 4 * 2);
-
-	if (m_bMove)
+	if (m_bTerminal)
 	{
-		XMVECTOR xmvVelocity;
-		XMVECTOR xmvPos;
-
-		if (m_bUseAccel)
-		{
-			xmvVelocity = (m_velocity.fWeightSpeed * 0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) + 
-				(m_velocity.fWeightSpeed * XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime);
-			xmvPos      = xmvVelocity + XMLoadFloat3(&m_velocity.xmf3InitPos);
-		}
-		else
-		{
-			xmvVelocity = XMLoadFloat3(&m_velocity.xmf3Velocity) * fTimeElapsed;
-			xmvPos      = xmvVelocity + XMLoadFloat3(&m_cbParticle.m_vParticleEmitPos);
-		}
-		XMStoreFloat3(&m_cbParticle.m_vParticleEmitPos, xmvPos);
+		m_pcNextParticle->Update(fTimeElapsed);
+		if (m_pcNextParticle->IsTermainal())
+			Disable();
 	}
+	else
+	{
+		m_cbParticle.m_fGameTime += fTimeElapsed;
+		m_cbParticle.m_fTimeStep = fTimeElapsed;
+		float fGameTime = m_cbParticle.m_fGameTime;
 
+		LifeUpdate(fGameTime, fTimeElapsed);
+		if (m_bMove && m_cbParticle.m_bEnable) 
+			MoveUpdate(fGameTime, fTimeElapsed);
+	}
+}
+
+void CParticle::MoveUpdate(const float & fGameTime, const float & fTimeElapsed)
+{
+	XMVECTOR xmvVelocity;
+	XMVECTOR xmvPos;
+
+	if (m_bUseAccel)
+	{
+		xmvVelocity = (m_velocity.fWeightSpeed * 0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) +
+			(m_velocity.fWeightSpeed * XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime);
+		xmvPos = xmvVelocity + XMLoadFloat3(&m_velocity.xmf3InitPos);
+	}
+	else
+	{
+		xmvVelocity = XMLoadFloat3(&m_velocity.xmf3Velocity) * fTimeElapsed;
+		xmvPos = xmvVelocity + XMLoadFloat3(&m_cbParticle.m_vParticleEmitPos);
+	}
+	XMStoreFloat3(&m_cbParticle.m_vParticleEmitPos, xmvPos);
+}
+
+void CParticle::LifeUpdate(const float & fGameTime, const float & fTimeElapsed)
+{
 	if (fGameTime > m_fDurability + m_cbParticle.m_fLifeTime)
 	{
 		m_cbParticle.m_fGameTime = 0.0f;
-		Disable();
+		if (!m_bTerminal) Disable();
 	}
-
 	else if (fGameTime > m_fDurability)
 	{
 		m_cbParticle.m_bEnable = 0;
+		if (m_pcNextParticle)  NextParticleOn();
 	}
 }
 
 bool CParticle::Enable(XMFLOAT3 * pos)
 {
-	if (pos) SetEmitPosition(*pos);
+	if (pos)
+	{
+		SetEmitPosition(*pos);
+		m_velocity.xmf3InitPos = *pos;
+	}
 
-	m_velocity.xmf3InitPos = *pos;
 	m_bEnable              = true;
+	m_bTerminal            = false;
 	m_bInitilize           = true;
 	m_cbParticle.m_bEnable = 1;
+	m_cbParticle.m_fGameTime = 0;
 	return true;
 }
 
 bool CParticle::Disable()
 {
-	m_bEnable = false;
-	return true;
+	return (m_bEnable = false);
 }
 
+void CParticle::NextParticleOn()
+{
+	m_pcNextParticle->Enable(&m_cbParticle.m_vParticleEmitPos);
+	m_bTerminal = true;
+}
+
+void CSmokeBoomParticle::Initialize(ID3D11Device * pd3dDevice)
+{
+	static CB_PARTICLE cbParticle;
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+
+	cbParticle.m_fLifeTime         = 1.0f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, 60, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(0, 0, 0);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(20, 20, 20);
+	cbParticle.m_fNewTime          = 0.005f;
+	cbParticle.m_fMaxSize          = 5.0f;
+	cbParticle.m_nIncrease         = 1;
+
+	MoveVelocity mov = MoveVelocity();
+
+	CParticle::SetParticle(cbParticle, mov, 0.5f, m_nMaxParticlenum);
+
+	PARTICLE_INFO cParticle;
+	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
+
+	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_fire_array"));
+}
+
+void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
+{
+	static CB_PARTICLE cbParticle;
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+
+	cbParticle.m_fLifeTime         = 1.0f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, 60, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(0, 0, 0);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(30, 30, 30);
+	cbParticle.m_fNewTime          = 0.01f;
+	cbParticle.m_fMaxSize          = 10.0f;
+	cbParticle.m_nIncrease         = 1;
+
+	MoveVelocity mov = MoveVelocity();
+	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
+	mov.xmf3Accelate = XMFLOAT3(0, 0, -10);
+	mov.fWeightSpeed = 100.0f;
+
+	CParticle::SetParticle(cbParticle, mov, 2.0f, m_nMaxParticlenum);
+
+	PARTICLE_INFO cParticle;
+	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
+
+	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_fire_array"));
+
+	m_pcNextParticle = new CSmokeBoomParticle();
+	m_pcNextParticle->Initialize(pd3dDevice);
+	CB_PARTICLE * pParticle        = m_pcNextParticle->GetCBParticle();
+	pParticle->m_fMaxSize          = 10.0f;
+	pParticle->m_fNewTime          = 0.0005f;
+	pParticle->m_vParticleVelocity = XMFLOAT3(10, 10, 10);
+//	pParticle->m_fNewTime = 
+}
+
+void CRainParticle::Initialize(ID3D11Device * pd3dDevice)
+{
+	CB_PARTICLE cbParticle;
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+
+	cbParticle.m_fLifeTime         = 3.0f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, -40, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1024, 2048, 1024);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(0, -10, 0);
+	cbParticle.m_fNewTime          = 0.05f;
+	cbParticle.m_fMaxSize          = 20.0f;
+	cbParticle.m_nIncrease         = 1;
+
+	MoveVelocity mov = MoveVelocity();
+
+	CParticle::SetParticle(cbParticle, mov, 100.0f, m_nMaxParticlenum);
+
+	PARTICLE_INFO cParticle;
+	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
+
+	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
+}
+
+//////////////////////////////////////
 CAbsorbMarble::CAbsorbMarble() : CBillboardObject()
 {
 	Initialize();
@@ -985,3 +1145,4 @@ bool CAbsorbMarble::IsVisible(CCamera *pCamera)
 
 	return(bIsVisible);
 }
+

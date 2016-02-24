@@ -296,6 +296,24 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 		InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
 		pd3dsrvTexture->Release();
 	}
+	{
+		pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_fire"), _T("png"), 2);
+
+		InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
+		pd3dsrvTexture->Release();
+	}
+	//{
+	//	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+
+	//	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_cloud.png", 0);
+	//	pd3dsrvTexture->Release();
+	//}
+	//{
+	//	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/fire2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+
+	//	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire1.png", 0);
+	//	pd3dsrvTexture->Release();
+	//}
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -752,6 +770,11 @@ void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	desc.ByteWidth = sizeof(XMFLOAT4X4);
 	ASSERT_S(hr = pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer));
 	InsertBuffer(pd3dBuffer, "cs_float4x4");
+	pd3dBuffer->Release();
+
+	desc.ByteWidth = sizeof(CB_PARTICLE);
+	ASSERT_S(pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer));
+	InsertBuffer(pd3dBuffer, "cs_particle");
 	pd3dBuffer->Release();
 }
 

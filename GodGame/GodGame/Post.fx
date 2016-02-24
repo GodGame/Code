@@ -60,13 +60,8 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	float4 specular = gtxtSpecular.Load(uvm);
 	float4 txColor  = pow(gtxtTxColor.Load(uvm), 2.2);// 2.2
 
-	float fLightingAmount = 0;
-	float4 color;
-	if (diffuse.a == 0.0)
-	{
-		color = FogColor(txColor, 0.9f);
-	}
-	else
+	float4 color = txColor;
+	if (diffuse.a > 0.0)
 	{
 		float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
 

@@ -153,8 +153,6 @@ void CGameFramework::OnDestroy()
 	if (m_pd3dBackRenderTargetView) m_pd3dBackRenderTargetView->Release();
 
 	//if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
-	if (m_pRenderingThreadInfo) delete[] m_pRenderingThreadInfo;
-	if (m_hRenderingEndEvents)  delete[] m_hRenderingEndEvents;
 }
 
 bool CGameFramework::CreateRenderTargetDepthStencilView()
@@ -252,6 +250,8 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 		case MRT_POS:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;// DXGI_FORMAT_R32G32B32A32_SINT;
 			break;
+			//d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R11G11B10_FLOAT;
+			//break;
 		case MRT_NORMAL:
 			d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_SNORM;
 			break;
@@ -585,11 +585,13 @@ void CGameFramework::ReleaseThreadInfo()
 		//::_endthreadex(m_pRenderingThreadInfo[i].m_hRenderingThread[i]);
 	}
 
-	if (m_nRenderThreads > 0)
+	if (m_pRenderingThreadInfo)
 	{
 		delete[] m_pRenderingThreadInfo;
 		m_pRenderingThreadInfo = nullptr;
-
+	}
+	if (m_hRenderingEndEvents)
+	{
 		delete[] m_hRenderingEndEvents;
 		m_hRenderingEndEvents = nullptr;
 	}

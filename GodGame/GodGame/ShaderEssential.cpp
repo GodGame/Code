@@ -122,7 +122,7 @@ CSceneShader::~CSceneShader()
 	if (m_pd3dRadialUAV) m_pd3dRadialUAV->Release();
 	if (m_pd3dCSRadialBlur) m_pd3dCSRadialBlur->Release();
 
-	if (m_pd3dBackRTV) m_pd3dBackRTV->Release();
+	//if (m_pd3dBackRTV) m_pd3dBackRTV->Release();
 	//m_csReduce.ReleaseObjects();
 	//m_csBloom.~POST_CS_BLOOMING();
 	//if (m_pcsReduce) delete m_pcsReduce;
@@ -163,7 +163,7 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 
 	m_iDrawOption = nMrtSrv;
 	m_ppd3dMrtSrv = ppd3dMrtSrv;
-	m_pd3dBackRTV = pd3dBackRTV;	m_pd3dBackRTV->AddRef();
+	m_pd3dBackRTV = pd3dBackRTV;	//m_pd3dBackRTV->AddRef();
 
 	m_pMesh       = new CPlaneMesh(pd3dDevice, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 	m_pTexture    = new CTexture(NUM_MRT - 1, 1, 17, 0, SET_SHADER_PS);
@@ -1263,7 +1263,7 @@ CUIShader::CUIShader() : CShader()
 
 CUIShader::~CUIShader()
 {
-	if (m_pBackRTV) m_pBackRTV->Release();
+	//if (m_pBackRTV) m_pBackRTV->Release();
 	if (m_pd3dScreenInfoBuffer) m_pd3dScreenInfoBuffer->Release();
 	if (m_pMousePoint) m_pMousePoint->Release();
 }
@@ -1364,7 +1364,7 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
-	m_pBackRTV->AddRef();
+	//m_pBackRTV->AddRef();
 	
 	m_pScene = pScene;
 
@@ -1439,7 +1439,7 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	//m_nObjects = 1;
 	//m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
-	m_pBackRTV->AddRef();
+	//m_pBackRTV->AddRef();
 
 	m_pScene = pScene;
 
