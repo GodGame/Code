@@ -76,7 +76,6 @@ public:
 	static ID3D11ShaderResourceView * CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, wchar_t * ppstrFormat, UINT nTextures);
 };
 
-
 class CTextureMgr : public CMgr<CTexture>
 {
 private:
@@ -166,7 +165,7 @@ struct CB_PARTICLE
 	float m_fTimeStep;
 	float m_fNewTime;
 	float m_fMaxSize;
-	float m_nIncrease;
+	float m_nColorNum;
 	float m_bEnable;
 };
 

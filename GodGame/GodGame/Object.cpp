@@ -760,11 +760,11 @@ void CParticle::SetParticle(CB_PARTICLE & info, MoveVelocity & Velocity, float f
 	if (Chae::XMFloat3NorValue(m_velocity.xmf3Velocity, 0.0f)) m_bMove = true;
 	if (Chae::XMFloat3NorValue(m_velocity.xmf3Accelate, 0.0f)) m_bUseAccel = true;
 
-	m_bEnable = false;
-	m_bInitilize = true;
+	m_bEnable              = false;
+	m_bInitilize           = true;
 	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
 
-	m_cbParticle = info;
+	m_cbParticle           = info;
 	m_cbParticle.m_bEnable = 1.0f;
 
 	m_velocity.xmf3InitPos = m_cbParticle.m_vParticleEmitPos;
@@ -807,12 +807,14 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 	pd3dDeviceContext->SOSetTargets(1, &m_pd3dStreamOutVertexBuffer, &m_nVertexOffsets);
 	// 원인은 무엇인가??
 	static const UINT strides[] = { (m_nVertexStrides * 3) };
-	//pd3dDeviceContext->Begin(m_pd3dQuery);
+
 	if (m_bTerminal)
 		m_pcNextParticle->StreamOut(pd3dDeviceContext);
 	else
 	{
 		UpdateShaderVariable(pd3dDeviceContext);
+		pd3dDeviceContext->GSSetConstantBuffers(0x04, 1, &m_pd3dCSParticleBuffer);
+
 		if (m_bInitilize)
 		{
 			pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dInitialVertexBuffer, strides, &m_nVertexOffsets);
@@ -825,11 +827,6 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 			pd3dDeviceContext->DrawAuto();
 		}
 	}
-	//pd3dDeviceContext->End(m_pd3dQuery);
-	//D3D11_QUERY_DATA_SO_STATISTICS d3dSOStatics;
-	//pd3dDeviceContext->GetData(m_pd3dQuery, &d3dSOStatics, sizeof(D3D11_QUERY_DATA_SO_STATISTICS), 0);
-	//printf("Num: %u //", d3dSOStatics.NumPrimitivesWritten);
-	//printf("Storage %u \n", d3dSOStatics.PrimitivesStorageNeeded);
 }
 
 void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -843,6 +840,9 @@ void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState
 		swap(m_pd3dDrawVertexBuffer, m_pd3dStreamOutVertexBuffer);
 
 		OnPrepare(pd3dDeviceContext);
+		UpdateShaderVariable(pd3dDeviceContext);
+		pd3dDeviceContext->VSSetConstantBuffers(0x04, 1, &m_pd3dCSParticleBuffer);
+
 		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, &m_nVertexStrides, &m_nVertexOffsets);
 		pd3dDeviceContext->DrawAuto();
 	}
@@ -855,9 +855,6 @@ void CParticle::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext)
 	CB_PARTICLE *pcbParticle = (CB_PARTICLE *)d3dMappedResource.pData;
 	memcpy(pcbParticle, GetCBParticle(), sizeof(CB_PARTICLE));
 	pd3dDeviceContext->Unmap(m_pd3dCSParticleBuffer, 0);
-
-	pd3dDeviceContext->VSSetConstantBuffers(0x04, 1, &m_pd3dCSParticleBuffer);
-	pd3dDeviceContext->GSSetConstantBuffers(0x04, 1, &m_pd3dCSParticleBuffer);
 }
 
 void CParticle::Update(float fTimeElapsed)
@@ -871,7 +868,7 @@ void CParticle::Update(float fTimeElapsed)
 	else
 	{
 		m_cbParticle.m_fGameTime += fTimeElapsed;
-		m_cbParticle.m_fTimeStep = fTimeElapsed;
+		m_cbParticle.m_fTimeStep  = fTimeElapsed;
 		float fGameTime = m_cbParticle.m_fGameTime;
 
 		LifeUpdate(fGameTime, fTimeElapsed);
@@ -946,12 +943,12 @@ void CSmokeBoomParticle::Initialize(ID3D11Device * pd3dDevice)
 	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
 
 	cbParticle.m_fLifeTime         = 1.0f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, 60, 0);
+	cbParticle.m_vAccel            = XMFLOAT3(20, 20, 20);
 	cbParticle.m_vParticleEmitPos  = XMFLOAT3(0, 0, 0);
 	cbParticle.m_vParticleVelocity = XMFLOAT3(20, 20, 20);
-	cbParticle.m_fNewTime          = 0.005f;
-	cbParticle.m_fMaxSize          = 5.0f;
-	cbParticle.m_nIncrease         = 1;
+	cbParticle.m_fNewTime          = 0.008f;
+	cbParticle.m_fMaxSize          = 8.0f;
+	cbParticle.m_nColorNum		   = COLOR_GRAY;
 
 	MoveVelocity mov = MoveVelocity();
 
@@ -961,7 +958,7 @@ void CSmokeBoomParticle::Initialize(ID3D11Device * pd3dDevice)
 	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
 
 	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
-	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_fire_array"));
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_smoke_array"));
 }
 
 void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
@@ -970,12 +967,12 @@ void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
 	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
 
 	cbParticle.m_fLifeTime         = 1.0f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, 60, 0);
+	cbParticle.m_vAccel            = XMFLOAT3(-20, 20, -20);
 	cbParticle.m_vParticleEmitPos  = XMFLOAT3(0, 0, 0);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(30, 30, 30);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(20, -20, 20);
 	cbParticle.m_fNewTime          = 0.01f;
-	cbParticle.m_fMaxSize          = 10.0f;
-	cbParticle.m_nIncrease         = 1;
+	cbParticle.m_fMaxSize          = 16.0f;
+	cbParticle.m_nColorNum	       = COLOR_WHITE;
 
 	MoveVelocity mov = MoveVelocity();
 	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
@@ -993,24 +990,46 @@ void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
 	m_pcNextParticle = new CSmokeBoomParticle();
 	m_pcNextParticle->Initialize(pd3dDevice);
 	CB_PARTICLE * pParticle        = m_pcNextParticle->GetCBParticle();
-	pParticle->m_fMaxSize          = 10.0f;
+	pParticle->m_fMaxSize          = 8.0f;
 	pParticle->m_fNewTime          = 0.0005f;
-	pParticle->m_vParticleVelocity = XMFLOAT3(10, 10, 10);
-//	pParticle->m_fNewTime = 
+	pParticle->m_vParticleVelocity = XMFLOAT3(20, 20, 20);
+	pParticle->m_vAccel            = XMFLOAT3(40, 40, 40);
+	pParticle->m_nColorNum         = COLOR_BLACK;
 }
+//
+//void CRainParticle::StreamOut(ID3D11DeviceContext * pd3dDeviceContext)
+//{
+//	pd3dDeviceContext->SOSetTargets(1, &m_pd3dStreamOutVertexBuffer, &m_nVertexOffsets);
+//	// 원인은 무엇인가??
+//	static const UINT strides[] = { (m_nVertexStrides) };
+//	//pd3dDeviceContext->Begin(m_pd3dQuery);
+//
+//	UpdateShaderVariable(pd3dDeviceContext);
+//	if (m_bInitilize)
+//	{
+//		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dInitialVertexBuffer, strides, &m_nVertexOffsets);
+//		pd3dDeviceContext->Draw(1, 0);
+//		m_bInitilize = false;
+//	}
+//	else
+//	{
+//		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, strides, &m_nVertexOffsets);
+//		pd3dDeviceContext->DrawAuto();
+//	}
+//}
 
 void CRainParticle::Initialize(ID3D11Device * pd3dDevice)
 {
 	CB_PARTICLE cbParticle;
 	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
 
-	cbParticle.m_fLifeTime         = 3.0f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, -40, 0);
-	cbParticle.m_vParticleEmitPos  = XMFLOAT3(1024, 2048, 1024);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(0, -10, 0);
-	cbParticle.m_fNewTime          = 0.05f;
-	cbParticle.m_fMaxSize          = 20.0f;
-	cbParticle.m_nIncrease         = 1;
+	cbParticle.m_fLifeTime         = 1.5f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, -60, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(0, 350, 0);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(0, -60, 0);
+	cbParticle.m_fNewTime          = 0.03f;
+	cbParticle.m_fMaxSize          = 10.0f;
+	cbParticle.m_nColorNum		   = COLOR_WHITE;
 
 	MoveVelocity mov = MoveVelocity();
 

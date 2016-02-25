@@ -302,12 +302,12 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 		InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
 		pd3dsrvTexture->Release();
 	}
-	//{
-	//	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/particle-cloud.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	{
+		pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_smoke"), _T("png"), 2);
 
-	//	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_cloud.png", 0);
-	//	pd3dsrvTexture->Release();
-	//}
+		InsertShaderResourceView(pd3dsrvTexture, "srv_particle_smoke_array", 0);
+		pd3dsrvTexture->Release();
+	}
 	//{
 	//	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/fire2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 

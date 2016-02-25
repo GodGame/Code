@@ -31,7 +31,7 @@ cbuffer cbViewProjectionMatrix : register(b0)
 	matrix gmtxViewProjection;
 	float4 gf3CameraPos;
 
-	static float gfCameraFar = 2000.0f;
+	static float gfCameraFar = 1000.0f;
 	static float gfDepthFar = 0.001f;
 };
 
@@ -62,6 +62,41 @@ cbuffer cbQuad
 {
 	static float2 gvQuadTexCoord[4] = { float2(0.0f, 1.0f), float2(0.0f, 0.0f), float2(1.0f, 1.0f), float2(1.0f, 0.0f) };
 };
+
+#define COLOR_WHITE  0
+#define COLOR_RED    1
+#define COLOR_GREEN  2
+#define COLOR_BLUE   3
+#define COLOR_CYAN   4
+#define COLOR_YELLOW 5
+#define COLOR_MAGENT 6
+#define COLOR_GRAY   7
+#define COLOR_BLACK  8
+
+cbuffer gcColor
+{
+	//static float4 gcWhite =  { 1, 1, 1, 1 };
+	//static float4 gcRed =    { 1, 0, 0, 1 };
+	//static float4 gcGreen =  { 0, 1, 0, 1 };
+	//static float4 gcBlue =   { 0, 0, 1, 1 };
+	//static float4 gcCyan =   { 0, 1, 1, 1 };
+	//static float4 gcYellow = { 1, 1, 0, 1 };
+	//static float4 gcMagent = { 1, 0, 1, 1 };
+	//static float4 gcGray   = { 0.5, 0.5, 0.5, 1 };
+	static float4 gcColors[9] =
+	{
+		{ 1, 1, 1, 1 },
+		{ 1, 0, 0, 1 },
+		{ 0, 1, 0, 1 },
+		{ 0, 0, 1, 1 },
+		{ 0, 1, 1, 1 },
+		{ 1, 1, 0, 1 },
+		{ 1, 0, 1, 1 },
+		{ 0.5, 0.5, 0.5, 1 },
+		{ 0.2, 0.2, 0.2, 1 }
+	};
+};
+
 cbuffer cbDisplacement : register(b3)
 {
 	float3 gBumpScale;

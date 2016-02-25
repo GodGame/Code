@@ -463,7 +463,7 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_PARTICLE_ON:
-		cout << "Particle : " << *(XMFLOAT3*)extra << endl;
+		//cout << "Particle : " << *(XMFLOAT3*)extra << endl;
 		((CParticleShader*)m_ppShaders[5])->ParticleOn((XMFLOAT3*)extra);
 		return;
 	case eMessage::MSG_MOUSE_DOWN:

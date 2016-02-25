@@ -466,6 +466,7 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 		xv3PlayerVelocity.y = 0.0f;
 		SetVelocity(xv3PlayerVelocity);
 		xv3PlayerPosition.y = fHeight;
+		cout << "Pos : " << xv3PlayerPosition << endl;
 		SetPosition(xv3PlayerPosition);
 	}
 }

@@ -858,7 +858,7 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 	d3dBlendStateDesc.AlphaToCoverageEnable                     = true;
 	d3dBlendStateDesc.RenderTarget[index].BlendEnable           = true;
 	d3dBlendStateDesc.RenderTarget[index].SrcBlend              = D3D11_BLEND_SRC_ALPHA;// D3D11_BLEND_ONE;
-	d3dBlendStateDesc.RenderTarget[index].DestBlend				=D3D11_BLEND_SRC_COLOR; //D3D11_BLEND_ONE;  
+	d3dBlendStateDesc.RenderTarget[index].DestBlend				= D3D11_BLEND_SRC_COLOR; //D3D11_BLEND_ONE;  
 	d3dBlendStateDesc.RenderTarget[index].BlendOp				= D3D11_BLEND_OP_ADD;
 	d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha         = D3D11_BLEND_ZERO;
 	d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha        = D3D11_BLEND_ZERO;
@@ -879,10 +879,8 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	m_ppObjects = nullptr;
 	m_ppParticle = new CParticle*[m_nObjects];
 
-
 	m_ppParticle[0] = new CSmokeBoomParticle();
 	m_ppParticle[0]->Initialize(pd3dDevice);//(pd3dDevice, cbParticle, 20.0, 800);
-	//m_ppParticle[0]->Enable();
 
 	m_ppParticle[1] = new CSmokeBoomParticle();
 	m_ppParticle[1]->Initialize(pd3dDevice);
@@ -896,9 +894,9 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 	m_ppParticle[4] = new CFireBallParticle();
 	m_ppParticle[4]->Initialize(pd3dDevice);
 
-	//m_pRainParticle = new CRainParticle();
-	//m_pRainParticle->Initialize(pd3dDevice);
-	//m_pRainParticle->Enable();
+	m_pRainParticle = new CRainParticle();
+	m_pRainParticle->Initialize(pd3dDevice);
+	m_pRainParticle->Enable();
 
 	m_pd3dRandomSRV = ViewMgr.GetSRV("srv_random1d");// CShader::CreateRandomTexture1DSRV(pd3dDevice);
 	m_pd3dRandomSRV->AddRef();
@@ -938,17 +936,17 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 
 	pd3dDeviceContext->OMSetDepthStencilState(m_pd3dDepthStencilState, 0);
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
-
 	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
 		it->second->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
+
+	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 	if (m_pRainParticle && m_pRainParticle->IsAble())
 	{
 		RainDrawShader(pd3dDeviceContext);
 		m_pRainParticle->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
-	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 }
 
 void CParticleShader::AnimateObjects(float fTimeElapsed)
@@ -970,13 +968,12 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 		}
 	}
 
-	if (m_pRainParticle) m_pRainParticle->Update(fTimeElapsed);
+	if (m_pRainParticle && m_pRainParticle->IsAble()) 
+		m_pRainParticle->Update(fTimeElapsed);
 }
 
 void CParticleShader::SOSetState(ID3D11DeviceContext * pd3dDeviceContext)
 {
-	//pd3dDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	//pd3dDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	pd3dDeviceContext->VSSetShader(m_pd3dVSSO, nullptr, 0);
 	pd3dDeviceContext->GSSetShader(m_pd3dGSSO, nullptr, 0);
 	pd3dDeviceContext->PSSetShader(nullptr, nullptr, 0);

@@ -13,6 +13,16 @@
 #define PARTICLE_TYPE_EMITTER	0
 #define PARTICLE_TYPE_FLARE		1
 
+#define COLOR_WHITE  0
+#define COLOR_RED    1
+#define COLOR_GREEN  2
+#define COLOR_BLUE   3
+#define COLOR_CYAN   4
+#define COLOR_YELLOW 5
+#define COLOR_MAGENT 6
+#define COLOR_GRAY   7
+#define COLOR_BLACK  8
+
 struct PARTICLE_INFO
 {
 	XMFLOAT3 m_xmf3Pos;
@@ -46,6 +56,15 @@ public:
 		pd3dDeviceContext->PSSetShaderResources(TX_SLOT_TEXTURE_ARRAY, 1, &m_pd3dSRVImagesArrays);
 	}
 	virtual void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResource(pd3dDeviceContext); }
+};
+class CTxAnimation : public CEffect
+{
+	bool m_bInitilize   : 1;
+	bool m_bEnable      : 1;
+	bool m_bMove        : 1;
+	bool m_bTerminal    : 1;
+	bool m_bUseAccel    : 1;
+	bool m_bSubordinate : 1;
 };
 
 class CParticle : public CEffect
@@ -126,7 +145,7 @@ public:
 
 class CFireBallParticle : public CParticle
 {
-	static const UINT m_nMaxParticlenum = 600;
+	static const UINT m_nMaxParticlenum = 500;
 public:
 	CFireBallParticle() {}
 	virtual ~CFireBallParticle() {}
@@ -136,11 +155,12 @@ public:
 
 class CRainParticle : public CParticle
 {
-	static const UINT m_nMaxParticlenum = 8000;
+	static const UINT m_nMaxParticlenum = 1400;
 public:
 	CRainParticle(){}
 	virtual ~CRainParticle(){}
-
+	
+	//void StreamOut(ID3D11DeviceContext *pd3dDeviceContext);
 	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
 
