@@ -102,7 +102,6 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 };
 
-
 class CIlluminatedShader : public CShader
 {
 public:

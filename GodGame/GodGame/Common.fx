@@ -19,7 +19,7 @@ Texture2D     gtxtSpecular           : register(t20);	// ¿Á¡˙ Ω∫∆Â≈ß∑Ø
 Texture2D     gtxtNormal             : register(t21);
 Texture1D     gtxtRandom             : register(t22);
 
-Texture2DArray gTextureArray : register(t10);
+Texture2DArray gTextureArray		 : register(t10);
 
 #define	FRAME_BUFFER_WIDTH		1280
 #define	FRAME_BUFFER_HEIGHT		960
@@ -55,7 +55,9 @@ cbuffer cbFixed
 {
 	static float  gFogStart        = 20.0f;
 	static float  gFogRangeInverse = 1 / 400.0f;
-	static float4 gFogColor        = float4(0.1, 0.1, 0.3, 0.0);
+	static float4 gFogColor = { 0.1, 0.1, 0.2, 0.0 };
+	static float4 vZero     = { 0, 0, 0, 0 };
+	static float4 vOne      = { 1, 1, 1, 1 };
 };
 
 cbuffer cbQuad 
@@ -63,15 +65,17 @@ cbuffer cbQuad
 	static float2 gvQuadTexCoord[4] = { float2(0.0f, 1.0f), float2(0.0f, 0.0f), float2(1.0f, 1.0f), float2(1.0f, 0.0f) };
 };
 
-#define COLOR_WHITE  0
-#define COLOR_RED    1
-#define COLOR_GREEN  2
-#define COLOR_BLUE   3
-#define COLOR_CYAN   4
-#define COLOR_YELLOW 5
-#define COLOR_MAGENT 6
-#define COLOR_GRAY   7
-#define COLOR_BLACK  8
+#define COLOR_NONE			-1
+#define COLOR_WHITE			0
+#define COLOR_RED			1
+#define COLOR_GREEN			2
+#define COLOR_BLUE			3
+#define COLOR_BLACK			4
+#define COLOR_YELLOW		5
+#define COLOR_MAGENT		6
+#define COLOR_CYAN			7
+#define COLOR_GRAY			8
+#define COLOR_BLACK_GRAY    9
 
 cbuffer gcColor
 {
@@ -83,17 +87,18 @@ cbuffer gcColor
 	//static float4 gcYellow = { 1, 1, 0, 1 };
 	//static float4 gcMagent = { 1, 0, 1, 1 };
 	//static float4 gcGray   = { 0.5, 0.5, 0.5, 1 };
-	static float4 gcColors[9] =
+	static float4 gcColors[10] =
 	{
 		{ 1, 1, 1, 1 },
 		{ 1, 0, 0, 1 },
 		{ 0, 1, 0, 1 },
 		{ 0, 0, 1, 1 },
-		{ 0, 1, 1, 1 },
+		{ 0.01, 0.01, 0.01, 1 },
 		{ 1, 1, 0, 1 },
 		{ 1, 0, 1, 1 },
-		{ 0.5, 0.5, 0.5, 1 },
-		{ 0.2, 0.2, 0.2, 1 }
+		{ 0, 1, 1, 1 },
+		{ 0.7, 0.7, 0.7, 1 },
+		{ 0.2, 0.2, 0.2, 1 },
 	};
 };
 
@@ -149,7 +154,12 @@ float4 FogExp(float4 color, float distance, float fFogDestiny)
 float4 FogLerp(float4 color, float distance)
 {
 	float f = saturate((distance - gFogStart) * gFogRangeInverse);
-	//return lerp(color, gFogColor, smoothstep(0, 1, f));
+	return lerp(color, gFogColor, f);
+}
+
+float4 FogLerpSq(float4 color, float distanceSq)
+{
+	float f = saturate((distanceSq - gFogStart * gFogStart) * gFogRangeInverse * gFogRangeInverse);
 	return lerp(color, gFogColor, f);
 }
 

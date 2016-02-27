@@ -14,7 +14,7 @@
 #define	FRAME_BUFFER_HEIGHT		960
 
 #define NUM_MRT		6
-#define NUM_SHADER	6
+#define NUM_SHADER	7
 
 //#ifdef _DEBUG
 #define NUM_THREAD  NUM_SHADER
@@ -77,6 +77,18 @@ using namespace DirectX;
 
 #define _QUAD_TREE
 
+#define COLOR_NONE   -1
+#define COLOR_WHITE  0
+#define COLOR_RED    1
+#define COLOR_GREEN  2
+#define COLOR_BLUE   3
+#define COLOR_BLACK  4
+#define COLOR_YELLOW 5
+#define COLOR_MAGENT 6
+#define COLOR_CYAN   7
+#define COLOR_GRAY   8
+#define COLOR_BLACK_GRAY   9
+
 using namespace std;
 
 ostream& operator<<(ostream& os, POINT & pt);
@@ -88,6 +100,8 @@ ostream& operator<<(ostream& os, XMFLOAT3 & xmf3);
 ostream& operator<<(ostream& os, XMFLOAT4 & xmf4);
 
 ostream& operator<<(ostream& os, XMFLOAT4X4 & mtx);
+
+
 
 
 template <class T>

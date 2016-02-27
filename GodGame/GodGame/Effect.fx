@@ -121,24 +121,18 @@ VS_TEXTURED_COLOR_OUTPUT VSTexturedColor(VS_TEXTURED_COLOR_INPUT input)
 PS_MRT_OUT PSTexturedColor(VS_TEXTURED_COLOR_OUTPUT input)
 {
 	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
-	//	input.shadowPos.xyz /= input.shadowPos.w;
-	//	float fsDepth = gtxtShadowMap.Sample(gssShadowMap, input.shadowPos.xy).r;
-	//	float fShadowFactor = 0.1f;
-	//	if (input.shadowPos.z <= (fsDepth + gfBias))
-	//		fShadowFactor = 1.0f;
 
 	PS_MRT_OUT output;
-	output.vNormal = float4(1, 1, 1, input.position.w * gfDepthFar);
-	output.vPos = float4(input.posW, 1.0f);
+	output.vNormal  = float4(1, 1, 1, input.position.w * gfDepthFar);
+	output.vPos     = float4(input.posW, 1.0f);
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 0.0f/*fShadowFactor*/);
-	output.vSpec = gMaterial.m_cSpecular;
+	output.vSpec    = gMaterial.m_cSpecular;
 	output.vTxColor = cColor;
 
 	return(output);
 }
 
 // 스카이박스 큐브맵 전용 -----------------------------
-
 VS_SKYBOX_CUBEMAP_OUTPUT VSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_INPUT input)
 {
 	VS_SKYBOX_CUBEMAP_OUTPUT output = (VS_SKYBOX_CUBEMAP_OUTPUT)0;
@@ -154,11 +148,11 @@ PS_MRT_OUT PSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_Target
 	//float4 cColor = gtxtTexture.Sample(gSamplerState, input.positionL);
 
 	PS_MRT_OUT output;
-	output.vNormal  = float4(0, 0, 0, 0);
-	output.vPos     = float4(0, 0, 0, 0);
-	output.vDiffuse = float4(0, 0, 0, 0);// cColor;
+	output.vNormal  = vZero;
+	output.vPos     = vZero;
+	output.vDiffuse = vZero;// cColor;
 	output.vSpec    = gMaterial.m_cSpecular;
-	output.vTxColor = float4(FogColor(cColor, 0.8f).rgb, 1);//float4(cColor.xyz, 0);
+	output.vTxColor = float4(FogColor(cColor, 0.7f).rgb, 1) * 4;//float4(cColor.xyz, 0);
 	return(output);
 }
 
@@ -220,9 +214,6 @@ PS_MRT_OUT PSTexturedLightingColor(VS_TEXTURED_LIGHTING_COLOR_OUTPUT input)
 	input.normalW = normalize(input.normalW);
 	//float4 cIllumination = Lighting(input.positionW, input.normalW);
 	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);// *cIllumination;
-
-	//float fShadowFactor = 0.3f;
-	//fShadowFactor = CalcOneShadowFactor(gsShadow, gtxtShadowMap, input.shadowPos, fShadowFactor);
 
 	PS_MRT_OUT output;
 	output.vNormal = float4(input.normalW, input.position.w * gfDepthFar);

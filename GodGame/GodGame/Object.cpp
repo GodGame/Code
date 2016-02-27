@@ -395,23 +395,6 @@ CDynamicObject::~CDynamicObject()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-CEffect::CEffect()
-{
-	m_nStartVertex = 0;
-	m_nVertexOffsets = 0;
-	m_nVertexStrides = 0;
-
-	m_pd3dSRVImagesArrays = nullptr;
-}
-
-CEffect::~CEffect()
-{
-	if (m_pd3dSRVImagesArrays) m_pd3dSRVImagesArrays->Release();
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////
 CUIObject::CUIObject(int nMeshes, UIInfo info) : CGameObject(nMeshes) 
 {
 	if (info.m_msgUI != MSG_UI_NONE)
@@ -683,9 +666,7 @@ CBillboardObject::CBillboardObject(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : 
 void CBillboardObject::UpdateInstanceData()
 {
 	XMFLOAT3 pos = GetPosition();
-	m_xv4InstanceData.x = pos.x;
-	m_xv4InstanceData.y = pos.y;
-	m_xv4InstanceData.z = pos.z;
+	memcpy(&m_xv4InstanceData, &pos, sizeof(XMFLOAT3));
 }
 
 bool CBillboardObject::IsVisible(CCamera *pCamera)
@@ -699,38 +680,337 @@ bool CBillboardObject::IsVisible(CCamera *pCamera)
 	}
 
 	XMFLOAT3 xmfPos = GetPosition();
-	m_xv4InstanceData.x = xmfPos.x;
-	m_xv4InstanceData.y = xmfPos.y;
-	m_xv4InstanceData.z = xmfPos.z;
-
+	memcpy(&m_xv4InstanceData, &xmfPos, sizeof(XMFLOAT3));
 	return(bIsVisible);
 }
-
-CParticle::CParticle() : CEffect()
+///////////////////////////////////////////////////////////////////////////////////////
+CEffect::CEffect()
 {
-	m_pd3dInitialVertexBuffer   = nullptr;
-	m_pd3dStreamOutVertexBuffer = nullptr;
-	m_pd3dDrawVertexBuffer      = nullptr;
+	m_nStartVertex        = 0;
+	m_nVertexOffsets      = 0;
+	m_nVertexStrides      = 0;
 
-	m_pcNextParticle            = nullptr;
+	m_fDurability         = 0;
 
-	m_fDurability               = 0;
-
-	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
-
-	m_bInitilize   = false;
 	m_bEnable      = false;
 	m_bMove        = false;
 	m_bTerminal    = false;
 	m_bSubordinate = false;
 
+	m_pd3dSRVImagesArrays = nullptr;
+	m_pd3dDrawVertexBuffer = nullptr;
+}
+
+CEffect::~CEffect()
+{
+	if (m_pd3dSRVImagesArrays) m_pd3dSRVImagesArrays->Release();
+	if (m_pd3dDrawVertexBuffer) m_pd3dDrawVertexBuffer->Release();
+}
+
+void CEffect::MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos)
+{
+	XMVECTOR xmvVelocity;
+	XMVECTOR xmvPos;
+
+	if (m_bUseAccel)
+	{
+		xmvVelocity = (m_velocity.fWeightSpeed * 0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) +
+			(m_velocity.fWeightSpeed * XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime);
+		xmvPos = xmvVelocity + XMLoadFloat3(&m_velocity.xmf3InitPos);
+	}
+	else
+	{
+		xmvVelocity = XMLoadFloat3(&m_velocity.xmf3Velocity) * fTimeElapsed * m_velocity.fWeightSpeed;
+		xmvPos = xmvVelocity + XMLoadFloat3(&xmf3Pos);
+	}
+	XMStoreFloat3(&xmf3Pos, xmvPos);
+}
+void CEffect::SetMoveVelocity(MoveVelocity & move, XMFLOAT3 * InitPos)
+{
+	m_velocity = move;
+
+	if (Chae::XMFloat3NorValue(m_velocity.xmf3Velocity, 0.0f)) m_bMove = true;
+	if (Chae::XMFloat3NorValue(m_velocity.xmf3Accelate, 0.0f)) m_bUseAccel = true;
+
+	if (InitPos) m_velocity.xmf3InitPos = *InitPos;
+}
+///////////////////////////////////////////////////////////////////////////////////////
+
+CTxAnimationObject::CTxAnimationObject()
+{
+	ZeroMemory(&m_cbInfo, sizeof(m_cbInfo));
+	m_pNextEffect = nullptr;
+	m_pd3dCSBuffer = nullptr;
+
+	m_bUseAnimation = false;
+}
+
+CTxAnimationObject::~CTxAnimationObject()
+{
+	if (m_pNextEffect) delete m_pNextEffect;
+	if (m_pd3dCSBuffer) m_pd3dCSBuffer->Release();
+}
+
+void CTxAnimationObject::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum      = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos        = { 0, 0, 0 };
+	
+	MoveVelocity move;
+	move.xmf3Velocity         = { 0, 0, 0 };
+	move.xmf3Accelate         = { 0, 0, 0 };
+	move.fWeightSpeed         = 1.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	XMFLOAT2 xmf2Size		{ 50, 50 };
+	XMFLOAT2 xmf2ImageSize	{ 1000, 200 };
+	XMFLOAT2 xmf2FrameSize	{ 100, 100 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 15, 0.1f);
+}
+
+void CTxAnimationObject::CreateBuffers(ID3D11Device * pd3dDevice, XMFLOAT2 & xmf2ObjSize, XMFLOAT2 & xmf2ImageSize, XMFLOAT2 & xmf2FrameSize, UINT dwFrameNum, float dwFramePerTime)
+{
+	TX_ANIMATION_VERTEX vertex;
+	vertex.xmf2FrameTotalSize = xmf2ImageSize;
+
+	CTxAnimationObject::CalculateCSInfoTime(vertex, xmf2ObjSize, xmf2FrameSize, dwFrameNum, dwFramePerTime);
+
+	m_nVertexStrides        = sizeof(TX_ANIMATION_VERTEX);
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage     = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = m_nVertexStrides * 1;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;// | D3D11_BIND_STREAM_OUTPUT;
+
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = &vertex;// pQuadPatchVertices;
+	ASSERT_S(pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dDrawVertexBuffer));
+
+	m_pd3dCSBuffer = ViewMgr.GetBuffer("cs_tx_animation");
+	m_pd3dCSBuffer->AddRef();
+
+}
+
+void CTxAnimationObject::CalculateCSInfoTime(TX_ANIMATION_VERTEX & vertex, XMFLOAT2 & xmf2ObjSize, XMFLOAT2 & xmf2FrameSize, UINT dwFrameNum, float dwFramePerTime)
+{
+	UINT uWidth   = UINT(vertex.xmf2FrameTotalSize.x / xmf2FrameSize.x);
+	UINT uHeight  = UINT(vertex.xmf2FrameTotalSize.y / xmf2FrameSize.y);
+
+	vertex.xmf2FrameRatePercent.x  = 1.0f / (float)uWidth;
+	vertex.xmf2FrameRatePercent.y  = 1.0f / (float)uHeight;
+
+	m_cbInfo.m_xmf2Size			   = xmf2ObjSize;
+	m_cbInfo.m_fFramePerTime       = dwFramePerTime;
+	m_cbInfo.m_bMove			   = m_bMove;
+
+	m_fDurability = (dwFramePerTime * dwFrameNum);// +0.01f;
+}
+
+void CTxAnimationObject::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dCSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	CB_TX_ANIMATION_INFO *pcbParticle = (CB_TX_ANIMATION_INFO*)d3dMappedResource.pData;
+	memcpy(pcbParticle, &m_cbInfo, sizeof(CB_TX_ANIMATION_INFO));
+	pd3dDeviceContext->Unmap(m_pd3dCSBuffer, 0);
+}
+
+bool CTxAnimationObject::Enable(XMFLOAT3 * pos, int nColorNum)
+{
+	if (pos)
+	{
+		m_cbInfo.m_xmf3Pos = *pos;
+		m_velocity.xmf3InitPos = *pos;
+	}
+	m_bEnable       = true;
+	m_bTerminal     = false;
+	m_bUseAnimation = true;
+
+	m_cbInfo.m_fGameTime = 0.0;
+
+	if (nColorNum != COLOR_NONE) m_cbInfo.m_nColorNum = nColorNum;
+
+	return true;
+}
+
+bool CTxAnimationObject::Disable()
+{
+	cout << "exit time : " << m_cbInfo.m_fGameTime << endl;
+	return (m_bEnable = false);
+}
+
+void CTxAnimationObject::NextEffectOn()
+{
+	m_pNextEffect->Enable(&m_cbInfo.m_xmf3Pos);
+	m_bTerminal = true;
+}
+
+void CTxAnimationObject::Animate(float fTimeElapsed)
+{
+	if (m_bTerminal)
+	{
+		m_pNextEffect->Animate(fTimeElapsed);
+		if (m_pNextEffect->IsTermainal())
+			Disable();
+	}
+	else if(m_bUseAnimation)
+	{
+		m_cbInfo.m_fGameTime += fTimeElapsed;
+
+		if (m_cbInfo.m_fGameTime > m_fDurability)
+		{
+			if (m_pNextEffect)  NextEffectOn();
+			else Disable();
+		}
+		else if (m_bMove)
+		{
+			MoveUpdate(m_cbInfo.m_fGameTime, fTimeElapsed, m_cbInfo.m_xmf3Pos);
+			m_cbInfo.m_xmf3LookVector = m_velocity.xmf3Velocity;
+		}	
+	}
+}
+
+void CTxAnimationObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	if (m_bTerminal)
+	{
+		m_pNextEffect->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
+	else
+	{
+		OnPrepare(pd3dDeviceContext);
+
+		UpdateShaderVariable(pd3dDeviceContext);
+		pd3dDeviceContext->GSSetConstantBuffers(0x04, 1, &m_pd3dCSBuffer);
+
+		pd3dDeviceContext->IASetVertexBuffers(0, 1, &m_pd3dDrawVertexBuffer, &m_nVertexStrides, &m_nVertexOffsets);
+		pd3dDeviceContext->Draw(1, 0);
+	}
+}
+
+void CCircleMagic::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_GRAY;
+	m_cbInfo.m_xmf3Pos   = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity    = { 0, 0, 0 };
+	move.xmf3Accelate    = { 0, 0, 0 };
+	move.fWeightSpeed    = 1.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	XMFLOAT2 xmf2Size      { 30, 30 };
+	XMFLOAT2 xmf2ImageSize { 960, 768 };
+	XMFLOAT2 xmf2FrameSize { 192, 192 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 20, 0.05f);
+
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_circle.png"));
+}
+
+void CIceSpear::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos   = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity    = { 0, 0, 0 };
+	move.xmf3Accelate    = { 0, 0, 0 };
+	move.fWeightSpeed    = 1.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	XMFLOAT2 xmf2Size      { 20, 20 };
+	XMFLOAT2 xmf2ImageSize { 960, 576 };
+	XMFLOAT2 xmf2FrameSize { 192, 192 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 13, 0.05f);
+
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_ice01.png"));
+}
+
+void CElementSpike::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos   = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity    = { 0, 0, 0 };
+	move.xmf3Accelate    = { 0, 0, 0 };
+	move.fWeightSpeed    = 1.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	XMFLOAT2 xmf2Size      { 20, 20 };
+	XMFLOAT2 xmf2ImageSize { 640, 128 };
+	XMFLOAT2 xmf2FrameSize { 128, 128 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 5, 0.1f);
+	m_cbInfo.m_bMove     = false;
+
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_spike.png"));
+}
+
+void CIceBolt::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos   = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity    = { 0, 0, 1 };
+	move.xmf3Accelate    = { 0, 0, 1 };
+	move.fWeightSpeed    = 10.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	XMFLOAT2 xmf2Size      { 10, 10 };
+	XMFLOAT2 xmf2ImageSize { 128, 128 };
+	XMFLOAT2 xmf2FrameSize { 128, 128 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 1, 5.0f);
+	m_cbInfo.m_bMove     = false;
+
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_ice_bolt.png"));
+
+	m_pNextEffect = new CElementSpike();
+	m_pNextEffect->Initialize(pd3dDevice);
+}
+
+void CElectricBolt::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos   = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity    = { 0, 0, 1 };
+	move.xmf3Accelate    = { 0, 0, 1 };
+	move.fWeightSpeed    = 10.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	XMFLOAT2 xmf2Size      { 8, 8 };
+	XMFLOAT2 xmf2ImageSize { 128, 128 };
+	XMFLOAT2 xmf2FrameSize { 128, 128 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 1, 5.0f);
+	m_cbInfo.m_bMove     = false;
+
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_electric_bolt.png"));
+
+	m_pNextEffect = new CElementSpike();
+	m_pNextEffect->Initialize(pd3dDevice);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+CParticle::CParticle() : CEffect()
+{
+	m_pd3dInitialVertexBuffer   = nullptr;
+	m_pd3dStreamOutVertexBuffer = nullptr;
+
+	m_pcNextParticle            = nullptr;
+
+	ZeroMemory(&m_cbParticle, sizeof(CB_PARTICLE));
+
+	m_bInitilize   = false;
+
 	m_pd3dCSParticleBuffer = nullptr;
-	//m_pd3dQuery = nullptr;
 }
 
 CParticle::~CParticle()
 {
-	if (m_pd3dDrawVertexBuffer)	m_pd3dDrawVertexBuffer->Release();
 	if (m_pd3dStreamOutVertexBuffer) m_pd3dStreamOutVertexBuffer->Release();
 	if (m_pd3dInitialVertexBuffer) m_pd3dInitialVertexBuffer->Release();
 
@@ -754,11 +1034,8 @@ void CParticle::Initialize(ID3D11Device *pd3dDevice)
 
 void CParticle::SetParticle(CB_PARTICLE & info, MoveVelocity & Velocity, float fDurability, UINT uMaxParticle)
 {
-	m_fDurability = fDurability;
-	m_velocity = Velocity;
-
-	if (Chae::XMFloat3NorValue(m_velocity.xmf3Velocity, 0.0f)) m_bMove = true;
-	if (Chae::XMFloat3NorValue(m_velocity.xmf3Accelate, 0.0f)) m_bUseAccel = true;
+	SetDurabilityTime(fDurability);
+	Velocity.xmf3InitPos = m_cbParticle.m_vParticleEmitPos;
 
 	m_bEnable              = false;
 	m_bInitilize           = true;
@@ -766,8 +1043,7 @@ void CParticle::SetParticle(CB_PARTICLE & info, MoveVelocity & Velocity, float f
 
 	m_cbParticle           = info;
 	m_cbParticle.m_bEnable = 1.0f;
-
-	m_velocity.xmf3InitPos = m_cbParticle.m_vParticleEmitPos;
+	SetMoveVelocity(Velocity, &m_cbParticle.m_vParticleEmitPos);
 }
 
 void CParticle::CreateParticleBuffer(ID3D11Device * pd3dDevice, PARTICLE_INFO & pcInfo, UINT nMaxNum)
@@ -873,27 +1149,8 @@ void CParticle::Update(float fTimeElapsed)
 
 		LifeUpdate(fGameTime, fTimeElapsed);
 		if (m_bMove && m_cbParticle.m_bEnable) 
-			MoveUpdate(fGameTime, fTimeElapsed);
+			MoveUpdate(fGameTime, fTimeElapsed, m_cbParticle.m_vParticleEmitPos);
 	}
-}
-
-void CParticle::MoveUpdate(const float & fGameTime, const float & fTimeElapsed)
-{
-	XMVECTOR xmvVelocity;
-	XMVECTOR xmvPos;
-
-	if (m_bUseAccel)
-	{
-		xmvVelocity = (m_velocity.fWeightSpeed * 0.5f * XMLoadFloat3(&m_velocity.xmf3Accelate) * fGameTime * fGameTime) +
-			(m_velocity.fWeightSpeed * XMLoadFloat3(&m_velocity.xmf3Velocity) * fGameTime);
-		xmvPos = xmvVelocity + XMLoadFloat3(&m_velocity.xmf3InitPos);
-	}
-	else
-	{
-		xmvVelocity = XMLoadFloat3(&m_velocity.xmf3Velocity) * fTimeElapsed;
-		xmvPos = xmvVelocity + XMLoadFloat3(&m_cbParticle.m_vParticleEmitPos);
-	}
-	XMStoreFloat3(&m_cbParticle.m_vParticleEmitPos, xmvPos);
 }
 
 void CParticle::LifeUpdate(const float & fGameTime, const float & fTimeElapsed)
@@ -910,7 +1167,7 @@ void CParticle::LifeUpdate(const float & fGameTime, const float & fTimeElapsed)
 	}
 }
 
-bool CParticle::Enable(XMFLOAT3 * pos)
+bool CParticle::Enable(XMFLOAT3 * pos, int nColorNum)
 {
 	if (pos)
 	{
@@ -918,11 +1175,13 @@ bool CParticle::Enable(XMFLOAT3 * pos)
 		m_velocity.xmf3InitPos = *pos;
 	}
 
-	m_bEnable              = true;
-	m_bTerminal            = false;
-	m_bInitilize           = true;
-	m_cbParticle.m_bEnable = 1;
+	m_bEnable                = true;
+	m_bTerminal              = false;
+	m_bInitilize             = true;
+	m_cbParticle.m_bEnable   = 1;
 	m_cbParticle.m_fGameTime = 0;
+	
+	if (nColorNum != COLOR_NONE) m_cbParticle.m_nColorNum = nColorNum;
 	return true;
 }
 
@@ -994,7 +1253,7 @@ void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
 	pParticle->m_fNewTime          = 0.0005f;
 	pParticle->m_vParticleVelocity = XMFLOAT3(20, 20, 20);
 	pParticle->m_vAccel            = XMFLOAT3(40, 40, 40);
-	pParticle->m_nColorNum         = COLOR_BLACK;
+	pParticle->m_nColorNum         = COLOR_GRAY;
 }
 //
 //void CRainParticle::StreamOut(ID3D11DeviceContext * pd3dDeviceContext)
@@ -1023,11 +1282,11 @@ void CRainParticle::Initialize(ID3D11Device * pd3dDevice)
 	CB_PARTICLE cbParticle;
 	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
 
-	cbParticle.m_fLifeTime         = 1.5f;
-	cbParticle.m_vAccel            = XMFLOAT3(0, -60, 0);
-	cbParticle.m_vParticleEmitPos  = XMFLOAT3(0, 350, 0);
-	cbParticle.m_vParticleVelocity = XMFLOAT3(0, -60, 0);
-	cbParticle.m_fNewTime          = 0.03f;
+	cbParticle.m_fLifeTime         = 1.0f;
+	cbParticle.m_vAccel            = XMFLOAT3(0, -40, 0);
+	cbParticle.m_vParticleEmitPos  = XMFLOAT3(512, 380, 256);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(0, -300, 0);
+	cbParticle.m_fNewTime          = 0.01f;
 	cbParticle.m_fMaxSize          = 10.0f;
 	cbParticle.m_nColorNum		   = COLOR_WHITE;
 
@@ -1143,7 +1402,6 @@ void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 
 	//	return;
 	case eMessage::MSG_OBJECT_RENEW:
-		cout << "Renew!!" << endl;
 		CBillboardObject::UpdateInstanceData();
 		SetCollide(true);
 		QUADMgr.EntityStaticObject(this);
@@ -1164,4 +1422,3 @@ bool CAbsorbMarble::IsVisible(CCamera *pCamera)
 
 	return(bIsVisible);
 }
-

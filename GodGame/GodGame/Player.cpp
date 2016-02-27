@@ -21,8 +21,6 @@ CPlayer::CPlayer(int nMeshes) : CDynamicObject(nMeshes)
 	m_fRoll                 = 0.0f;
 	m_fYaw                  = 0.0f;
 
-	m_nEnergy = 0;
-
 	m_pPlayerUpdatedContext = nullptr;
 	m_pCameraUpdatedContext = nullptr;
 
@@ -348,51 +346,6 @@ void CPlayer::Animate(float fTimeElapsed)
 	m_uSize = uSize;
 }
 
-void CPlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
-{
-	switch (eMSG)
-	{
-	case eMessage::MSG_GET_SOUL:
-		cout << "에너지 : " << ++m_nEnergy << endl;;
-		EVENTMgr.InsertDelayMessage(0.0f, MSG_PARTICLE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, extra);
-		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, byObj);
-		//cout << "Player : " << GetPosition() << endl;
-		//m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
-		return;
-	case eMessage::MSG_COLLIDE:
-		return;
-	case eMessage::MSG_COLLIDED:
-		return;
-	case eMessage::MSG_NORMAL:
-		return;
-	case eMessage::MSG_COLLIDE_LOCATION:
-		
-		//toObj->GetGameMessage(this, MSG_COLLIDE);
-		return;
-	}
-}
-
-void CPlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra)
-{
-	CGameObject * pObj = nullptr;
-
-	switch (eMSG)
-	{
-	case eMessage::MSG_NORMAL:
-		return;
-		// 반대로 메세지 전송하도록 하자
-	case eMessage::MSG_COLLIDE:
-		//pObj = dynamic_cast<CAbsorbMarble*>(toObj);
-		//if (dynamic_cast<CAbsorbMarble*>(toObj))
-		//	QUADMgr.DeleteStaticObject(toObj);
-		toObj->GetGameMessage(this, MSG_COLLIDED);
-		return;
-	case eMessage::MSG_COLLIDED:
-		toObj->GetGameMessage(this, MSG_COLLIDE);
-		return;
-	}
-}
-
 ///////////////////
 
 CTerrainPlayer::CTerrainPlayer(int nMeshes) : CPlayer(nMeshes)
@@ -466,7 +419,6 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 		xv3PlayerVelocity.y = 0.0f;
 		SetVelocity(xv3PlayerVelocity);
 		xv3PlayerPosition.y = fHeight;
-		cout << "Pos : " << xv3PlayerPosition << endl;
 		SetPosition(xv3PlayerPosition);
 	}
 }
@@ -499,7 +451,7 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 
 CInGamePlayer::CInGamePlayer(int m_nMeshes)
 {
-	ZeroMemory(&m_nEnergies, sizeof(m_nEnergies));
+	ZeroMemory(&m_nElemental, sizeof(m_nElemental));
 
 	m_pBuff = nullptr;
 	m_pDebuff = nullptr;
@@ -515,4 +467,114 @@ void CInGamePlayer::BuildObject()
 {
 	if (!m_pBuff) m_pBuff = new CBuff();
 	if (!m_pDebuff) m_pDebuff = new CDeBuff();
+}
+
+void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
+{
+	static XMFLOAT4 xmfInfo;
+	switch (eMSG)
+	{
+	case eMessage::MSG_GET_SOUL:
+		xmfInfo = *(XMFLOAT4*)extra;
+		AddEnergy(xmfInfo.w);
+		EVENTMgr.InsertDelayMessage(0.0f, MSG_PARTICLE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, extra);
+		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, byObj);
+		//m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
+		return;
+	case eMessage::MSG_COLLIDE:
+		return;
+	case eMessage::MSG_COLLIDED:
+		return;
+	case eMessage::MSG_NORMAL:
+		return;
+	case eMessage::MSG_COLLIDE_LOCATION:
+
+		//toObj->GetGameMessage(this, MSG_COLLIDE);
+		return;
+	}
+}
+
+void CInGamePlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra)
+{
+	CGameObject * pObj = nullptr;
+
+	switch (eMSG)
+	{
+	case eMessage::MSG_NORMAL:
+		return;
+		// 반대로 메세지 전송하도록 하자
+	case eMessage::MSG_COLLIDE:
+		//pObj = dynamic_cast<CAbsorbMarble*>(toObj);
+		//if (dynamic_cast<CAbsorbMarble*>(toObj))
+		//	QUADMgr.DeleteStaticObject(toObj);
+		toObj->GetGameMessage(this, MSG_COLLIDED);
+		return;
+	case eMessage::MSG_COLLIDED:
+		toObj->GetGameMessage(this, MSG_COLLIDE);
+		return;
+	}
+}
+
+void CInGamePlayer::AddEnergy(UINT index, UINT num)
+{
+	++m_nElemental.m_nSum;
+
+	BYTE nNewNum = ++m_nElemental.m_nEnergies[index];
+	if (m_nElemental.m_nMinNum < nNewNum)
+	{
+		m_nElemental.m_nMinNum = nNewNum;
+	}
+
+#ifdef _DEBUG
+	cout << m_nElemental << endl;
+	//cout << "총 에너지 : " << (UINT)m_nElemental.m_nSum << "\t";
+	//cout << index << "번 에너지 : " <<  (UINT)m_nElemental.m_nEnergies[index] << endl;
+#endif
+
+}
+
+UINT CInGamePlayer::UseEnergy(UINT index, BYTE energyNum, bool bForced)
+{
+	if (bForced)
+	{
+		BYTE num = min(m_nElemental.m_nEnergies[index], energyNum);
+		m_nElemental.m_nEnergies[index] -= num;
+		m_nElemental.m_nSum -= num;
+		return num;
+	}
+	else if (m_nElemental.m_nEnergies[index] >= energyNum)
+	{
+		m_nElemental.m_nEnergies[index] -= energyNum;
+		m_nElemental.m_nSum -= energyNum;
+		return energyNum;
+	}
+	return 0;
+}
+
+UINT CInGamePlayer::UseEnergy(UINT energyNum, bool bForced)
+{
+	if (!bForced || m_nElemental.m_nSum < energyNum)
+		return false;
+	
+	BYTE num = energyNum;
+
+	for (int i = 0; i < ELEMENT_NUM; ++i)
+	{
+		if (0 == (num -= UseEnergy(i, num, bForced)))
+			break;
+	}
+
+	cout << m_nElemental << endl;
+	return num;
+}
+
+UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
+{
+	if (!bForced || m_nElemental.m_nMinNum < energyNum)
+		return false;
+
+	for (int i = 0; i < ELEMENT_NUM; ++i)
+		UseEnergy(i, energyNum, bForced);
+
+	return true;
 }

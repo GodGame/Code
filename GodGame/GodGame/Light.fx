@@ -75,7 +75,7 @@ LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera)
 		{
 #ifdef _WITH_REFLECT
 			float3 vReflect = reflect(-vToLight, vNormal);
-				float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
+			float fSpecularFactor = pow(max(dot(vReflect, vToCamera), 0.0f), gMaterial.m_cSpecular.a);
 #else
 #ifdef _WITH_LOCAL_VIEWER_HIGHLIGHTING
 			float3 vHalf = normalize(vToCamera + vToLight);
@@ -384,8 +384,8 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 	float4 vDiffuse = vDiff;
 	float fShadowFactor = vDiff.a;
 	float4 vSpec = float4(vSpecular.xyz, vSpecular.w * 255.0f);
-	float3 vCameraPosition = float3(gvCameraPosition.x, gvCameraPosition.y, gvCameraPosition.z);
-	float3 vToCamera = normalize(vCameraPosition - vPos);
+//	float3 vCameraPosition = gvCameraPosition.xyz;
+	float3 vToCamera = normalize(gvCameraPosition.xyz - vPos);
 	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;
 
 	float4 cColor = float4(0.0f, 0.0f, 0.0f, 0.0f);

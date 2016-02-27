@@ -99,3 +99,15 @@ Element::~Element()
 {
 }
 
+
+ostream& operator<<(ostream& os, ElementEnergy & element)
+{
+	os << "ÃÑ " << (UINT)element.m_nSum << " // ";
+	os << "ºû : " << (UINT)element.m_nEnergies[ELEMENT_LIGHT] << " // ";
+	os << "ºÒ : " << (UINT)element.m_nEnergies[ELEMENT_FIRE] << endl;
+	os << "¹Ù¶÷ : " << (UINT)element.m_nEnergies[ELEMENT_WIND] << " // ";
+	os << "¾óÀ½ : " << (UINT)element.m_nEnergies[ELEMENT_ICE] << " // ";
+	os << "¾îµÒ : " << (UINT)element.m_nEnergies[ELEMENT_DARK] << " // ";
+	os << "Àü±â : " << (UINT)element.m_nEnergies[ELEMENT_ELECTRIC];
+	return os;
+}

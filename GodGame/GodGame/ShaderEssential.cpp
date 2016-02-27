@@ -4,7 +4,7 @@
 #include "Player.h"
 #include <D3Dcompiler.h>
 
-CPlayer * gpPlayer = nullptr;
+CInGamePlayer * gpPlayer = nullptr;
 bool gbStartEffect = false;
 bool gbStartRadial = false;
 
@@ -191,16 +191,43 @@ void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceVi
 	m_csReduce.m_pd3dSRVArray[0] = ViewMgr.GetSRV("su_reduce1"); m_csReduce.m_pd3dSRVArray[0]->AddRef();
 	m_csReduce.m_pd3dSRVArray[1] = ViewMgr.GetSRV("su_reduce2"); m_csReduce.m_pd3dSRVArray[1]->AddRef();
 
-	m_pd3dLastReducedSRV = ViewMgr.GetSRV("su_4last_reduce"); m_pd3dLastReducedSRV->AddRef();
-	m_pd3dLastReducedUAV = ViewMgr.GetUAV("su_4last_reduce"); m_pd3dLastReducedUAV->AddRef();
-
 	m_pd3dPostRenderRTV = ViewMgr.GetRTV("sr2d_PostResult");  m_pd3dPostRenderRTV->AddRef();
 	m_pd3dPostRenderSRV = ViewMgr.GetSRV("sr2d_PostResult");  m_pd3dPostRenderSRV->AddRef();
 
 	m_pd3dRadialSRV = ViewMgr.GetSRV("su2d_radial");  m_pd3dRadialSRV->AddRef();
 	m_pd3dRadialUAV = ViewMgr.GetUAV("su2d_radial");  m_pd3dRadialUAV->AddRef();
+
+	//m_pd3dLastReducedSRV = ViewMgr.GetSRV("su_4last_reduce"); m_pd3dLastReducedSRV->AddRef();
+	//m_pd3dLastReducedUAV = ViewMgr.GetUAV("su_4last_reduce"); m_pd3dLastReducedUAV->AddRef();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Buffers for blooming effect in CS path
+
+	D3D11_BUFFER_DESC DescBuffer;
+	ZeroMemory(&DescBuffer, sizeof(D3D11_BUFFER_DESC));
+	DescBuffer.BindFlags           = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	DescBuffer.ByteWidth           = sizeof(float) * 16;
+	DescBuffer.MiscFlags           = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	DescBuffer.StructureByteStride = sizeof(float);
+	DescBuffer.Usage               = D3D11_USAGE_DEFAULT;
+
+	D3D11_UNORDERED_ACCESS_VIEW_DESC DescUAV;
+	ZeroMemory(&DescUAV, sizeof(D3D11_UNORDERED_ACCESS_VIEW_DESC));
+	DescUAV.Format                 = DXGI_FORMAT_UNKNOWN;
+	DescUAV.ViewDimension          = D3D11_UAV_DIMENSION_BUFFER;
+	DescUAV.Buffer.FirstElement    = 0;
+	DescUAV.Buffer.NumElements     = DescBuffer.ByteWidth / sizeof(float);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC DescRV;
+	ZeroMemory(&DescRV, sizeof(DescRV));
+	DescRV.Format                  = DXGI_FORMAT_UNKNOWN;
+	DescRV.ViewDimension           = D3D11_SRV_DIMENSION_BUFFER;
+	DescRV.Buffer.FirstElement     = DescUAV.Buffer.FirstElement;
+	DescRV.Buffer.NumElements      = DescUAV.Buffer.NumElements;
+
+	ID3D11Buffer * pBuffer         = nullptr;
+	ASSERT_S(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer));
+	ASSERT_S(pd3dDevice->CreateUnorderedAccessView(pBuffer, &DescUAV, &m_pd3dLastReducedUAV));
+	ASSERT_S(pd3dDevice->CreateShaderResourceView(pBuffer, &DescRV, &m_pd3dLastReducedSRV));
+	pBuffer->Release();
 }
 
 void CSceneShader::CreateConstantBuffer(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext)
@@ -252,7 +279,7 @@ void CSceneShader::UpdateShaderReosurces(ID3D11DeviceContext * pd3dDeviceContext
 
 void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera /*= nullptr*/)
 {
-	gpPlayer = pCamera->GetPlayer();
+	gpPlayer = (CInGamePlayer*) pCamera->GetPlayer();
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	//ShadowMgr.UpdateStaticShadowResource(pd3dDeviceContext);
@@ -290,7 +317,7 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 void CSceneShader::AnimateObjects(float fTimeElapsed)
 {
-	if (gpPlayer && !gbStartEffect &&gpPlayer->m_nEnergy > 10)
+	if (gpPlayer && !gbStartEffect &&gpPlayer->GetEnergyNum() > 10)
 	{
 		GetGameMessage(this, MSG_EFFECT_GLARE_ON);
 		EVENTMgr.InsertDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SHADER, (void*)this); //ShaderDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, (CShader*)this);
@@ -314,7 +341,7 @@ void CSceneShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_EFFECT_GLARE_OFF:
 		m_fTotalTime        = 0.0f;
 		gbStartEffect       = false;
-		gpPlayer->m_nEnergy = 0;
+		gpPlayer->UseEnergy(10, true);
 		m_iDrawOption       = 0;
 		return;
 
@@ -487,7 +514,7 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		if(!gbStartEffect)
 			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
 		else
-			cbCS = { XMFLOAT4(1.0f, 100000.0f, m_fTotalTime, m_fFrameTime) };
+			cbCS = { XMFLOAT4(1.0f, 250000.0f, m_fTotalTime, m_fFrameTime) };
 
 		MapConstantBuffer(pd3dDeviceContext, &cbCS, sizeof(CB_CS), m_pd3dCBComputeInfo);
 		pd3dDeviceContext->CSSetConstantBuffers(0, 1, &m_pd3dCBComputeInfo);

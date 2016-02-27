@@ -1,9 +1,9 @@
 //#define LUMCOLOR
 
 
-static float  MIDDLE_GRAY = 0.72f;
-static float  LUM_WHITE = 3.0f;
-static const float  BRIGHT_THRESHOLD = 0.6f;
+static float  MIDDLE_GRAY = 1.0f;//0.72f;
+static float  LUM_WHITE = 2.5f;
+static const float  BRIGHT_THRESHOLD = 0.4f;
 
 
 float3 ColorToLum(float3 fColor)

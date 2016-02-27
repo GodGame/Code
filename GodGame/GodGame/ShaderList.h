@@ -102,6 +102,48 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 };
+class CTextureAniShader : public CShader
+{
+	CTxAnimationObject ** m_ppEffctsObjects;
+	ID3D11BlendState   *  m_pd3dBlendState;
+	ID3D11SamplerState *  m_pd3dSamplerState;
+
+public:
+	CTextureAniShader();
+	virtual ~CTextureAniShader();
+
+public:	
+	void CreateStates(ID3D11Device * pd3dDevice);
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	virtual void AnimateObjects(float fTimeElapsed);
+
+public:
+	bool SetEffect(int index, XMFLOAT3 * pos = nullptr)
+	{
+		if (m_ppEffctsObjects[index]->IsAble()) return false;
+		return m_ppEffctsObjects[index]->Enable(pos);
+	}
+	CTxAnimationObject * GetEffect(int index) { return m_ppEffctsObjects[index]; }
+
+	//void EffectOn(XMFLOAT3 * pos = nullptr, float fColor = COLOR_NONE)
+	//{
+	//	if (m_vcAbleParticleArray.empty()) return;
+
+	//	auto it = m_vcAbleParticleArray.end() - 1;
+	//	(*it)->Enable(pos, fColor);
+	//	m_vcAbleParticleArray.pop_back();
+	//}
+
+	void EffectOn(int num, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
+	{
+		m_ppEffctsObjects[num]->Enable(pos, fColor);
+		if (vel) m_ppEffctsObjects[num]->SetMoveVelocity(*vel);
+		if (acc) m_ppEffctsObjects[num]->SetMoveAccel(*acc);
+	}
+};
 
 class CParticleShader : public CShader
 {
@@ -109,6 +151,7 @@ class CParticleShader : public CShader
 	ID3D11VertexShader       * m_pd3dVSSO;
 	ID3D11GeometryShader     * m_pd3dGSSO;
 
+private:
 // Rain Particle
 	ID3D11GeometryShader     * m_pd3dStreamRain;
 
@@ -142,7 +185,7 @@ private:
 
 public :
 	CParticleShader();
-	~CParticleShader();
+	virtual ~CParticleShader();
 
 	void	CreateStates(ID3D11Device * pd3dDevice);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
@@ -162,18 +205,18 @@ public :
 	}
 	CParticle * GetParticle(int index) { return m_ppParticle[index]; }
 
-	void ParticleOn(XMFLOAT3 * pos = nullptr)
+	void ParticleOn(XMFLOAT3 * pos = nullptr, float fColor = COLOR_NONE)
 	{
 		if (m_vcAbleParticleArray.empty()) return;
 
 		auto it = m_vcAbleParticleArray.end() - 1;
-		(*it)->Enable(pos);
+		(*it)->Enable(pos, fColor);
 		m_vcAbleParticleArray.pop_back();
 	}
 
-	void ParticleOn(int num, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr)
+	void ParticleOn(int num, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
 	{
-		m_ppParticle[num]->Enable(pos);
+		m_ppParticle[num]->Enable(pos, fColor);
 		if (vel) m_ppParticle[num]->SetMoveVelocity(*vel);
 		if (acc) m_ppParticle[num]->SetMoveAccel(*acc);
 	}

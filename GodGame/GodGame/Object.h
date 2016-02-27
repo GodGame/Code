@@ -13,33 +13,38 @@
 #define PARTICLE_TYPE_EMITTER	0
 #define PARTICLE_TYPE_FLARE		1
 
-#define COLOR_WHITE  0
-#define COLOR_RED    1
-#define COLOR_GREEN  2
-#define COLOR_BLUE   3
-#define COLOR_CYAN   4
-#define COLOR_YELLOW 5
-#define COLOR_MAGENT 6
-#define COLOR_GRAY   7
-#define COLOR_BLACK  8
-
-struct PARTICLE_INFO
-{
-	XMFLOAT3 m_xmf3Pos;
-	XMFLOAT3 m_xmf3Velocity;
-	XMFLOAT2 m_xmf2Size;
-	float	 m_fAge;
-	float	 m_uType;
-};
-
 class CEffect
 {
+protected:
+	MoveVelocity m_velocity;
+	float m_fDurability;
+
+	bool m_bEnable      : 1;
+	bool m_bTerminal    : 1;
+	bool m_bSubordinate : 1;
+	bool m_bMove        : 1;
+	bool m_bUseAccel    : 1;
+
+public:
+	void SetDurabilityTime(float fTime)  { m_fDurability = fTime; }
+	float GetDurabilityTime()		     { return m_fDurability; }
+
+	void SetMoveVelocity(XMFLOAT3 & vel) { m_velocity.xmf3Velocity = vel; }
+	void SetMoveAccel(XMFLOAT3 & acc)    { m_velocity.xmf3Accelate = acc; }
+
+	bool IsAble() { return m_bEnable; }
+	bool IsSubordinative() { return m_bSubordinate; }
+
+	void MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos);
+	void SetMoveVelocity(MoveVelocity & move, XMFLOAT3 * InitPos);
+
 protected:
 	UINT m_nStartVertex;
 	UINT m_nVertexStrides;
 	UINT m_nVertexOffsets;
 
 	ID3D11ShaderResourceView * m_pd3dSRVImagesArrays;
+	ID3D11Buffer * m_pd3dDrawVertexBuffer;
 
 public:
 	CEffect();
@@ -51,43 +56,103 @@ public:
 		m_pd3dSRVImagesArrays = pSRV;
 		m_pd3dSRVImagesArrays->AddRef();
 	}
-	inline void UpdateShaderResource(ID3D11DeviceContext * pd3dDeviceContext)
+	inline void UpdateShaderResourceArray(ID3D11DeviceContext * pd3dDeviceContext)
 	{
 		pd3dDeviceContext->PSSetShaderResources(TX_SLOT_TEXTURE_ARRAY, 1, &m_pd3dSRVImagesArrays);
 	}
-	virtual void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResource(pd3dDeviceContext); }
+	inline void UpdateShaderResource(ID3D11DeviceContext * pd3dDeviceContext)
+	{
+		pd3dDeviceContext->PSSetShaderResources(0, 1, &m_pd3dSRVImagesArrays);
+	}
 };
-class CTxAnimation : public CEffect
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+struct TX_ANIMATION_VERTEX
 {
-	bool m_bInitilize   : 1;
-	bool m_bEnable      : 1;
-	bool m_bMove        : 1;
-	bool m_bTerminal    : 1;
-	bool m_bUseAccel    : 1;
-	bool m_bSubordinate : 1;
+	XMFLOAT2	xmf2FrameRatePercent;
+	XMFLOAT2	xmf2FrameTotalSize;
+};
+
+class CTxAnimationObject : public CEffect
+{
+protected:
+	CB_TX_ANIMATION_INFO m_cbInfo;
+	CTxAnimationObject * m_pNextEffect;
+	ID3D11Buffer * m_pd3dCSBuffer;
+	bool	 m_bUseAnimation;
+//	float	 m_fTimeStartUseAnimation;
+
+public:
+	CTxAnimationObject();
+	virtual ~CTxAnimationObject();
+
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+	void CreateBuffers(ID3D11Device * pd3dDevice, XMFLOAT2 & xmf2ObjSize, XMFLOAT2 & xmf2FrameTotalSize, XMFLOAT2 & xmf2FrameSize, UINT dwFrameNum, float dwFramePerTime);
+	/* 1 : info 구조체, 2 : 한 프레임 너비, 3 : 한 프레임 높이, 4 : 프레임 총 개수, 5 : 프레임 당 시간  */
+	void CalculateCSInfoTime(TX_ANIMATION_VERTEX & vertex, XMFLOAT2 & xmf2ObjSize, XMFLOAT2 & xmf2FrameSize, UINT dwFrameNum, float dwFramePerTime);
+	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
+
+public:
+	void UseAnimation() { m_bUseAnimation = true; }
+
+	bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE);
+	bool Disable();
+	void NextEffectOn();
+	bool IsTermainal() { return (m_pNextEffect) ? m_pNextEffect->IsTermainal() : !m_bEnable; }
+
+public:
+	void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResource(pd3dDeviceContext); }
+	void Animate(float fTimeElapsed);
+	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+};
+
+class CCircleMagic : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CIceSpear : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CIceBolt : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CElectricBolt : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CElementSpike : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+struct PARTICLE_INFO
+{
+	XMFLOAT3 m_xmf3Pos;
+	XMFLOAT3 m_xmf3Velocity;
+	XMFLOAT2 m_xmf2Size;
+	float	 m_fAge;
+	float	 m_uType;
 };
 
 class CParticle : public CEffect
 {
-	//ID3D11Query * m_pd3dQuery;
-private:
+protected:
 	CB_PARTICLE m_cbParticle;
 
 	bool m_bInitilize   : 1;
-	bool m_bEnable      : 1;
-	bool m_bMove        : 1;
-	bool m_bTerminal	: 1;
-	bool m_bUseAccel    : 1;
-	bool m_bSubordinate : 1;
-
 	//UINT m_bExtra     : 28;
-
-	MoveVelocity m_velocity;
-	float m_fDurability;
-
 	ID3D11Buffer * m_pd3dInitialVertexBuffer;
 	ID3D11Buffer * m_pd3dStreamOutVertexBuffer;
-	ID3D11Buffer * m_pd3dDrawVertexBuffer;
 
 	ID3D11Buffer * m_pd3dCSParticleBuffer;
 
@@ -100,7 +165,6 @@ public:
 
 	CB_PARTICLE * GetCBParticle() { return &m_cbParticle; }
 	void Update(float fTimeElapsed);
-	void MoveUpdate(const float & fGameTime, const float & fTimeElapsed);
 	void LifeUpdate(const float & fGameTime, const float & fTimeElapsed);
 
 	virtual void Initialize(ID3D11Device *pd3dDevice);
@@ -109,33 +173,28 @@ public:
 
 	void StreamOut(ID3D11DeviceContext *pd3dDeviceContext);
 	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
-
+	void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResourceArray(pd3dDeviceContext); }
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 
 public:
-	void SetDurabilityTime(float fTime)   { m_fDurability = fTime; }
 	void SetLifeTime(float fLifeTime)     { m_cbParticle.m_fLifeTime = fLifeTime; }
 	void SetEmitPosition(XMFLOAT3 & pos)  { m_cbParticle.m_vParticleEmitPos = pos; }
 	void SetEmitDirection(XMFLOAT3 & dir) { m_cbParticle.m_vParticleVelocity = dir; }
 	void SetAccelation(XMFLOAT3 & accel)  { m_cbParticle.m_vAccel = accel; }
 	void SetParticleSize(float fSize)     { m_cbParticle.m_fMaxSize = fSize; }
 
-	void SetMoveVelocity(XMFLOAT3 & vel)  { m_velocity.xmf3Velocity = vel; }
-	void SetMoveAccel(XMFLOAT3 & acc)     { m_velocity.xmf3Accelate = acc; }
-
-	bool IsAble() { return m_bEnable; }
-	bool Enable(XMFLOAT3 * pos = nullptr);
+	bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE);
 	bool Disable();
 
 	void NextParticleOn();
 
 	bool IsTermainal() { return (m_pcNextParticle) ? m_pcNextParticle->IsTermainal() : !m_bEnable; }
-	bool IsSubordinative() { return m_bSubordinate; }
 };
 
 class CSmokeBoomParticle : public CParticle
 {
 	static const UINT m_nMaxParticlenum = 200;
+
 public:
 	CSmokeBoomParticle(){}
 	virtual ~CSmokeBoomParticle(){}
@@ -146,6 +205,7 @@ public:
 class CFireBallParticle : public CParticle
 {
 	static const UINT m_nMaxParticlenum = 500;
+
 public:
 	CFireBallParticle() {}
 	virtual ~CFireBallParticle() {}
@@ -155,7 +215,8 @@ public:
 
 class CRainParticle : public CParticle
 {
-	static const UINT m_nMaxParticlenum = 1400;
+	static const UINT m_nMaxParticlenum = 4000;
+
 public:
 	CRainParticle(){}
 	virtual ~CRainParticle(){}
@@ -410,7 +471,7 @@ public:
 
 class CBillboardObject : public CGameObject
 {
-	XMFLOAT2 m_xv2Size;
+	XMFLOAT2 m_xv2Size;	
 	XMFLOAT4 m_xv4InstanceData;
 
 public:

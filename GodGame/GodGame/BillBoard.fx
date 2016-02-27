@@ -5,7 +5,7 @@ struct VS_BILLBOARD_INPUT
 {
 	float3 pos                         : POSITION;
 	float2 sizeW                       : SIZE;
-	float4 posW                        : INSTANCEPOS;
+	float4 instanceW                   : INSTANCE;
 };
 
 struct VS_BILLBOARD_OUTPUT
@@ -14,7 +14,7 @@ struct VS_BILLBOARD_OUTPUT
 	float2 sizeW                       : SIZE;
 };
 
-struct GS_BILLBOARD_OUTPUT
+struct GS_BILLBOARD_ARRAY_OUTPUT
 {
 	float4 posH                        : SV_POSITION;
 	float3 posW                        : POSITION;
@@ -23,10 +23,18 @@ struct GS_BILLBOARD_OUTPUT
 	uint primID                        : SV_PrimitiveID;
 };
 
+struct GS_BILLBOARD_COLOR_OUTPUT
+{
+	float4 posH                        : SV_POSITION;
+	float3 posW                        : POSITION;
+	float4 color                       : COLOR;
+	float2 texCoord                    : TEXCOORD;
+};
+
 struct VS_BILLBOARD_CUBE_INPUT
 {
 	float3 pos                         : POSITION;
-	float sizeW : SIZE;
+	float sizeW						   : SIZE;
 };
 
 struct VS_BILLBOARD_CUBE_OUTPUT
@@ -53,7 +61,7 @@ struct VS_INSTANCE_CUBE_INPUT
 
 struct VS_INSTANCE_CUBE_OUTPUT
 {
-	float sizeW : SIZE;
+	float sizeW						   : SIZE;
 	float3 centerW                     : POSITION;
 	//float3 pos                       : POSITION
 };
@@ -86,7 +94,7 @@ VS_BILLBOARD_OUTPUT VSBillboard(VS_BILLBOARD_INPUT input, uint instID : SV_Insta
 {
 	VS_BILLBOARD_OUTPUT output;
 	//output.centerW.xyz = input.posW.xyz;// +input.pos;
-	output.centerW = input.posW;
+	output.centerW = input.instanceW;
 	//output.centerW.w = instID;
 	output.sizeW = input.sizeW;
 	return output;
@@ -95,12 +103,12 @@ VS_BILLBOARD_OUTPUT VSBillboard(VS_BILLBOARD_INPUT input, uint instID : SV_Insta
 [maxvertexcount(4)]
 void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
 	//uint primID : SV_InstanceID,
-	inout TriangleStream<GS_BILLBOARD_OUTPUT> triStream)
+	inout TriangleStream<GS_BILLBOARD_ARRAY_OUTPUT> triStream)
 {
-	float3 vUp = float3(0.0f, 1.0f, 0.0f);
-	float3 vLook = gf3CameraPos.xyz - input[0].centerW;
-	vLook.y = 0.0f;
-	vLook = normalize(vLook);
+	float3 vUp    = float3(0.0f, 1.0f, 0.0f);
+	float3 vLook  = gf3CameraPos.xyz - input[0].centerW;
+	vLook.y       = 0.0f;
+	vLook         = normalize(vLook);
 	float3 vRight = cross(vUp, vLook);
 
 	float fHalfW = 0.5f * input[0].sizeW.x;
@@ -116,23 +124,60 @@ void GSBillboard(point VS_BILLBOARD_OUTPUT input[1],
 	pVertices[2] = float4(PosW - vWidth - vHeight, 1.0f);
 	pVertices[3] = float4(PosW - vWidth + vHeight, 1.0f);
 
-	GS_BILLBOARD_OUTPUT output;
+	GS_BILLBOARD_ARRAY_OUTPUT output;
 	for (int i = 0; i < 4; ++i)
 	{
-		output.posW = pVertices[i].xyz;
-		output.posH = mul(pVertices[i], gmtxViewProjection);
-		output.normalW = vLook;
+		output.posW     = pVertices[i].xyz;
+		output.posH     = mul(pVertices[i], gmtxViewProjection);
+		output.normalW  = vLook;
 		output.texCoord = gvQuadTexCoord[i];
-		output.primID = input[0].centerW.w;
+		output.primID   = input[0].centerW.w;
 		triStream.Append(output);
 	}
 }
 
-PS_MRT_OUT PSBillboardTextureArray(GS_BILLBOARD_OUTPUT input) : SV_Target
+[maxvertexcount(4)]
+void GSBillboardColor(point VS_BILLBOARD_OUTPUT input[1],
+	//uint primID : SV_InstanceID,
+	inout TriangleStream<GS_BILLBOARD_COLOR_OUTPUT> triStream)
+{
+	float3 vUp    = float3(0.0f, 1.0f, 0.0f);
+	float3 vLook  = gf3CameraPos.xyz - input[0].centerW;
+	vLook.y       = 0.0f;
+	vLook         = normalize(vLook);
+	float3 vRight = cross(vUp, vLook);
+
+	float fHalfW   = 0.5f * input[0].sizeW.x;
+	float fHalfH   = 0.5f * input[0].sizeW.y;
+
+	float3 vWidth  = fHalfW * vRight;
+	float3 vHeight = fHalfH * vUp;
+	float3 PosW    = input[0].centerW.xyz;
+
+	float4 pVertices[4];
+	pVertices[0] = float4(PosW + vWidth - vHeight, 1.0f);
+	pVertices[1] = float4(PosW + vWidth + vHeight, 1.0f);
+	pVertices[2] = float4(PosW - vWidth - vHeight, 1.0f);
+	pVertices[3] = float4(PosW - vWidth + vHeight, 1.0f);
+
+	PosW = gf3CameraPos.xyz - PosW;
+
+	GS_BILLBOARD_COLOR_OUTPUT output;
+	for (int i = 0; i < 4; ++i)
+	{
+		output.posH     = mul(pVertices[i], gmtxViewProjection);
+		output.posW     = PosW;
+		output.color    = gcColors[uint(input[0].centerW.w)];
+		output.texCoord = gvQuadTexCoord[i];
+		triStream.Append(output);
+	}
+}
+
+PS_MRT_OUT PSBillboardTextureArray(GS_BILLBOARD_ARRAY_OUTPUT input) : SV_Target
 {
 	float3 uvw = float3(input.texCoord, (input.primID % 4));
 	float4 cColor = gTextureArray.Sample(gSamplerState, uvw);
-	if (cColor.a <= 0.15) discard;
+	if (cColor.a < 0.1) discard;
 
 	PS_MRT_OUT output;
 
@@ -145,8 +190,23 @@ PS_MRT_OUT PSBillboardTextureArray(GS_BILLBOARD_OUTPUT input) : SV_Target
 	return output;
 }
 
+PS_MRT_OUT PSBillboardColor(GS_BILLBOARD_COLOR_OUTPUT input) : SV_Target
+{
+	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
+	if (cColor.a < 0.1) discard;
 
-PS_MRT_OUT PSBillboard(GS_BILLBOARD_OUTPUT input) : SV_Target
+	PS_MRT_OUT output;
+
+	output.vNormal  = vZero;
+	output.vPos     = float4(input.posW, 1.0f);
+	output.vDiffuse = vZero;
+	output.vSpec    = vZero;
+	output.vTxColor = cColor * input.color * 10;
+
+	return output;
+}
+
+PS_MRT_OUT PSBillboard(GS_BILLBOARD_ARRAY_OUTPUT input) : SV_Target
 {
 	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
 	if (cColor.a <= 0.15) discard;
@@ -161,7 +221,6 @@ PS_MRT_OUT PSBillboard(GS_BILLBOARD_OUTPUT input) : SV_Target
 
 	return output;
 }
-
 
 VS_BILLBOARD_CUBE_OUTPUT VSCubeBillboard(VS_BILLBOARD_CUBE_INPUT input)
 {

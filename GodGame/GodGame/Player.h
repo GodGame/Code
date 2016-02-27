@@ -3,7 +3,6 @@
 //#include "Camera.h"
 #include "GameInfo.h"
 
-
 class CPlayer : public CDynamicObject
 {
 protected:
@@ -37,8 +36,6 @@ protected:
 	CScene * m_pScene;
 
 public:
-	int m_nEnergy;
-
 	CPlayer(int nMeshes = 1);
 	virtual ~CPlayer();
 	virtual void BuildObject() {}
@@ -101,9 +98,6 @@ public:
 	//플레이어의 카메라가 3인칭 카메라일 때 플레이어 메쉬를 렌더링한다.
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 	virtual void Animate(float fTimeElapsed);
-
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra);
-	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
 };
 
 class CTerrainPlayer : public CPlayer
@@ -120,7 +114,7 @@ public:
 
 class CInGamePlayer : public CTerrainPlayer
 {
-	ElementEnergy	m_nEnergies;
+	ElementEnergy	m_nElemental;
 	StatusInfo		m_Status;
 
 	CBuff		  * m_pBuff;
@@ -131,7 +125,18 @@ public:
 	virtual ~CInGamePlayer();
 	virtual void BuildObject();
 
+	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra);
+	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
+
 public:
-	ElementEnergy & GetEnergyNum() { return m_nEnergies; }
-	//void AddEnergy(Element)
+	BYTE & GetEnergyNum(UINT index) { return m_nElemental.m_nEnergies[index]; }
+	BYTE & GetEnergyNum() { return m_nElemental.m_nSum; }
+	
+	void AddEnergy(UINT index, UINT num = 0);
+
+	UINT UseEnergy(UINT index, BYTE energyNum, bool bForced = false);
+	UINT UseEnergy(UINT energyNum, bool bForced = false);
+	UINT UseAllEnergy(UINT energyNum, bool bForced = false);
+
+	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
 };

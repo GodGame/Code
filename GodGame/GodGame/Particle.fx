@@ -17,8 +17,8 @@ cbuffer cbParticleInfo : register(b4)
 
 	float  gfNewTime;
 	float  gMaxSize;
-	float  gnColorInfo;
-	float  gbEnable;
+	uint   gnColorInfo;
+	uint   gbEnable;
 };
 
 struct PARTICLE_INPUT
@@ -43,11 +43,11 @@ struct PARTICLE_GSIN
 struct PARTICLE_PSIN
 {
 	float4 posH  : SV_POSITION;
-	float3 posW  : POSITION;
+//	float3 posW  : POSITION;
 //	float fOpacity : OPACITY;
-	float fagePercent : AGE;
 	float4 color : COLOR;
 	float2 tex   : TEXCOORD;
+	float fagePercent : AGE;
 };
 
 PARTICLE_INPUT VSParticleSO(PARTICLE_INPUT input)
@@ -93,10 +93,13 @@ PARTICLE_GSIN VSParticleDraw(PARTICLE_INPUT input)
 	float t            = input.age;
 	output.velocity    = (0.5f * gvAccel * t * t) + (input.velocity * t);
 	output.pos         = output.velocity + input.pos;
-	output.fagePercent = t / gfLifeTime;
-	float fOpacity     = 1.0f - smoothstep(0.0f, 1.0f, output.fagePercent);
+	output.fagePercent = (t / gfLifeTime);
+	float fOpacity = 1.0f - smoothstep(0.0f, 1.0f, output.fagePercent);
+	output.fagePercent += 0.85f;
 
-	output.color = gcColors[uint(gnColorInfo)] * fOpacity;
+	output.color = gcColors[uint(gnColorInfo)];
+	output.color *= fOpacity;// *fOpacity;
+	output.color.rgb *= fOpacity * fOpacity; // *gcFogCOl;
 
 	output.size = input.size;
 	output.type = input.type;
@@ -110,9 +113,10 @@ void GSParticleDraw(point PARTICLE_GSIN input[1], inout TriangleStream<PARTICLE_
 	if (input[0].type == PARTICLE_TYPE_EMITTER) return;
 	//if (input[0].color.a < 0.02f) return;
 
-	float3 vLook  = normalize(gf3CameraPos.xyz - input[0].pos);
-	float3 vUp	  = normalize(input[0].velocity); //cross(vLook, vRight);
-	float3 vRight = cross(vUp, vLook);			  //normalize(cross(float3(0.0f, 1.0f, 0.0f), vLook));
+//	float3 vToCamera = gf3CameraPos.xyz - input[0].pos;
+	float3 vLook     = normalize(gf3CameraPos.xyz - input[0].pos);
+	float3 vUp	     = normalize(input[0].velocity); //cross(vLook, vRight);
+	float3 vRight    = cross(vUp, vLook);			  //normalize(cross(float3(0.0f, 1.0f, 0.0f), vLook));
 
 	float fHalfWidth = 0.5f * input[0].size.x, fHalfHeight = 0.5f * input[0].size.y;
 	float4 vQuad[4];
@@ -126,7 +130,7 @@ void GSParticleDraw(point PARTICLE_GSIN input[1], inout TriangleStream<PARTICLE_
 	for (int i = 0; i < 4; ++i)
 	{
 		output.posH        = mul(vQuad[i], gmtxViewProjection);
-		output.posW        = vQuad[i].xyz;
+//		output.posW		   = vToCamera;
 		output.tex         = gvQuadTexCoord[i];
 		output.fagePercent = input[0].fagePercent;
 		output.color       = input[0].color;
@@ -138,14 +142,14 @@ PS_MRT_OUT PSParticleDraw(PARTICLE_PSIN input)
 {
 	PS_MRT_OUT output;
 
-	float3 uvw = float3(input.tex, uint(input.fagePercent + 0.85f));// 0);//(input.primID % 4));
+	float3 uvw = float3(input.tex, uint(input.fagePercent));// 0);//(input.primID % 4));
 	float4 cColor = gTextureArray.Sample(gSamplerState, uvw);
 	//if (cColor.a < 0.02f) discard;
 
-	output.vNormal  = float4(0, 0, 0, 0);
-	output.vPos     = float4(1, 1, 1, 1);
-	output.vDiffuse = float4(1, 1, 1, 0);
-	output.vSpec    = float4(0, 0, 0, 1);
+	output.vNormal  = vZero;
+	output.vPos     = vZero;//float4(input.posW, 1) ;//float4(input.posW, 0);
+	output.vDiffuse = vZero;
+	output.vSpec    = vZero;
 	output.vTxColor = (cColor * input.color);
 	return(output);
 }
@@ -167,7 +171,7 @@ void GSRainSO(point PARTICLE_INPUT input[1], inout PointStream<PARTICLE_INPUT> P
 				vRandom           = abs(normalize(vRandom));
 
 				PARTICLE_INPUT particle;
-				particle.pos      = gvParticleEmitPos.xyz + (vRandom * 2048.0f);
+				particle.pos      = gvParticleEmitPos.xyz + (vRandom * 1024.0f);
 				particle.pos.y    = gvParticleEmitPos.y;
 				particle.size     = gMaxSize;
 				particle.velocity = gvParticleVelocity;
@@ -204,7 +208,7 @@ RAIN_GSIN VSRainDraw(PARTICLE_INPUT input)
 	RAIN_GSIN output;
 
 	float t = input.age;
-	output.pos = (0.5f * gvAccel * t * t) + (input.velocity * t) + input.pos;
+	output.pos = (input.velocity * t) + input.pos;
 	output.size = input.size;
 	output.type = input.type;
 
@@ -235,11 +239,11 @@ PS_MRT_OUT PSRainDraw(RAIN_PSIN input)
 {
 	PS_MRT_OUT output;
 
-	output.vNormal  = float4(0, 0, 0, 0);
+	output.vNormal  = vZero;
 	output.vPos		= float4(input.posW, 1);// cColor;
-	output.vDiffuse = float4(1, 1, 1, 0);
-	output.vSpec    = float4(0, 0, 0, 1);
-	output.vTxColor = float4(0.8, 0.8, 1, 1);
+	output.vDiffuse = vOne;
+	output.vSpec    = vOne;
+	output.vTxColor = float4(0.8, 0.8, 0.8, 1);
 
 	return(output);
 }

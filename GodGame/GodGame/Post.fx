@@ -18,7 +18,6 @@ struct PS_SCENE_INPUT
 	float2 tex			: TEXCOORD;
 };
 
-
 cbuffer cbPS : register(b0)
 {
 	float4    g_param; // : packoffset(c0);
@@ -36,9 +35,6 @@ PS_SCENE_INPUT VSScreen(VS_SCENE_INPUT input)
 float4 InfoScreen(PS_SCENE_INPUT input) : SV_Target
 {
 	int3 uvm = int3(input.pos.xy, 0);
-	//float2 Tex = float2((float)input.pos.x / FRAME_BUFFER_WIDTH, (float)input.pos.y / FRAME_BUFFER_HEIGHT);
-	//float4 color = gtxtTexture.Sample(gSamplerState, Tex);
-	//float4 color = gtxtTexture.Sample(gSamplerState, input.tex);
 
 	float4 color = gtxtTexture.Load(uvm);
 	return color;
@@ -53,14 +49,16 @@ float4 LightScreen(PS_SCENE_INPUT input) : SV_Target
 
 float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 {
-	int3 uvm        = int3(input.pos.xy, 0);	// (u, v, level)
+	uint3 uvm       = uint3(input.pos.xy, 0);
 	float4 normal   = gtxtNormal.Load(uvm);
-	float3 pos      = gtxtPos.Load(uvm).xyz;
+	float3 pos      = gtxtPos.Load(uvm);
+//	float3 pos      = position.xyz;
 	float4 diffuse  = pow(gtxtDiffuse.Load(uvm), 2.2);	// 2.2
 	float4 specular = gtxtSpecular.Load(uvm);
 	float4 txColor  = pow(gtxtTxColor.Load(uvm), 2.2);// 2.2
 
 	float4 color = txColor;
+	float distance = 0;
 	if (diffuse.a > 0.0)
 	{
 		float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
@@ -72,10 +70,16 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 		fShadowFactor = CalcOneShadowFactor(shadowPos, fShadowFactor);
 #endif
 		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular) * txColor;
-		float distance = length(pos - gvCameraPosition.xyz);
-		color = FogLerp(color, distance);
-		//color = FogExp(color, distance, 0.88f);
+	
+		distance = length(pos - gvCameraPosition.xyz);
+		//color = FogLerp(color, distance);
 	}
+	else
+	{
+		distance = length(pos);
+	}
+	color = FogLerp(color, distance);
+
 #ifdef LUMCOLOR
 	color   = float4(LumToColor(color), 1);//float4(LumToColor(ColorToLum(rgb)), 1);
 	color.r = min(LUM_WHITE, color.r);

@@ -9,6 +9,8 @@ bool bIsKeyDown = false;
 
 CSceneInGame::CSceneInGame() : CScene()
 {
+	m_nParticleShaderNum = 0;
+	m_nEffectShaderNum = 0;
 }
 
 CSceneInGame::~CSceneInGame()
@@ -55,9 +57,16 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pTrees->BuildObjects(pd3dDevice, GetTerrain());
 		m_ppShaders[index++] = pTrees;
 
+		CTextureAniShader * pTxAni = new CTextureAniShader();
+		pTxAni->CreateShader(pd3dDevice);
+		pTxAni->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
+		m_nEffectShaderNum = index;
+		m_ppShaders[index++] = pTxAni;
+
 		CParticleShader * pParticleShader = new CParticleShader();
 		pParticleShader->CreateShader(pd3dDevice);
 		pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
+		m_nParticleShaderNum = index;
 		m_ppShaders[index++] = pParticleShader;
 
 		CSceneShader * pSceneShader = new CSceneShader();
@@ -241,11 +250,11 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case 'Z':
-			if (m_pLights->m_pLights[1].m_bEnable) m_pLights->m_pLights[1].m_bEnable = false;
-			else m_pLights->m_pLights[1].m_bEnable = true;
+		//case 'Z':
+		//	if (m_pLights->m_pLights[1].m_bEnable) m_pLights->m_pLights[1].m_bEnable = false;
+		//	else m_pLights->m_pLights[1].m_bEnable = true;
 
-			break;
+		//	break;
 		//case 'N':
 		//	pMat = MaterialMgr.GetObjects("White");
 		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0, 0, 0, 0);
@@ -270,13 +279,28 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		//case 'B':
 		//	bIsKeyDown = !bIsKeyDown;
 		//	break;
-		case 'X' :
+		case 'B' :
 			pPlayer = m_pPlayerShader->GetPlayer();
-			((CParticleShader*)m_ppShaders[5])->ParticleOn(4, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
+			((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn(4, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
 			break;
 			//case VK_SPACE:
 			//	FRAMEWORK.ChangeGameScene(new CSceneTitle());
 			//	break;
+
+		case 'Z':
+			pPlayer = m_pPlayerShader->GetPlayer();
+			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(0, &pPlayer->GetPosition());
+			break;
+
+		case 'X':
+			pPlayer = m_pPlayerShader->GetPlayer();
+			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(1, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVector());
+			break;
+
+		case 'C':
+			pPlayer = m_pPlayerShader->GetPlayer();
+			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(2, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), nullptr);
+			break;
 		}
 		break;
 	}
@@ -460,11 +484,13 @@ CHeightMapTerrain *CSceneInGame::GetTerrain()
 
 void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
+	XMFLOAT4 xmf4Data;
+
 	switch (eMSG)
 	{
 	case eMessage::MSG_PARTICLE_ON:
-		//cout << "Particle : " << *(XMFLOAT3*)extra << endl;
-		((CParticleShader*)m_ppShaders[5])->ParticleOn((XMFLOAT3*)extra);
+		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
+		((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn((XMFLOAT3*)&xmf4Data, xmf4Data.w);
 		return;
 	case eMessage::MSG_MOUSE_DOWN:
 		m_ptOldCursorPos = *(POINT*)extra;

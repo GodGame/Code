@@ -155,6 +155,21 @@ public:
 
 #define MaterialMgr CMaterialMgr::GetInstance()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+struct CB_TX_ANIMATION_INFO
+{
+	float  m_fGameTime;
+	float  m_fFramePerTime;
+	XMFLOAT2 m_xmf2Size;
+	//float  m_fFrameWidthPercent;
+	//float  m_fFrameHeightPercent;
+
+	XMFLOAT3 m_xmf3Pos;
+	float    m_nColorNum;
+
+	XMFLOAT3 m_xmf3LookVector;
+	float    m_bMove;
+};
+
 struct CB_PARTICLE
 {
 	XMFLOAT3 m_vParticleEmitPos;
@@ -165,8 +180,8 @@ struct CB_PARTICLE
 	float m_fTimeStep;
 	float m_fNewTime;
 	float m_fMaxSize;
-	float m_nColorNum;
-	float m_bEnable;
+	UINT  m_nColorNum;
+	UINT  m_bEnable;
 };
 
 class CViewManager

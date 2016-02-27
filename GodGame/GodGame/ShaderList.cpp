@@ -195,7 +195,7 @@ void CBillboardShader::CreateShader(ID3D11Device *pd3dDevice)
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
+		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
 	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
@@ -264,7 +264,7 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	int nTreeInstance = 0;
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(m_pd3dTreeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	VS_VB_WORLD_POSITION *pnTreeInstances = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
+	XMFLOAT4 *pnTreeInstances = (XMFLOAT4 *)d3dMappedResource.pData;
 
 	CBillboardObject * pTree = nullptr;
 	//XMFLOAT4 xmfInstanceData;
@@ -275,7 +275,7 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 		//pTree->SetActive(true);
 		if (pTree->IsVisible(pCamera))
 		{
-			pnTreeInstances[nTreeInstance].m_xv3Position = pTree->GetInstanceData();
+			pnTreeInstances[nTreeInstance] = pTree->GetInstanceData();
 		//	printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
 			nTreeInstance++;
 		}
@@ -312,14 +312,14 @@ void CBillboardShader::AllRender(ID3D11DeviceContext * pd3dDeviceContext, UINT u
 {
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(m_pd3dTreeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	VS_VB_WORLD_POSITION *pnTreeInstances = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
+	XMFLOAT4 *pnTreeInstances = (XMFLOAT4 *)d3dMappedResource.pData;
 
 	CBillboardObject * pTree = nullptr;
 	XMFLOAT4 xmfInstanceData;
 	for (int j = 0; j < m_nTrees; ++j)
 	{
 		pTree = (CBillboardObject*)m_ppObjects[j];
-		pnTreeInstances[j].m_xv3Position = pTree->GetInstanceData();
+		pnTreeInstances[j] = pTree->GetInstanceData();
 	}
 	pd3dDeviceContext->Unmap(m_pd3dTreeInstanceBuffer, 0);
 
@@ -408,8 +408,6 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	{
 		pObject = new CGameObject(1);
 		pObject->SetMesh(pCubeMesh);
-		//	pObject->SetRotationAxis(XMFLOAT3(0.0f, 1.0f, 0.0f));
-		//	pObject->SetRotationSpeed(36.0f * (i % 10) + 36.0f);
 		pObject->SetTexture(pSwordTexture);
 		pObject->SetMaterial(pMaterial);
 		pObject->AddRef();
@@ -477,12 +475,12 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "SIZE", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
+		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
 	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSBillboard", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
+	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSBillboardColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSBillboardColor", "gs_5_0", &m_pd3dGeometryShader);
 #endif
 }
 
@@ -496,10 +494,10 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 	m_pMaterial = pMat;//pMaterial;
 	pMat->AddRef();//if (pMaterial) pMaterial->AddRef();
-	m_nObjects = m_nCubes = 500;
+	m_nObjects = m_nCubes = (ELEMENT_NUM * 100);
 
-	XMFLOAT3 xmf3Pos;
-	XMFLOAT2 xmf2Size = XMFLOAT2(20, 40);
+//	XMFLOAT3 xmf3Pos;
+	XMFLOAT2 xmf2Size(6, 6);
 
 	//m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
 	m_nInstanceBufferStride = sizeof(XMFLOAT4);
@@ -513,7 +511,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 #ifdef DRAW_GS_SPHERE
 	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 20, 5);
 #else
-	CBillBoardVertex * pPointMesh = new CBillBoardVertex(pd3dDevice, 5, 5);
+	CBillBoardVertex * pPointMesh = new CBillBoardVertex(pd3dDevice, 6, 6);
 #endif
 	CGameObject *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
@@ -524,7 +522,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 #ifdef DRAW_GS_SPHERE
 		pObject = new CGameObject(1);//CBillboardObject(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5) );
 #else
-		pObject = new CAbsorbMarble(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5));
+		pObject = new CAbsorbMarble(XMFLOAT3(fx, fy, fz), (i % ELEMENT_NUM), xmf2Size);
 #endif
 		pObject->SetMesh(pPointMesh);
 		//pObject->SetMaterial(pMat);
@@ -558,11 +556,12 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 	int nCubeInstance = 0;
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(m_pd3dCubeInstanceBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
-	VS_VB_WORLD_POSITION *pnTreeInstance = (VS_VB_WORLD_POSITION *)d3dMappedResource.pData;
+	XMFLOAT4 *pnTreeInstance = (XMFLOAT4 *)d3dMappedResource.pData;
 
 	XMFLOAT3 xmf3Pos;
 
 #ifdef DRAW_GS_SPHERE
+	CBillboardObject * pTree = nullptr;
 	for (int j = 0; j < m_nCubes; j++)
 	{
 #ifdef _QUAD_TREE
@@ -571,8 +570,8 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 		if (m_ppObjects[j]->IsVisible(pCamera))
 #endif
 		{
-			xmf3Pos = m_ppObjects[j]->GetPosition();
-			pnTreeInstance[nCubeInstance].m_xv3Position = XMFLOAT4(xmf3Pos.x, xmf3Pos.y, xmf3Pos.z, 1.0f);
+			pTree = (CBillboardObject*)m_ppObjects[j];
+			pnTreeInstance[nCubeInstance] = pTree->GetInstanceData();
 			//printf("%0.2f %0.2f %0.2f \n", xmf3Pos.x, xmf3Pos.y, xmf3Pos.z);
 			nCubeInstance++;
 		}
@@ -590,7 +589,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 		if (pTree->IsVisible(pCamera))
 #endif
 		{
-			pnTreeInstance[nCubeInstance].m_xv3Position = pTree->GetInstanceData();
+			pnTreeInstance[nCubeInstance] = pTree->GetInstanceData();
 			nCubeInstance++;
 		}
 		m_ppObjects[j]->SetActive(false);
@@ -751,6 +750,117 @@ void CNormalShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	m_ppObjects[m_nObjects - 1]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	m_Bump.m_xv3BumpScale.y = 20;
 }
+////////////////////////////////////////////////////////////////////////
+CTextureAniShader::CTextureAniShader()
+{
+	m_ppEffctsObjects  = nullptr;
+	m_pd3dBlendState   = nullptr;
+	m_pd3dSamplerState = nullptr;
+}
+
+CTextureAniShader::~CTextureAniShader()
+{
+	if (m_ppEffctsObjects)
+	{
+		for (int i = 0; i < m_nObjects; ++i)
+			delete m_ppEffctsObjects[i];
+	}
+	delete[] m_ppEffctsObjects;
+
+	if (m_pd3dBlendState) m_pd3dBlendState->Release();
+	if (m_pd3dSamplerState) m_pd3dSamplerState->Release();
+}
+
+void CTextureAniShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputElements);
+
+	CreateVertexShaderFromFile(pd3dDevice, L"TextureAni.fx", "VSTextureAnimate", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"TextureAni.fx", "PSTextureAnimate", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"TextureAni.fx", "GSTextureAnimate", "gs_5_0", &m_pd3dGeometryShader);
+}
+
+void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
+{
+	//D3D11_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
+	//ZeroMemory(&d3dDepthStencilDesc, sizeof(d3dDepthStencilDesc));
+	//d3dDepthStencilDesc.DepthEnable = false;
+	//d3dDepthStencilDesc.StencilEnable = false;
+	//d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	//pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dSODepthStencilState);
+
+	//d3dDepthStencilDesc.DepthEnable = true;
+	//d3dDepthStencilDesc.StencilEnable = false;
+	//d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; //D3D11_DEPTH_WRITE_MASK_ZERO;
+	//pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dDepthStencilState);
+
+	D3D11_BLEND_DESC d3dBlendStateDesc;
+	ZeroMemory(&d3dBlendStateDesc, sizeof(D3D11_BLEND_DESC));
+	d3dBlendStateDesc.IndependentBlendEnable = false;
+	int index = 0;
+	ZeroMemory(&d3dBlendStateDesc.RenderTarget[index], sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
+	d3dBlendStateDesc.AlphaToCoverageEnable                     = true;
+	d3dBlendStateDesc.RenderTarget[index].BlendEnable           = false;
+	d3dBlendStateDesc.RenderTarget[index].SrcBlend              = D3D11_BLEND_SRC_ALPHA;// D3D11_BLEND_ONE;
+	d3dBlendStateDesc.RenderTarget[index].DestBlend             = D3D11_BLEND_SRC_ALPHA;//D3D11_BLEND_SRC_ALPHA
+	d3dBlendStateDesc.RenderTarget[index].BlendOp               = D3D11_BLEND_OP_SUBTRACT;//ADD
+	d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha         = D3D11_BLEND_ZERO;
+	d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha        = D3D11_BLEND_ZERO;
+	d3dBlendStateDesc.RenderTarget[index].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+	d3dBlendStateDesc.RenderTarget[index].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;//D3D11_COLOR_WRITE_ENABLE_RED | D3D11_COLOR_WRITE_ENABLE_ALPHA;
+	pd3dDevice->CreateBlendState(&d3dBlendStateDesc, &m_pd3dBlendState);
+
+	m_pd3dSamplerState = TXMgr.GetSamplerState("ss_linear_wrap");
+	m_pd3dSamplerState->AddRef();
+}
+
+void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain * pHeightMapTerrain, CMaterial * pMaterial)
+{
+	m_nObjects = 3;
+
+	m_ppEffctsObjects = new CTxAnimationObject*[m_nObjects];
+
+	m_ppEffctsObjects[0] = new CCircleMagic();
+	m_ppEffctsObjects[1] = new CElectricBolt();//CIceBolt();
+	m_ppEffctsObjects[2] = new CIceSpear();
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppEffctsObjects[i]->Initialize(pd3dDevice);
+	}
+
+	CreateStates(pd3dDevice);
+}
+
+void CTextureAniShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	pd3dDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	pd3dDeviceContext->PSSetSamplers(0, 1, &m_pd3dSamplerState);
+	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
+
+	//pd3dDeviceContext->PSSetSamplers(0, 1, &TXMgr.GetSamplerState("ss_linear_wrap"));
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		if (m_ppEffctsObjects[i]->IsAble())
+			m_ppEffctsObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
+
+	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+}
+
+void CTextureAniShader::AnimateObjects(float fTimeElapsed)
+{
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		if (m_ppEffctsObjects[i]->IsAble())
+			m_ppEffctsObjects[i]->Animate(fTimeElapsed);
+	}
+}
 
 CParticleShader::CParticleShader() : CShader()
 {
@@ -767,6 +877,7 @@ CParticleShader::CParticleShader() : CShader()
 	m_pd3dSamplerState        = nullptr;
 
 	m_pd3dStreamRain		  = nullptr;
+	m_pd3dVSRainDraw		  = nullptr;
 	m_pd3dGSRainDraw		  = nullptr;
 	m_pd3dPSRainDraw		  = nullptr;
 
@@ -778,21 +889,26 @@ CParticleShader::~CParticleShader()
 	m_vcAbleParticleArray.clear();
 	m_vcUsingParticleArray.clear();
 
-	for (int i = 0; i < m_nObjects; ++i)
-		delete m_ppParticle[i];
+	if (m_ppParticle)
+	{
+		for (int i = 0; i < m_nObjects; ++i)
+			delete m_ppParticle[i];
+		delete[] m_ppParticle;
+	}
 
 	if (m_pd3dcbGameInfo) m_pd3dcbGameInfo->Release();
 	if (m_pd3dSODepthStencilState) m_pd3dSODepthStencilState->Release();
 	if (m_pd3dDepthStencilState) m_pd3dDepthStencilState->Release();
 	if (m_pd3dBlendState) m_pd3dBlendState->Release();
-
-	if (m_pd3dRandomSRV) m_pd3dRandomSRV->Release();
 	if (m_pd3dSamplerState) m_pd3dSamplerState->Release();
 
-	if (m_pd3dGSSO) m_pd3dGSSO->Release();
+	if (m_pd3dRandomSRV) m_pd3dRandomSRV->Release();
+
 	if (m_pd3dVSSO) m_pd3dVSSO->Release();
+	if (m_pd3dGSSO) m_pd3dGSSO->Release();
 
 	if (m_pd3dStreamRain) m_pd3dStreamRain->Release();
+	if (m_pd3dVSRainDraw) m_pd3dVSRainDraw->Release();
 	if (m_pd3dGSRainDraw) m_pd3dGSRainDraw->Release();
 	if (m_pd3dPSRainDraw) m_pd3dPSRainDraw->Release();
 
@@ -834,6 +950,7 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSRainDraw", "vs_5_0", &m_pd3dVSRainDraw, d3dInputElements, nElements, &m_pd3dVertexLayout);
 	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSRainDraw", "gs_5_0", &m_pd3dGSRainDraw);
 	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSRainDraw", "ps_5_0", &m_pd3dPSRainDraw);
+	//m_pd3dVertexLayout->Release();
 }
 
 void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
@@ -856,9 +973,9 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 	int index = 0;
 	ZeroMemory(&d3dBlendStateDesc.RenderTarget[index], sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
 	d3dBlendStateDesc.AlphaToCoverageEnable                     = true;
-	d3dBlendStateDesc.RenderTarget[index].BlendEnable           = true;
+	d3dBlendStateDesc.RenderTarget[index].BlendEnable           = false;
 	d3dBlendStateDesc.RenderTarget[index].SrcBlend              = D3D11_BLEND_SRC_ALPHA;// D3D11_BLEND_ONE;
-	d3dBlendStateDesc.RenderTarget[index].DestBlend				= D3D11_BLEND_SRC_COLOR; //D3D11_BLEND_ONE;  
+	d3dBlendStateDesc.RenderTarget[index].DestBlend				= D3D11_BLEND_SRC_COLOR;//D3D11_BLEND_SRC_ALPHA; //D3D11_BLEND_ONE;  
 	d3dBlendStateDesc.RenderTarget[index].BlendOp				= D3D11_BLEND_OP_ADD;
 	d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha         = D3D11_BLEND_ZERO;
 	d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha        = D3D11_BLEND_ZERO;

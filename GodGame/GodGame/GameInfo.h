@@ -2,6 +2,14 @@
 #ifndef __GAME_INFO
 #define __GAME_INFO
 
+#define ELEMENT_LIGHT			COLOR_WHITE
+#define ELEMENT_FIRE			COLOR_RED
+#define ELEMENT_WIND			COLOR_GREEN
+#define ELEMENT_ICE				COLOR_BLUE
+#define ELEMENT_DARK			COLOR_BLACK
+#define ELEMENT_ELECTRIC		COLOR_YELLOW
+#define ELEMENT_NUM				6
+
 class CPlayer;
 class CDeBuff
 {
@@ -126,13 +134,11 @@ public:
 struct ElementEnergy
 {
 	BYTE m_nSum;
-	BYTE m_nDarkness;
-	BYTE m_nLight;
-	BYTE m_nFire;
-	BYTE m_nWind;
-	BYTE m_nIce;
-	BYTE m_nElectricity;
+	BYTE m_nMinNum;
+	BYTE m_nEnergies[ELEMENT_NUM];
 };
+
+ostream& operator<<(ostream& os, ElementEnergy & element);
 
 class Element
 {

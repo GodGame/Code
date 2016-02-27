@@ -6,9 +6,9 @@
 
 class CSceneInGame : public CScene
 {
-	//렌더 타겟 뷰 인터페이스에 대한 포인터이다. 
-	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
-	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
+	UINT m_nParticleShaderNum;
+	UINT m_nEffectShaderNum;
+
 	POINT m_ptOldCursorPos;
 	UINT  m_uHeightMapIndex;
 

@@ -279,41 +279,46 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 {
 	HRESULT hr = 0;
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	{
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-		InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
-		pd3dsrvTexture->Release();
-	}
-	{
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
+	pd3dsrvTexture->Release();
+	
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_title_jpg", 0);
+	pd3dsrvTexture->Release();
+	
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/cursor1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
+	pd3dsrvTexture->Release();
+	
+	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_fire"), _T("png"), 2);
+	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
+	pd3dsrvTexture->Release();
+	
+	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_smoke"), _T("png"), 2);
+	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_smoke_array", 0);
+	pd3dsrvTexture->Release();
+		
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_circle_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_circle.png", 0);
+	pd3dsrvTexture->Release();
+	
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_Ice_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_ice01.png", 0);
+	pd3dsrvTexture->Release();
+	
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/ice_spike02.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_ice_bolt.png", 0);
+	pd3dsrvTexture->Release();
+	
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/lightsphere2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_electric_bolt.png", 0);
+	pd3dsrvTexture->Release();
 
-		InsertShaderResourceView(pd3dsrvTexture, "srv_title_jpg", 0);
-		pd3dsrvTexture->Release();
-	}
-	{
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/cursor1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-
-		InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
-		pd3dsrvTexture->Release();
-	}
-	{
-		pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_fire"), _T("png"), 2);
-
-		InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
-		pd3dsrvTexture->Release();
-	}
-	{
-		pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_smoke"), _T("png"), 2);
-
-		InsertShaderResourceView(pd3dsrvTexture, "srv_particle_smoke_array", 0);
-		pd3dsrvTexture->Release();
-	}
-	//{
-	//	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/fire2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-
-	//	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire1.png", 0);
-	//	pd3dsrvTexture->Release();
-	//}
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/ice_sprite02.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_spike.png", 0);
+	pd3dsrvTexture->Release();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -674,21 +679,21 @@ void CViewManager::CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11Devic
 		ASSERT_S(pd3dDevice->CreateShaderResourceView(pBuffer2, &DescRV, &pSRV));
 		InsertSRV(pSRV, "su_reduce2"); pSRV->Release();
 	}
-	{
-		DescBuffer.ByteWidth = sizeof(float) * 16;
-		DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
-		DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
-		DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
+	//{
+	//	DescBuffer.ByteWidth = sizeof(float) * 16;
+	//	DescUAV.Buffer.NumElements = DescBuffer.ByteWidth / sizeof(float);
+	//	DescRV.Buffer.FirstElement = DescUAV.Buffer.FirstElement;
+	//	DescRV.Buffer.NumElements  = DescUAV.Buffer.NumElements;
 
-		ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer3)));
-		ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer3, &DescUAV, &pUAV)));
-		InsertUAV(pUAV, "su_4last_reduce"); pUAV->Release();
-		ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer3, &DescRV, &pSRV)));
-		InsertSRV(pSRV, "su_4last_reduce"); pSRV->Release();
-	}
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateBuffer(&DescBuffer, nullptr, &pBuffer3)));
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateUnorderedAccessView(pBuffer3, &DescUAV, &pUAV)));
+	//	InsertUAV(pUAV, "su_4last_reduce"); pUAV->Release();
+	//	ASSERT(SUCCEEDED(pd3dDevice->CreateShaderResourceView(pBuffer3, &DescRV, &pSRV)));
+	//	InsertSRV(pSRV, "su_4last_reduce"); pSRV->Release();
+	//}
 	pBuffer1->Release();
 	pBuffer2->Release();
-	pBuffer3->Release();
+	//pBuffer3->Release();
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Buffers for blooming effect in CS path
 	//ZeroMemory(&DescBuffer, sizeof(DescBuffer));
@@ -775,6 +780,11 @@ void CViewManager::BuildConstantBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceC
 	desc.ByteWidth = sizeof(CB_PARTICLE);
 	ASSERT_S(pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer));
 	InsertBuffer(pd3dBuffer, "cs_particle");
+	pd3dBuffer->Release();
+
+	desc.ByteWidth = sizeof(CB_TX_ANIMATION_INFO);
+	ASSERT_S(pd3dDevice->CreateBuffer(&desc, nullptr, &pd3dBuffer));
+	InsertBuffer(pd3dBuffer, "cs_tx_animation");
 	pd3dBuffer->Release();
 }
 
