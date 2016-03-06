@@ -76,6 +76,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_pSceneShader = pSceneShader;
 	}
 	{
+		//m_ppShaders[2]->EntityAllStaticObjects();
 		m_ppShaders[3]->EntityAllStaticObjects();
 
 		m_pPlayerShader = new CPlayerShader();

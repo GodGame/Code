@@ -4,6 +4,8 @@
 
 class CStaticShader : public CShader
 {
+	CMaterial * m_pMaterial;
+
 public:
 	CStaticShader();
 	virtual ~CStaticShader();

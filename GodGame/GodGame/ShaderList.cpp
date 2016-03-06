@@ -331,13 +331,13 @@ void CBillboardShader::AllRender(ID3D11DeviceContext * pd3dDeviceContext, UINT u
 CStaticShader::CStaticShader() : CShader()
 {
 	//m_pTexture = nullptr;
-	//m_pMaterial = nullptr;
+	m_pMaterial = nullptr;
 }
 
 CStaticShader::~CStaticShader()
 {
 	//if (m_pTexture) m_pTexture->Release();
-	//if (m_pMaterial) m_pMaterial->Release();
+	if (m_pMaterial) m_pMaterial->Release();
 }
 
 void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -368,8 +368,8 @@ void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
 {
-	//m_pMaterial = pMaterial;
-	//if (pMaterial) pMaterial->AddRef();
+	m_pMaterial = pMaterial;
+	if (pMaterial) pMaterial->AddRef();
 
 	//m_pTexture = pTexture;
 	//if (pTexture) pTexture->AddRef();
@@ -377,24 +377,37 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 
 	CTexture *pSwordTexture = new CTexture(3, 1, 0, 0);
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_d.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	pSwordTexture->SetTexture(0, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
+	{
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_d.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pSwordTexture->SetTexture(0, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_n.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	pSwordTexture->SetTexture(1, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_n.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pSwordTexture->SetTexture(1, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_s.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	pSwordTexture->SetTexture(2, pd3dsrvTexture);
-	pd3dsrvTexture->Release();
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_s.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pSwordTexture->SetTexture(2, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
 
-	pSwordTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		pSwordTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+	}
 
-	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 10.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+	vector<wstring> vcTxFileNames;
+	wstring baseDir{ _T("../Assets/Image/Objects/") };
+
+	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 2.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
 	//CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
 
-	m_nObjects = 1;
+	CLoadMeshByFbxcjh * pDemonMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Demon_T_Wiezzorek.fbxcjh"), 0.2f, vcTxFileNames);
+	CTexture *pDemonTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	vcTxFileNames.clear();
+
+	CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
+	CTexture *pAtienzaTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	vcTxFileNames.clear();
+
+	m_nObjects = 3;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	//CMaterial * pMat = new CMaterial();
@@ -408,15 +421,27 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	{
 		pObject = new CGameObject(1);
 		pObject->SetMesh(pCubeMesh);
-		pObject->SetTexture(pSwordTexture);
-		pObject->SetMaterial(pMaterial);
+		//pObject->SetTexture(pSwordTexture);
+		//pObject->SetMaterial(pMaterial);
 		pObject->AddRef();
 		m_ppObjects[i] = pObject;
 	}
+	float fHeight = 0;
+	fHeight = pHeightMapTerrain->GetHeight(1085, 220, false);
+	m_ppObjects[0]->SetPosition(1085, fHeight, 220);//(1105, 200, 250);
+	m_ppObjects[0]->SetTexture(pSwordTexture);
+	m_ppObjects[0]->SetMesh(pCubeMesh);
 
-	m_ppObjects[0]->SetPosition(1085, 230, 220);//(1105, 200, 250);
-	//m_ppObjects[1]->SetPosition(1085, 170, 260);
-	//m_ppObjects[2]->SetPosition(1115, 170, 265);
+	fHeight = pHeightMapTerrain->GetHeight(1085, 260, false);
+	m_ppObjects[1]->SetPosition(1085, fHeight, 260);
+	m_ppObjects[1]->SetTexture(pDemonTexture);
+	m_ppObjects[1]->SetMesh(pDemonMesh);
+	
+	fHeight = pHeightMapTerrain->GetHeight(1115, 265, true);
+	m_ppObjects[2]->SetPosition(1115, fHeight, 265);
+	m_ppObjects[2]->SetTexture(pAtienzaTexture);
+	m_ppObjects[2]->SetMesh(pAtienzaMesh);
+
 	//m_ppObjects[3]->SetPosition(1100, 170, 255);
 	//m_ppObjects[4]->SetPosition(1140, 170, 265);
 
@@ -425,16 +450,18 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 
 void CStaticShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	//pd3dDeviceContext->PSSetShaderResources(0, 0, nullptr);
-	//pd3dDeviceContext->PSSetSamplers(0, 0, nullptr);
-
+	ID3D11ShaderResourceView * pd3dNullSRV[] = { nullptr, nullptr };
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
 		//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
+		//m_ppObjects[j]->SetActive(true);
 		if (m_ppObjects[j]->IsVisible(pCamera))
 		{
+			pd3dDeviceContext->PSSetShaderResources(2, 2, pd3dNullSRV);
 			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
 		}
 	}

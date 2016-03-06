@@ -333,6 +333,26 @@ void CTextureMgr::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	}
 }
 
+CTexture * CTextureMgr::MakeFbxcjhTextures(ID3D11Device * pd3dDevice, wstring & wstrBaseDir, vector<wstring>& vcFileNameArrays, int nStartTxSlot)
+{
+	ID3D11ShaderResourceView * pd3dsrvTexture = nullptr;
+
+	CTexture * pTexture = new CTexture(vcFileNameArrays.size(), 1, nStartTxSlot, 0);
+	pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	for (int i = 0; i < vcFileNameArrays.size(); ++i)
+	{
+		vcFileNameArrays[i] = wstrBaseDir + vcFileNameArrays[i];
+		LPCWSTR wstr = vcFileNameArrays[i].c_str();
+
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, vcFileNameArrays[i].c_str(), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pTexture->SetTexture(i, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
+	}
+
+	return pTexture;
+}
+
 bool CTextureMgr::InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, string name, UINT uSlotNum, SETSHADER nSetInfo)
 {
 	if (nullptr == pSRV) return false;
@@ -403,9 +423,9 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "Blue");
 
 	pMaterial                          = new CMaterial();
-	pMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	pMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.8f, 0.8f, 0.8f, 0.8f);
 	pMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 4.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.5f, 1.5f, 1.5f, 4.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "White");
 

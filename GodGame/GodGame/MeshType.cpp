@@ -3,6 +3,8 @@
 #include "MyInline.h"
 #include "CollisionMgr.h"
 
+#include <wchar.h>
+
 CMesh::CMesh(ID3D11Device *pd3dDevice)
 {
 	m_nBuffers = 0;
@@ -1002,9 +1004,6 @@ CSphereMeshTexturedIlluminated::~CSphereMeshTexturedIlluminated()
 {
 }
 
-
-
-
 CPlaneMesh::CPlaneMesh(ID3D11Device * pd3dDevice, int fx, int fy) : CMeshTextured(pd3dDevice)
 {
 	m_nVertices = 4;
@@ -1045,17 +1044,13 @@ CPlaneMesh::CPlaneMesh(ID3D11Device * pd3dDevice, int fx, int fy) : CMeshTexture
 	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+FLT_MAX, +FLT_MAX, 0);
 }
 
-
-
 CPlaneMesh::~CPlaneMesh()
 {
 
 }
 
-
 CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, float fScale) : CMeshTexturedIlluminated(pd3dDevice)
 {
-
 	int nReadBytes;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	//D3D11_PRIMITIVE_TOPOLOGY_
@@ -1082,7 +1077,6 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 
 	XMFLOAT3 min{ FLT_MAX, FLT_MAX , FLT_MAX }, max{ FLT_MIN, FLT_MIN, FLT_MIN };
 
-
 	XMVECTOR xmvScale = XMVectorSet(fScale, fScale, fScale, 1);
 	XMMATRIX xmtxRotate = XMMatrixIdentity();// XMMatrixRotationX(90);
 
@@ -1095,13 +1089,13 @@ CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, fl
 		XMStoreFloat3(&m_pxv3Positions[i], xmvPos);
 		XMStoreFloat3(&pChaeInfo[i].xmf3Pos, xmvPos);
 
-		min.x < m_pxv3Positions[i].x ? min.x = m_pxv3Positions[i].x : NULL;
-		min.y < m_pxv3Positions[i].y ? min.y = m_pxv3Positions[i].y : NULL;
-		min.z < m_pxv3Positions[i].z ? min.z = m_pxv3Positions[i].z : NULL;
+		if (min.x > m_pxv3Positions[i].x) min.x = m_pxv3Positions[i].x;
+		if (min.y > m_pxv3Positions[i].y) min.y = m_pxv3Positions[i].y;
+		if (min.z > m_pxv3Positions[i].z) min.z = m_pxv3Positions[i].z;
 
-		max.x > m_pxv3Positions[i].x ? max.x = m_pxv3Positions[i].x : NULL;
-		max.y > m_pxv3Positions[i].y ? max.y = m_pxv3Positions[i].y : NULL;
-		max.z > m_pxv3Positions[i].z ? max.z = m_pxv3Positions[i].z : NULL;
+		if (max.x < m_pxv3Positions[i].x) max.x = m_pxv3Positions[i].x;
+		if (max.y < m_pxv3Positions[i].y) max.y = m_pxv3Positions[i].y;
+		if (max.z < m_pxv3Positions[i].z) max.z = m_pxv3Positions[i].z;
 
 //		pChaeInfo[i].xmf3Normal = pChaeInfo[i].xmf3Normal;
 	}
@@ -1149,6 +1143,122 @@ CLoadMeshByChae::~CLoadMeshByChae()
 {
 }
 
+CLoadMeshByFbxcjh::CLoadMeshByFbxcjh(ID3D11Device * pd3dDevice, char * tMeshName, float fScale, vector<wstring> & vcFileName) : CMeshTexturedIlluminated(pd3dDevice)
+{
+	int nReadBytes;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	//D3D11_PRIMITIVE_TOPOLOGY_
+
+	FILE * pFile = NULL;
+	::fopen_s(&pFile, tMeshName, "rb");
+
+	m_nBuffers = 0;
+
+	//텍스쳐 개수
+	UINT nTextures = 0;
+	nReadBytes = ::fread(&nTextures, sizeof(UINT), 1, pFile);
+
+	//wstring * wstringArray = new wstring[nTextures];
+	wchar_t temp[256];
+	wstring fileName;
+	for (int i = 0; i < nTextures; ++i)
+	{
+		UINT fileNameSize = 0;
+		nReadBytes = ::fread(&fileNameSize, sizeof(UINT), 1, pFile);
+		nReadBytes = ::fread(temp, sizeof(wchar_t), fileNameSize, pFile);
+		temp[fileNameSize] = '\0';
+		fileName = temp;
+		//wcout << temp << endl;
+
+		vcFileName.push_back(fileName);
+	}
+
+	//정점 개수
+	UINT nMeshes = 0;
+	nReadBytes = ::fread(&nMeshes, sizeof(UINT), 1, pFile);
+	m_nVertices = 0;
+	for (int i = 0; i < nMeshes; ++i)
+	{
+		UINT sz = 0;
+		nReadBytes = ::fread(&sz, sizeof(UINT), 1, pFile);
+		m_nVertices += sz;
+	}
+
+	NormalMapVertex * pChaeInfo = new NormalMapVertex[m_nVertices];
+	m_pxv3Positions = new XMFLOAT3[m_nVertices];
+
+	for (int i = 0; i < nMeshes; ++i)
+	{
+		nReadBytes = ::fread(&pChaeInfo[0], sizeof(NormalMapVertex), m_nVertices, pFile);
+	}
+
+	//nReadBytes = ::fread(&m_nIndices, sizeof(UINT), 1, pFile);
+	//m_pnIndices = new UINT[m_nIndices];
+	//nReadBytes = ::fread(&m_pnIndices[0], sizeof(UINT), m_nIndices, pFile);
+	::fclose(pFile);
+
+	XMFLOAT3 min{ FLT_MAX, FLT_MAX, FLT_MAX }, max{ FLT_MIN, FLT_MIN, FLT_MIN };
+
+
+	XMVECTOR xmvScale = XMVectorSet(fScale, fScale, fScale, 1);
+	XMMATRIX xmtxRotate = XMMatrixIdentity();// XMMatrixRotationX(90);
+
+	for (unsigned int i = 0; i < m_nVertices; ++i)
+	{
+		XMVECTOR xmvPos = XMVectorSet(pChaeInfo[i].xmf3Pos.x, pChaeInfo[i].xmf3Pos.y, pChaeInfo[i].xmf3Pos.z, 1);
+		xmvPos *= xmvScale;
+		xmvPos = XMVector3TransformCoord(xmvPos, xmtxRotate);
+
+		XMStoreFloat3(&m_pxv3Positions[i], xmvPos);
+		XMStoreFloat3(&pChaeInfo[i].xmf3Pos, xmvPos);
+
+		if (min.x > m_pxv3Positions[i].x) min.x = m_pxv3Positions[i].x;
+		if (min.y > m_pxv3Positions[i].y) min.y = m_pxv3Positions[i].y;
+		if (min.z > m_pxv3Positions[i].z) min.z = m_pxv3Positions[i].z;
+
+		if (max.x < m_pxv3Positions[i].x) max.x = m_pxv3Positions[i].x;
+		if (max.y < m_pxv3Positions[i].y) max.y = m_pxv3Positions[i].y;
+		if (max.z < m_pxv3Positions[i].z) max.z = m_pxv3Positions[i].z;
+		//		pChaeInfo[i].xmf3Normal = pChaeInfo[i].xmf3Normal;
+	}
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth      = sizeof(NormalMapVertex) * m_nVertices;
+	d3dBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = pChaeInfo;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
+
+	ID3D11Buffer *pd3dBuffers[1] = { m_pd3dPositionBuffer };
+	UINT pnBufferStrides[1] = { sizeof(NormalMapVertex) };
+	UINT pnBufferOffsets[1] = { 0 };
+	AssembleToVertexBuffer(1, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+
+	delete[] pChaeInfo;
+
+	m_bcBoundingCube.m_xv3Minimum = min;
+	m_bcBoundingCube.m_xv3Maximum = max;
+}
+
+CLoadMeshByFbxcjh::~CLoadMeshByFbxcjh()
+{
+}
+
+void CLoadMeshByFbxcjh::CreateRasterizerState(ID3D11Device * pd3dDevice)
+{
+	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
+	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
+	//래스터라이저 단계에서 컬링(은면 제거)을 하지 않도록 래스터라이저 상태를 생성한다.
+	d3dRasterizerDesc.CullMode = D3D11_CULL_NONE;
+	d3dRasterizerDesc.FillMode = D3D11_FILL_SOLID;//WIREFRAME;
+	d3dRasterizerDesc.DepthClipEnable = false;
+	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
+}
 
 void CLoadMeshByChae::CreateRasterizerState(ID3D11Device *pd3dDevice)
 {

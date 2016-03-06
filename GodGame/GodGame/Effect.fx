@@ -675,38 +675,42 @@ PS_WORLD_NORMALMAP DSBump(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation, Ou
 PS_WORLD_NORMALMAP VSNormalAndSF(MODEL_NORMALMAP input)
 {
 	PS_WORLD_NORMALMAP output;
-	output.pos = mul(float4(input.pos, 1.0f), gmtxWorld);
-	output.posW = output.pos.xyz;
+	output.pos      = mul(float4(input.pos, 1.0f), gmtxWorld);
+	output.posW     = output.pos.xyz;
 	output.tangentW = mul(input.tangent, (float3x3)gmtxWorld);
-	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
-	output.pos = mul(output.pos, gmtxViewProjection);
-	output.tex = input.tex;
+	output.normalW  = mul(input.normal, (float3x3)gmtxWorld);
+	output.pos      = mul(output.pos, gmtxViewProjection);
+	output.tex      = input.tex;
 
 	return output;
 }
 
+Texture2D	  TxDiffuse            : register(t0);
+Texture2D     TxNormal             : register(t1);
+Texture2D     TxSpecluar           : register(t2);
+Texture2D     TxGlow               : register(t3);
+
 PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 {
-	float3 N = normalize(input.normalW);
-	float3 T = normalize(input.tangentW - dot(input.tangentW, N) * N);
-	float3 B = cross(N, T);
-	float3x3 TBN = float3x3(T, B, N);
+	float3 N     = normalize(input.normalW);
+	float3 T     = normalize(input.tangentW - dot(input.tangentW, N) * N);
+	float3x3 TBN = float3x3(T, cross(N, T), N);
 
-	float4 displacementInfo = gtxtDetailTexture.SampleLevel(gSamplerState, input.tex, 0);
+	float4 displacementInfo = TxNormal.Sample(gSamplerState, input.tex);
 	float3 normal = (2.0f * displacementInfo.rgb) - 1.0f; //.rgb;
 	normal = mul(normal, TBN);
 
 	//float offset = displacementInfo.a;//gtxtTexture.SampleLevel(gSamplerState, input.tex, 0).a;
-	input.posW -= normal * 5.0f;// (gBumpScale.y * 2) * (1.0 - displacementInfo.a);
+	input.posW -= normal * 6.0f;// (gBumpScale.y * 2) * (1.0 - displacementInfo.a);
 
-	float4 color = gtxtTexture.SampleLevel(gSamplerState, input.tex, 0);
-	//	return (1, 1, 1, 0);gtxtDetailTexture
+	float4 color = TxDiffuse.Sample(gSamplerState, input.tex);
+	float4 glow = TxGlow.Sample(gSamplerState, input.tex) * 5;
 
 	PS_MRT_OUT output;
-	output.vNormal = float4(normal, input.pos.w * gfDepthFar);
-	output.vPos = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f/*fShadowFactor*/);
-	output.vSpec = float4(1, 1, 1, 1);// gtxtSFTexture.SampleLevel(gSamplerState, input.tex, 0); //
-	output.vTxColor = color;
+	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
+	output.vPos     = float4(input.posW, 1.0);
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) + glow;
+	output.vSpec    = float4(1, 1, 1, TxSpecluar.Sample(gSamplerState, input.tex).r);// +glow;
+	output.vTxColor = color + glow;
 	return output;
 }

@@ -97,6 +97,8 @@ public:
 	void BuildTextures(ID3D11Device *pd3dDevice);
 
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, string name);
+
+	static CTexture * MakeFbxcjhTextures(ID3D11Device * pd3dDevice, wstring & wstrBaseDir, vector<wstring>& vcFileNameArrays, int nStartTxSlot = 0);
 };
 
 #define TXMgr CTextureMgr::GetInstance()

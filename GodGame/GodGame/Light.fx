@@ -383,7 +383,7 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 	int i;
 	float4 vDiffuse = vDiff;
 	float fShadowFactor = vDiff.a;
-	float4 vSpec = float4(vSpecular.xyz, vSpecular.w * 255.0f);
+	float4 vSpec = float4(vSpecular.xyz, vSpecular.w);
 //	float3 vCameraPosition = gvCameraPosition.xyz;
 	float3 vToCamera = normalize(gvCameraPosition.xyz - vPos);
 	LIGHTEDCOLOR LightedColor = (LIGHTEDCOLOR)0;

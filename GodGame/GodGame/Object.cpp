@@ -97,7 +97,7 @@ void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
 	{
 		AABB bcBoundingCube = pMesh->GetBoundingCube();
 		m_bcMeshBoundingCube.Union(&bcBoundingCube);
-		m_bcMeshBoundingCube.Update(m_xmf44World, nullptr);
+		//m_bcMeshBoundingCube.Update(m_xmf44World, nullptr);
 
 		XMVECTOR xmvMax = XMLoadFloat3(&m_bcMeshBoundingCube.m_xv3Maximum);
 		XMVECTOR xmvMin = XMLoadFloat3(&m_bcMeshBoundingCube.m_xv3Minimum);
