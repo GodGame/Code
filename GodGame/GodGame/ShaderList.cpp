@@ -399,15 +399,21 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 2.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
 	//CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
 
-	CLoadMeshByFbxcjh * pDemonMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Demon_T_Wiezzorek.fbxcjh"), 0.2f, vcTxFileNames);
+	CLoadAnimatedMeshByADFile * pDemonMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/demon_cast1_0.ad", 0.15f, vcTxFileNames);
 	CTexture *pDemonTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
 	vcTxFileNames.clear();
 
-	CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
+	CLoadAnimatedMeshByADFile * pAtienzaMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Man_Death_0.ad", 0.15f, vcTxFileNames);
+	//CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
 	CTexture *pAtienzaTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
 	vcTxFileNames.clear();
 
-	m_nObjects = 3;
+	CLoadAnimatedMeshByADFile * pKnightMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Player_0.ad", 0.15f, vcTxFileNames);
+	//CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
+	CTexture *pKnightTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	vcTxFileNames.clear();
+
+	m_nObjects = 4;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	//CMaterial * pMat = new CMaterial();
@@ -417,31 +423,39 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	//pMat->m_Material.m_xcEmissive = { 0.0f, 0.0f, 0.0f, 0.0 };
 
 	CGameObject *pObject = nullptr;
-	for (int i = 0; i < m_nObjects; i++)
-	{
-		pObject = new CGameObject(1);
-		pObject->SetMesh(pCubeMesh);
-		//pObject->SetTexture(pSwordTexture);
-		//pObject->SetMaterial(pMaterial);
-		pObject->AddRef();
-		m_ppObjects[i] = pObject;
-	}
+
 	float fHeight = 0;
-	fHeight = pHeightMapTerrain->GetHeight(1085, 220, false);
+	fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
+	m_ppObjects[0] = new CGameObject(1);
+	m_ppObjects[0]->AddRef();
 	m_ppObjects[0]->SetPosition(1085, fHeight, 220);//(1105, 200, 250);
 	m_ppObjects[0]->SetTexture(pSwordTexture);
 	m_ppObjects[0]->SetMesh(pCubeMesh);
 
-	fHeight = pHeightMapTerrain->GetHeight(1085, 260, false);
-	m_ppObjects[1]->SetPosition(1085, fHeight, 260);
-	m_ppObjects[1]->SetTexture(pDemonTexture);
-	m_ppObjects[1]->SetMesh(pDemonMesh);
-	
-	fHeight = pHeightMapTerrain->GetHeight(1115, 265, true);
-	m_ppObjects[2]->SetPosition(1115, fHeight, 265);
-	m_ppObjects[2]->SetTexture(pAtienzaTexture);
-	m_ppObjects[2]->SetMesh(pAtienzaMesh);
+	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
+	CAnimatedObject * pAnimatedObject = new CAnimatedObject(1);
+	pAnimatedObject->SetTexture(pDemonTexture);
+	pAnimatedObject->SetMesh(pDemonMesh);
+	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	m_ppObjects[1] = pAnimatedObject;
+	m_ppObjects[1]->SetPosition(1085, fHeight + 5, 260);
+	m_ppObjects[1]->AddRef();
 
+	fHeight = pHeightMapTerrain->GetHeight(1115, 265, false);
+	pAnimatedObject = new CAnimatedObject(1);
+	pAnimatedObject->SetTexture(pAtienzaTexture);
+	pAnimatedObject->SetMesh(pAtienzaMesh);
+	m_ppObjects[2] = pAnimatedObject;
+	m_ppObjects[2]->SetPosition(1115, fHeight + 5, 265);
+	m_ppObjects[2]->AddRef();
+
+	fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
+	pAnimatedObject = new CAnimatedObject(1);
+	pAnimatedObject->SetTexture(pKnightTexture);
+	pAnimatedObject->SetMesh(pKnightMesh);
+	m_ppObjects[3] = pAnimatedObject;
+	m_ppObjects[3]->SetPosition(1140, fHeight + 5, 255);
+	m_ppObjects[3]->AddRef();
 	//m_ppObjects[3]->SetPosition(1100, 170, 255);
 	//m_ppObjects[4]->SetPosition(1140, 170, 265);
 

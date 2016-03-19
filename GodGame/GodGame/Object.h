@@ -325,6 +325,7 @@ public:
 	int PickObjectByRayIntersection(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxView, MESHINTERSECTINFO *pd3dxIntersectInfo);
 #endif
 };
+
 // 스스로 움직이지 못하는 고정된 객체
 class CStaticObject : public CGameObject
 {
@@ -339,8 +340,7 @@ class CDynamicObject : public CGameObject
 {
 public:
 	CDynamicObject(int nMeshes);
-	virtual ~CDynamicObject();
-
+	virtual ~CDynamicObject(){}
 protected:
 	XMFLOAT3 m_xv3Velocity;
 
@@ -349,6 +349,25 @@ public:
 	const XMFLOAT3& GetVelocity() const { return(m_xv3Velocity); }
 };
 
+class CAnimatedObject : public CDynamicObject
+{
+public:
+	CAnimatedObject(int nMeshes);
+	virtual ~CAnimatedObject()
+	{
+		cout << "Animate 삭제" << endl;
+	}
+protected:
+	typedef CAnimatedMesh ANI_MESH;
+	
+	WORD m_wdAnimateState;
+
+public:
+	void SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime) { static_cast<ANI_MESH*>(m_ppMeshes[wdAnimNum])->SetOneCycleTime(fCycleTime); }
+
+	virtual void Animate(float fTimeElapsed);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+};
 
 class CUIObject : public CGameObject
 {

@@ -36,6 +36,16 @@ struct NormalMapVertex
 	XMFLOAT3 xmf3Tangent;
 };
 
+struct MeshBuffer
+{	
+	int nVertexes;
+	int nStrides;
+	int nOffsets;
+	int nStartSlot;
+	ID3D11Buffer * pd3dBuffer;
+	AABB bb;
+};
+
 class CVertex
 {
 	XMFLOAT3 m_xv3Position;		//정점의 위치 정보(3차원 벡터)를 저장하기 위한 멤버 변수를 선언한다.
@@ -117,6 +127,9 @@ public:
 #ifdef PICKING
 	int CheckRayIntersection(XMFLOAT3 *pxv3RayPosition, XMFLOAT3 *pxv3RayDirection, MESHINTERSECTINFO *pd3dxIntersectInfo);
 #endif
+	ID3D11Buffer ** GetVertexBuffer() { return m_ppd3dVertexBuffers; }
+	ID3D11Buffer * GetPositionBuffer() { return m_pd3dPositionBuffer; }
+	int GetVerticesSize() { return m_nVertices; }
 	//메쉬의 정점 버퍼들을 배열로 조립한다.
 	void AssembleToVertexBuffer(int nBuffers = 0, ID3D11Buffer **m_pd3dBuffers = nullptr, UINT *pnBufferStrides = nullptr, UINT *pnBufferOffsets = nullptr);
 
@@ -124,6 +137,32 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	//인스턴싱을 사용하여 렌더링한다.
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, int nInstances, int nStartInstance);
+
+	static MeshBuffer GetNormalMapVertexBuffer(ID3D11Device * pd3dDevice, NormalMapVertex * pData, int nSize, float fScale = 1.0f);
+};
+
+class CAnimatedMesh : public CMesh
+{
+protected:
+	vector<ID3D11Buffer*> m_pvcMeshBuffers;
+	int m_iIndex;
+	float m_fNowFrameTime;
+	float m_fFramePerTime;
+
+public:
+	CAnimatedMesh(ID3D11Device * pd3dDevice); 
+	virtual ~CAnimatedMesh();
+
+	virtual void Animate(float fFrameTime);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
+	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
+public:
+
+	void SetOneCycleTime(float fCycleTime);
+	void SetAnimationIndex(int iIndex);
+	int GetAnimationAllIndex() { return m_pvcMeshBuffers.size(); }
+
+	void ResetIndex() { m_iIndex = 0; m_fNowFrameTime = 0.0f; }
 };
 
 class CMeshDiffused : public CMesh
@@ -288,6 +327,21 @@ class CLoadMeshByFbxcjh : public CMeshTexturedIlluminated
 public:
 	CLoadMeshByFbxcjh(ID3D11Device *pd3dDevice, char * tMeshName, float fScale, vector<wstring> & vcFileName);
 	virtual ~CLoadMeshByFbxcjh();
+	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
+};
+
+//class LoadNormalMapVertexByFile : public CMesh
+//{
+//public:
+//	LoadNormalMapVertexByFile(ID3D11Device * pd3dDevice, NormalMapVertex * pData, int nSize, float fScale = 1.0f);
+//	virtual ~LoadNormalMapVertexByFile();
+//};
+
+class CLoadAnimatedMeshByADFile : public CAnimatedMesh
+{
+public:
+	CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, vector<wstring> & vcFileName);
+	virtual ~CLoadAnimatedMeshByADFile();
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };
 

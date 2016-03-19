@@ -390,9 +390,49 @@ CDynamicObject::CDynamicObject(int nMeshes) : CGameObject(nMeshes)
 	m_xv3Velocity = { 0, 0, 0 };
 }
 
-CDynamicObject::~CDynamicObject()
+
+CAnimatedObject::CAnimatedObject(int nMeshes) : CDynamicObject(nMeshes)
 {
+	m_wdAnimateState = 0;
 }
+
+void CAnimatedObject::Animate(float fTimeElapsed)
+{
+	static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState])->Animate(fTimeElapsed);
+}
+
+void CAnimatedObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
+	//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
+	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+	//객체의 텍스쳐를 쉐이더 변수에 설정(연결)한다.
+	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
+
+	if (m_ppMeshes)
+	{
+#ifdef _QUAD_TREE
+		if (m_bActive)
+		{
+			m_ppMeshes[m_wdAnimateState]->Render(pd3dDeviceContext, uRenderState);
+			if (!(uRenderState & DRAW_AND_ACTIVE))
+				m_bActive = false;
+		}
+#else
+		bool bIsVisible = true;
+		if (pCamera)
+		{
+			AABB bcBoundingCube = m_ppMeshes[i]->GetBoundingCube();
+			bcBoundingCube.Update(m_xmf44World);
+			bIsVisible = pCamera->IsInFrustum(&bcBoundingCube);
+		}
+		if (bIsVisible)
+			m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+#endif
+	}
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 CUIObject::CUIObject(int nMeshes, UIInfo info) : CGameObject(nMeshes) 

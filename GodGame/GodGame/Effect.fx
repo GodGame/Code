@@ -709,8 +709,8 @@ PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 	PS_MRT_OUT output;
 	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
 	output.vPos     = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) + glow;
-	output.vSpec    = float4(1, 1, 1, TxSpecluar.Sample(gSamplerState, input.tex).r);// +glow;
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) * 1.2f + glow;
+	output.vSpec    = float4(1, 1, 1, TxSpecluar.Sample(gSamplerState, input.tex).r) * 1.5f;// +glow;
 	output.vTxColor = color + glow;
 	return output;
 }
