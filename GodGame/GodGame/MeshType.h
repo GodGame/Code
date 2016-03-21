@@ -2,6 +2,17 @@
 #include "CollisionMgr.h"
 #define RANDOM_COLOR ((rand() * 0xFFFFFF) / RAND_MAX)
 
+
+enum ANIMATION_STATE
+{
+	eANI_IDLE = 0,
+	eANI_RUN_FORWARD,
+	eANI_WALK_BACK,
+	eANI_WALK_LEFT,
+	eANI_WALK_RIGHT,
+	eANI_TOTAL_NUM
+};
+
 class CTexture;
 class AABB;
 struct POSANDSIZE {
@@ -34,6 +45,13 @@ struct NormalMapVertex
 	XMFLOAT2 xmf2Tex;
 	XMFLOAT3 xmf3Normal;
 	XMFLOAT3 xmf3Tangent;
+
+	void operator=(V3T2N3 & vertex)
+	{
+		xmf3Pos = vertex.xmf3Pos;
+		xmf2Tex = vertex.xmf2Tex;
+		xmf3Normal = vertex.xmf3Normal;
+	}
 };
 
 struct MeshBuffer
@@ -139,12 +157,13 @@ public:
 	virtual void RenderInstanced(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, int nInstances, int nStartInstance);
 
 	static MeshBuffer GetNormalMapVertexBuffer(ID3D11Device * pd3dDevice, NormalMapVertex * pData, int nSize, float fScale = 1.0f);
+	static MeshBuffer GetNormalMapVertexBufferAndCalculateTangent(ID3D11Device * pd3dDevice, NormalMapVertex * pData, int nSize, float fScale = 1.0f);
 };
 
 class CAnimatedMesh : public CMesh
 {
 protected:
-	vector<ID3D11Buffer*> m_pvcMeshBuffers;
+	vector<MeshBuffer> m_pvcMeshBuffers;
 	int m_iIndex;
 	float m_fNowFrameTime;
 	float m_fFramePerTime;
@@ -157,8 +176,11 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 public:
+	AABB & GetAABBMesh() { return m_pvcMeshBuffers[m_iIndex].bb; }
 
-	void SetOneCycleTime(float fCycleTime);
+	float SetOneCycleTime(float fCycleTime);
+	void SetFramePerTime(float fFramePerTime);
+
 	void SetAnimationIndex(int iIndex);
 	int GetAnimationAllIndex() { return m_pvcMeshBuffers.size(); }
 
@@ -329,7 +351,6 @@ public:
 	virtual ~CLoadMeshByFbxcjh();
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };
-
 //class LoadNormalMapVertexByFile : public CMesh
 //{
 //public:

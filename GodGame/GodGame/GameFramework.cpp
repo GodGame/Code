@@ -602,7 +602,7 @@ void CGameFramework::BuildObjects(CScene * pScene)
 	CShader::CreateShaderVariables(m_pd3dDevice);
 	CIlluminatedShader::CreateShaderVariables(m_pd3dDevice);
 
-	SceneShaderBuildInfo info;
+	CScene::ShaderBuildInfo info;
 	info.pd3dBackRTV = m_pd3dBackRenderTargetView;
 	info.ppMRTSRVArray = m_pd3dMRTSRV;
 

@@ -14,7 +14,11 @@ CSceneTitle::~CSceneTitle()
 {
 }
 
-void CSceneTitle::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
+void CSceneTitle::BuildMeshes(ID3D11Device * pd3dDevice)
+{
+}
+
+void CSceneTitle::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo)
 {
 	m_nThread = m_nShaders = 0;
 	//m_ppShaders = new CShader*[m_nShaders];

@@ -76,12 +76,14 @@ public:
 	static ID3D11ShaderResourceView * CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, wchar_t * ppstrFormat, UINT nTextures);
 };
 
-class CTextureMgr : public CMgr<CTexture>
+typedef CMgr<CTexture> TEXTURE_MGR;
+class CTextureMgr : public TEXTURE_MGR
 {
 private:
 	CTextureMgr();
 	virtual ~CTextureMgr();
 	CTextureMgr& operator=(const CTextureMgr&);
+
 public:
 	static CTextureMgr& GetInstance();
 	bool InsertShaderResourceView(ID3D11ShaderResourceView * pSRV, string name, UINT uSlotNum, SETSHADER nSetInfo = SET_SHADER_PS);
@@ -142,7 +144,8 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class CMaterialMgr : public CMgr<CMaterial>
+typedef CMgr<CMaterial> MATERIAL_MGR;
+class CMaterialMgr : public MATERIAL_MGR
 {
 private:
 	CMaterialMgr();
@@ -154,8 +157,25 @@ public:
 	virtual void BuildResources(ID3D11Device *pd3dDevice);
 
 };
-
 #define MaterialMgr CMaterialMgr::GetInstance()
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CMesh;
+typedef CMgr<CMesh> MESH_MGR;
+#ifdef _USE_MESH_MGR
+class CMesh;
+class CMeshMgr : public CMgr<CMesh>
+{
+private:
+	CMeshMgr();
+	virtual ~CMeshMgr();
+
+public:
+	static CMeshMgr& GetInstance();
+
+	virtual void BuildResources(ID3D11Device * pd3dDevice);
+};
+#define MESHMgr CMeshMgr::GetInstance()
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct CB_TX_ANIMATION_INFO
 {
@@ -228,6 +248,8 @@ public:
 	void ReleaseResources();
 	void BuildResources(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void BuildViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
+	//void BuildBuffers(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
+
 	void CreatePostProcessViews(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 	void CreateViewsInGame(ID3D11Device * pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext);
 

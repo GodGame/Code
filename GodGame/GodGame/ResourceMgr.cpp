@@ -2,6 +2,8 @@
 #include "MyInline.h"
 #include "ResourceMgr.h"
 
+//#include "Mesh.h"
+
 CTexture::CTexture(int nTextures, int nSamplers, int nTextureStartSlot, int nSamplerStartSlot, SETSHADER nSetInfo)
 {
 	m_nReferences = 0;
@@ -180,7 +182,7 @@ ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device * pd3dD
 	return(pd3dsrvTextureArray);
 }
 
-CTextureMgr::CTextureMgr() : CMgr<CTexture>()
+CTextureMgr::CTextureMgr() : TEXTURE_MGR()
 {
 }
 
@@ -291,6 +293,11 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/cursor1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
 	pd3dsrvTexture->Release();
+
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/loading.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_loading.png", 0);
+	pd3dsrvTexture->Release();
+
 	
 	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_fire"), _T("png"), 2);
 	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
@@ -384,7 +391,7 @@ CMaterial::~CMaterial()
 {
 }
 
-CMaterialMgr::CMaterialMgr() : CMgr<CMaterial>()
+CMaterialMgr::CMaterialMgr() : MATERIAL_MGR()
 {
 }
 
@@ -429,6 +436,13 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "White");
 
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.8f, 1.8f, 1.8f, 0.8f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.5f, 1.5f, 1.5f, 4.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "WhiteLight");
+
 	pMaterial                          = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.3f, 0.5f, 0.3f, 1.0f);
 	pMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -436,6 +450,33 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	InsertObject(pMaterial, "Terrain");
 }
+#ifdef _USE_MESH_MGR
+CMeshMgr::CMeshMgr() : CMgr<CMesh>()
+{
+}
+
+CMeshMgr::~CMeshMgr()
+{
+}
+
+CMeshMgr & CMeshMgr::GetInstance()
+{
+	static CMeshMgr instance;
+	return instance;
+}
+
+void CMeshMgr::BuildResources(ID3D11Device * pd3dDevice)
+{
+	vector<wstring> vcTxFileNames;
+	wstring baseDir{ _T("../Assets/Image/Objects/") };
+
+	//CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 2.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+
+	CLoadMeshByFbxcjh *pCubeMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/staff/Staff01.fbxcjh"), 0.2f, vcTxFileNames);
+
+	vcTxFileNames.clear();
+}
+#endif
 
 ID3D11ShaderResourceView * CViewManager::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)
 {

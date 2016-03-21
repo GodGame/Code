@@ -75,7 +75,7 @@ void GS_UI_Draw(point GS_UI input[1], inout TriangleStream<PS_UI> triStream)
 {
 	PS_UI output[4];
 
-	float2 fHalfSize = (g_param.x * 0.5f, g_param.y * 0.5f);
+	float2 fHalfSize = g_param.xy * 0.5f; //(g_param.x * 0.5f, g_param.y * 0.5f);
 	float2 pos = input[0].DrawInfo.xy + g_param.zw;
 	output[0].posH = float4(pos + float2(-input[0].DrawInfo.z, +input[0].DrawInfo.w), 0, 1);
 	output[1].posH = float4(pos + float2(+input[0].DrawInfo.z, +input[0].DrawInfo.w), 0, 1);
@@ -98,9 +98,9 @@ SamplerState gSampler : register (s0);
 
 float4 PS_UI_Draw(PS_UI input) : SV_Target
 {
-	float4 color = gTex.Sample(gSampler, input.tex);
+	float4 color = gTex.SampleLevel(gSampler, input.tex, 0);
 
-	if (color.a == 0.0f) discard;
+	if (color.a < 0.45f) discard;
 
 	return color;
 }

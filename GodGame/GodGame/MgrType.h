@@ -29,19 +29,19 @@ public:
 	{
 		for (MgrList::iterator it = m_mpList.begin(); it != m_mpList.end(); ++it)
 		{
-#ifdef _DEBUG
-			int num = it->second->Release();
-			if (num > 0)
-			{
-				cout << it->first << "가 이상있습니다. 개수 : " << num << endl;
-				while (num > 0)
-				{
-					num = it->second->Release();
-				}
-			}
-#else
+//#ifdef _DEBUG
+//			int num = it->second->Release();
+//			if (num > 0)
+//			{
+//				cout << it->first << "가 이상있습니다. 개수 : " << num << endl;
+//				while (num > 0)
+//				{
+//					num = it->second->Release();
+//				}
+//			}
+//#else
 			it->second->Release();
-#endif
+//#endif
 		}
 		m_mpList.clear();
 	}

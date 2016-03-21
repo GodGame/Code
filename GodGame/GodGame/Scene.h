@@ -42,14 +42,15 @@ struct RENDER_INFO
 	UINT * pRenderState;
 };
 
-struct SceneShaderBuildInfo
-{
-	ID3D11ShaderResourceView ** ppMRTSRVArray;
-	ID3D11RenderTargetView  * pd3dBackRTV;
-};
-
 class CScene
 {
+public:
+	struct ShaderBuildInfo
+	{
+		ID3D11ShaderResourceView ** ppMRTSRVArray;
+		ID3D11RenderTargetView  * pd3dBackRTV;
+	};
+
 protected:
 	CSceneShader *  m_pSceneShader;
 	CUIShader    *  m_pUIShader;
@@ -66,6 +67,8 @@ protected:
 	LIGHTS        * m_pLights;
 	ID3D11Buffer  * m_pd3dcbLights;
 
+	CShader::BUILD_RESOURCES_MGR  m_SceneResoucres;
+
 	//렌더 타겟 뷰 인터페이스에 대한 포인터이다.
 	//ID3D11RenderTargetView *m_pd3dRenderTargetView;
 	//ID3D11DepthStencilView *m_pd3dDepthStencilView;
@@ -78,7 +81,8 @@ public:
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool ProcessInput(HWND hWnd, float fTime, POINT & pt);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo) = 0;
+	virtual void BuildMeshes(ID3D11Device * pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo) = 0;
 	virtual void ReleaseObjects();
 
 	virtual void AnimateObjects(float fTimeElapsed);

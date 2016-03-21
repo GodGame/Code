@@ -13,7 +13,8 @@ public:
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool ProcessInput(HWND hWnd, float fTime, POINT & pt);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo);
+	virtual void BuildMeshes(ID3D11Device * pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo);
 	virtual void ReleaseObjects();
 
 	//virtual void AnimateObjects(float fTimeElapsed);

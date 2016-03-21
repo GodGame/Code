@@ -393,12 +393,52 @@ CDynamicObject::CDynamicObject(int nMeshes) : CGameObject(nMeshes)
 
 CAnimatedObject::CAnimatedObject(int nMeshes) : CDynamicObject(nMeshes)
 {
+	m_vcfAnimationCycleTime.resize(nMeshes, 1.0f);
+	m_vcfFramePerTime.resize(nMeshes, 1.0f);
+
 	m_wdAnimateState = 0;
+}
+
+CAnimatedObject::~CAnimatedObject()
+{
+}
+
+void CAnimatedObject::SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime)
+{
+	m_vcfAnimationCycleTime[wdAnimNum] = fCycleTime;
+
+	if (m_ppMeshes[wdAnimNum])
+	{
+		m_vcfFramePerTime[wdAnimNum] =
+			static_cast<ANI_MESH*>(m_ppMeshes[wdAnimNum])->SetOneCycleTime(m_vcfAnimationCycleTime[wdAnimNum]);
+	}
+}
+
+void CAnimatedObject::UpdateFramePerTime()
+{
+	for (int i = 0; i < m_nMeshes; ++i)
+	{
+		if (m_ppMeshes[i])
+		{
+			m_vcfFramePerTime[i] =
+				static_cast<ANI_MESH*>(m_ppMeshes[i])->SetOneCycleTime(m_vcfAnimationCycleTime[i]);
+		}
+	}
+}
+
+void CAnimatedObject::SetMesh(CMesh * pMesh, int nIndex)
+{
+	CGameObject::SetMesh(pMesh, nIndex);
+
+	m_vcfFramePerTime[nIndex] =
+		static_cast<ANI_MESH*>(m_ppMeshes[nIndex])->SetOneCycleTime(m_vcfAnimationCycleTime[nIndex]);
 }
 
 void CAnimatedObject::Animate(float fTimeElapsed)
 {
-	static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState])->Animate(fTimeElapsed);
+	ANI_MESH * pMesh = static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState]);
+	pMesh->SetFramePerTime(m_vcfFramePerTime[m_wdAnimateState]);
+	pMesh->Animate(fTimeElapsed);
 }
 
 void CAnimatedObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)

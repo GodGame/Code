@@ -366,61 +366,56 @@ void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
 	//CreateShaderVariables(pd3dDevice);
 }
 
-void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
+void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_pMaterial = pMaterial;
 	if (pMaterial) pMaterial->AddRef();
 
-	//m_pTexture = pTexture;
-	//if (pTexture) pTexture->AddRef();
+	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
+	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
+	//vector<wstring> vcTxFileNames;
+	//ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 
-	CTexture *pSwordTexture = new CTexture(3, 1, 0, 0);
-	{
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_d.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-		pSwordTexture->SetTexture(0, pd3dsrvTexture);
-		pd3dsrvTexture->Release();
+	//CTexture *pStaffTexture = SceneMgr.mgrTexture.GetObjects("scene_staff_01");
+	//// new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/staff/Staff01.fbxcjh"), 0.2f, vcTxFileNames);
+	//CMesh *pStaffMesh = SceneMgr.mgrMesh.GetObjects("scene_staff_01");
 
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_n.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-		pSwordTexture->SetTexture(1, pd3dsrvTexture);
-		pd3dsrvTexture->Release();
+	//wstring baseDir{ _T("../Assets/Image/Objects/") };
 
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/medicbag_s.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-		pSwordTexture->SetTexture(2, pd3dsrvTexture);
-		pd3dsrvTexture->Release();
+	////CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 2.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
+	//
 
-		pSwordTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
-	}
+	//vcTxFileNames.clear();
 
-	vector<wstring> vcTxFileNames;
-	wstring baseDir{ _T("../Assets/Image/Objects/") };
+	//CLoadAnimatedMeshByADFile * pDemonMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure_Magic_0.ad", 0.13f, vcTxFileNames);
+	//CTexture *pDemonTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	//vcTxFileNames.clear();
 
-	CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 2.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
-	//CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice);
+	//CLoadAnimatedMeshByADFile * pAtienzaMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Man_Death_0.ad", 0.13f, vcTxFileNames);
+	////CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
+	//CTexture *pAtienzaTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	//vcTxFileNames.clear();
 
-	CLoadAnimatedMeshByADFile * pDemonMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/demon_cast1_0.ad", 0.15f, vcTxFileNames);
-	CTexture *pDemonTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
-	vcTxFileNames.clear();
+	//CLoadAnimatedMeshByADFile * pKnightMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Player_0.ad", 0.13f, vcTxFileNames);
+	////CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
+	//CTexture *pKnightTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	//vcTxFileNames.clear();
 
-	CLoadAnimatedMeshByADFile * pAtienzaMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Man_Death_0.ad", 0.15f, vcTxFileNames);
-	//CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
-	CTexture *pAtienzaTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
-	vcTxFileNames.clear();
+	//CLoadAnimatedMeshByADFile * pSkeletonMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/skeleton_0.ad", 3.5f, vcTxFileNames);
+	//CTexture *pSkeletonTexture = new CTexture(1, 0, 0, 0);
+	//ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Skull.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	//pSkeletonTexture->SetTexture(0, pd3dsrvTexture);
+	//pd3dsrvTexture->Release();
+	////pSkeletonTexture->SetTexture(1, nullptr);
+	////pSkeletonTexture->SetTexture(2, nullptr);
 
-	CLoadAnimatedMeshByADFile * pKnightMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Player_0.ad", 0.15f, vcTxFileNames);
-	//CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
-	CTexture *pKnightTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
-	vcTxFileNames.clear();
 
-	m_nObjects = 4;
+	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	//CMaterial * pMat = new CMaterial();
-	//pMat->m_Material.m_xcAmbient = { 1.0f, 1.0f, 1.0f, 1.0f };
-	//pMat->m_Material.m_xcDiffuse = { 0.64f, 0.64f, 0.64f, 0.64f };
-	//pMat->m_Material.m_xcSpecular = { 0.5f, 0.5f, 0.5f, 0.5f };
-	//pMat->m_Material.m_xcEmissive = { 0.0f, 0.0f, 0.0f, 0.0 };
+	char ManagerNames[2][50] = { {"scene_staff_01"}, { "scene_skull_0" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
+	//int Pos[5][2] = { {1085, 220}, {1085, 260}, {} };
 
 	CGameObject *pObject = nullptr;
 
@@ -428,37 +423,49 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
 	m_ppObjects[0] = new CGameObject(1);
 	m_ppObjects[0]->AddRef();
-	m_ppObjects[0]->SetPosition(1085, fHeight, 220);//(1105, 200, 250);
-	m_ppObjects[0]->SetTexture(pSwordTexture);
-	m_ppObjects[0]->SetMesh(pCubeMesh);
+	m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
 	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
 	CAnimatedObject * pAnimatedObject = new CAnimatedObject(1);
-	pAnimatedObject->SetTexture(pDemonTexture);
-	pAnimatedObject->SetMesh(pDemonMesh);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
 	m_ppObjects[1] = pAnimatedObject;
 	m_ppObjects[1]->SetPosition(1085, fHeight + 5, 260);
 	m_ppObjects[1]->AddRef();
 
-	fHeight = pHeightMapTerrain->GetHeight(1115, 265, false);
-	pAnimatedObject = new CAnimatedObject(1);
-	pAnimatedObject->SetTexture(pAtienzaTexture);
-	pAnimatedObject->SetMesh(pAtienzaMesh);
-	m_ppObjects[2] = pAnimatedObject;
-	m_ppObjects[2]->SetPosition(1115, fHeight + 5, 265);
-	m_ppObjects[2]->AddRef();
+	//fHeight = pHeightMapTerrain->GetHeight(1115, 265, false);
+	//pAnimatedObject = new CAnimatedObject(1);
+	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	//m_ppObjects[2] = pAnimatedObject;
+	//m_ppObjects[2]->SetPosition(1115, fHeight + 5, 265);
+	//m_ppObjects[2]->AddRef();
 
-	fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
-	pAnimatedObject = new CAnimatedObject(1);
-	pAnimatedObject->SetTexture(pKnightTexture);
-	pAnimatedObject->SetMesh(pKnightMesh);
-	m_ppObjects[3] = pAnimatedObject;
-	m_ppObjects[3]->SetPosition(1140, fHeight + 5, 255);
-	m_ppObjects[3]->AddRef();
-	//m_ppObjects[3]->SetPosition(1100, 170, 255);
-	//m_ppObjects[4]->SetPosition(1140, 170, 265);
+	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
+	//pAnimatedObject = new CAnimatedObject(1);
+	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	//m_ppObjects[3] = pAnimatedObject;
+	//m_ppObjects[3]->SetPosition(1140, fHeight + 5, 255);
+	//m_ppObjects[3]->AddRef();
+	////m_ppObjects[3]->SetPosition(1100, 170, 255);
+	//
+	//fHeight = pHeightMapTerrain->GetHeight(1180, 255, false);
+	//pAnimatedObject = new CAnimatedObject(1);
+	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	//m_ppObjects[4] = pAnimatedObject;
+	//m_ppObjects[4]->SetPosition(1180, fHeight, 255);
+	//m_ppObjects[4]->AddRef();
 
+
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppObjects[i]->SetMesh(meshmgr.GetObjects(ManagerNames[i]));
+		m_ppObjects[i]->SetTexture(txmgr.GetObjects(ManagerNames[i]));
+
+		CAnimatedObject * pAnimObject = nullptr;
+		if (pAnimObject = dynamic_cast<CAnimatedObject*>(m_ppObjects[i]))
+		{
+			pAnimObject->UpdateFramePerTime();
+		}
+	}
 	/// ÀÌ»ó ½ºÅ×Æ½ °´Ã¼µé
 }
 

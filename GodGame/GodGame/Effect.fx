@@ -692,24 +692,28 @@ Texture2D     TxGlow               : register(t3);
 
 PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 {
-	float3 N     = normalize(input.normalW);
-	float3 T     = normalize(input.tangentW - dot(input.tangentW, N) * N);
-	float3x3 TBN = float3x3(T, cross(N, T), N);
+	float4 displacementInfo = TxNormal.SampleLevel(gSamplerState, input.tex, 0);
+	float3 normal = input.normalW;
+	 
+	if (dot(displacementInfo.rgb, float3(1, 1, 1)) != 0 )
+	{
+		float3 N = normalize(normal);
+		float3 T = normalize(input.tangentW - dot(input.tangentW, N) * N);
+		float3x3 TBN = float3x3(T, cross(N, T), N);
 
-	float4 displacementInfo = TxNormal.Sample(gSamplerState, input.tex);
-	float3 normal = (2.0f * displacementInfo.rgb) - 1.0f; //.rgb;
-	normal = mul(normal, TBN);
+		normal = (2.0f * displacementInfo.rgb) - 1.0f; //.rgb;
+		normal = mul(normal, TBN);
 
+		input.posW -= normal * 4.0f;// (gBumpScale.y * 2) * (1.0 - displacementInfo.a);
+	}
 	//float offset = displacementInfo.a;//gtxtTexture.SampleLevel(gSamplerState, input.tex, 0).a;
-	input.posW -= normal * 6.0f;// (gBumpScale.y * 2) * (1.0 - displacementInfo.a);
-
 	float4 color = TxDiffuse.Sample(gSamplerState, input.tex);
 	float4 glow = TxGlow.Sample(gSamplerState, input.tex) * 5;
 
 	PS_MRT_OUT output;
 	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
 	output.vPos     = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) * 1.2f + glow;
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) + glow;
 	output.vSpec    = float4(1, 1, 1, TxSpecluar.Sample(gSamplerState, input.tex).r) * 1.5f;// +glow;
 	output.vTxColor = color + glow;
 	return output;

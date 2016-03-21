@@ -258,14 +258,14 @@ public:
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera * pCamera);
 };
 
-class CPlayerShader : public CTexturedIlluminatedShader
+class CPlayerShader : public CShader
 {
 public:
 	CPlayerShader();
 	virtual ~CPlayerShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 	CPlayer *GetPlayer(int nIndex = 0) { return((CPlayer *)m_ppObjects[nIndex]); }
@@ -319,6 +319,7 @@ protected:
 	CScene				   * m_pScene;
 
 	ID3D11RenderTargetView * m_pBackRTV;
+	ID3D11BlendState       * m_pd3dBlendState;
 	ID3D11Buffer           * m_pd3dScreenInfoBuffer;
 
 	CGameObject			   * m_pMousePoint;
@@ -332,7 +333,7 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	void CreateConstantBuffer(ID3D11Device * pd3dDevice);
+	void CreateUIResources(ID3D11Device * pd3dDevice);
 
 public:
 	void SetMouseCursor(POINT & pt) { if (m_pMousePoint) m_pMousePoint->SetPosition(XMFLOAT3(pt.x, pt.y, 0)); }

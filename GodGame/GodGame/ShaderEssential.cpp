@@ -751,7 +751,7 @@ void CSceneShader::UpdateShaders(ID3D11DeviceContext * pd3dDeviceContext)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CPlayerShader::CPlayerShader() : CTexturedIlluminatedShader()
+CPlayerShader::CPlayerShader() : CShader()
 {
 }
 CPlayerShader::~CPlayerShader()
@@ -759,46 +759,69 @@ CPlayerShader::~CPlayerShader()
 }
 void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 {
-	CTexturedIlluminatedShader::CreateShader(pd3dDevice);
+//	CTexturedIlluminatedShader::CreateShader(pd3dDevice);
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+
+	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain)
+void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene)
 {
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	CTexture *pBrickTexture = new CTexture(1, 1, 0, 0);
-	pBrickTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_brick2_jpg"));
-	pBrickTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+	//CTexture *pBrickTexture = new CTexture(1, 1, 0, 0);
+	//pBrickTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_brick2_jpg"));
+	//pBrickTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	//TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
 
-	CMaterial *pPlayerMaterial               = new CMaterial();
-	pPlayerMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	pPlayerMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
-	pPlayerMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
-	pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
+	CMaterial * pPlayerMaterial = MaterialMgr.GetObjects("WhiteLight");
+	//CMaterial *pPlayerMaterial               = new CMaterial();
+	//pPlayerMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
+	//pPlayerMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
+	//pPlayerMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
+	//pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 
-	CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 4.0f, 12.0f, 4.0f);
-	CTerrainPlayer *pTerrainPlayer = new CInGamePlayer(1);
-
+	CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
-	pTerrainPlayer->SetPlayerUpdatedContext(pTerrain);
+	pPlayer->SetPlayerUpdatedContext(pTerrain);
 	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
-	pTerrainPlayer->SetCameraUpdatedContext(pTerrain);
+	pPlayer->SetCameraUpdatedContext(pTerrain);
 	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
 
-	pTerrainPlayer->InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 1000.0f, 300));
-	pTerrainPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
-	pTerrainPlayer->Rotate(0, 180, 0);
+	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 
-	pTerrainPlayer->SetMesh(pCubeMesh);
-	pTerrainPlayer->SetMaterial(pPlayerMaterial);
-	pTerrainPlayer->SetTexture(pBrickTexture);
-	pTerrainPlayer->AddRef();
+	pMesh[eANI_IDLE] = mgrScene.mgrMesh.GetObjects("scene_aure_idle");
+	pMesh[eANI_RUN_FORWARD] = mgrScene.mgrMesh.GetObjects("scene_aure_run_forwad");
+	pMesh[eANI_WALK_BACK] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_Back");
+	pMesh[eANI_WALK_RIGHT] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_right");
+	pMesh[eANI_WALK_LEFT] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_left");
+
+	CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
+
+	pPlayer->InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 1000.0f, 300));
+	pPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
+	//pTerrainPlayer->ChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, 0.0f);
+	pPlayer->Rotate(0, 180, 0);
+
+	for (int i = 0; i < eANI_TOTAL_NUM; ++i)
+		pPlayer->SetMesh(pMesh[i], i);
+
+	pPlayer->SetMaterial(pPlayerMaterial);
+	pPlayer->SetTexture(pTexture);
+	pPlayer->AddRef();
 
 	//pBrickTexture->Release();
-	m_ppObjects[0] = pTerrainPlayer;
+	m_ppObjects[0] = pPlayer;
 
 	QUADMgr.EntityDynamicObject(m_ppObjects[0]);
 }
@@ -811,6 +834,7 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	//3인칭 카메라일 때 플레이어를 렌더링한다.
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	m_ppObjects[0]->SetActive(true);
+
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
 		CShader::Render(pd3dDeviceContext, uRenderState);
@@ -1286,6 +1310,7 @@ CUIShader::CUIShader() : CShader()
 	m_pBackRTV             = nullptr;
 	m_pd3dScreenInfoBuffer = nullptr;
 	m_pMousePoint          = nullptr;
+	m_pd3dBlendState       = nullptr;
 }
 
 CUIShader::~CUIShader()
@@ -1293,16 +1318,20 @@ CUIShader::~CUIShader()
 	//if (m_pBackRTV) m_pBackRTV->Release();
 	if (m_pd3dScreenInfoBuffer) m_pd3dScreenInfoBuffer->Release();
 	if (m_pMousePoint) m_pMousePoint->Release();
+	if (m_pd3dBlendState) m_pd3dBlendState->Release();
 }
 
 void CUIShader::OnPrepareRender(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)
 {
 	CShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	ID3D11SamplerState * pSampler = TXMgr.GetSamplerState("ss_point_wrap");
+	pd3dDeviceContext->PSSetSamplers(0, 1, &pSampler);
 }
 
 void CUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
-	CreateConstantBuffer(pd3dDevice);
+	CreateUIResources(pd3dDevice);
 }
 
 void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
@@ -1314,10 +1343,9 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 	XMFLOAT3 pos;
 
 	pd3dDeviceContext->OMSetRenderTargets(1, &m_pBackRTV, nullptr);
-	OnPrepareRender(pd3dDeviceContext, uRenderState);
+	CUIShader::OnPrepareRender(pd3dDeviceContext, uRenderState);
 
-	ID3D11SamplerState * pSampler = TXMgr.GetSamplerState("ss_point_wrap");
-	pd3dDeviceContext->PSSetSamplers(0, 1, &pSampler);
+	//pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
 
 	for (int i = 0; i < m_nObjects; i++)
 	{
@@ -1329,6 +1357,7 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 
 		m_ppObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
+	//pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 	if (m_pMousePoint)
 	{
@@ -1340,6 +1369,7 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 
 		m_pMousePoint->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
+
 }
 
 void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
@@ -1355,11 +1385,27 @@ void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
 	CreateGeometryShaderFromFile(pd3dDevice, L"Final.fx", "GS_UI_Draw", "gs_5_0", &m_pd3dGeometryShader);
 }
 
-void CUIShader::CreateConstantBuffer(ID3D11Device * pd3dDevice)
+void CUIShader::CreateUIResources(ID3D11Device * pd3dDevice)
 {
 	if (m_pd3dScreenInfoBuffer) return;
 	ASSERT_S(nullptr != ( m_pd3dScreenInfoBuffer = ViewMgr.GetBuffer("cs_float4") ));
 	m_pd3dScreenInfoBuffer->AddRef();
+
+	//D3D11_BLEND_DESC d3dBlendStateDesc;
+	//ZeroMemory(&d3dBlendStateDesc, sizeof(D3D11_BLEND_DESC));
+	//d3dBlendStateDesc.IndependentBlendEnable                    = false;
+	//int index                                                   = 0;
+	//ZeroMemory(&d3dBlendStateDesc.RenderTarget[index], sizeof(D3D11_RENDER_TARGET_BLEND_DESC));
+	//d3dBlendStateDesc.AlphaToCoverageEnable                     = true;
+	//d3dBlendStateDesc.RenderTarget[index].BlendEnable           = true;
+	//d3dBlendStateDesc.RenderTarget[index].SrcBlend              = D3D11_BLEND_SRC_ALPHA;
+	//d3dBlendStateDesc.RenderTarget[index].DestBlend             = D3D11_BLEND_DEST_ALPHA;
+	//d3dBlendStateDesc.RenderTarget[index].BlendOp               = D3D11_BLEND_OP_ADD;
+	//d3dBlendStateDesc.RenderTarget[index].SrcBlendAlpha         = D3D11_BLEND_ZERO;
+	//d3dBlendStateDesc.RenderTarget[index].DestBlendAlpha        = D3D11_BLEND_ZERO;
+	//d3dBlendStateDesc.RenderTarget[index].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
+	//d3dBlendStateDesc.RenderTarget[index].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	//pd3dDevice->CreateBlendState(&d3dBlendStateDesc, &m_pd3dBlendState);
 }
 
 void CUIShader::MouseDown(HWND hWnd, POINT & pt)
@@ -1388,7 +1434,7 @@ CTitleScreenShader::~CTitleScreenShader()
 
 void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
-	m_nObjects = 1;
+	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	//m_pBackRTV->AddRef();
@@ -1399,8 +1445,12 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 	CGameObject  * pObject = nullptr;
 	CTexture     * pTexture = nullptr;
 
-	XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f) };
-	string   UIName[1] = { { "srv_title_jpg",  } };
+	XMFLOAT4 InstanceData[2] =
+	{
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f),
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, 600, 200)
+	};
+	string   UIName[2] = { { "srv_title_jpg"}, { "srv_loading.png"} };
 
 	//m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
 	//m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
@@ -1420,6 +1470,9 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 
 		m_ppObjects[i] = pObject;
 	}
+
+	m_ppObjects[1]->SetActive(false);
+
 	{
 		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
 		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
@@ -1431,7 +1484,7 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 		m_pMousePoint->SetActive(true);
 		m_pMousePoint->AddRef();
 	}
-	CUIShader::CreateConstantBuffer(pd3dDevice);
+	CUIShader::CreateUIResources(pd3dDevice);
 }
 
 void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
@@ -1445,6 +1498,7 @@ void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * e
 		{
 		case UIMessage::MSG_UI_TITLE_INSERT_INGAME :
 			EVENTMgr.InsertDelayMessage(0.1f, eMessage::MSG_SCENE_CHANGE, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+			m_ppObjects[1]->SetActive(true);
 			return;
 		}
 		return;
@@ -1502,7 +1556,7 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 		m_pMousePoint->SetActive(true);
 		m_pMousePoint->AddRef();
 	}
-	CUIShader::CreateConstantBuffer(pd3dDevice);
+	CUIShader::CreateUIResources(pd3dDevice);
 }
 
 void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)

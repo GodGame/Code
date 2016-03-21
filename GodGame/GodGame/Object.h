@@ -278,7 +278,7 @@ public:
 
 	virtual void UpdateBoundingBox();
 
-	void SetMesh(CMesh *pMesh, int nIndex = 0);
+	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
@@ -353,20 +353,32 @@ class CAnimatedObject : public CDynamicObject
 {
 public:
 	CAnimatedObject(int nMeshes);
-	virtual ~CAnimatedObject()
-	{
-		cout << "Animate »èÁ¦" << endl;
-	}
+	virtual ~CAnimatedObject();
+
 protected:
 	typedef CAnimatedMesh ANI_MESH;
 	
 	WORD m_wdAnimateState;
 
+	vector<float> m_vcfAnimationCycleTime;
+	vector<float> m_vcfFramePerTime;
+
 public:
-	void SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime) { static_cast<ANI_MESH*>(m_ppMeshes[wdAnimNum])->SetOneCycleTime(fCycleTime); }
+	void ChangeAnimationState(WORD wd) {
+		if (m_wdAnimateState != wd)
+		{
+			m_wdAnimateState = wd;
+			static_cast<CAnimatedMesh*>(m_ppMeshes[m_wdAnimateState])->ResetIndex();
+		}
+	}
+	void SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime); 
+	void UpdateFramePerTime();
+
+	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+
 };
 
 class CUIObject : public CGameObject

@@ -17,7 +17,84 @@ CSceneInGame::~CSceneInGame()
 {
 }
 
-void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, SceneShaderBuildInfo * SceneInfo)
+void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
+{
+	wstring baseDir{ _T("../Assets/Image/Objects/") };
+	vector<wstring> vcTxFileNames;
+
+	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
+	CTexture * pTexture = nullptr;
+	CMesh * pMesh = nullptr;
+	{
+		pTexture = new CTexture(2, 1, 0, 0);
+		{
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/staff/Staff01_Diff.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/staff/Staff01_Diff_NRM.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(1, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		}
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/staff/Staff01.fbxcjh"), 0.2f, vcTxFileNames);
+		vcTxFileNames.clear();
+
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_staff_01");
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_staff_01");
+	}
+	{
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.08f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_idle");
+		pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir + _T("Aure/"), vcTxFileNames, 0);
+		vcTxFileNames.clear();
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_aure");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Forward.ad", 0.08f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_run_forwad");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Walk_Back.ad", 0.08f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_Back");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Walk_Right.ad", 0.08f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_right");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Walk_Left.ad", 0.08f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_left");
+		vcTxFileNames.clear();
+	}
+
+	//{
+	//	pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Man_Death_0.ad", 0.13f, vcTxFileNames);
+	//	pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	//	vcTxFileNames.clear();
+
+	//	m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_man_death");
+	//	m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_man_death");
+	//}
+	//{
+	//	pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Player_0.ad", 0.13f, vcTxFileNames);
+	//	pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
+	//	vcTxFileNames.clear();
+
+	//	m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_player_0");
+	//	m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_player_0");
+	//}
+	{
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Skull/skeleton_0.ad", 3.5f, vcTxFileNames);
+		pTexture = new CTexture(1, 0, 0, 0);
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Skull/Skull.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pTexture->SetTexture(0, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
+		vcTxFileNames.clear();
+
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_skull_0");
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_skull_0");
+	}
+}
+
+void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo)
 {
 	m_nMRT     = NUM_MRT;
 	m_nThread  = NUM_THREAD;
@@ -27,6 +104,9 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	CMaterial *pGreenMaterial = MaterialMgr.GetObjects("Green");
 	CMaterial *pBlueMaterial  = MaterialMgr.GetObjects("Blue");
 	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
+
+	//¸Þ½Ã ºôµå
+	BuildMeshes(pd3dDevice);
 	{
 		UINT index = 0;
 		m_nShaders = NUM_SHADER;
@@ -44,7 +124,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 		CStaticShader *pStaticObjectsShader = new CStaticShader();
 		pStaticObjectsShader->CreateShader(pd3dDevice);
-		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
+		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial, m_SceneResoucres);
 		m_ppShaders[index++] = pStaticObjectsShader;
 
 		CPointInstanceShader *pPointShader = new CPointInstanceShader();
@@ -81,7 +161,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
-		m_pPlayerShader->BuildObjects(pd3dDevice, GetTerrain());
+		m_pPlayerShader->BuildObjects(pd3dDevice, GetTerrain(), m_SceneResoucres);
 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
@@ -304,6 +384,17 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			break;
 		}
 		break;
+
+	case WM_KEYUP:
+		switch (wParam)
+		{
+		case VK_UP:
+		case VK_DOWN:
+		case VK_LEFT:
+		case VK_RIGHT:
+			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE);
+			break;
+		}
 	}
 	return(false);
 }

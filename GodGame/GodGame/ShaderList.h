@@ -11,7 +11,7 @@ public:
 	virtual ~CStaticShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 };
 
@@ -26,9 +26,10 @@ public:
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial *pMaterial, CTexture *pTexture, int k);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+
 private:
 	CMaterial *m_pMaterial;
-	CTexture *m_pTexture;
+	CTexture  *m_pTexture;
 
 	//UINT m_nInstanceBufferStride;
 	//UINT m_nInstanceBufferOffset;

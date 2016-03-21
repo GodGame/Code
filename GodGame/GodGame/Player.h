@@ -3,7 +3,7 @@
 //#include "Camera.h"
 #include "GameInfo.h"
 
-class CPlayer : public CDynamicObject
+class CPlayer : public CAnimatedObject
 {
 protected:
 	//플레이어의 위치 벡터, x-축(Right), y-축(Up), z-축(Look) 벡터이다.
@@ -48,10 +48,10 @@ public:
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
 
-	XMFLOAT3 GetPosition() { return(m_xv3Position); }
-	XMFLOAT3 GetLookVector() { return(m_xv3Look); }
-	XMFLOAT3 GetUpVector() { return(m_xv3Up); }
-	XMFLOAT3 GetRightVector() { return(m_xv3Right); }
+	XMFLOAT3 & GetPosition() { return(m_xv3Position); }
+	XMFLOAT3 & GetLookVector() { return(m_xv3Look); }
+	XMFLOAT3 & GetUpVector() { return(m_xv3Up); }
+	XMFLOAT3 & GetRightVector() { return(m_xv3Right); }
 
 	XMFLOAT3 GetLookVectorInverse() { return XMFLOAT3(-m_xv3Look.x, -m_xv3Look.y, -m_xv3Look.z); }
 	XMFLOAT3 GetUpVectorInverse() { return XMFLOAT3(-m_xv3Up.x, -m_xv3Up.y, -m_xv3Up.z); }
@@ -77,7 +77,7 @@ public:
 	void Move(float fxOffset = 0.0f, float fyOffset = 0.0f, float fzOffset = 0.0f);
 	//플레이어를 회전하는 함수이다.
 	void Rotate(float x, float y, float z);
-
+	void Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle);
 	//플레이어의 위치와 회전 정보를 경과 시간에 따라 갱신하는 함수이다.
 	void Update(float fTimeElapsed);
 

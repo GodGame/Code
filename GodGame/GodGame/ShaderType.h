@@ -38,6 +38,14 @@ struct CB_CS
 class CShader
 {
 public:
+	struct BUILD_RESOURCES_MGR
+	{
+		MATERIAL_MGR  mgrMaterial;
+		TEXTURE_MGR   mgrTexture;
+		MESH_MGR      mgrMesh;
+	};
+
+public:
 	CShader();
 	virtual ~CShader();
 
@@ -60,6 +68,7 @@ public:
 	void EntityAllDynamicObjects();
 
 	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
+
 public:
 	//게임 객체들을 생성하고 애니메이션 처리를 하고 렌더링하기 위한 함수이다.
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);

@@ -173,6 +173,114 @@ MeshBuffer CMesh::GetNormalMapVertexBuffer(ID3D11Device * pd3dDevice, NormalMapV
 	return meshInfo;
 }
 
+MeshBuffer CMesh::GetNormalMapVertexBufferAndCalculateTangent(ID3D11Device * pd3dDevice, NormalMapVertex * pData, int nSize, float fScale)
+{
+	MeshBuffer meshInfo;
+	meshInfo.pd3dBuffer = nullptr;
+
+	XMFLOAT3 min{ FLT_MAX, FLT_MAX, FLT_MAX }, max{ FLT_MIN, FLT_MIN, FLT_MIN };
+
+	XMVECTOR xmvScale = XMVectorSet(fScale, fScale, fScale, 1);
+	XMMATRIX xmtxRotate = XMMatrixIdentity();// XMMatrixRotationX(-90);
+
+	UINT nVertices = meshInfo.nVertexes = nSize;
+
+	float vecX, vecY, vecZ, tcU1, tcU2, tcV1, tcV2;
+	XMVECTOR edge1, edge2;
+	XMFLOAT3 tangent[3], normal[3];
+
+	int CalIndex[] = { 1, 2, 1, 2, 1, 2 }; 
+	UINT offsetLeft3 = 0, offset = 0;
+
+	for (unsigned int i = 0; i < nVertices; ++i)
+	{
+		offset = (i % 3);
+		if (offset == 0) 
+		{
+			for (UINT j = 0; j < 3; ++j)
+			{
+				offsetLeft3 = j * 2;
+				tangent[j] = { 0, 0, 0 };
+
+				NormalMapVertex * pNearVertexes[3] = { &pData[i],
+					&pData[(i + CalIndex[offsetLeft3 + 1]) % nVertices],
+					&pData[(i + CalIndex[offsetLeft3 + 2]) % nVertices] };
+
+				//Get the vector describing one edge of our triangle (edge 0,2)
+				vecX = pNearVertexes[0]->xmf3Pos.x - pNearVertexes[2]->xmf3Pos.x;
+				vecY = pNearVertexes[0]->xmf3Pos.y - pNearVertexes[2]->xmf3Pos.y;
+				vecZ = pNearVertexes[0]->xmf3Pos.z - pNearVertexes[2]->xmf3Pos.z;
+				edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);	//Create our first edge
+
+																//Get the vector describing another edge of our triangle (edge 2,1)
+				vecX = pNearVertexes[2]->xmf3Pos.x - pNearVertexes[1]->xmf3Pos.x;
+				vecY = pNearVertexes[2]->xmf3Pos.y - pNearVertexes[1]->xmf3Pos.y;
+				vecZ = pNearVertexes[2]->xmf3Pos.z - pNearVertexes[1]->xmf3Pos.z;
+				edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);	//Create our second edge
+
+
+				tcU1 = pNearVertexes[0]->xmf2Tex.x - pNearVertexes[2]->xmf2Tex.x;
+				tcV1 = pNearVertexes[0]->xmf2Tex.y - pNearVertexes[2]->xmf2Tex.y;
+
+				//Find second texture coordinate edge 2d vector
+				tcU2 = pNearVertexes[2]->xmf2Tex.x - pNearVertexes[1]->xmf2Tex.x;
+				tcV2 = pNearVertexes[2]->xmf2Tex.y - pNearVertexes[1]->xmf2Tex.y;
+
+				//Find tangent using both tex coord edges and position edges
+				double fVal = (double)(tcU1 * tcV2 - tcU2 * tcV1);
+				if (fVal == 0.0) fVal += 0.00001;
+				tangent[offset].x += (tcV1 * XMVectorGetX(edge1) - tcV2 * XMVectorGetX(edge2)) * 1 / fVal;
+				tangent[offset].y += (tcV1 * XMVectorGetY(edge1) - tcV2 * XMVectorGetY(edge2)) * 1 / fVal;
+				tangent[offset].z += (tcV1 * XMVectorGetZ(edge1) - tcV2 * XMVectorGetZ(edge2)) * 1 / fVal;
+			}
+
+			XMVECTOR tangentSum = XMLoadFloat3(&tangent[offset]);
+			tangentSum += XMLoadFloat3(&tangent[offset + 1]);
+			tangentSum += XMLoadFloat3(&tangent[offset + 2]);
+			tangentSum = XMVector3Normalize(tangentSum);
+
+			XMStoreFloat3(&pData[i].xmf3Tangent, tangentSum);
+			XMStoreFloat3(&pData[i + 1].xmf3Tangent, tangentSum);
+			XMStoreFloat3(&pData[i + 2].xmf3Tangent, tangentSum);
+		}
+
+		XMVECTOR xmvPos = XMVectorSet(pData[i].xmf3Pos.x, pData[i].xmf3Pos.y, pData[i].xmf3Pos.z, 1);
+		xmvPos *= xmvScale;
+		xmvPos = XMVector3TransformCoord(xmvPos, xmtxRotate);
+
+		//XMStoreFloat3(&m_pxv3Positions[i], xmvPos);
+		XMStoreFloat3(&pData[i].xmf3Pos, xmvPos);
+
+		if (min.x > pData[i].xmf3Pos.x) min.x = pData[i].xmf3Pos.x;
+		if (min.y > pData[i].xmf3Pos.y) min.y = pData[i].xmf3Pos.y;
+		if (min.z > pData[i].xmf3Pos.z) min.z = pData[i].xmf3Pos.z;
+
+		if (max.x < pData[i].xmf3Pos.x) max.x = pData[i].xmf3Pos.x;
+		if (max.y < pData[i].xmf3Pos.y) max.y = pData[i].xmf3Pos.y;
+		if (max.z < pData[i].xmf3Pos.z) max.z = pData[i].xmf3Pos.z;
+	}
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(NormalMapVertex) * nSize;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = &pData[0];
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &meshInfo.pd3dBuffer);
+
+	meshInfo.bb.m_xv3Maximum = max;
+	meshInfo.bb.m_xv3Minimum = min;
+
+	meshInfo.nStrides = sizeof(NormalMapVertex);
+	meshInfo.nOffsets = 0;
+
+	return meshInfo;
+}
+
 
 void CMesh::CreateRasterizerState(ID3D11Device *pd3dDevice)
 {
@@ -228,9 +336,14 @@ int CMesh::CheckRayIntersection(XMFLOAT3 *pxv3RayPosition, XMFLOAT3 *pxv3RayDire
 #endif
 
 
-void CAnimatedMesh::SetOneCycleTime(float fCycleTime)
+float CAnimatedMesh::SetOneCycleTime(float fCycleTime)
 {
-	m_fFramePerTime = m_pvcMeshBuffers.size() / fCycleTime;
+	return (m_fFramePerTime = m_pvcMeshBuffers.size() / fCycleTime);
+}
+
+void CAnimatedMesh::SetFramePerTime(float fFramePerTime)
+{
+	m_fFramePerTime = fFramePerTime;
 }
 
 void CAnimatedMesh::SetAnimationIndex(int iIndex)
@@ -249,7 +362,7 @@ CAnimatedMesh::CAnimatedMesh(ID3D11Device * pd3dDevice) : CMesh(pd3dDevice)
 CAnimatedMesh::~CAnimatedMesh()
 {
 	for (auto it = m_pvcMeshBuffers.begin(); it != m_pvcMeshBuffers.end(); ++it)
-		(*it)->Release();
+	 	it->pd3dBuffer->Release();
 	m_pvcMeshBuffers.clear();
 }
 
@@ -262,7 +375,7 @@ void CAnimatedMesh::Animate(float fFrameTime)
 void CAnimatedMesh::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)
 {
 	//메쉬의 정점은 여러 개의 정점 버퍼로 표현된다.
-	ID3D11Buffer * ppd3dBuffer[] = { m_pvcMeshBuffers[m_iIndex] };
+	ID3D11Buffer * ppd3dBuffer[] = { m_pvcMeshBuffers[m_iIndex].pd3dBuffer };
 
 	pd3dDeviceContext->IASetVertexBuffers(m_nSlot, m_nBuffers, ppd3dBuffer, m_pnVertexStrides, m_pnVertexOffsets);
 	pd3dDeviceContext->IASetIndexBuffer(m_pd3dIndexBuffer, m_dxgiIndexFormat, m_nIndexOffset);
@@ -1275,7 +1388,7 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		nReadBytes = ::fread(temp, sizeof(wchar_t), fileNameSize, pFile);
 		temp[fileNameSize] = '\0';
 		file = temp;
-		wcout << temp << endl;
+		//wcout << temp << endl;
 
 		vcFileName.push_back(file);
 	}
@@ -1284,24 +1397,38 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 	__int32 sz = 0;
 
 	MeshBuffer MeshInfo;
-
-	UINT nIndex = 0;
-
+	
+	__int32 nType = 0;
 	vector<NormalMapVertex> pVertexInfo;
+	NormalMapVertex ZeroVertex;
+	ZeroMemory(&ZeroVertex, sizeof(ZeroVertex));
 
-
-
-	while (true)
+	for (UINT nIndex = 0;;++nIndex)
 	{
-		nReadBytes = ::fread(&nIndex, sizeof(__int32), 1, pFile);
+		nReadBytes = ::fread(&nType, sizeof(__int32), 1, pFile);
 		if (nReadBytes == 0) break;
 		nReadBytes = ::fread(&sz, sizeof(__int32), 1, pFile);
 
-		if (pVertexInfo.size() < sz) pVertexInfo.resize(sz);
-		
-		nReadBytes = ::fread(&pVertexInfo[0], sizeof(NormalMapVertex), sz, pFile);
-		MeshInfo = CMesh::GetNormalMapVertexBuffer( pd3dDevice, &pVertexInfo[0], sz, fScale);
-		
+		if (pVertexInfo.size() < sz) pVertexInfo.resize(sz, ZeroVertex);
+
+		if (nType == 0)
+		{
+			nReadBytes = ::fread(&pVertexInfo[0], sizeof(NormalMapVertex), sz, pFile);
+			MeshInfo = CMesh::GetNormalMapVertexBuffer(pd3dDevice, &pVertexInfo[0], sz, fScale);
+		}
+		else if (nType == 1)
+		{
+			V3T2N3 temp;
+			for (int index = 0; index < sz; ++index)
+			{
+				nReadBytes = ::fread(&pVertexInfo[index], sizeof(V3T2N3), 1, pFile);
+				//pVertexInfo[index] = temp;
+			}
+			MeshInfo = CMesh::GetNormalMapVertexBufferAndCalculateTangent(pd3dDevice, &pVertexInfo[0], sz, fScale);
+		}
+		else
+			break;
+
 		if (nIndex == 0)
 		{
 			m_bcBoundingCube = MeshInfo.bb;
@@ -1317,7 +1444,7 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		}
 		//pMesh->AddRef();
 		
-		m_pvcMeshBuffers.push_back(MeshInfo.pd3dBuffer);
+		m_pvcMeshBuffers.push_back(MeshInfo);
 	}
 	::fclose(pFile);
 	pVertexInfo.clear();

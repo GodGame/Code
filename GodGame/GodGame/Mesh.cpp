@@ -590,8 +590,6 @@ CPoint2DMesh::CPoint2DMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight
 	XMFLOAT4 xmfInfo = XMFLOAT4(fWidth, fHeight, fxSize, fySize);
 
 	BuildMesh(pd3dDevice, xmfInfo);
-
-
 }
 
 CPoint2DMesh::CPoint2DMesh(ID3D11Device * pd3dDevice, XMFLOAT4 & info) : CMesh(pd3dDevice)

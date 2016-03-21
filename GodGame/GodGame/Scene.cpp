@@ -163,6 +163,10 @@ bool CScene::ProcessInput(HWND hWnd, float fTime, POINT & pt)
 	return false;
 }
 
+void CScene::BuildMeshes(ID3D11Device * pd3dDevice)
+{
+}
+
 void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nShaders; i++)
