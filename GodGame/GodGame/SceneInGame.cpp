@@ -45,23 +45,32 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_staff_01");
 	}
 	{
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.08f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_idle");
 		pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir + _T("Aure/"), vcTxFileNames, 0);
 		vcTxFileNames.clear();
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_aure");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Forward.ad", 0.08f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Forward.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_run_forwad");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Walk_Back.ad", 0.08f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Back.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_Back");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Walk_Right.ad", 0.08f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Right.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_right");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Walk_Left.ad", 0.08f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Left.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_left");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Attack01.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_attack01");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Cast_01.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_cast01");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
 		vcTxFileNames.clear();
 	}
 
@@ -364,9 +373,6 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			pPlayer = m_pPlayerShader->GetPlayer();
 			((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn(4, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
 			break;
-			//case VK_SPACE:
-			//	FRAMEWORK.ChangeGameScene(new CSceneTitle());
-			//	break;
 
 		case 'Z':
 			pPlayer = m_pPlayerShader->GetPlayer();
@@ -382,6 +388,18 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			pPlayer = m_pPlayerShader->GetPlayer();
 			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(2, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), nullptr);
 			break;
+
+		case 'I':
+			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_1H_CAST, true);
+			break;
+
+		case 'O':
+			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_1H_MAGIC_ATTACK, true);
+			break;
+
+		case 'P':
+			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_1H_MAGIC_AREA, true);
+			break;
 		}
 		break;
 
@@ -392,7 +410,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case VK_DOWN:
 		case VK_LEFT:
 		case VK_RIGHT:
-			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE);
+			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE, false);
 			break;
 		}
 	}

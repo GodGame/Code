@@ -40,7 +40,7 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 			fHeight = OnGetHeight(x, z, pContext) ;
 			m_pxv3Positions[i] = XMFLOAT3((x*m_xv3Scale.x), fHeight, (z*m_xv3Scale.z));
 			pxv3Normals[i] = pHeightMap->GetHeightMapNormal(x, z);
-			pxv2TexCoords[i] = XMFLOAT2(float(x) / float(m_xv3Scale.x*0.5f), float(z) / float(m_xv3Scale.z*0.5f));
+			pxv2TexCoords[i] = XMFLOAT2(float(x) / float(m_xv3Scale.x*0.25f), float(z) / float(m_xv3Scale.z*0.25f));
 			pxv2AlphaTexCoords[i] = XMFLOAT2(float(x) / float(cxHeightMap - 1), float(czHeightMap - 1 - z) / float(czHeightMap - 1));
 #ifdef DETAIL_TERRAIN
 			pxv3DetailTexCoords[i] = XMFLOAT2(float(x) / float(m_xv3Scale.x*0.5f), float(z) / float(m_xv3Scale.z*0.5f));

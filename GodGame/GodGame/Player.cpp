@@ -69,23 +69,23 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 		//화살표 키 ‘↑’를 누르면 로컬 z-축 방향으로 이동(전진)한다. ‘↓’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_FORWARD)
 		{
-			xv3Shift += XMLoadFloat3(&m_xv3Look) * fDistance;
+			xv3Shift += XMLoadFloat3(&m_xv3Look) * fDistance * 1.2f;
 			wdNextState = eANI_RUN_FORWARD;
 		}
 		if (dwDirection & DIR_BACKWARD)
 		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance * 0.8f;
+			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance;
 			wdNextState = eANI_WALK_BACK;
 		}
 		//화살표 키 ‘→’를 누르면 로컬 x-축 방향으로 이동한다. ‘←’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_RIGHT)
 		{
-			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance * 0.8f;
+			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance;
 			wdNextState = eANI_WALK_RIGHT;
 		}
 		if (dwDirection & DIR_LEFT)
 		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance * 0.8f;
+			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance;
 			wdNextState = eANI_WALK_LEFT;
 		}
 		//‘Page Up’을 누르면 로컬 y-축 방향으로 이동한다. ‘Page Down’을 누르면 반대 방향으로 이동한다.
@@ -447,8 +447,8 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 		SetMaxVelocityXZ(300.0f);
 		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
-		m_pCamera->SetTimeLag(0.35f);
-		m_pCamera->SetOffset(XMFLOAT3(0, 20, -50)); //XMFLOAT3(0.0f, 30.0f, -30.0f));
+		m_pCamera->SetTimeLag(0.55f);
+		m_pCamera->SetOffset(XMFLOAT3(0, 20.0f, -50.0)); //XMFLOAT3(0.0f, 30.0f, -30.0f));
 		m_pCamera->GenerateProjectionMatrix(1.01f, 1000.0f, ASPECT_RATIO, 60.0f);
 		break;
 	default:
@@ -463,9 +463,9 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 	XMFLOAT3 xv3Scale           = pTerrain->GetScale();
 	XMFLOAT3 xv3PlayerPosition  = GetPosition();
 	int z                       = (int)(xv3PlayerPosition.z / xv3Scale.z);
-	bool bReverseQuad = !(z % 2);//((z % 2) != 0);
+	bool bReverseQuad = (z % 2);//((z % 2) != 0);
 	/*높이 맵에서 플레이어의 현재 위치 (x, z)의 y 값을 구한다. 그리고 플레이어 메쉬의 높이가 12이고 플레이어의 중심이 직육면체의 가운데이므로 y 값에 메쉬의 높이의 절반을 더하면 플레이어의 위치가 된다.*/
-	float fHeight = pTerrain->GetHeight(xv3PlayerPosition.x, xv3PlayerPosition.z, bReverseQuad) + 2.0f;
+	float fHeight = pTerrain->GetHeight(xv3PlayerPosition.x, xv3PlayerPosition.z, bReverseQuad);//+2.0f;
 //	cout << "높이는 : " << fHeight << endl;
 	/*플레이어의 속도 벡터의 y-값이 음수이면(예를 들어, 중력이 적용되는 경우) 플레이어의 위치 벡터의 y-값이 점점 작아지게 된다.
 	이때 플레이어의 현재 위치의 y 값이 지형의 높이(실제로 지형의 높이 + 6)보다 작으면 플레이어가 땅속에 있게 되므로 플레이어의 속도 벡터의 y 값을 0으로 만들고 플레이어의 위치 벡터의 y-값을 지형의 높이로 설정한다. 그러면 플레이어는 지형 위에 있게 된다.*/
@@ -497,12 +497,12 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	CCamera *pCamera            = GetCamera();
 	XMFLOAT3 xv3CameraPosition  = pCamera->GetPosition();
 	int z                       = (int)(xv3CameraPosition.z / xv3Scale.z);
-	bool bReverseQuad = !(z % 2);//((z % 2) != 1);
+	bool bReverseQuad = (z % 2);//((z % 2) != 1);
 	/*높이 맵에서 카메라의 현재 위치 (x, z)의 높이(y 값)를 구한다. 이 값이 카메라의 위치에 해당하는 지형의 높이 보다 작으면 카메라가 땅속에 있게 된다.
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 8.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 2.0f;// +8.0f;
 	if (xv3CameraPosition.y < fHeight)
 	{
 		xv3CameraPosition.y = fHeight;
@@ -511,11 +511,13 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 		if (pCamera->GetMode() == THIRD_PERSON_CAMERA)
 		{
 			CThirdPersonCamera *p3rdPersonCamera = (CThirdPersonCamera *)pCamera;
+			XMFLOAT3 look = GetPosition();
+			look.y += 0.5f;
 			//XMFLOAT3 pos = GetPosition();
 			//XMFLOAT3 look = GetLookVector();
 			//XMStoreFloat3(&pos, XMLoadFloat3(&pos) + ( XMLoadFloat3(&look) * 60.0f));
 
-			p3rdPersonCamera->SetLookAt(GetPosition());
+			p3rdPersonCamera->SetLookAt(look);
 		}
 	}
 }

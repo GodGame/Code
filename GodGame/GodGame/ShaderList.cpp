@@ -429,7 +429,7 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	CAnimatedObject * pAnimatedObject = new CAnimatedObject(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
 	m_ppObjects[1] = pAnimatedObject;
-	m_ppObjects[1]->SetPosition(1085, fHeight + 5, 260);
+	m_ppObjects[1]->SetPosition(1085, fHeight, 260);
 	m_ppObjects[1]->AddRef();
 
 	//fHeight = pHeightMapTerrain->GetHeight(1115, 265, false);

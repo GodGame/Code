@@ -784,7 +784,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 
 	//TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
 
-	CMaterial * pPlayerMaterial = MaterialMgr.GetObjects("WhiteLight");
+	CMaterial * pPlayerMaterial = MaterialMgr.GetObjects("White");
 	//CMaterial *pPlayerMaterial               = new CMaterial();
 	//pPlayerMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
 	//pPlayerMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
@@ -798,13 +798,17 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pPlayer->SetCameraUpdatedContext(pTerrain);
 	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
 
-	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
 
 	pMesh[eANI_IDLE] = mgrScene.mgrMesh.GetObjects("scene_aure_idle");
 	pMesh[eANI_RUN_FORWARD] = mgrScene.mgrMesh.GetObjects("scene_aure_run_forwad");
 	pMesh[eANI_WALK_BACK] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_Back");
 	pMesh[eANI_WALK_RIGHT] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_right");
 	pMesh[eANI_WALK_LEFT] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_left");
+
+	pMesh[eANI_1H_CAST] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_cast01");
+	pMesh[eANI_1H_MAGIC_ATTACK] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_attack01");
+	pMesh[eANI_1H_MAGIC_AREA] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_area01");
 
 	CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
 
@@ -813,8 +817,17 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	//pTerrainPlayer->ChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, 0.0f);
 	pPlayer->Rotate(0, 180, 0);
 
+//	pPlayer->SetMesh(pMesh[0], 0);
 	for (int i = 0; i < eANI_TOTAL_NUM; ++i)
+	{
 		pPlayer->SetMesh(pMesh[i], i);
+	}
+	pPlayer->SetAnimationCycleTime(eANI_IDLE, 1.5f);
+	pPlayer->SetAnimationCycleTime(eANI_RUN_FORWARD, 0.8f);
+
+	pPlayer->SetAnimationCycleTime(eANI_1H_CAST, 2.0f);
+	pPlayer->SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, 1.8f);
+	pPlayer->SetAnimationCycleTime(eANI_1H_MAGIC_AREA, 2.5f);
 
 	pPlayer->SetMaterial(pPlayerMaterial);
 	pPlayer->SetTexture(pTexture);
@@ -952,7 +965,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	//ppAlphaName[1] = _T("../Assets/Image/Terrain/Alpha1.png");
 	//ppAlphaName[2] = _T("../Assets/Image/Terrain/Alpha2.png");
 
-	ppEntityTexture[0] = _T("../Assets/Image/Terrain/Base_Texture.jpg");
+	ppEntityTexture[0] = _T("../Assets/Image/Terrain/Base_Texture1.jpg");
 
 	for (int fileIndex = 0; fileIndex < m_nLayerNumber; fileIndex++) 
 	{

@@ -349,13 +349,15 @@ void CAnimatedMesh::SetFramePerTime(float fFramePerTime)
 void CAnimatedMesh::SetAnimationIndex(int iIndex)
 {
 	m_iIndex = (iIndex) % m_pvcMeshBuffers.size();
+	m_bTerminal = false;
 }
 
 CAnimatedMesh::CAnimatedMesh(ID3D11Device * pd3dDevice) : CMesh(pd3dDevice)
 {
 	m_fFramePerTime = 30.0f;
 	m_fNowFrameTime = 0.0f;
-	m_iIndex = 0;
+	m_iIndex = -1;
+	m_bTerminal = false;
 	m_pvcMeshBuffers.reserve(30);
 }
 
@@ -370,6 +372,8 @@ void CAnimatedMesh::Animate(float fFrameTime)
 {
 	m_fNowFrameTime += fFrameTime * m_fFramePerTime;
 	m_iIndex = (int(m_fNowFrameTime)) % m_pvcMeshBuffers.size();
+
+	if (!m_bTerminal) { m_bTerminal = (m_iIndex > m_pvcMeshBuffers.size() - 2); }
 }
 
 void CAnimatedMesh::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)

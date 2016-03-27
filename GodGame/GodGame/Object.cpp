@@ -439,6 +439,15 @@ void CAnimatedObject::Animate(float fTimeElapsed)
 	ANI_MESH * pMesh = static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState]);
 	pMesh->SetFramePerTime(m_vcfFramePerTime[m_wdAnimateState]);
 	pMesh->Animate(fTimeElapsed);
+
+	if (m_bReserveBackIdle)
+	{
+		if (pMesh->IsEndAnimation())
+		{
+			ChangeAnimationState(eANI_IDLE, false);
+			m_bReserveBackIdle = false;
+		}
+	}
 }
 
 void CAnimatedObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
@@ -1432,7 +1441,9 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 	if (m_bAbsorb)
 	{
 		m_fAbsorbTime		+= fTimeElapsed;
-		XMVECTOR xmvTarget   = XMLoadFloat3(&m_pTargetObject->GetPosition());
+		XMFLOAT3 xmfPos      = m_pTargetObject->GetPosition();
+		xmfPos.y += 10;
+		XMVECTOR xmvTarget   = XMLoadFloat3(&xmfPos);
 		XMVECTOR xvPos       = XMLoadFloat3(&CBillboardObject::GetPosition());
 		XMVECTOR xmvToTarget = xmvTarget - xvPos;
 		xmvToTarget          = XMVector3Normalize(xmvToTarget) * 2.0f;
@@ -1441,7 +1452,6 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 		XMVECTOR xvRandom    = XMLoadFloat3(&m_xvRandomVelocity);
 
 		xvPos = (0.5f * xmvToTarget * m_fAbsorbTime * m_fAbsorbTime) + (xvRandom * m_fAbsorbTime) + xvPos;
-		XMFLOAT3 xmfPos;
 		XMStoreFloat3(&xmfPos, xvPos);
 		SetPosition(xmfPos);
 		CBillboardObject::UpdateInstanceData();

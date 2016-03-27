@@ -356,6 +356,7 @@ public:
 	virtual ~CAnimatedObject();
 
 protected:
+	bool m_bReserveBackIdle;
 	typedef CAnimatedMesh ANI_MESH;
 	
 	WORD m_wdAnimateState;
@@ -364,11 +365,13 @@ protected:
 	vector<float> m_vcfFramePerTime;
 
 public:
-	void ChangeAnimationState(WORD wd) {
+	void ChangeAnimationState(WORD wd, bool bReserveIdle) {
 		if (m_wdAnimateState != wd)
 		{
 			m_wdAnimateState = wd;
 			static_cast<CAnimatedMesh*>(m_ppMeshes[m_wdAnimateState])->ResetIndex();
+
+			m_bReserveBackIdle = bReserveIdle;
 		}
 	}
 	void SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime); 

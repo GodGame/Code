@@ -10,6 +10,9 @@ enum ANIMATION_STATE
 	eANI_WALK_BACK,
 	eANI_WALK_LEFT,
 	eANI_WALK_RIGHT,
+	eANI_1H_CAST,
+	eANI_1H_MAGIC_ATTACK,
+	eANI_1H_MAGIC_AREA,
 	eANI_TOTAL_NUM
 };
 
@@ -164,6 +167,8 @@ class CAnimatedMesh : public CMesh
 {
 protected:
 	vector<MeshBuffer> m_pvcMeshBuffers;
+	bool m_bTerminal;
+
 	int m_iIndex;
 	float m_fNowFrameTime;
 	float m_fFramePerTime;
@@ -184,7 +189,8 @@ public:
 	void SetAnimationIndex(int iIndex);
 	int GetAnimationAllIndex() { return m_pvcMeshBuffers.size(); }
 
-	void ResetIndex() { m_iIndex = 0; m_fNowFrameTime = 0.0f; }
+	bool IsEndAnimation() { return m_bTerminal; }
+	void ResetIndex() { m_iIndex = 0; m_fNowFrameTime = 0.0f; m_bTerminal = false; }
 };
 
 class CMeshDiffused : public CMesh
