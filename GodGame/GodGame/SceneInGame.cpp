@@ -25,25 +25,34 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	CTexture * pTexture = nullptr;
 	CMesh * pMesh = nullptr;
+
+	for (int i = 1; i < 7; ++i)
 	{
 		pTexture = new CTexture(2, 1, 0, 0);
 		{
-			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/staff/Staff01_Diff.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			wchar_t result[256];
+			wsprintf(result, _T("../Assets/Image/Objects/staff/Staff0%d_Diff.png"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
 			pTexture->SetTexture(0, pd3dsrvTexture);
 			pd3dsrvTexture->Release();
 
-			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/staff/Staff01_Diff_NRM.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			wsprintf(result, _T("../Assets/Image/Objects/staff/Staff0%d_Diff_NRM.png"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
 			pTexture->SetTexture(1, pd3dsrvTexture);
 			pd3dsrvTexture->Release();
 
 			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 		}
-		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/staff/Staff01.fbxcjh"), 0.2f, vcTxFileNames);
+		char file[256];
+		sprintf(file, "../Assets/Image/Objects/staff/Staff0%d.fbxcjh", i);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.2f, vcTxFileNames);
 		vcTxFileNames.clear();
 
-		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_staff_01");
-		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_staff_01");
+		sprintf(file, "scene_staff_0%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
 	}
+
 	{
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_idle");
@@ -333,7 +342,7 @@ void CSceneInGame::UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, 
 
 bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
-	CPlayer * pPlayer = nullptr;
+	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
 
 	switch (nMessageID)
 	{
@@ -343,65 +352,34 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		//case 'Z':
 		//	if (m_pLights->m_pLights[1].m_bEnable) m_pLights->m_pLights[1].m_bEnable = false;
 		//	else m_pLights->m_pLights[1].m_bEnable = true;
+		// break;
 
-		//	break;
-		//case 'N':
-		//	pMat = MaterialMgr.GetObjects("White");
-		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0, 0, 0, 0);
-		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(0, 0, 0, 0);
-		//	pMat = MaterialMgr.GetObjects("Terrain");
-		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-		//	pMat->m_Material.m_xcSpecular = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-		//	pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		//	break;
-		//case 'M':
-		//	pMat = MaterialMgr.GetObjects("White");
-		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(1, 1, 1, 0);
-		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(1, 1, 1, 0);
-
-		//	pMat = MaterialMgr.GetObjects("Terrain");
-		//	pMat->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.8f, 0.7f, 1.0f);
-		//	pMat->m_Material.m_xcAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-		//	pMat->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 3.0f, 3.0f, 5.0f);
-		//	pMat->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-		//	break;
 		//case 'B':
 		//	bIsKeyDown = !bIsKeyDown;
 		//	break;
 		case 'B' :
-			pPlayer = m_pPlayerShader->GetPlayer();
 			((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn(4, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
-			break;
-
-		case 'Z':
-			pPlayer = m_pPlayerShader->GetPlayer();
-			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(0, &pPlayer->GetPosition());
-			break;
+			return(false);
 
 		case 'X':
-			pPlayer = m_pPlayerShader->GetPlayer();
 			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(1, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVector());
-			break;
+			return(false);
 
 		case 'C':
-			pPlayer = m_pPlayerShader->GetPlayer();
 			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(2, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), nullptr);
-			break;
+			return(false);
 
-		case 'I':
-			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_1H_CAST, true);
-			break;
+		//case 'I':
+		//	pPlayer = m_pPlayerShader->GetPlayer();
+		//	pPlayer->ChangeAnimationState(eANI_1H_CAST, true, nullptr, 0);
+		//	return(false);
 
-		case 'O':
-			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_1H_MAGIC_ATTACK, true);
-			break;
-
-		case 'P':
-			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_1H_MAGIC_AREA, true);
-			break;
+		case 'N':
+		case 'M':
+			pPlayer->PlayerKeyEventOn(wParam, this);
+			return(false);
 		}
-		break;
+		return(false);
 
 	case WM_KEYUP:
 		switch (wParam)
@@ -410,8 +388,8 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case VK_DOWN:
 		case VK_LEFT:
 		case VK_RIGHT:
-			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE, false);
-			break;
+			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+			return(false);
 		}
 	}
 	return(false);
@@ -595,6 +573,7 @@ CHeightMapTerrain *CSceneInGame::GetTerrain()
 void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
 	XMFLOAT4 xmf4Data;
+	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
 
 	switch (eMSG)
 	{
@@ -602,6 +581,15 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
 		((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn((XMFLOAT3*)&xmf4Data, xmf4Data.w);
 		return;
+		
+	case eMessage::MSG_MAGIC_SHOT:
+		static_cast<CParticleShader*>(m_ppShaders[m_nParticleShaderNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
+		return;
+	case eMessage::MSG_MAGIC_AREA:
+		((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(0, &pPlayer->GetCenterPosition());
+		return;
+		
+
 	case eMessage::MSG_MOUSE_DOWN:
 		m_ptOldCursorPos = *(POINT*)extra;
 	case eMessage::MSG_MOUSE_DOWN_OVER:
@@ -611,8 +599,6 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_MOUSE_UP:
 		m_pUIShader->GetGameMessage(nullptr, eMSG, extra);
 	case eMessage::MSG_MOUSE_UP_OVER:
-		return;
-	default:
 		return;
 	}
 }

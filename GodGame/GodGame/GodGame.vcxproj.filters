@@ -201,52 +201,52 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Define.fx">
-      <Filter>Global\0_FX</Filter>
-    </FxCompile>
-    <FxCompile Include="Effect.fx">
-      <Filter>Global\0_FX</Filter>
-    </FxCompile>
-    <FxCompile Include="Post.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="BlurAndBloom.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="Reduce.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="SSAO.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="PostDefine.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="Shadow.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="BillBoard.fx">
-      <Filter>Global\0_FX</Filter>
-    </FxCompile>
-    <FxCompile Include="Common.fx">
-      <Filter>Global\0_FX</Filter>
-    </FxCompile>
-    <FxCompile Include="Final.fx">
-      <Filter>Global\0_FX\PostProcessing</Filter>
-    </FxCompile>
-    <FxCompile Include="Particle.fx">
-      <Filter>Global\0_FX\Effects</Filter>
-    </FxCompile>
-    <FxCompile Include="TextureAni.fx">
-      <Filter>Global\0_FX\Effects</Filter>
-    </FxCompile>
-    <FxCompile Include="Light.fx">
-      <Filter>Global\0_FX\Effects</Filter>
-    </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ReadMe.txt">
       <Filter>Global</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="fx\BillBoard.fx">
+      <Filter>Global\0_FX</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Common.fx">
+      <Filter>Global\0_FX</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Define.fx">
+      <Filter>Global\0_FX</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Effect.fx">
+      <Filter>Global\0_FX</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\SSAO.fx">
+      <Filter>Global\0_FX</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Particle.fx">
+      <Filter>Global\0_FX\Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Final.fx">
+      <Filter>Global\0_FX\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Post.fx">
+      <Filter>Global\0_FX\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\TextureAni.fx">
+      <Filter>Global\0_FX\Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Light.fx">
+      <Filter>Global\0_FX\Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\PostDefine.fx">
+      <Filter>Global\0_FX\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Shadow.fx">
+      <Filter>Global\0_FX\Effects</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\BlurAndBloom.fx">
+      <Filter>Global\0_FX\PostProcessing</Filter>
+    </FxCompile>
+    <FxCompile Include="fx\Reduce.fx">
+      <Filter>Global\0_FX\PostProcessing</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

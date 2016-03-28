@@ -1,5 +1,5 @@
-#include "Define.fx"
-//#include "Shadow.fx"
+#include "fx/Define.fx"
+//#include "fx/Shadow.fx"
 
 /*정점-쉐이더이다. 정점의 위치 벡터를 월드 변환, 카메라 변환, 투영 변환을 순서대로 수행한다. 이제 삼각형의 각 정점은 y-축으로의 회전을 나타내는 행렬에 따라 변환한다. 그러므로 삼각형은 회전하게 된다.*/
 VS_OUTPUT VS(VS_INPUT input)
@@ -152,7 +152,7 @@ PS_MRT_OUT PSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_Target
 	output.vPos     = vZero;
 	output.vDiffuse = vZero;// cColor;
 	output.vSpec    = gMaterial.m_cSpecular;
-	output.vTxColor = float4(FogColor(cColor, 0.7f).rgb, 1) * 4;//float4(cColor.xyz, 0);
+	output.vTxColor = float4(FogColor(cColor, 0.7f).rgb, 1) * 3;//float4(cColor.xyz, 0);
 	return(output);
 }
 
@@ -713,8 +713,8 @@ PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 	PS_MRT_OUT output;
 	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
 	output.vPos     = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) + glow;
-	output.vSpec    = float4(1, 1, 1, TxSpecluar.Sample(gSamplerState, input.tex).r) * 1.5f;// +glow;
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f) * 1.5f + glow;
+	output.vSpec    = float4(gMaterial.m_cSpecular.rgb, TxSpecluar.Sample(gSamplerState, input.tex).r * 1.5f);// +glow;
 	output.vTxColor = color + glow;
 	return output;
 }

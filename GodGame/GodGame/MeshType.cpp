@@ -373,7 +373,7 @@ void CAnimatedMesh::Animate(float fFrameTime)
 	m_fNowFrameTime += fFrameTime * m_fFramePerTime;
 	m_iIndex = (int(m_fNowFrameTime)) % m_pvcMeshBuffers.size();
 
-	if (!m_bTerminal) { m_bTerminal = (m_iIndex > m_pvcMeshBuffers.size() - 2); }
+	if (!m_bTerminal) { m_bTerminal = (m_fNowFrameTime > m_pvcMeshBuffers.size() - 1); }
 }
 
 void CAnimatedMesh::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)

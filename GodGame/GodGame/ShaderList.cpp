@@ -40,8 +40,8 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "INSTANCEPOS", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSInstancedTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSInstancedTexturedColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSInstancedTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSInstancedTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
 
 void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial *pMaterial, CTexture *pTexture, int k)
@@ -198,9 +198,9 @@ void CBillboardShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSBillboardTextureArray", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "PSBillboardTextureArray", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
 }
 
 void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain)
@@ -351,8 +351,8 @@ void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
 
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
 
 	//D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
 	//{
@@ -361,8 +361,8 @@ void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
 	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	//};
 	//UINT nElements = ARRAYSIZE(d3dInputElements);
-	//CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	//CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	//CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 	//CreateShaderVariables(pd3dDevice);
 }
 
@@ -374,63 +374,26 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
 	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	//vector<wstring> vcTxFileNames;
-	//ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-
-	//CTexture *pStaffTexture = SceneMgr.mgrTexture.GetObjects("scene_staff_01");
-	//// new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/staff/Staff01.fbxcjh"), 0.2f, vcTxFileNames);
-	//CMesh *pStaffMesh = SceneMgr.mgrMesh.GetObjects("scene_staff_01");
-
-	//wstring baseDir{ _T("../Assets/Image/Objects/") };
-
-	////CLoadMeshByChae *pCubeMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Medicbag.chae"), 2.0f);//new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
-	//
-
-	//vcTxFileNames.clear();
-
-	//CLoadAnimatedMeshByADFile * pDemonMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure_Magic_0.ad", 0.13f, vcTxFileNames);
-	//CTexture *pDemonTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
-	//vcTxFileNames.clear();
-
-	//CLoadAnimatedMeshByADFile * pAtienzaMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Man_Death_0.ad", 0.13f, vcTxFileNames);
-	////CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
-	//CTexture *pAtienzaTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
-	//vcTxFileNames.clear();
-
-	//CLoadAnimatedMeshByADFile * pKnightMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Player_0.ad", 0.13f, vcTxFileNames);
-	////CLoadMeshByFbxcjh * pAtienzaMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Ely_by_K._Atienza.fbxcjh"), 0.2f, vcTxFileNames);
-	//CTexture *pKnightTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir, vcTxFileNames, 0);
-	//vcTxFileNames.clear();
-
-	//CLoadAnimatedMeshByADFile * pSkeletonMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/skeleton_0.ad", 3.5f, vcTxFileNames);
-	//CTexture *pSkeletonTexture = new CTexture(1, 0, 0, 0);
-	//ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Skull.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	//pSkeletonTexture->SetTexture(0, pd3dsrvTexture);
-	//pd3dsrvTexture->Release();
-	////pSkeletonTexture->SetTexture(1, nullptr);
-	////pSkeletonTexture->SetTexture(2, nullptr);
-
-
-	m_nObjects = 2;
+	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	char ManagerNames[2][50] = { {"scene_staff_01"}, { "scene_skull_0" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
+	char ManagerNames[1][50] = { { "scene_skull_0" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
 	//int Pos[5][2] = { {1085, 220}, {1085, 260}, {} };
 
 	CGameObject *pObject = nullptr;
 
 	float fHeight = 0;
-	fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
-	m_ppObjects[0] = new CGameObject(1);
-	m_ppObjects[0]->AddRef();
-	m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
+	//fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
+	//m_ppObjects[0] = new CGameObject(1);
+	//m_ppObjects[0]->AddRef();
+	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
 	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
 	CAnimatedObject * pAnimatedObject = new CAnimatedObject(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	m_ppObjects[1] = pAnimatedObject;
-	m_ppObjects[1]->SetPosition(1085, fHeight, 260);
-	m_ppObjects[1]->AddRef();
+	m_ppObjects[0] = pAnimatedObject;
+	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
+	m_ppObjects[0]->AddRef();
 
 	//fHeight = pHeightMapTerrain->GetHeight(1115, 265, false);
 	//pAnimatedObject = new CAnimatedObject(1);
@@ -515,9 +478,9 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "INSTANCEPOS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSPointSphereInstance", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSPointInstance", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSPointSphereInstance", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "VSPointSphereInstance", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "PSPointInstance", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "GSPointSphereInstance", "gs_5_0", &m_pd3dGeometryShader);
 #else
 	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
@@ -526,9 +489,9 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"BillBoard.fx", "PSBillboardColor", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"BillBoard.fx", "GSBillboardColor", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "PSBillboardColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "GSBillboardColor", "gs_5_0", &m_pd3dGeometryShader);
 #endif
 }
 
@@ -693,13 +656,13 @@ void CNormalShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 36, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	//CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSNormalMap", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
+	//CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSNormalMap", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	//CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
 
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSBump", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreateHullShaderFromFile(pd3dDevice, L"Effect.fx", "HSBump", "hs_5_0", &m_pd3dHullShader);
-	CreateDomainShaderFromFile(pd3dDevice, L"Effect.fx", "DSBump", "ds_5_0", &m_pd3dDomainShader);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSBump", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreateHullShaderFromFile(pd3dDevice, L"fx/Effect.fx", "HSBump", "hs_5_0", &m_pd3dHullShader);
+	CreateDomainShaderFromFile(pd3dDevice, L"fx/Effect.fx", "DSBump", "ds_5_0", &m_pd3dDomainShader);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
 }
 
 void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
@@ -827,9 +790,9 @@ void CTextureAniShader::CreateShader(ID3D11Device * pd3dDevice)
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
 
-	CreateVertexShaderFromFile(pd3dDevice, L"TextureAni.fx", "VSTextureAnimate", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"TextureAni.fx", "PSTextureAnimate", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"TextureAni.fx", "GSTextureAnimate", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/TextureAni.fx", "VSTextureAnimate", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/TextureAni.fx", "PSTextureAnimate", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/TextureAni.fx", "GSTextureAnimate", "gs_5_0", &m_pd3dGeometryShader);
 }
 
 void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
@@ -975,9 +938,9 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
 
-	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSParticleDraw", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleDraw", "gs_5_0", &m_pd3dGeometryShader);
-	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSParticleDraw", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Particle.fx", "VSParticleDraw", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/Particle.fx", "GSParticleDraw", "gs_5_0", &m_pd3dGeometryShader);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Particle.fx", "PSParticleDraw", "ps_5_0", &m_pd3dPixelShader);
 	m_pd3dVertexLayout->Release();
 
 	D3D11_SO_DECLARATION_ENTRY SODeclaration[] =
@@ -990,14 +953,14 @@ void CParticleShader::CreateShader(ID3D11Device *pd3dDevice)
 	};
 	UINT pBufferStrides[1] = { sizeof(SODeclaration) };
 
-	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSParticleSO", "vs_5_0", &m_pd3dVSSO, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSParticleSO", "gs_5_0", &m_pd3dGSSO, SODeclaration, 5, pBufferStrides, 1, 0);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Particle.fx", "VSParticleSO", "vs_5_0", &m_pd3dVSSO, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"fx/Particle.fx", "GSParticleSO", "gs_5_0", &m_pd3dGSSO, SODeclaration, 5, pBufferStrides, 1, 0);
 	m_pd3dVertexLayout->Release();
 
-	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"Particle.fx", "GSRainSO", "gs_5_0", &m_pd3dStreamRain, SODeclaration, 5, pBufferStrides, 1, 0);
-	CreateVertexShaderFromFile(pd3dDevice, L"Particle.fx", "VSRainDraw", "vs_5_0", &m_pd3dVSRainDraw, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreateGeometryShaderFromFile(pd3dDevice, L"Particle.fx", "GSRainDraw", "gs_5_0", &m_pd3dGSRainDraw);
-	CreatePixelShaderFromFile(pd3dDevice, L"Particle.fx", "PSRainDraw", "ps_5_0", &m_pd3dPSRainDraw);
+	CreateGeometryStreamOutShaderFromFile(pd3dDevice, L"fx/Particle.fx", "GSRainSO", "gs_5_0", &m_pd3dStreamRain, SODeclaration, 5, pBufferStrides, 1, 0);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Particle.fx", "VSRainDraw", "vs_5_0", &m_pd3dVSRainDraw, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/Particle.fx", "GSRainDraw", "gs_5_0", &m_pd3dGSRainDraw);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Particle.fx", "PSRainDraw", "ps_5_0", &m_pd3dPSRainDraw);
 	//m_pd3dVertexLayout->Release();
 }
 

@@ -1,4 +1,4 @@
-#include "PostDefine.fx"
+#include "fx/PostDefine.fx"
 
 Texture2D<float4> gTex      : register(t0);
 StructuredBuffer<float> lum : register(t1);
@@ -44,7 +44,7 @@ float4 PSFinalPass(PS_SCENE_INPUT Input) : SV_Target
 	//vBloom = CalculateToneColor(vColor, fLum, middle);
 	//vBloomScaled = CalculateToneColor(vColor, fLum, middle);
 
-	vColor.rgb += (0.3f * vBloom + 0.4f * vBloomScaled);//vBloom;// max(vBloom, vBloomScaled);
+	vColor.rgb += (0.4f * vBloom + 0.4f * vBloomScaled);//vBloom;// max(vBloom, vBloomScaled);
 //	vColor.a = 1.0f;
 
 	return vColor;//vColor;

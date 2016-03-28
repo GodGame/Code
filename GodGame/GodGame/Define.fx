@@ -1,5 +1,5 @@
-#include "Common.fx"
-#include "Light.fx"
+#include "fx/Common.fx"
+#include "fx/Light.fx"
 
 //#define LUMCOLOR
 

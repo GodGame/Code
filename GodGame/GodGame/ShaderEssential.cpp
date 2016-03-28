@@ -137,24 +137,24 @@ void CSceneShader::CreateShader(ID3D11Device *pd3dDevice)
 	};
 
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Post.fx", "VSScreen", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "PSScreen", "ps_5_0", &m_pd3dPixelShader);
-	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "InfoScreen", "ps_5_0", &m_pd3dPSOther);
-	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "LightScreen", "ps_5_0", &m_pd3dLightPS);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Post.fx", "VSScreen", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Post.fx", "PSScreen", "ps_5_0", &m_pd3dPixelShader);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Post.fx", "InfoScreen", "ps_5_0", &m_pd3dPSOther);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Post.fx", "LightScreen", "ps_5_0", &m_pd3dLightPS);
 
-	CreatePixelShaderFromFile(pd3dDevice, L"Post.fx", "DumpMap", "ps_5_0", &m_pd3dPSDump);
-	CreatePixelShaderFromFile(pd3dDevice, L"Final.fx", "PSFinalPass", "ps_5_0", &m_pd3dPSFinal);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Post.fx", "DumpMap", "ps_5_0", &m_pd3dPSDump);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Final.fx", "PSFinalPass", "ps_5_0", &m_pd3dPSFinal);
 
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "HorizonBlur", "cs_5_0", &m_pd3dComputeHorzBlur);
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "VerticalBlur", "cs_5_0", &m_pd3dComputeVertBlur);
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "HorizonBloom", "cs_5_0", &m_pd3dComputeHorzBloom);
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "VerticalBloom", "cs_5_0", &m_pd3dComputeVertBloom);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/BlurAndBloom.fx", "HorizonBlur", "cs_5_0", &m_pd3dComputeHorzBlur);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/BlurAndBloom.fx", "VerticalBlur", "cs_5_0", &m_pd3dComputeVertBlur);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/BlurAndBloom.fx", "HorizonBloom", "cs_5_0", &m_pd3dComputeHorzBloom);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/BlurAndBloom.fx", "VerticalBloom", "cs_5_0", &m_pd3dComputeVertBloom);
 
-	CreateComputeShaderFromFile(pd3dDevice, L"BlurAndBloom.fx", "RadialBlur", "cs_5_0", &m_pd3dCSRadialBlur);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/BlurAndBloom.fx", "RadialBlur", "cs_5_0", &m_pd3dCSRadialBlur);
 
-	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "LumCompression", "cs_5_0", &m_csReduce.m_pd3dComputeShader);
-	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "ReduceToSingle", "cs_5_0", &m_pd3dCSReduceToSingle);
-	CreateComputeShaderFromFile(pd3dDevice, L"Reduce.fx", "LumAdapted", "cs_5_0", &m_pd3dCSAdaptLum);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/Reduce.fx", "LumCompression", "cs_5_0", &m_csReduce.m_pd3dComputeShader);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/Reduce.fx", "ReduceToSingle", "cs_5_0", &m_pd3dCSReduceToSingle);
+	CreateComputeShaderFromFile(pd3dDevice, L"fx/Reduce.fx", "LumAdapted", "cs_5_0", &m_pd3dCSAdaptLum);
 }
 
 void CSceneShader::BuildObjects(ID3D11Device *pd3dDevice, ID3D11ShaderResourceView ** ppd3dMrtSrv, int nMrtSrv, ID3D11RenderTargetView * pd3dBackRTV)
@@ -512,7 +512,7 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 //		if(pCamera->GetPlayer()->m_nEnergy < 10)
 //			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
 		if(!gbStartEffect)
-			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
+			cbCS = { XMFLOAT4(1.0f, 1000.0f, m_fTotalTime, m_fFrameTime) };
 		else
 			cbCS = { XMFLOAT4(1.0f, 250000.0f, m_fTotalTime, m_fFrameTime) };
 
@@ -769,20 +769,14 @@ void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
 
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
 }
 
 void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene)
 {
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
-
-	//CTexture *pBrickTexture = new CTexture(1, 1, 0, 0);
-	//pBrickTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_brick2_jpg"));
-	//pBrickTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
-
-	//TXMgr.InsertObject(pBrickTexture, "PlayerTexture");
 
 	CMaterial * pPlayerMaterial = MaterialMgr.GetObjects("White");
 	//CMaterial *pPlayerMaterial               = new CMaterial();
@@ -792,11 +786,6 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	//pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
 
 	CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
-	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
-	pPlayer->SetPlayerUpdatedContext(pTerrain);
-	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
-	pPlayer->SetCameraUpdatedContext(pTerrain);
-	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
 
 	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
 
@@ -811,30 +800,32 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pMesh[eANI_1H_MAGIC_AREA] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_area01");
 
 	CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
-
-	pPlayer->InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 1000.0f, 300));
+	pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial,  pTerrain);
 	pPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
-	//pTerrainPlayer->ChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, 0.0f);
 	pPlayer->Rotate(0, 180, 0);
 
-//	pPlayer->SetMesh(pMesh[0], 0);
-	for (int i = 0; i < eANI_TOTAL_NUM; ++i)
-	{
-		pPlayer->SetMesh(pMesh[i], i);
-	}
-	pPlayer->SetAnimationCycleTime(eANI_IDLE, 1.5f);
-	pPlayer->SetAnimationCycleTime(eANI_RUN_FORWARD, 0.8f);
-
-	pPlayer->SetAnimationCycleTime(eANI_1H_CAST, 2.0f);
-	pPlayer->SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, 1.8f);
-	pPlayer->SetAnimationCycleTime(eANI_1H_MAGIC_AREA, 2.5f);
-
-	pPlayer->SetMaterial(pPlayerMaterial);
-	pPlayer->SetTexture(pTexture);
 	pPlayer->AddRef();
-
-	//pBrickTexture->Release();
 	m_ppObjects[0] = pPlayer;
+
+	char name[56];
+	for (int i = 1; i < 7; ++i)
+	{
+		CRevolvingObject * pObject = nullptr;
+		pObject = new CRevolvingObject(1);
+		pObject->SetRevolutionAxis(XMFLOAT3(0, 1, 0));
+		pObject->SetRevolutionSpeed(60.0f);
+
+		sprintf(name, "scene_staff_0%d", i);
+
+		pObject->SetMesh(mgrScene.mgrMesh.GetObjects(name));
+		pObject->SetTexture(mgrScene.mgrTexture.GetObjects(name));
+		pObject->SetMaterial(pPlayerMaterial);
+		pObject->SetPosition(cosf(XMConvertToRadians(i * 60)) * 15, 10, sinf(XMConvertToRadians(i * 60)) * 15);
+		pObject->Rotate(0, 0, 0);
+
+		pPlayer->SetChild(pObject);
+		//pBrickTexture->Release();
+	}
 
 	QUADMgr.EntityDynamicObject(m_ppObjects[0]);
 }
@@ -870,10 +861,10 @@ void CTerrainShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 } };
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
 
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTerrain", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreateHullShaderFromFile(pd3dDevice, L"Effect.fx", "HSTerrain", "hs_5_0", &m_pd3dHullShader);
-	CreateDomainShaderFromFile(pd3dDevice, L"Effect.fx", "DSTerrain", "ds_5_0", &m_pd3dDomainShader);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTerrain", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTerrain", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreateHullShaderFromFile(pd3dDevice, L"fx/Effect.fx", "HSTerrain", "hs_5_0", &m_pd3dHullShader);
+	CreateDomainShaderFromFile(pd3dDevice, L"fx/Effect.fx", "DSTerrain", "ds_5_0", &m_pd3dDomainShader);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTerrain", "ps_5_0", &m_pd3dPixelShader);
 	CreateShaderVariables(pd3dDevice);
 #else
 	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
@@ -884,8 +875,8 @@ void CTerrainShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSSplatTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSSplatTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSSplatTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSSplatTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 #endif
 }
 
@@ -1161,8 +1152,8 @@ void CSkyBoxShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSSkyBoxTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSSkyBoxTexturedColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSSkyBoxTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSSkyBoxTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 #else
 	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
 	{
@@ -1170,8 +1161,8 @@ void CSkyBoxShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 #endif
 }
 
@@ -1212,8 +1203,8 @@ void CSSAOShader::CreateShader(ID3D11Device * pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"SSAO.fx", "VSSCeneSpaceAmbient", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"SSAO.fx", "PSSCeneSpaceAmbient", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/SSAO.fx", "VSSCeneSpaceAmbient", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/SSAO.fx", "PSSCeneSpaceAmbient", "ps_5_0", &m_pd3dPixelShader);
 }
 
 void CSSAOShader::BuildObjects(ID3D11Device * pd3dDevice)
@@ -1393,9 +1384,9 @@ void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
 	};
 
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"Final.fx", "VS_UI_Draw", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Final.fx", "PS_UI_Draw", "ps_5_0", &m_pd3dPixelShader);
-	CreateGeometryShaderFromFile(pd3dDevice, L"Final.fx", "GS_UI_Draw", "gs_5_0", &m_pd3dGeometryShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Final.fx", "VS_UI_Draw", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Final.fx", "PS_UI_Draw", "ps_5_0", &m_pd3dPixelShader);
+	CreateGeometryShaderFromFile(pd3dDevice, L"fx/Final.fx", "GS_UI_Draw", "gs_5_0", &m_pd3dGeometryShader);
 }
 
 void CUIShader::CreateUIResources(ID3D11Device * pd3dDevice)

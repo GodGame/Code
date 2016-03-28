@@ -231,11 +231,8 @@ void CShader::CreateShader(ID3D11Device *pd3dDevice)
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
 
-	//CreateVertexShaderFromCompiledFile(pd3dDevice, L"VS.fxo", d3dInputLayout, nElements);
-	//CreatePixelShaderFromCompiledFile(pd3dDevice, L"PS.fxo");
-
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VS", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PS", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VS", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PS", "ps_5_0", &m_pd3dPixelShader);
 	CreateShaderVariables(pd3dDevice);
 }
 
@@ -354,8 +351,8 @@ void CIlluminatedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSLightingColor", "ps_5_0", &m_pd3dPixelShader);
 }
 void CIlluminatedShader::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
@@ -401,8 +398,8 @@ void CDiffusedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSDiffusedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSDiffusedColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSDiffusedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSDiffusedColor", "ps_5_0", &m_pd3dPixelShader);
 }
 
 #pragma endregion
@@ -424,8 +421,8 @@ void CTexturedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -447,8 +444,8 @@ void CDetailTexturedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSDetailTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSDetailTexturedColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSDetailTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSDetailTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -470,8 +467,8 @@ void CTexturedIlluminatedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 }
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,8 +491,8 @@ void CDetailTexturedIlluminatedShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSDetailTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSDetailTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSDetailTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSDetailTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 }
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -553,8 +550,8 @@ void CSplatLightingShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
-	CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSSplatTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSSplatTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSSplatTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSSplatTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 }
 #pragma endregion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -588,8 +585,8 @@ void CNormalMapShader::CreateShader(ID3D11Device *pd3dDevice)
 	//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	//};
 	//UINT nElements = ARRAYSIZE(d3dInputElements);
-	//CreateVertexShaderFromFile(pd3dDevice, L"Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
-	//CreatePixelShaderFromFile(pd3dDevice, L"Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
+	//CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTexturedLightingColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	//CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTexturedLightingColor", "ps_5_0", &m_pd3dPixelShader);
 }
 
 void CNormalMapShader::OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState)

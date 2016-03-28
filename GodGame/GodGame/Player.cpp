@@ -390,6 +390,7 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 
 void CPlayer::Animate(float fTimeElapsed)
 {
+	CGameObject::Animate(fTimeElapsed);
 	CAnimatedObject::Animate(fTimeElapsed);
 
 	UINT uSize = m_uSize;
@@ -502,10 +503,10 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 2.0f;// +8.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad);// +8.0f;
 	if (xv3CameraPosition.y < fHeight)
 	{
-		xv3CameraPosition.y = fHeight;
+		xv3CameraPosition.y = fHeight + 2.0f;
 		pCamera->SetPosition(xv3CameraPosition);
 		//3인칭 카메라의 경우 카메라의 y-위치가 변경되었으므로 카메라가 플레이어를 바라보도록 한다.
 		if (pCamera->GetMode() == THIRD_PERSON_CAMERA)
@@ -536,11 +537,33 @@ CInGamePlayer::~CInGamePlayer()
 	if (m_pDebuff) delete m_pDebuff;
 }
 
-void CInGamePlayer::BuildObject()
+void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial, CHeightMapTerrain * pTerrain)
 {
 	if (!m_pBuff) m_pBuff = new CBuff();
 	if (!m_pDebuff) m_pDebuff = new CDeBuff();
+
+	for (int i = 0; i < eANI_TOTAL_NUM; ++i)
+	{
+		CInGamePlayer::SetMesh(ppMeshList[i], i);
+	}
+	CInGamePlayer::SetAnimationCycleTime(eANI_IDLE, mfIdleAnim);
+	CInGamePlayer::SetAnimationCycleTime(eANI_RUN_FORWARD, mfRunForwardAnim);
+
+	CInGamePlayer::SetAnimationCycleTime(eANI_1H_CAST, mf1HCastAnimTime);
+	CInGamePlayer::SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, mf1HMagicAttackAnimTime);
+	CInGamePlayer::SetAnimationCycleTime(eANI_1H_MAGIC_AREA, mf1HMagicAreaAnimTime);
+
+	CInGamePlayer::SetMaterial(pMaterial);
+	CInGamePlayer::SetTexture(pTexture);
+
+	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
+	CInGamePlayer::SetPlayerUpdatedContext(pTerrain);
+	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
+	CInGamePlayer::SetCameraUpdatedContext(pTerrain);
+	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
+	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 1000.0f, 300));
 }
+
 
 void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 {
@@ -561,8 +584,10 @@ void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 	case eMessage::MSG_NORMAL:
 		return;
 	case eMessage::MSG_COLLIDE_LOCATION:
-
 		//toObj->GetGameMessage(this, MSG_COLLIDE);
+		return;
+
+	case eMessage::MSG_MAGIC_SHOT:
 		return;
 	}
 }
@@ -585,6 +610,25 @@ void CInGamePlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * e
 	case eMessage::MSG_COLLIDED:
 		toObj->GetGameMessage(this, MSG_COLLIDE);
 		return;
+	}
+}
+
+void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
+{
+	//static WORD wdNext[] = { eANI_1H_MAGIC_ATTACK };
+
+	switch (key)
+	{
+	case 'N':
+		ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
+		EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, extra);
+		return;
+
+	case 'M':
+		ChangeAnimationState(eANI_1H_MAGIC_AREA, true, nullptr, 0);
+		EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE, extra);
+		return;
+
 	}
 }
 
@@ -650,4 +694,21 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 		UseEnergy(i, energyNum, bForced);
 
 	return true;
+}
+
+PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
+{
+	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
+	mtx = XMMatrixTranslation(0, 9.0f, 10.0f) * mtx;
+	XMFLOAT4X4 xmf44Change;
+	XMStoreFloat4x4(&xmf44Change, mtx);
+
+	PARTILCE_ON_INFO info;
+	info.fColor = 0;
+	info.iNum = 4;
+	info.m_xmf3Pos = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
+	info.m_xmf3Velocity = move(XMFLOAT3(xmf44Change._31, xmf44Change._32, xmf44Change._33));
+	info.m_xmfAccelate = move(XMFLOAT3(-xmf44Change._31, -xmf44Change._32, -xmf44Change._33));
+
+	return info;
 }

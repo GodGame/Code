@@ -223,4 +223,9 @@ public :
 		if (vel) m_ppParticle[num]->SetMoveVelocity(*vel);
 		if (acc) m_ppParticle[num]->SetMoveAccel(*acc);
 	}
+
+	void ParticleOn(PARTILCE_ON_INFO & info)
+	{
+		ParticleOn(info.iNum, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fColor);
+	}
 };

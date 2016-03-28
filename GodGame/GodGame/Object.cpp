@@ -25,7 +25,7 @@ CGameObject::CGameObject(int nMeshes)
 
 	m_pChild      = nullptr;
 	m_pSibling    = nullptr;
-	m_pParent     = nullptr;
+	//m_pParent     = nullptr;
 }
 
 CGameObject::~CGameObject()
@@ -56,19 +56,11 @@ void CGameObject::Release()
 	}
 }
 
-void CGameObject::SuccessSibling()
-{
-	if (m_pParent->m_nReferences < 1) return;
-
-	if (m_pSibling) m_pParent->SetChild(m_pSibling);
-	m_pSibling->Release();
-}
-
 void CGameObject::ReleaseRelationShip()
 {
 	// 루트가 아니라면, 자식은 모두 지우고 형제는 부모에게 넘겨주고 삭제한다.
 	if (m_pChild)   m_pChild->Release();
-	if (m_pParent)	SuccessSibling();
+	//if (m_pParent)	SuccessSibling();
 	if (m_pSibling) m_pSibling->Release();
 }
 
@@ -77,6 +69,28 @@ void CGameObject::SetTexture(CTexture *pTexture, bool beforeRelease)
 	if (beforeRelease && m_pTexture) m_pTexture->Release();
 	m_pTexture = pTexture;
 	if (m_pTexture) m_pTexture->AddRef();
+}
+
+void CGameObject::UpdateSubResources(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
+{
+	XMFLOAT4X4 xmf44Result;
+
+	if (pmtxParentWorld)
+	{
+		Chae::XMFloat4x4Mul(&xmf44Result, &m_xmf44World, pmtxParentWorld);
+
+		if (m_pChild)   m_pChild->Render(pd3dDeviceContext, uRenderState, pCamera, &xmf44Result);
+		if (m_pSibling) m_pSibling->Render(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
+
+		CShader::UpdateShaderVariable(pd3dDeviceContext, xmf44Result);
+	}
+	else
+	{
+		if (m_pChild)   m_pChild->Render(pd3dDeviceContext, uRenderState, pCamera, &m_xmf44World);
+		if (m_pSibling) m_pSibling->Render(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
+
+		CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
+	}
 }
 
 void CGameObject::UpdateBoundingBox()
@@ -113,6 +127,8 @@ void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
 
 void CGameObject::Animate(float fTimeElapsed)
 {
+	if (m_pChild) m_pChild->Animate(fTimeElapsed);
+	if (m_pSibling) m_pSibling->Animate(fTimeElapsed);
 }
 
 bool CGameObject::IsVisible(CCamera * pCamera)
@@ -128,25 +144,21 @@ bool CGameObject::IsVisible(CCamera * pCamera)
 	return(m_bActive);
 }
 
-void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
-	CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
-	//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
-	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
-	//객체의 텍스쳐를 쉐이더 변수에 설정(연결)한다.
-	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
-
-	if (m_ppMeshes)
+	if (m_ppMeshes && (m_bActive || pmtxParentWorld))
 	{
+		CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
+
+		if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+		if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
+
 		for (int i = 0; i < m_nMeshes; i++)
 		{
 #ifdef _QUAD_TREE
-			if (m_bActive)
-			{
-				m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
-				if(!(uRenderState & DRAW_AND_ACTIVE)) 
-					m_bActive = false;
-			}
+			m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
+			if (!(uRenderState & DRAW_AND_ACTIVE))
+				m_bActive = false;
 #else
 			bool bIsVisible = true;
 			if (pCamera)
@@ -249,17 +261,15 @@ void CGameObject::SetSibling(CGameObject * pObject)
 	CGameObject * pBeforeSibling = nullptr;
 	pBeforeSibling = m_pSibling;
 
-	m_pSibling = pObject; 
-	if (m_pSibling) m_pSibling->AddRef();	
-	if (pBeforeSibling) pBeforeSibling->Release();
-}
-
-void CGameObject::SetParent(CGameObject * pObject)
-{
-	m_pParent = pObject;
-	// 단일방향으로 지우기 위해서 부모는 AddRef 호출을 안한다.
-	if (pObject && m_pSibling) m_pSibling->SetParent(pObject);
-	//if (pBeforeParent) pBeforeParent->Release();
+	if (pBeforeSibling)
+	{
+		pBeforeSibling->SetSibling(m_pSibling);
+	}
+	else
+	{
+		m_pSibling = pObject;
+		m_pSibling->AddRef();
+	}
 }
 
 XMFLOAT3 CGameObject::GetLookAt()
@@ -403,6 +413,25 @@ CAnimatedObject::~CAnimatedObject()
 {
 }
 
+void CAnimatedObject::ChangeAnimationState(WORD wd, bool bReserveIdle, WORD * pNextStateArray, int nNum)
+{
+	if (m_wdAnimateState != wd)
+	{
+		m_wdAnimateState = wd;
+		static_cast<CAnimatedMesh*>(m_ppMeshes[m_wdAnimateState])->ResetIndex();
+
+		m_bReserveBackIdle = bReserveIdle;
+
+		if (pNextStateArray)
+		{
+			m_vcNextAnimState.clear();
+
+			for (int i = 0; i < nNum; ++i)
+				m_vcNextAnimState.push_back(*(pNextStateArray + nNum - (i + 1)));
+		}
+	}
+}
+
 void CAnimatedObject::SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime)
 {
 	m_vcfAnimationCycleTime[wdAnimNum] = fCycleTime;
@@ -439,34 +468,35 @@ void CAnimatedObject::Animate(float fTimeElapsed)
 	ANI_MESH * pMesh = static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState]);
 	pMesh->SetFramePerTime(m_vcfFramePerTime[m_wdAnimateState]);
 	pMesh->Animate(fTimeElapsed);
-
-	if (m_bReserveBackIdle)
+	
+	if (pMesh->IsEndAnimation())
 	{
-		if (pMesh->IsEndAnimation())
+		if (!m_vcNextAnimState.empty())
 		{
-			ChangeAnimationState(eANI_IDLE, false);
+			ChangeAnimationState(*(m_vcNextAnimState.end() - 1), m_bReserveBackIdle, nullptr, 0);
+			m_vcNextAnimState.pop_back();
+		}
+		else if (m_bReserveBackIdle)
+		{
+			ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
 			m_bReserveBackIdle = false;
 		}
 	}
 }
 
-void CAnimatedObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+void CAnimatedObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
-	CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
-	//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
-	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
-	//객체의 텍스쳐를 쉐이더 변수에 설정(연결)한다.
-	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
-
-	if (m_ppMeshes)
+	if (m_ppMeshes && m_bActive)
 	{
+		CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
+		//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
+		if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+		//객체의 텍스쳐를 쉐이더 변수에 설정(연결)한다.
+		if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 #ifdef _QUAD_TREE
-		if (m_bActive)
-		{
-			m_ppMeshes[m_wdAnimateState]->Render(pd3dDeviceContext, uRenderState);
-			if (!(uRenderState & DRAW_AND_ACTIVE))
-				m_bActive = false;
-		}
+		m_ppMeshes[m_wdAnimateState]->Render(pd3dDeviceContext, uRenderState);
+		if (!(uRenderState & DRAW_AND_ACTIVE))
+			m_bActive = false;
 #else
 		bool bIsVisible = true;
 		if (pCamera)
@@ -479,7 +509,6 @@ void CAnimatedObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRend
 			m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
 #endif
 	}
-
 }
 
 
@@ -526,6 +555,7 @@ CRotatingObject::~CRotatingObject()
 
 void CRotatingObject::Animate(float fTimeElapsed)
 {
+	CGameObject::Animate(fTimeElapsed);
 	CGameObject::Rotate(&m_xv3RotationAxis, m_fRotationSpeed * fTimeElapsed);
 }
 
@@ -541,11 +571,14 @@ CRevolvingObject::~CRevolvingObject()
 
 void CRevolvingObject::Animate(float fTimeElapsed)
 {
-	CGameObject::Rotate(&m_xv3RevolutionAxis, XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
+	CGameObject::Animate(fTimeElapsed);
+	//CGameObject::Rotate(&m_xv3RevolutionAxis, XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
 	//공전을 나타내기 위해 회전 행렬을 오른쪽에 곱한다.
-	//XMFLOAT4X4 mtxRotate;
-	//XMFLOAT4X4RotationAxis(&mtxRotate, &m_xv3RevolutionAxis, (float)D3DXToRadian(m_fRevolutionSpeed * fTimeElapsed));
-	//m_xmf44World = m_xmf44World * mtxRotate;
+	XMMATRIX mtxRotate = XMMatrixRotationAxis(XMLoadFloat3(&m_xv3RevolutionAxis), (float)XMConvertToRadians(m_fRevolutionSpeed * fTimeElapsed));
+	XMMATRIX mtxWorld = XMLoadFloat4x4(&m_xmf44World);
+	mtxWorld = mtxWorld * mtxRotate;
+
+	XMStoreFloat4x4(&m_xmf44World, mtxWorld);
 }
 
 CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3& xv3Scale)
@@ -723,7 +756,7 @@ CSkyBox::~CSkyBox()
 {
 }
 
-void CSkyBox::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+void CSkyBox::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
 #ifdef SKYBOX_CUBE
 	XMFLOAT3 xv3CameraPos = pCamera->GetPosition();
@@ -961,11 +994,11 @@ void CTxAnimationObject::Animate(float fTimeElapsed)
 	}
 }
 
-void CTxAnimationObject::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+void CTxAnimationObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
 	if (m_bTerminal)
 	{
-		m_pNextEffect->Render(pd3dDeviceContext, uRenderState, pCamera);
+		m_pNextEffect->Render(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
 	}
 	else
 	{
@@ -990,7 +1023,7 @@ void CCircleMagic::Initialize(ID3D11Device * pd3dDevice)
 	move.fWeightSpeed    = 1.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
-	XMFLOAT2 xmf2Size      { 30, 30 };
+	XMFLOAT2 xmf2Size      { 60, 60 };
 	XMFLOAT2 xmf2ImageSize { 960, 768 };
 	XMFLOAT2 xmf2FrameSize { 192, 192 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 20, 0.05f);
@@ -1194,11 +1227,11 @@ void CParticle::StreamOut(ID3D11DeviceContext *pd3dDeviceContext)
 	}
 }
 
-void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+void CParticle::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
 	if (m_bTerminal)
 	{
-		m_pcNextParticle->Render(pd3dDeviceContext, uRenderState, pCamera);
+		m_pcNextParticle->Render(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
 	}
 	else
 	{

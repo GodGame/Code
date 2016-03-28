@@ -1,5 +1,5 @@
-#include "Light.fx"
-#include "Common.fx"
+#include "fx/Light.fx"
+#include "fx/Common.fx"
 // 빌보드용 구조체이다--------------------------------------------------------------------------------------------------
 struct VS_BILLBOARD_INPUT
 {

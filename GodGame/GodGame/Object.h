@@ -102,7 +102,7 @@ public:
 public:
 	void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResource(pd3dDeviceContext); }
 	void Animate(float fTimeElapsed);
-	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 };
 
 class CCircleMagic : public CTxAnimationObject
@@ -144,6 +144,15 @@ struct PARTICLE_INFO
 	float	 m_uType;
 };
 
+struct PARTILCE_ON_INFO
+{
+	XMFLOAT3 m_xmf3Pos;
+	XMFLOAT3 m_xmf3Velocity;
+	XMFLOAT3 m_xmfAccelate;
+	float fColor;
+	int iNum;
+};
+
 class CParticle : public CEffect
 {
 protected:
@@ -172,7 +181,7 @@ public:
 	void CreateParticleBuffer(ID3D11Device *pd3dDevice, PARTICLE_INFO & pcInfo, UINT nMaxNum);
 
 	void StreamOut(ID3D11DeviceContext *pd3dDeviceContext);
-	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 	void OnPrepare(ID3D11DeviceContext * pd3dDeviceContext) { UpdateShaderResourceArray(pd3dDeviceContext); }
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 
@@ -239,7 +248,6 @@ protected:
 
 	CGameObject * m_pChild;
 	CGameObject * m_pSibling;
-	CGameObject * m_pParent;
 
 public:
 	void	 AddRef();
@@ -258,13 +266,13 @@ public:
 public:
 	void SetChild(CGameObject* pObject);
 	void SetSibling(CGameObject * pObject);
-	void SetParent(CGameObject * pObject);
+	//void SetParent(CGameObject * pObject);
 
 	CGameObject * GetChildObject() { return m_pChild; }
 	CGameObject * GetSiblingObject() { return m_pSibling; }
-	CGameObject * GetParentObject() { return m_pParent; }
+	//CGameObject * GetParentObject() { return m_pParent; }
 
-	void SuccessSibling();
+	//void SuccessSibling();
 	// 부모 형제 자식을 다 끊어버림
 	void ReleaseRelationShip();
 
@@ -281,8 +289,9 @@ public:
 	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
 
 	virtual void Animate(float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
-	//virtual void RenderReflected(ID3D11DeviceContext *pd3dDeviceContext, XMMATRIX *xmtxReflect, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
+	// child, sibling 객체를 그리고, 월드 좌표계를 셋 한다.
+	void UpdateSubResources(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 
 	void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3& xv3Position);
@@ -363,24 +372,17 @@ protected:
 
 	vector<float> m_vcfAnimationCycleTime;
 	vector<float> m_vcfFramePerTime;
+	vector<WORD>  m_vcNextAnimState;
 
 public:
-	void ChangeAnimationState(WORD wd, bool bReserveIdle) {
-		if (m_wdAnimateState != wd)
-		{
-			m_wdAnimateState = wd;
-			static_cast<CAnimatedMesh*>(m_ppMeshes[m_wdAnimateState])->ResetIndex();
-
-			m_bReserveBackIdle = bReserveIdle;
-		}
-	}
+	void ChangeAnimationState(WORD wd, bool bReserveIdle, WORD * pNextStateArray, int nNum);
 	void SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime); 
 	void UpdateFramePerTime();
 
 	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
 
 	virtual void Animate(float fTimeElapsed);
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 
 };
 
@@ -500,7 +502,7 @@ public:
 	CSkyBox(ID3D11Device *pd3dDevice, UINT uImageNum);
 	virtual ~CSkyBox();
 
-	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 };
 
 class CBillboardObject : public CGameObject

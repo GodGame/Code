@@ -1,4 +1,4 @@
-#include "Define.fx"
+#include "fx/Define.fx"
 
 struct VS_SCENE_INPUT
 {

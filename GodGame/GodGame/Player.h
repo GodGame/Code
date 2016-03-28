@@ -114,6 +114,17 @@ public:
 
 class CInGamePlayer : public CTerrainPlayer
 {
+public:
+	WORD mwd1HMagicShot[2] = {eANI_1H_CAST, eANI_1H_MAGIC_ATTACK};
+
+	const float mfIdleAnim = 1.5f;
+	const float mfRunForwardAnim = 0.8f;
+
+	const float mf1HCastAnimTime = 1.5f;
+	const float mf1HMagicAttackAnimTime = 1.8f;
+	const float mf1HMagicAreaAnimTime = 2.5f;
+
+private:
 	ElementEnergy	m_nElemental;
 	StatusInfo		m_Status;
 
@@ -123,12 +134,18 @@ class CInGamePlayer : public CTerrainPlayer
 public:
 	CInGamePlayer(int m_nMeshes);
 	virtual ~CInGamePlayer();
-	virtual void BuildObject();
+	virtual void BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial, CHeightMapTerrain * pTerrain);
 
 	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra);
 	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
 
 public:
+	void PlayerKeyEventOn(WORD key, void * extra);
+
+
+public:
+	XMFLOAT3 GetCenterPosition() { return XMFLOAT3(m_xv3Position.x, m_xv3Position.y + 9.0f, m_xv3Position.z); }
+
 	BYTE & GetEnergyNum(UINT index) { return m_nElemental.m_nEnergies[index]; }
 	BYTE & GetEnergyNum() { return m_nElemental.m_nSum; }
 	
@@ -139,4 +156,7 @@ public:
 	UINT UseAllEnergy(UINT energyNum, bool bForced = false);
 
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
+
+public:
+	PARTILCE_ON_INFO Get1HAnimShotParticleOnInfo();
 };
