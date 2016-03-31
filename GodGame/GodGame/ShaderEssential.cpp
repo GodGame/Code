@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "ShaderEssential.h"
 #include "MyInline.h"
-#include "Player.h"
+//#include "ObjectsList.h"
 #include <D3Dcompiler.h>
 
 CInGamePlayer * gpPlayer = nullptr;
@@ -759,7 +759,6 @@ CPlayerShader::~CPlayerShader()
 }
 void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 {
-//	CTexturedIlluminatedShader::CreateShader(pd3dDevice);
 	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -789,15 +788,15 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 
 	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
 
-	pMesh[eANI_IDLE] = mgrScene.mgrMesh.GetObjects("scene_aure_idle");
-	pMesh[eANI_RUN_FORWARD] = mgrScene.mgrMesh.GetObjects("scene_aure_run_forwad");
-	pMesh[eANI_WALK_BACK] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_Back");
-	pMesh[eANI_WALK_RIGHT] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_right");
-	pMesh[eANI_WALK_LEFT] = mgrScene.mgrMesh.GetObjects("scene_aure_walk_left");
+	pMesh[eANI_IDLE]            = mgrScene.mgrMesh.GetObjects("scene_aure_idle");
+	pMesh[eANI_RUN_FORWARD]     = mgrScene.mgrMesh.GetObjects("scene_aure_run_forwad");
+	pMesh[eANI_WALK_BACK]       = mgrScene.mgrMesh.GetObjects("scene_aure_walk_Back");
+	pMesh[eANI_WALK_RIGHT]      = mgrScene.mgrMesh.GetObjects("scene_aure_walk_right");
+	pMesh[eANI_WALK_LEFT]       = mgrScene.mgrMesh.GetObjects("scene_aure_walk_left");
 
-	pMesh[eANI_1H_CAST] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_cast01");
+	pMesh[eANI_1H_CAST]         = mgrScene.mgrMesh.GetObjects("scene_aure_magic_cast01");
 	pMesh[eANI_1H_MAGIC_ATTACK] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_attack01");
-	pMesh[eANI_1H_MAGIC_AREA] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_area01");
+	pMesh[eANI_1H_MAGIC_AREA]   = mgrScene.mgrMesh.GetObjects("scene_aure_magic_area01");
 
 	CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
 	pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial,  pTerrain);

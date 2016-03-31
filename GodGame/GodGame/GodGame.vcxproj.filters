@@ -26,9 +26,6 @@
     <Filter Include="Local\4_Shaders">
       <UniqueIdentifier>{df0396e9-47a3-474f-b779-2fa127ce0a28}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Local\5_ObjectsAndCamera">
-      <UniqueIdentifier>{c654119a-4951-4246-89c5-e71ae7645a54}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Local\6_Meshes">
       <UniqueIdentifier>{f1fc6fa5-5ff9-43a3-9b99-633e6cbd4d7f}</UniqueIdentifier>
     </Filter>
@@ -40,6 +37,12 @@
     </Filter>
     <Filter Include="Global\0_FX\Effects">
       <UniqueIdentifier>{c665a9a4-9d26-4878-8f59-02d6a4d58a1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Local\5_Objects">
+      <UniqueIdentifier>{c654119a-4951-4246-89c5-e71ae7645a54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Local\5_Objects\Object">
+      <UniqueIdentifier>{d5562b5d-a181-400f-bca6-d5c443f6e6e9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -68,13 +71,7 @@
       <Filter>Local\4_Shaders</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
-    </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
-    </ClInclude>
-    <ClInclude Include="Player.h">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
+      <Filter>Local\5_Objects</Filter>
     </ClInclude>
     <ClInclude Include="MeshType.h">
       <Filter>Local\6_Meshes</Filter>
@@ -122,7 +119,19 @@
       <Filter>Global\2_Managers</Filter>
     </ClInclude>
     <ClInclude Include="GameInfo.h">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
+      <Filter>Local\5_Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectsList.h">
+      <Filter>Local\5_Objects\Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -145,13 +154,7 @@
       <Filter>Local\4_Shaders</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
-    </ClCompile>
-    <ClCompile Include="Object.cpp">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
-    </ClCompile>
-    <ClCompile Include="Player.cpp">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
+      <Filter>Local\5_Objects</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
       <Filter>Local\6_Meshes</Filter>
@@ -184,7 +187,16 @@
       <Filter>Global\2_Managers</Filter>
     </ClCompile>
     <ClCompile Include="GameInfo.cpp">
-      <Filter>Local\5_ObjectsAndCamera</Filter>
+      <Filter>Local\5_Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Character.cpp">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Local\5_Objects\Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

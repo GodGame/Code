@@ -374,10 +374,10 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
 	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	m_nObjects = 1;
+	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	char ManagerNames[1][50] = { { "scene_skull_0" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
+	char ManagerNames[2][50] = { { "scene_skull" }, {"scene_warrok"} };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
 	//int Pos[5][2] = { {1085, 220}, {1085, 260}, {} };
 
 	CGameObject *pObject = nullptr;
@@ -389,18 +389,27 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
 	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
-	CAnimatedObject * pAnimatedObject = new CAnimatedObject(1);
+	CCharacter * pAnimatedObject = new CCharacter(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
 	m_ppObjects[0] = pAnimatedObject;
 	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
 	m_ppObjects[0]->AddRef();
 
-	//fHeight = pHeightMapTerrain->GetHeight(1115, 265, false);
-	//pAnimatedObject = new CAnimatedObject(1);
-	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	//m_ppObjects[2] = pAnimatedObject;
-	//m_ppObjects[2]->SetPosition(1115, fHeight + 5, 265);
-	//m_ppObjects[2]->AddRef();
+
+	char AnimNames[6][50] = { "scene_warrok_idle", "scene_warrok_run", "scene_warrok_roar", "scene_warrok_punch", "scene_warrok_swiping", "scene_warrok_death"};
+
+	fHeight = pHeightMapTerrain->GetHeight(1115, 275, false);
+	pAnimatedObject = new CWarrock(CWarrock::eANI_WARROCK_ANIM_NUM);
+
+	for (int i = 0; i < 6; ++i)
+		pAnimatedObject->SetMesh(meshmgr.GetObjects(AnimNames[i]), i);
+
+	pAnimatedObject->InitializeAnimCycleTime();
+
+	m_ppObjects[1] = pAnimatedObject;
+	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
+	m_ppObjects[1]->AddRef();
 
 	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
 	//pAnimatedObject = new CAnimatedObject(1);
@@ -420,7 +429,6 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		m_ppObjects[i]->SetMesh(meshmgr.GetObjects(ManagerNames[i]));
 		m_ppObjects[i]->SetTexture(txmgr.GetObjects(ManagerNames[i]));
 
 		CAnimatedObject * pAnimObject = nullptr;

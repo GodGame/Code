@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "MyInline.h"
+//#include "Object.h"
+//#include "Character.h"
 #include "Player.h"
 
-CPlayer::CPlayer(int nMeshes) : CAnimatedObject(nMeshes)
+CPlayer::CPlayer(int nMeshes) : CCharacter(nMeshes)
 {
 	m_pCamera               = nullptr;
 
@@ -546,12 +548,7 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 	{
 		CInGamePlayer::SetMesh(ppMeshList[i], i);
 	}
-	CInGamePlayer::SetAnimationCycleTime(eANI_IDLE, mfIdleAnim);
-	CInGamePlayer::SetAnimationCycleTime(eANI_RUN_FORWARD, mfRunForwardAnim);
-
-	CInGamePlayer::SetAnimationCycleTime(eANI_1H_CAST, mf1HCastAnimTime);
-	CInGamePlayer::SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, mf1HMagicAttackAnimTime);
-	CInGamePlayer::SetAnimationCycleTime(eANI_1H_MAGIC_AREA, mf1HMagicAreaAnimTime);
+	CInGamePlayer::InitializeAnimCycleTime();
 
 	CInGamePlayer::SetMaterial(pMaterial);
 	CInGamePlayer::SetTexture(pTexture);
@@ -611,6 +608,16 @@ void CInGamePlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * e
 		toObj->GetGameMessage(this, MSG_COLLIDE);
 		return;
 	}
+}
+
+void CInGamePlayer::InitializeAnimCycleTime()
+{
+	SetAnimationCycleTime(eANI_IDLE, mfIdleAnim);
+	SetAnimationCycleTime(eANI_RUN_FORWARD, mfRunForwardAnim);
+
+	SetAnimationCycleTime(eANI_1H_CAST, mf1HCastAnimTime);
+	SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, mf1HMagicAttackAnimTime);
+	SetAnimationCycleTime(eANI_1H_MAGIC_AREA, mf1HMagicAreaAnimTime);
 }
 
 void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)

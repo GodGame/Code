@@ -95,6 +95,8 @@ CHeightMapGridMesh::CHeightMapGridMesh(ID3D11Device *pd3dDevice, int xStart, int
 	if (pxv3Normals) delete[] pxv3Normals;
 	if (pxv2TexCoords) delete[] pxv2TexCoords;
 	if (pxv2AlphaTexCoords) delete[] pxv2AlphaTexCoords;
+	if (m_pxv3Positions) delete[] m_pxv3Positions;
+	m_pxv3Positions = nullptr;
 	//if (pxv3DetailTexCoords) delete[] pxv3DetailTexCoords;
 	// 와인딩 순서 주의
 #endif

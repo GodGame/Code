@@ -1392,7 +1392,7 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		nReadBytes = ::fread(temp, sizeof(wchar_t), fileNameSize, pFile);
 		temp[fileNameSize] = '\0';
 		file = temp;
-		//wcout << temp << endl;
+		wcout << temp << endl;
 
 		vcFileName.push_back(file);
 	}
@@ -1436,6 +1436,9 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		if (nIndex == 0)
 		{
 			m_bcBoundingCube = MeshInfo.bb;
+			cout << "Max : " << m_bcBoundingCube.m_xv3Maximum;
+			cout << "Min : " << m_bcBoundingCube.m_xv3Minimum;
+			cout << endl;
 
 			m_pnVertexOffsets = new UINT[1];
 			m_pnVertexOffsets[0] = MeshInfo.nOffsets;

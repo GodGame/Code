@@ -1,7 +1,7 @@
 #pragma once
 #include "Object.h"
 #include "Camera.h"
-#include "Player.h"
+#include "ObjectsList.h"
 
 struct VS_VB_INSTANCE
 {

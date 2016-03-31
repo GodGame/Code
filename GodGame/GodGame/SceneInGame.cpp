@@ -52,7 +52,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
 	}
-
+	// 플레이어 캐릭터
 	{
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_idle");
@@ -82,6 +82,31 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
 		vcTxFileNames.clear();
 	}
+	// 워록 몬스터
+	{
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Idle.ad", 0.5f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_idle");
+		
+		pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir + _T("Warrok/"), vcTxFileNames, 0);
+		vcTxFileNames.clear();
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_warrok");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Run.ad", 0.5f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_run");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Roar.ad", 0.5f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_roar");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Punch.ad", 0.5f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_punch");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Swiping.ad", 0.5f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_swiping");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Death.ad", 0.5f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_death");
+		//vcTxFileNames.clear();
+	}
 
 	//{
 	//	pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Man_Death_0.ad", 0.13f, vcTxFileNames);
@@ -107,7 +132,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pd3dsrvTexture->Release();
 		vcTxFileNames.clear();
 
-		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_skull_0");
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_skull");
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_skull_0");
 	}
 }
@@ -369,10 +394,25 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(2, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), nullptr);
 			return(false);
 
-		//case 'I':
-		//	pPlayer = m_pPlayerShader->GetPlayer();
-		//	pPlayer->ChangeAnimationState(eANI_1H_CAST, true, nullptr, 0);
-		//	return(false);
+		case '1':
+			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(1, true, nullptr, 0);
+			return(false);
+
+		case '2':
+			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(2, true, nullptr, 0);
+			return(false);
+
+		case '3':
+			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(3, true, nullptr, 0);
+			return(false);
+
+		case '4':
+			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(4, true, nullptr, 0);
+			return(false);
+
+		case '5':
+			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(5, true, nullptr, 0);
+			return(false);
 
 		case 'N':
 		case 'M':

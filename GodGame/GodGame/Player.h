@@ -1,9 +1,10 @@
 #pragma once
-#include "Object.h"
+
+#include "Character.h"
 //#include "Camera.h"
 #include "GameInfo.h"
 
-class CPlayer : public CAnimatedObject
+class CPlayer : public CCharacter //public CAnimatedObject
 {
 protected:
 	//플레이어의 위치 벡터, x-축(Right), y-축(Up), z-축(Look) 벡터이다.
@@ -39,6 +40,7 @@ public:
 	CPlayer(int nMeshes = 1);
 	virtual ~CPlayer();
 	virtual void BuildObject() {}
+	virtual void InitializeAnimCycleTime(){}
 
 	//플레이어의 현재 카메라를 설정하고 반환하는 멤버 함수를 선언한다.
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
@@ -121,7 +123,7 @@ public:
 	const float mfRunForwardAnim = 0.8f;
 
 	const float mf1HCastAnimTime = 1.5f;
-	const float mf1HMagicAttackAnimTime = 1.8f;
+	const float mf1HMagicAttackAnimTime = 1.5f;
 	const float mf1HMagicAreaAnimTime = 2.5f;
 
 private:
@@ -139,6 +141,7 @@ public:
 	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra);
 	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
 
+	virtual void InitializeAnimCycleTime();
 public:
 	void PlayerKeyEventOn(WORD key, void * extra);
 

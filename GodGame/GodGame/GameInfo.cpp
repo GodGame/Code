@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "GameInfo.h"
-#include "Player.h"
+#include "ObjectsList.h"
 
 CDeBuff::CDeBuff()
 {
