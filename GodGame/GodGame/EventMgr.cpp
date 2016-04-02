@@ -2,6 +2,7 @@
 #include "EventMgr.h"
 
 #include "Scene.h"
+#include "AI.h"
 
 bool operator<(const cMessage & left, const cMessage & right)
 {
@@ -41,8 +42,12 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 	case MSGType::MSG_TYPE_SCENE:
 		m_mpMessageList.insert(new cMessageSystem<CScene>
 			(m_fCurrentTime + fDelayeTime, eMsg, (CScene*)pToObj, (CScene*)pByObj, extra));
-		cout << "Scene Msg In" << endl;
 		return;
+
+	//case MSGType::MSG_TYPE_FSM:
+	//	m_mpMessageList.insert(new cMessageSystem<CAIState<CWarrock>>
+	//		(m_fCurrentTime + fDelayeTime, eMsg, (CAIState<CWarrock>*)pToObj, (CAIState<CWarrock>*)pByObj, extra));
+	//	return;
 
 	case MSGType::MSG_TYPE_NONE:
 		return;

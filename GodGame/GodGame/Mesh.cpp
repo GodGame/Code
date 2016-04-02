@@ -474,66 +474,6 @@ void CSkyBoxMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 }
 
 
-CMirrorMesh::CMirrorMesh(ID3D11Device *pd3dDevice, float fWidth, float fHeight) : CMeshTexturedIlluminated(pd3dDevice)
-{
-	m_nVertices = 6;
-	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
-
-	float fx = fWidth*0.5f, fy = fHeight*0.5f;
-
-	//직육면체 메쉬는 2개의 정점 버퍼(위치 벡터 버퍼와 색상 버퍼)로 구성된다.
-	//직육면체 메쉬의 정점 버퍼(위치 벡터 버퍼)를 생성한다.
-	XMFLOAT2 pxv2TexCoords[6];
-	m_pxv3Positions = new XMFLOAT3[m_nVertices];
-	
-	int i = 0;
-	m_pxv3Positions[0] = XMFLOAT3(-fx, +fy, 0); pxv2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
-	m_pxv3Positions[1] = XMFLOAT3(+fx, +fy, 0); pxv2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
-	m_pxv3Positions[2] = XMFLOAT3(-fx, -fy, 0); pxv2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
-	m_pxv3Positions[3] = XMFLOAT3(+fx, +fy, 0); pxv2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
-	m_pxv3Positions[4] = XMFLOAT3(+fx, -fy, 0); pxv2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
-	m_pxv3Positions[5] = XMFLOAT3(-fx, -fy, 0); pxv2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
-
-	D3D11_BUFFER_DESC d3dBufferDesc;
-	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
-	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	d3dBufferDesc.CPUAccessFlags = 0;
-	D3D11_SUBRESOURCE_DATA d3dBufferData;
-	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-	d3dBufferData.pSysMem = m_pxv3Positions;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
-
-	//법선 벡터를 생성하기 위한 다음 코드를 추가한다.
-	XMFLOAT3 pxv3Normals[6];
-	CalculateVertexNormal(pxv3Normals);
-
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
-	d3dBufferData.pSysMem = pxv3Normals;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
-
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
-	d3dBufferData.pSysMem = pxv2TexCoords;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
-
-	//정점은 위치 벡터, 법선 벡터, 텍스쳐 좌표를 갖는다.
-	ID3D11Buffer *pd3dBuffers[3] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer };
-	UINT pnBufferStrides[3] = { sizeof(XMFLOAT3), sizeof(XMFLOAT3), sizeof(XMFLOAT2) };
-	UINT pnBufferOffsets[3] = { 0, 0, 0 };
-	AssembleToVertexBuffer(3, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
-
-	/*인덱스 버퍼는 직육면체의 6개의 면(사각형)에 대한 기하 정보를 갖는다. 삼각형 리스트로 직육면체를 표현할 것이므로 각 면은 2개의 삼각형을 가지고 각 삼각형은 3개의 정점이 필요하다. 즉, 인덱스 버퍼는 전체 36(=6*2*3)개의 인덱스를 가진다.*/
-	
-	//CreateRasterizerState(pd3dDevice);
-
-	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-fx, -fy, 0);
-	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+fx, +fy, 0);
-}
-
-CMirrorMesh::~CMirrorMesh()
-{
-}
 
 CBillBoardVertex::CBillBoardVertex(ID3D11Device *pd3dDevice, float fWSize, float fHSize) : CMesh(pd3dDevice)
 {

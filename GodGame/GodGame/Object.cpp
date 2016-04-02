@@ -64,7 +64,7 @@ void CGameObject::ReleaseRelationShip()
 	if (m_pSibling) m_pSibling->Release();
 }
 
-void CGameObject::SetTexture(CTexture *pTexture, bool beforeRelease)
+void CGameObject::SetTexture(CTexture* const pTexture, bool beforeRelease)
 {
 	if (beforeRelease && m_pTexture) m_pTexture->Release();
 	m_pTexture = pTexture;
@@ -98,7 +98,7 @@ void CGameObject::UpdateBoundingBox()
 	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());//&m_ppMeshes[0]->GetBoundingCube());
 }
 
-void CGameObject::SetMesh(CMesh *pMesh, int nIndex)
+void CGameObject::SetMesh(CMesh* const pMesh, int nIndex)
 {
 	if (m_ppMeshes)
 	{
@@ -180,13 +180,13 @@ void CGameObject::SetPosition(float x, float y, float z)
 	m_xmf44World._42 = y;
 	m_xmf44World._43 = z;
 }
-void CGameObject::SetPosition(XMFLOAT3& xv3Position)
+void CGameObject::SetPosition(const XMFLOAT3& xv3Position)
 {
 	m_xmf44World._41 = xv3Position.x;
 	m_xmf44World._42 = xv3Position.y;
 	m_xmf44World._43 = xv3Position.z;
 }
-void CGameObject::SetPosition(XMVECTOR * xv3Position)
+void CGameObject::SetPosition(const XMVECTOR * xv3Position)
 {
 	XMFLOAT3 xmf3Pos;
 	XMStoreFloat3(&xmf3Pos, *xv3Position);
@@ -272,21 +272,21 @@ void CGameObject::SetSibling(CGameObject * pObject)
 	}
 }
 
-XMFLOAT3 CGameObject::GetLookAt()
+XMFLOAT3 CGameObject::GetLookAt() const 
 {
 	//게임 객체를 로컬 z-축 벡터를 반환한다.
 	XMFLOAT3 xv3LookAt(m_xmf44World._31, m_xmf44World._32, m_xmf44World._33);
 	//Chae::XMFloat3Normalize(&xv3LookAt);
 	return(xv3LookAt);
 }
-XMFLOAT3 CGameObject::GetUp()
+XMFLOAT3 CGameObject::GetUp() const
 {
 	//게임 객체를 로컬 y-축 벡터를 반환한다.
 	XMFLOAT3 xv3Up(m_xmf44World._21, m_xmf44World._22, m_xmf44World._23);
 	//Chae::XMFloat3Normalize(&xv3Up);
 	return(xv3Up);
 }
-XMFLOAT3 CGameObject::GetRight()
+XMFLOAT3 CGameObject::GetRight() const
 {
 	//게임 객체를 로컬 x-축 벡터를 반환한다.
 	XMFLOAT3 xv3Right(m_xmf44World._11, m_xmf44World._12, m_xmf44World._13);
@@ -379,7 +379,7 @@ void CGameObject::Rotate(XMFLOAT3 *pxv3Axis, float fAngle)
 	XMStoreFloat4x4(&m_xmf44World, mtxWorld);
 }
 
-XMFLOAT3 CGameObject::GetPosition()
+XMFLOAT3 CGameObject::GetPosition() const
 {
 	return(XMFLOAT3(m_xmf44World._41, m_xmf44World._42, m_xmf44World._43));
 }
@@ -644,7 +644,7 @@ XMFLOAT3& CHeightMap::GetHeightMapNormal(int x, int z)
 	return(vNormal);
 }
 
-float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad)
+float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad) const
 {
 	//지형의 좌표 (fx, fz)에서 높이 맵의 좌표를 계산한다.
 	fx = fx / m_xv3Scale.x;

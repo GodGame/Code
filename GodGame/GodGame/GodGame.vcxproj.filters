@@ -44,6 +44,9 @@
     <Filter Include="Local\5_Objects\Object">
       <UniqueIdentifier>{d5562b5d-a181-400f-bca6-d5c443f6e6e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Local\5_Objects\AI">
+      <UniqueIdentifier>{7a0dcc96-70b3-403a-9592-8a700ccc1a79}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameFramework.h">
@@ -133,6 +136,18 @@
     <ClInclude Include="ObjectsList.h">
       <Filter>Local\5_Objects\Object</Filter>
     </ClInclude>
+    <ClInclude Include="Action.h">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Evaluator.h">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AI.h">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="AIWarrock.h">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -197,6 +212,15 @@
     </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>Local\5_Objects\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Action.cpp">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Evaluator.cpp">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="AIWarrock.cpp">
+      <Filter>Local\5_Objects\AI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

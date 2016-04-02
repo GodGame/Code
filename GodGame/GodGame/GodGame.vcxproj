@@ -161,9 +161,13 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Action.h" />
+    <ClInclude Include="AI.h" />
+    <ClInclude Include="AIWarrock.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="CollisionMgr.h" />
+    <ClInclude Include="Evaluator.h" />
     <ClInclude Include="GameInfo.h" />
     <ClInclude Include="EventMgr.h" />
     <ClInclude Include="GameFramework.h" />
@@ -192,9 +196,12 @@
     <ClInclude Include="Timer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Action.cpp" />
+    <ClCompile Include="AIWarrock.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="CollisionMgr.cpp" />
+    <ClCompile Include="Evaluator.cpp" />
     <ClCompile Include="GameInfo.cpp" />
     <ClCompile Include="EventMgr.cpp" />
     <ClCompile Include="GameFramework.cpp" />

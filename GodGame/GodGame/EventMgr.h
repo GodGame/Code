@@ -10,29 +10,34 @@ enum eMessage : BYTE
 {
 //	MSG_NONE = -1,
 	MSG_NORMAL = 0,
+	//Collide
 	MSG_COLLIDE,
 	MSG_COLLIDED,
 	MSG_COLLIDE_LOCATION,
-
 	MSG_COLLIDE_UI,
-
+	// Mouse
 	MSG_MOUSE_DOWN,
 	MSG_MOUSE_DOWN_OVER,
 	MSG_MOUSE_UP,
 	MSG_MOUSE_UP_OVER,
-
+	// Quad-Tree
 	MSG_QUAD_DELETE,
-
+	MSG_CULL_OUT,
+	MSG_CULL_IN,
+	// Scene
 	MSG_SCENE_CHANGE,
-
+	// Data-Pass
+	MSG_PASS_PLAYERPTR,
+	// Object
 	MSG_OBJECT_RENEW,
-
+	MSG_OBJECT_ANIM_CHANGE,
+	// Player
 	MSG_PLAYER_USE_MAGIC,
-
+	// Magic
 	MSG_MAGIC_SHOT,
 	MSG_MAGIC_CAST,
 	MSG_MAGIC_AREA,
-
+	
 	MSG_PARTICLE_ON,
 
 	MSG_GET_SOUL,
@@ -46,8 +51,6 @@ enum eMessage : BYTE
 	MSG_DEBUFF_ON,
 	MSG_DEBUFF_OFF,
 
-	MSG_CULL_OUT,
-	MSG_CULL_IN,
 
 	MSG_EFFECT_GLARE_ON,
 	MSG_EFFECT_GLARE_OFF,
@@ -98,8 +101,8 @@ public:
 
 	virtual void MessageExecute() const
 	{
-		if (m_pByObj)		m_pByObj->SendGameMessage(m_pToObj, m_eMessage, m_pExtra);
-		else		     	m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
+		//if (m_pByObj)		m_pByObj->SendGameMessage(m_pToObj, m_eMessage, m_pExtra);
+		m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
 	}
 
 	virtual bool MessageUpdate(float fTime) const
@@ -150,12 +153,13 @@ private:
 	CGameEventMgr& operator=(const CGameEventMgr&);
 
 public:
-	enum MSGType : BYTE
+	enum MSGType : UCHAR
 	{
 		MSG_TYPE_NONE = 0,
 		MSG_TYPE_SCENE,
 		MSG_TYPE_SHADER,
-		MSG_TYPE_OBJECT
+		MSG_TYPE_OBJECT,
+		MSG_TYPE_FSM
 	};
 
 	static CGameEventMgr& GetInstance();

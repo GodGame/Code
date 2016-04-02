@@ -389,9 +389,10 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
 	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
-	CCharacter * pAnimatedObject = new CCharacter(1);
+	CMonster * pAnimatedObject = new CMonster(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
 	pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
+	
 	m_ppObjects[0] = pAnimatedObject;
 	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
 	m_ppObjects[0]->AddRef();
@@ -406,9 +407,11 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 		pAnimatedObject->SetMesh(meshmgr.GetObjects(AnimNames[i]), i);
 
 	pAnimatedObject->InitializeAnimCycleTime();
+	//static_cast<CWarrock*>(pAnimatedObject)->BuildObject(pAnimatedObject);
 
 	m_ppObjects[1] = pAnimatedObject;
 	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
+	m_ppObjects[1]->Rotate(0, 90.f, 0);
 	m_ppObjects[1]->AddRef();
 
 	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
@@ -431,10 +434,11 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	{
 		m_ppObjects[i]->SetTexture(txmgr.GetObjects(ManagerNames[i]));
 
-		CAnimatedObject * pAnimObject = nullptr;
-		if (pAnimObject = dynamic_cast<CAnimatedObject*>(m_ppObjects[i]))
+		CCharacter * pAnimObject = nullptr;
+		if (pAnimObject = dynamic_cast<CCharacter*>(m_ppObjects[i]))
 		{
 			pAnimObject->UpdateFramePerTime();
+			pAnimObject->SetUpdatedContext(pHeightMapTerrain);
 		}
 	}
 	/// ÀÌ»ó ½ºÅ×Æ½ °´Ã¼µé
@@ -456,6 +460,15 @@ void CStaticShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 			pd3dDeviceContext->PSSetShaderResources(2, 2, pd3dNullSRV);
 			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
 		}
+	}
+}
+
+void CStaticShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	if (eMSG == eMessage::MSG_PASS_PLAYERPTR)
+	{
+		for (int i = 0; i < m_nObjects; ++i)
+			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CGameObject*>(extra));
 	}
 }
 

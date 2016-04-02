@@ -80,13 +80,13 @@ public:
 	//뷰-포트를 설정하는 멤버 함수를 선언한다.
 	void SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD xStart, DWORD yStart, DWORD nWidth, DWORD nHeight, float fMinZ = 0.0f, float fMaxZ = 1.0f);
 	static void SetViewport(ID3D11DeviceContext *pd3dDeviceContext, DWORD nWidth, DWORD nHeight);
-	D3D11_VIEWPORT GetViewport() { return(m_d3dViewport); }
+	D3D11_VIEWPORT GetViewport() const { return(m_d3dViewport); }
 
-	XMFLOAT4X4 GetViewMatrix() { return(m_xmf44View); }
-	XMFLOAT4X4 GetProjectionMatrix() { return(m_xmf44Projection); }
-	XMFLOAT4X4 GetViewProjectionMatrix()  { return(m_xmf44ViewProjection); }
-	ID3D11Buffer *GetCameraConstantBuffer() { return(m_pd3dcbCamera); }
-	ID3D11Buffer *GetCameraPosConstantBuffer() { return(m_pd3dcbCameraPos); }
+	XMFLOAT4X4 GetViewMatrix() const { return(m_xmf44View); }
+	XMFLOAT4X4 GetProjectionMatrix() const { return(m_xmf44Projection); }
+	XMFLOAT4X4 GetViewProjectionMatrix() const { return(m_xmf44ViewProjection); }
+	ID3D11Buffer *GetCameraConstantBuffer() const { return(m_pd3dcbCamera); }
+	ID3D11Buffer *GetCameraPosConstantBuffer() const { return(m_pd3dcbCameraPos); }
 	//카메라 변환행렬을 생성한다.
 	void GenerateViewMatrix();
 	void GenerateProjectionMatrix(float fNearPlaneDistance, float fFarPlaneDistance, float fAspectRatio, float fFOVAngle);
@@ -101,7 +101,7 @@ public:
 	void RegenerateViewMatrix();
 
 	void SetMode(DWORD nMode) { m_nMode = nMode; }
-	DWORD GetMode() { return (m_nMode); }
+	DWORD GetMode() const { return (m_nMode); }
 
 	void SetPosition(XMFLOAT3 xv3Position) { m_xv3Position = xv3Position; }
 	XMFLOAT3& GetPosition() { return(m_xv3Position); }
@@ -122,7 +122,7 @@ public:
 	XMFLOAT3& GetOffset() { return(m_xv3Offset); }
 
 	void SetTimeLag(float fTimeLag) { m_fTimeLag = fTimeLag; }
-	float GetTimeLag() { return(m_fTimeLag); }
+	float GetTimeLag() const { return(m_fTimeLag); }
 
 	//카메라를 xv3Shift 만큼 이동하는 가상함수이다.
 	virtual void Move(XMFLOAT3& xv3Shift);

@@ -8,22 +8,10 @@ CPlayer::CPlayer(int nMeshes) : CCharacter(nMeshes)
 {
 	m_pCamera               = nullptr;
 
-	m_xv3Position           = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	//m_xv3Position.z +     = 1;
-	m_xv3Right              = XMFLOAT3(1.0f, 0.0f, 0.0f);
-	m_xv3Up                 = XMFLOAT3(0.0f, 1.0f, 0.0f);
-	m_xv3Look               = XMFLOAT3(0.0f, 0.0f, 1.0f);
-
-	m_xv3Gravity            = XMFLOAT3(0.0f, 0.0f, 0.0f);
-	m_fMaxVelocityXZ        = 0.0f;
-	m_fMaxVelocityY         = 0.0f;
-	m_fFriction             = 0.0f;
-
 	m_fPitch                = 0.0f;
 	m_fRoll                 = 0.0f;
 	m_fYaw                  = 0.0f;
 
-	m_pPlayerUpdatedContext = nullptr;
 	m_pCameraUpdatedContext = nullptr;
 
 	m_pScene = nullptr;
@@ -46,13 +34,6 @@ void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 	//cout << "player" << endl;
 	//cout << "bb max : " << m_bcMeshBoundingCube.m_xv3Maximum.x << ", " << m_bcMeshBoundingCube.m_xv3Maximum.y << ", " << m_bcMeshBoundingCube.m_xv3Maximum.z << endl;
 	//cout << "bb min : " << m_bcMeshBoundingCube.m_xv3Minimum.x << ", " << m_bcMeshBoundingCube.m_xv3Minimum.y << ", " << m_bcMeshBoundingCube.m_xv3Minimum.z << endl;
-}
-
-void CPlayer::SetPosition(XMFLOAT3& xv3Position)
-{
-	XMFLOAT3 xv3Result;
-	Chae::XMFloat3Sub(&xv3Result, &xv3Position, &m_xv3Position);
-	Move(xv3Result, false);
 }
 
 void CPlayer::InitPosition(XMFLOAT3 xv3Position)
@@ -101,14 +82,6 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 		{
 			m_wdAnimateState = wdNextState;
 			CAnimatedMesh* pAnimatedMesh = static_cast<CAnimatedMesh*>(m_ppMeshes[m_wdAnimateState]);
-			
-			//XMVECTOR max = XMLoadFloat3(&pAnimatedMesh->GetAABBMesh().m_xv3Maximum);
-			//XMVECTOR min = XMLoadFloat3(&pAnimatedMesh->GetAABBMesh().m_xv3Minimum);
-			//max = (max + min) * 0.5f;
-
-			//XMFLOAT3 Pos = GetPosition();
-			//XMStoreFloat3(&Pos, max + XMLoadFloat3(&Pos));
-			//SetPosition(Pos);
 
 			pAnimatedMesh->ResetIndex();
 		}
@@ -152,8 +125,8 @@ void CPlayer::Move(XMFLOAT3& xv3Shift, bool bUpdateVelocity)
 void CPlayer::Rotate(float x, float y, float z)
 {
 	XMVECTOR xmvRight = XMLoadFloat3(&m_xv3Right);
-	XMVECTOR xmvUp = XMLoadFloat3(&m_xv3Up);
-	XMVECTOR xmvLook = XMLoadFloat3(&m_xv3Look);
+	XMVECTOR xmvUp    = XMLoadFloat3(&m_xv3Up);
+	XMVECTOR xmvLook  = XMLoadFloat3(&m_xv3Look);
 
 	XMMATRIX mtxRotate;
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
@@ -200,20 +173,20 @@ void CPlayer::Rotate(float x, float y, float z)
 		if (x != 0.0f)
 		{
 			mtxRotate = XMMatrixRotationAxis(xmvRight, (float)XMConvertToRadians(x));
-			xmvLook = XMVector3TransformNormal(xmvLook, mtxRotate);
-			xmvUp = XMVector3TransformNormal(xmvUp, mtxRotate);
+			xmvLook   = XMVector3TransformNormal(xmvLook, mtxRotate);
+			xmvUp     = XMVector3TransformNormal(xmvUp, mtxRotate);
 		}
 		if (y != 0.0f)
 		{
 			mtxRotate = XMMatrixRotationAxis(xmvUp, (float)XMConvertToRadians(y));
-			xmvLook = XMVector3TransformNormal(xmvLook, mtxRotate);
-			xmvRight = XMVector3TransformNormal(xmvRight, mtxRotate);
+			xmvLook   = XMVector3TransformNormal(xmvLook, mtxRotate);
+			xmvRight  = XMVector3TransformNormal(xmvRight, mtxRotate);
 		}
 		if (z != 0.0f)
 		{
 			mtxRotate = XMMatrixRotationAxis(xmvLook, (float)XMConvertToRadians(z));
-			xmvUp = XMVector3TransformNormal(xmvUp, mtxRotate);
-			xmvRight = XMVector3TransformNormal(xmvRight, mtxRotate);
+			xmvUp     = XMVector3TransformNormal(xmvUp, mtxRotate);
+			xmvRight  = XMVector3TransformNormal(xmvRight, mtxRotate);
 		}
 	}
 
@@ -231,14 +204,7 @@ void CPlayer::Rotate(float x, float y, float z)
 
 void CPlayer::Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle)
 {
-	XMMATRIX xmtxWorld = XMLoadFloat4x4(&m_xmf44World);
-	XMMATRIX xmtxRotAxis = XMMatrixRotationAxis(XMLoadFloat3(&xmf3RotAxis), (float)(XMConvertToRadians(fAngle)));
-	xmtxWorld = xmtxRotAxis * xmtxWorld;
-	XMStoreFloat4x4(&m_xmf44World, xmtxWorld);
-
-	m_xv3Right = { m_xmf44World._11, m_xmf44World._12, m_xmf44World._13 };
-	m_xv3Up = { m_xmf44World._21, m_xmf44World._22, m_xmf44World._23 };
-	m_xv3Look = { m_xmf44World._31, m_xmf44World._32, m_xmf44World._33};
+	CCharacter::Rotate(xmf3RotAxis, fAngle);
 }
 
 void CPlayer::Update(float fTimeElapsed)
@@ -261,21 +227,26 @@ void CPlayer::Update(float fTimeElapsed)
 	if (fLength > fMaxVelocityY) m_xv3Velocity.y *= (fMaxVelocityY / fLength);
 
 	//플레이어를 속도 벡터 만큼 실제로 이동한다(카메라도 이동될 것이다).
-	Move(m_xv3Velocity, false);
+	CPlayer::Move(m_xv3Velocity, false);
 
 	/*플레이어의 위치가 변경될 때 추가로 수행할 작업을 수행한다. 
 	예를 들어, 플레이어의 위치가 변경되었지만 플레이어 객체에는 지형(Terrain)의 정보가 없다. 
 	플레이어의 새로운 위치가 유효한 위치가 아닐 수도 있고 또는 플레이어의 충돌 검사 등을 수행할 필요가 있다. 
 	이러한 상황에서 플레이어의 위치를 유효한 위치로 다시 변경할 수 있다.*/
-	if (m_pPlayerUpdatedContext) OnPlayerUpdated(fTimeElapsed);
+	if (m_pUpdatedContext) OnPlayerUpdated(fTimeElapsed);
 
 	DWORD nCurrentCameraMode = m_pCamera->GetMode();
 	//플레이어의 위치가 변경되었으므로 카메라의 상태를 갱신한다.
-	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->Update(m_xv3Position, fTimeElapsed);
-	//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
-	if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
-	//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
-	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->SetLookAt(m_xv3Position);
+	m_pCamera->Update(m_xv3Position, fTimeElapsed);
+
+	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) 
+	{
+		//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
+		if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
+		//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
+		m_pCamera->SetLookAt(m_xv3Position);
+	}
+	else if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
 	//카메라의 카메라 변환 행렬을 다시 생성한다.
 	m_pCamera->RegenerateViewMatrix();
 
@@ -290,9 +261,7 @@ void CPlayer::Update(float fTimeElapsed)
 	xvDeceleration = XMVector3Normalize(xvDeceleration);
 	XMVECTOR xfLength = XMVector3Length(xvVelocity);
 	XMStoreFloat(&fLength, xfLength);
-	//XMFLOAT3 xv3Deceleration = -m_xv3Velocity;
-	//xv3ec3Normalize(&xv3Deceleration, &xv3Deceleration);
-	//fLength = xv3ec3Length(&m_xv3Velocity);
+
 	float fDeceleration = (m_fFriction * fTimeElapsed);
 	if (fDeceleration > fLength) fDeceleration = fLength;
 	xvVelocity += xvDeceleration * fDeceleration;
@@ -462,35 +431,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 
 void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 {
-	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pPlayerUpdatedContext;
-	XMFLOAT3 xv3Scale           = pTerrain->GetScale();
-	XMFLOAT3 xv3PlayerPosition  = GetPosition();
-	int z                       = (int)(xv3PlayerPosition.z / xv3Scale.z);
-	bool bReverseQuad = (z % 2);//((z % 2) != 0);
-	/*높이 맵에서 플레이어의 현재 위치 (x, z)의 y 값을 구한다. 그리고 플레이어 메쉬의 높이가 12이고 플레이어의 중심이 직육면체의 가운데이므로 y 값에 메쉬의 높이의 절반을 더하면 플레이어의 위치가 된다.*/
-	float fHeight = pTerrain->GetHeight(xv3PlayerPosition.x, xv3PlayerPosition.z, bReverseQuad);//+2.0f;
-//	cout << "높이는 : " << fHeight << endl;
-	/*플레이어의 속도 벡터의 y-값이 음수이면(예를 들어, 중력이 적용되는 경우) 플레이어의 위치 벡터의 y-값이 점점 작아지게 된다.
-	이때 플레이어의 현재 위치의 y 값이 지형의 높이(실제로 지형의 높이 + 6)보다 작으면 플레이어가 땅속에 있게 되므로 플레이어의 속도 벡터의 y 값을 0으로 만들고 플레이어의 위치 벡터의 y-값을 지형의 높이로 설정한다. 그러면 플레이어는 지형 위에 있게 된다.*/
-	if (xv3PlayerPosition.y < fHeight)
-	{
-		XMFLOAT3 xv3PlayerVelocity = GetVelocity();
-		xv3PlayerVelocity.y = 0.0f;
-		SetVelocity(xv3PlayerVelocity);
-		xv3PlayerPosition.y = fHeight;
-		SetPosition(xv3PlayerPosition);
-	}
-	//XMFLOAT3 xmf3TerrainNormal = pTerrain->GetNormal(xv3PlayerPosition.x, xv3PlayerPosition.z);
-	//XMVECTOR xmvTerrainNormal = XMLoadFloat3(&xmf3TerrainNormal);
-	//XMFLOAT3 xmf3RotateAxis;
-	//XMStoreFloat3(&xmf3RotateAxis, XMVector3Normalize( XMVector3Cross(xmvTerrainNormal, XMVectorSet(0, 0, 1, 0))));
-
-
-	//float fAngle = 0.0f;
-	//XMStoreFloat(&fAngle, XMVector3Dot(xmvTerrainNormal, XMVectorSet(0, 0, 1, 0)));
-	//fAngle = acos(fAngle);
-
-	//CPlayer::Rotate(xmf3RotateAxis, fAngle);
+	CCharacter::OnContextUpdated(fTimeElapsed);
 }
 
 void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
@@ -505,17 +446,19 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad);// +8.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad);
+
 	if (xv3CameraPosition.y < fHeight)
 	{
-		xv3CameraPosition.y = fHeight + 2.0f;
+		xv3CameraPosition.y = fHeight + 8.0f;
 		pCamera->SetPosition(xv3CameraPosition);
+
 		//3인칭 카메라의 경우 카메라의 y-위치가 변경되었으므로 카메라가 플레이어를 바라보도록 한다.
 		if (pCamera->GetMode() == THIRD_PERSON_CAMERA)
 		{
 			CThirdPersonCamera *p3rdPersonCamera = (CThirdPersonCamera *)pCamera;
 			XMFLOAT3 look = GetPosition();
-			look.y += 0.5f;
+			look.y += 1.0f;
 			//XMFLOAT3 pos = GetPosition();
 			//XMFLOAT3 look = GetLookVector();
 			//XMStoreFloat3(&pos, XMLoadFloat3(&pos) + ( XMLoadFloat3(&look) * 60.0f));

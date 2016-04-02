@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef __COLLISION
-#define __COLLISION
+#ifndef __COLLISION_H
+#define __COLLISION_H
 
 #include "stdafx.h"
 
@@ -57,36 +57,6 @@ struct CPartitionNode
 	AABB				 m_BoundingBox;
 	vector<CGameObject*> m_vpObjects;
 };
-
-//template <int nodes>
-//class CPartitionTree
-//{
-//public:
-//	static enum XDivde { Left = 0, Right };
-//	static enum YDivde { Bottom = 0, Top };
-//	static enum ZDivde { Front = 0, Far };
-//
-//	typedef list<CPartitionNode> NodeArray;
-//protected:
-//	NodeArray m_vlNodes;
-//
-//	BoundingBox bb;
-//	AABB m_BoundingBox;
-//	XMFLOAT3 m_xmf3Center;
-//	CPartitionTree * m_pChildTrees[nodes];
-//
-//
-////	ePartLoc m_e;
-//public:
-//	CPartitionTree(AABB & bbMapBox, int nLevels);
-//	CPartitionTree(XMFLOAT3 & xmf3Min, XMFLOAT3 & xmf3Max, int nLevels);
-//	~CPartitionTree();
-//
-//	virtual void AddChild(int nLevels) = 0;
-//	//NodeArray & GetNodeArray();
-//};
-//
-//#include "CollisionPartitionTree.cpp"
 
 class DirectQuadTree
 {

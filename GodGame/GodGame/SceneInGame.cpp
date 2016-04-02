@@ -84,7 +84,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	}
 	// 워록 몬스터
 	{
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Idle.ad", 0.5f, vcTxFileNames);
+  		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Idle.ad", 0.5f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_idle");
 		
 		pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir + _T("Warrok/"), vcTxFileNames, 0);
@@ -148,6 +148,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	CMaterial *pBlueMaterial  = MaterialMgr.GetObjects("Blue");
 	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
 
+	int iStaticShaderNum = -1;
 	//메시 빌드
 	BuildMeshes(pd3dDevice);
 	{
@@ -165,6 +166,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_ppShaders[index]->CreateShader(pd3dDevice);
 		m_ppShaders[index++]->BuildObjects(pd3dDevice);
 
+		iStaticShaderNum = index;
 		CStaticShader *pStaticObjectsShader = new CStaticShader();
 		pStaticObjectsShader->CreateShader(pd3dDevice);
 		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial, m_SceneResoucres);
@@ -216,6 +218,9 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pUIShader->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV, this);
 		m_pUIShader = pUIShader;
 	}
+	{
+		m_ppShaders[iStaticShaderNum]->GetGameMessage(nullptr, eMessage::MSG_PASS_PLAYERPTR, m_pCamera->GetPlayer());
+	}
 
 	CreateShaderVariables(pd3dDevice);
 	BuildStaticShadowMap(pd3dDeviceContext);
@@ -226,32 +231,7 @@ void CSceneInGame::ReleaseObjects()
 	CScene::ReleaseObjects();
 	QUADMgr.ReleaseQuadTree();
 }
-//
-//bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
-//{
-//	switch (nMessageID)
-//	{
-//	case WM_LBUTTONDOWN:
-//	case WM_RBUTTONDOWN:
-//		//마우스 캡쳐를 하고 현재 마우스 위치를 가져온다.
-//		//SetCapture(hWnd);
-//		GetCursorPos(&m_ptOldCursorPos);
-//		//bIsMouseDown = true;
-//		break;
-//	case WM_LBUTTONUP:
-//	case WM_RBUTTONUP:
-//		//마우스 캡쳐를 해제한다.
-//		//ReleaseCapture();
-//		break;
-//	case WM_MOUSEMOVE:
-//		break;
-//	default:
-//		//bIsMouseDown = false;
-//		break;
-//	}
-//
-//	return false;
-//}
+
 void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 {
 	m_pLights = new LIGHTS;

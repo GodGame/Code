@@ -13,6 +13,8 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 };
 
 class CInstancingShader : public CInstanceShader, public CTexturedShader

@@ -18,12 +18,15 @@ enum ANIMATION_STATE
 
 class CTexture;
 class AABB;
-struct POSANDSIZE {
+
+struct POSANDSIZE 
+{
 	XMFLOAT3 m_xmf3Pos;
 	float		 m_fSize;
 };
 
-struct MESHINTERSECTINFO {
+struct MESHINTERSECTINFO 
+{
 	DWORD m_dwFaceIndex;
 	float m_fU;
 	float m_fV;
@@ -70,6 +73,7 @@ struct MeshBuffer
 class CVertex
 {
 	XMFLOAT3 m_xv3Position;		//정점의 위치 정보(3차원 벡터)를 저장하기 위한 멤버 변수를 선언한다.
+
 public:
 	CVertex() { m_xv3Position = XMFLOAT3(0, 0, 0); }
 	CVertex(XMFLOAT3 xv3Position) { m_xv3Position = xv3Position; }
@@ -148,9 +152,9 @@ public:
 #ifdef PICKING
 	int CheckRayIntersection(XMFLOAT3 *pxv3RayPosition, XMFLOAT3 *pxv3RayDirection, MESHINTERSECTINFO *pd3dxIntersectInfo);
 #endif
-	ID3D11Buffer ** GetVertexBuffer() { return m_ppd3dVertexBuffers; }
-	ID3D11Buffer * GetPositionBuffer() { return m_pd3dPositionBuffer; }
-	int GetVerticesSize() { return m_nVertices; }
+	ID3D11Buffer ** GetVertexBuffer()   const { return m_ppd3dVertexBuffers; }
+	ID3D11Buffer *  GetPositionBuffer() const { return m_pd3dPositionBuffer; }
+	int GetVerticesSize() const { return m_nVertices; }
 	//메쉬의 정점 버퍼들을 배열로 조립한다.
 	void AssembleToVertexBuffer(int nBuffers = 0, ID3D11Buffer **m_pd3dBuffers = nullptr, UINT *pnBufferStrides = nullptr, UINT *pnBufferOffsets = nullptr);
 
@@ -188,6 +192,7 @@ public:
 
 	void SetAnimationIndex(int iIndex);
 	int GetAnimationAllIndex() { return m_pvcMeshBuffers.size(); }
+	int GetAnimIndex() { return m_iIndex; }
 
 	bool IsEndAnimation() { return m_bTerminal; }
 	void ResetIndex() { m_iIndex = 0; m_fNowFrameTime = 0.0f; m_bTerminal = false; }
@@ -357,12 +362,6 @@ public:
 	virtual ~CLoadMeshByFbxcjh();
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };
-//class LoadNormalMapVertexByFile : public CMesh
-//{
-//public:
-//	LoadNormalMapVertexByFile(ID3D11Device * pd3dDevice, NormalMapVertex * pData, int nSize, float fScale = 1.0f);
-//	virtual ~LoadNormalMapVertexByFile();
-//};
 
 class CLoadAnimatedMeshByADFile : public CAnimatedMesh
 {
@@ -377,6 +376,7 @@ class CLoadMesh : public CMeshTexturedIlluminated
 protected:
 	XMFLOAT3 * m_xmf3Normal;
 	XMFLOAT2 * m_xmf2TexCoords;
+
 public:
 	CLoadMesh(ID3D11Device *pd3dDevice, wchar_t * tMeshName);
 	virtual ~CLoadMesh();

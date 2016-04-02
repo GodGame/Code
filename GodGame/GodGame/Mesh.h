@@ -1,12 +1,7 @@
 #pragma once
 #include "MeshType.h"
 
-class CMirrorMesh : public CMeshTexturedIlluminated
-{
-public:
-	CMirrorMesh(ID3D11Device *pd3dDevice, float fWidth = 2.f, float fHeight = 2.f);
-	virtual ~CMirrorMesh();
-};
+
 #define SPLAT_TERRAIN
 /*지형 메쉬의 각 정점은 두 개의 텍스쳐 좌표를 갖는다.*/
 #ifdef DETAIL_TERRAIN

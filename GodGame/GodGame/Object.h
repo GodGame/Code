@@ -9,6 +9,7 @@
 
 #include "Camera.h"
 #include "MgrList.h"
+#include "AI.h"
 
 #define PARTICLE_TYPE_EMITTER	0
 #define PARTICLE_TYPE_FLARE		1
@@ -27,10 +28,10 @@ protected:
 
 public:
 	void SetDurabilityTime(float fTime)  { m_fDurability = fTime; }
-	float GetDurabilityTime()		     { return m_fDurability; }
+	float GetDurabilityTime()	const	 { return m_fDurability; }
 
-	void SetMoveVelocity(XMFLOAT3 & vel) { m_velocity.xmf3Velocity = vel; }
-	void SetMoveAccel(XMFLOAT3 & acc)    { m_velocity.xmf3Accelate = acc; }
+	void SetMoveVelocity(const XMFLOAT3 & vel) { m_velocity.xmf3Velocity = vel; }
+	void SetMoveAccel(const XMFLOAT3 & acc)    { m_velocity.xmf3Accelate = acc; }
 
 	bool IsAble() { return m_bEnable; }
 	bool IsSubordinative() { return m_bSubordinate; }
@@ -266,43 +267,41 @@ public:
 public:
 	void SetChild(CGameObject* pObject);
 	void SetSibling(CGameObject * pObject);
-	//void SetParent(CGameObject * pObject);
 
 	CGameObject * GetChildObject() { return m_pChild; }
 	CGameObject * GetSiblingObject() { return m_pSibling; }
-	//CGameObject * GetParentObject() { return m_pParent; }
 
-	//void SuccessSibling();
 	// 부모 형제 자식을 다 끊어버림
 	void ReleaseRelationShip();
 
 public:
-	CMesh *GetMesh(int nIndex = 0) { return(m_ppMeshes[nIndex]); }
-	//게임 객체는 텍스쳐 가질 수 있다.
-	CTexture *m_pTexture;
-	void SetTexture(CTexture *pTexture, bool beforeRelease = true);
-	void SetActive(bool bActive = false) { m_bActive = bActive; }
-	void SetCollide(bool bCollide) { m_bUseCollide = bCollide; }
+	CMesh* GetMesh(const int nIndex = 0) { return(m_ppMeshes[nIndex]); }
+	CTexture* m_pTexture;
+
+	void SetTexture(CTexture* const pTexture, bool beforeRelease = true);
+	void SetActive(const bool bActive = false) { m_bActive = bActive; }
+	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
 
 	virtual void UpdateBoundingBox();
 
-	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
+	virtual void SetMesh(CMesh* const pMesh, int nIndex = 0);
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 	// child, sibling 객체를 그리고, 월드 좌표계를 셋 한다.
 	void UpdateSubResources(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 
-	void SetPosition(float x, float y, float z);
-	void SetPosition(XMFLOAT3& xv3Position);
-	void SetPosition(XMVECTOR* xv3Position);
+	virtual void SetPosition(float x, float y, float z);
+	void SetPosition(const XMFLOAT3& xv3Position);
+	void SetPosition(const XMVECTOR* xv3Position);
 
-	XMFLOAT3 GetPosition();
-	UINT GetSize() { return m_uSize; }
+	XMFLOAT3 GetPosition() const;
+	UINT GetSize() const { return m_uSize; }
 
 public:
 	virtual bool IsVisible(CCamera *pCamera = nullptr);
-	bool CanCollide(CGameObject * pObj) { 
+	bool CanCollide(CGameObject * pObj) const
+	{ 
 		if (!m_bUseCollide) return false;
 		if (this == pObj) return false;
 		return true;
@@ -314,13 +313,13 @@ public:
 	void MoveForward(float fDistance = 1.0f);
 
 	//로컬 x-축, y-축, z-축 방향으로 회전한다.
-	void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
-	void Rotate(XMFLOAT3 *pxv3Axis, float fAngle);
+	virtual void Rotate(float fPitch = 10.0f, float fYaw = 10.0f, float fRoll = 10.0f);
+	virtual void Rotate(XMFLOAT3 *pxv3Axis, float fAngle);
 
 	//객체의 위치, 로컬 x-축, y-축, z-축 방향 벡터를 반환한다.
-	XMFLOAT3 GetLookAt();
-	XMFLOAT3 GetUp();
-	XMFLOAT3 GetRight();
+	XMFLOAT3 GetLookAt() const;
+	XMFLOAT3 GetUp() const;
+	XMFLOAT3 GetRight() const;
 
 	//객체를 렌더링하기 전에 호출되는 함수이다.
 	virtual void OnPrepareRender() { }
@@ -350,6 +349,7 @@ class CDynamicObject : public CGameObject
 public:
 	CDynamicObject(int nMeshes);
 	virtual ~CDynamicObject(){}
+
 protected:
 	XMFLOAT3 m_xv3Velocity;
 
@@ -377,13 +377,15 @@ protected:
 public:
 	void ChangeAnimationState(WORD wd, bool bReserveIdle, WORD * pNextStateArray, int nNum);
 	void SetAnimationCycleTime(WORD wdAnimNum, float fCycleTime); 
+	WORD GetAnimationState() const { return m_wdAnimateState;}
 	void UpdateFramePerTime();
+
+	ANI_MESH* GetAniMesh() { return static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState]); }
 
 	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
-
 };
 
 class CUIObject : public CGameObject
@@ -442,7 +444,7 @@ class CHeightMap
 {
 private:
 	//높이 맵 이미지 픽셀(8-비트)들의 이차원 배열이다. 각 픽셀은 0~255의 값을 갖는다.
-	BYTE *m_pHeightMapImage;
+	BYTE* m_pHeightMapImage;
 	//높이 맵 이미지의 가로와 세로 크기이다.
 	int m_nWidth;
 	int m_nLength;
@@ -454,14 +456,14 @@ public:
 	~CHeightMap(void);
 
 	//높이 맵 이미지에서 (x, z) 위치의 픽셀 값에 기반한 지형의 높이를 반환한다.
-	float GetHeight(float x, float z, bool bReverseQuad = false);
+	float GetHeight(float x, float z, bool bReverseQuad = false) const;
 	//높이 맵 이미지에서 (x, z) 위치의 법선 벡터를 반환한다.
 	XMFLOAT3& GetHeightMapNormal(int x, int z);
 	XMFLOAT3& GetScale() { return(m_xv3Scale); }
 
-	BYTE *GetHeightMapImage() { return(m_pHeightMapImage); }
-	int GetHeightMapWidth() { return(m_nWidth); }
-	int GetHeightMapLength() { return(m_nLength); }
+	BYTE* GetHeightMapImage() const { return(m_pHeightMapImage); }
+	int GetHeightMapWidth()   const { return(m_nWidth); }
+	int GetHeightMapLength()  const { return(m_nLength); }
 };
 
 class CHeightMapTerrain : public CGameObject

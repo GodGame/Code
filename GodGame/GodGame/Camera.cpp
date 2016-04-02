@@ -489,6 +489,9 @@ void CThirdPersonCamera::Update(XMFLOAT3& xv3LookAt, float fTimeElapsed)
 		XMFLOAT3 xv3Right = m_pPlayer->GetRightVector();
 		XMFLOAT3 xv3Up = m_pPlayer->GetUpVector();
 		XMFLOAT3 xv3Look = m_pPlayer->GetLookVector();
+		XMFLOAT3 xv3Player = m_pPlayer->GetPosition();
+		m_xv3Position.y = max(m_xv3Position.y, xv3Player.y + m_xv3Offset.y);
+
 		//플레이어의 로컬 x-축, y-축, z-축 벡터로부터 회전 행렬을 생성한다.
 		mtxRotate._11 = xv3Right.x; mtxRotate._21 = xv3Up.x; mtxRotate._31 = xv3Look.x;
 		mtxRotate._12 = xv3Right.y; mtxRotate._22 = xv3Up.y; mtxRotate._32 = xv3Look.y;

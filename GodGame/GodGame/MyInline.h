@@ -52,6 +52,10 @@ namespace Chae
 		XMStoreFloat(&fResult, XMVector3Dot(XMLoadFloat3(v1), XMLoadFloat3(v2)));
 		return fResult;
 	}
+	inline void XMFloat3Cross(XMFLOAT3 * pOut, XMFLOAT3 * v1, XMFLOAT3 * v2)
+	{
+		XMStoreFloat3(pOut, XMVector3Cross(XMLoadFloat3(v1), XMLoadFloat3(v2)));
+	}
 	inline void XMFloat3Normalize(XMFLOAT3 * pXMF3Target)
 	{
 		XMStoreFloat3(pXMF3Target, XMVector3Normalize(XMLoadFloat3(pXMF3Target)));
@@ -60,6 +64,11 @@ namespace Chae
 	{
 		XMStoreFloat3(pOut, XMVector3Normalize(XMLoadFloat3(pXMF3)));
 	}
+	inline void XMFloat3TargetToNormal(XMFLOAT3 * pOut, XMFLOAT3 * pTarget, XMFLOAT3 * Pos)
+	{
+		XMStoreFloat3(pOut, XMVector3Normalize(XMLoadFloat3(pTarget) - XMLoadFloat3(Pos)));
+	}
+
 	inline void XMVelocityMove(XMFLOAT3 * xmfResult, XMFLOAT3 * xmfVelocity, XMFLOAT3 * xmfPos, float fTime)
 	{
 		XMStoreFloat3(xmfResult, XMLoadFloat3(xmfVelocity) * fTime + XMLoadFloat3(xmfPos));
