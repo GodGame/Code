@@ -99,7 +99,7 @@ public:
 	static  void MessageObjToObj(CScene * byObj, CScene * toObj, eMessage eMSG, void * extra = nullptr);
 
 	virtual void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
-	virtual void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
+	virtual void PreProcessing(ID3D11DeviceContext * pd3dDeviceContext);
 public:
 #ifdef PICKING
 	CGameObject *PickObjectPointedByCursor(int xClient, int yClient);

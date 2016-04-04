@@ -10,7 +10,7 @@
 #define ELEMENT_ELECTRIC		COLOR_YELLOW
 #define ELEMENT_NUM				6
 
-class CPlayer;
+class CCharacter;
 class CDeBuff
 {
 	enum eDeBuff : BYTE
@@ -31,7 +31,7 @@ private:
 	list<eDeBuff> m_DebuffMessageList;
 
 	float	 m_fPlusDebuffTime;
-	CPlayer * m_pPlayer;
+	CCharacter * m_pMaster;
 
 	const float m_fTimeSlow   = 1.5f;
 	const float m_fTimeFreeze = 1.5f;
@@ -40,7 +40,8 @@ private:
 public:
 	CDeBuff();
 	~CDeBuff();
-	void GetPlayer(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
+	void Reset();
+	void SetPlayer(CCharacter* pPlayer) { m_pMaster = pPlayer; }
 
 	void PlayerDelayMessage(eDeBuff eType, float fDebuffTime);
 	void DebuffPop();
@@ -72,7 +73,7 @@ private:
 	list<eBuff> m_BuffMessageList;
 
 	float	 m_fPlusDebuffTime;
-	CPlayer * m_pPlayer;
+	CCharacter * m_pMaster;
 
 	const float m_fTimePlusDamage = 1.5f;
 	const float m_fTimeCast       = 1.5f;
@@ -82,7 +83,8 @@ private:
 public:
 	CBuff();
 	~CBuff();
-	void GetPlayer(CPlayer* pPlayer) { m_pPlayer = pPlayer; }
+	void Reset();
+	void SetMaster(CCharacter* pMaster) { m_pMaster = pMaster; }
 
 	void PlayerDelayMessage(eBuff eType, float fDebuffTime);
 	void BuffPop();
@@ -111,24 +113,46 @@ private:
 	UINT	m_uGold         : 18;
 
 	UINT	m_uAttackDamage : 10;
-	UINT	m_uHP           : 10;
 	UINT	m_uStamina	    : 6;
 	UINT	m_nShields		: 6;
+
 	UINT    m_bRange		: 1;
 	UINT    m_bUnbeatable   : 1;
 	UINT    m_bCanJump      : 1;
+	UINT    m_bCanMove      : 1;
 	UINT	m_bAlive        : 1;
 
+	short	m_sHP;
 	float	m_fAttackSpeed;
 	float	m_fAttackRange;
+	//float   m_fAttackDamage;
 
 public:
 	StatusInfo();
 	~StatusInfo();
 
+	void ResetStatus();
+
 	WORD GetGold()  { return m_uGold; }
 	WORD GetPoint() { return m_uGamePoint; }
-	WORD GetHP()	{ return m_uHP; }
+
+	short GetHP()	{ return m_sHP; }
+	void SetHP(short hp) { m_sHP = hp; }
+	void ChangeHP(short hpValue) { m_sHP += hpValue; if(m_sHP < 0) m_bAlive = false; }
+	void Damaged(short damage) { ChangeHP(-damage); m_bCanMove = false; }
+
+	float GetAttackSpeed()          { return m_fAttackSpeed; }
+	void SetAttackSpeed(float fVal) { m_fAttackSpeed = fVal; }
+	float GetAttackRange()          { return m_fAttackRange; }
+	void SetAttackRange(float fVal) { m_fAttackRange = fVal; }
+//	float GetAttackDamage()			{ return m_fAttackDamage; }
+
+
+	bool IsCanMove()          { return m_bCanMove; }
+	void SetCanMove(bool val) { m_bCanMove = val; }
+
+	bool IsAlive()            { return m_bAlive; }
+	void SetAilive(bool val)  { m_bAlive = m_bAlive; }
 };
 
 struct ElementEnergy

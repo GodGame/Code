@@ -4,19 +4,24 @@
 
 CDeBuff::CDeBuff()
 {
-	m_eDebuff			 = 0;
-	m_fPlusDebuffTime	 = 0.0f;
+	Reset();
 
-	m_pPlayer = nullptr;
+	m_pMaster = nullptr;
 }
 
 CDeBuff::~CDeBuff()
 {
 }
 
+void CDeBuff::Reset()
+{
+	m_eDebuff = 0;
+	m_fPlusDebuffTime = 0.0f;
+}
+
 void CDeBuff::PlayerDelayMessage(eDeBuff eType, float fDebuffTime)
 {
-	if (m_pPlayer) 
+	if (m_pMaster)
 	{
 		m_DebuffMessageList.push_back(eType);
 		void * DebuffMsg = &(*(--m_DebuffMessageList.end()));
@@ -37,19 +42,24 @@ void CDeBuff::DebuffPop()
 ///////////////////////////////////////////////////////////////////
 CBuff::CBuff()
 {
-	m_eBuff           = 0;
-	m_fPlusDebuffTime = 0.0f;
+	Reset();
 
-	m_pPlayer         = nullptr;
+	m_pMaster = nullptr;
 }
 
 CBuff::~CBuff()
 {
 }
 
+void CBuff::Reset()
+{
+	m_eBuff = 0;
+	m_fPlusDebuffTime = 0.0f;
+}
+
 void CBuff::PlayerDelayMessage(eBuff eType, float fBuffTime)
 {
-	if (m_pPlayer)
+	if (m_pMaster)
 	{
 		m_BuffMessageList.push_back(eType);
 		void * DebuffMsg = &(*(--m_BuffMessageList.end()));
@@ -70,24 +80,33 @@ void CBuff::BuffPop()
 //////////////////////////////////////////////
 StatusInfo::StatusInfo()
 {
-	m_uGamePoint		 = 0;
-	m_uGold				 = 0;
-
-	m_uHP				 = 0;
-	m_uStamina			 = 0;
-	m_nShields			 = 0;
-	m_uAttackDamage		 = 0;
-	m_bRange		     = false;
-	m_bUnbeatable        = false;
-	m_bCanJump			 = false;
-	m_bAlive			 = false;
-
-	m_fAttackSpeed		 = 0.0f;
-	m_fAttackRange		 = 0.0f;
+	ResetStatus();
 }
 
 StatusInfo::~StatusInfo()
 {
+}
+
+void StatusInfo::ResetStatus()
+{
+	m_uGamePoint    = 0;
+	m_uGold         = 0;
+
+	m_uStamina      = 0;
+	m_nShields      = 0;
+	m_uAttackDamage = 0;
+	m_bRange        = false;
+	m_bUnbeatable   = false;
+	m_bCanJump      = false;
+	m_bCanMove      = true;
+	m_bAlive        = true;
+	m_sHP           = 0;
+
+	m_fAttackSpeed  = 0.0f;
+	m_fAttackRange  = 0.0f;
+
+	m_Buff.Reset();
+	m_Debuff.Reset();
 }
 
 ///////////////////////////////////////////

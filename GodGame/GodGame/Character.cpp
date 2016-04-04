@@ -205,6 +205,20 @@ void CCharacter::OnContextUpdated(float fTimeElapsed)
 	}
 }
 
+void CCharacter::Attack(CCharacter * pToChar, short stDamage)
+{
+}
+
+void CCharacter::AttackSuccess(CCharacter * pToChar, short stDamage)
+{
+	pToChar->Damaged(pToChar, stDamage);
+}
+
+void CCharacter::Damaged(CCharacter * pByChar, short stDamage)
+{
+	m_Status.Damaged(stDamage);
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CMonster::CMonster(int nMeshes) : CCharacter(nMeshes)
@@ -237,8 +251,11 @@ CWarrock::~CWarrock()
 {
 }
 
-void CWarrock::BuildObject(CGameObject * pTarget)
+void CWarrock::BuildObject(CCharacter * pTarget)
 {
+	m_Status.ResetStatus();
+	m_Status.SetHP(mfMAX_HEALTH);
+
 	SetMaxVelocityXZ(30.0f);
 	SetFriction(20.0f);
 
@@ -274,6 +291,7 @@ void CWarrock::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 
 	switch (eMSG)
 	{
+#if 0
 	case eMessage::MSG_OBJECT_ANIM_CHANGE:
 		eAnim = eWarrockAnim(*static_cast<int*>(extra));
 
@@ -286,5 +304,23 @@ void CWarrock::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 			break;
 		}
 		return;
+#endif
+	case eMessage::MSG_OBJECT_STATE_CHANGE:
+		m_pStateMachine->ChangeState(static_cast<CAIState<CWarrock>*>(extra));
+		return;
 	}
+}
+
+void CWarrock::Attack(CCharacter * pToChar, short stDamage)
+{
+}
+
+void CWarrock::AttackSuccess(CCharacter * pToChar, short stDamage)
+{
+	pToChar->Damaged(pToChar, stDamage);
+}
+
+void CWarrock::Damaged(CCharacter * pByChar, short stDamage)
+{
+	m_Status.Damaged(stDamage);
 }

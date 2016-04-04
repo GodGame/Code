@@ -2,7 +2,7 @@
 
 #include "Character.h"
 //#include "Camera.h"
-#include "GameInfo.h"
+//#include "GameInfo.h"
 
 class CPlayer : public CCharacter //public CAnimatedObject
 {
@@ -50,7 +50,7 @@ public:
 	virtual void Rotate(float x, float y, float z);
 	virtual void Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle);
 	//플레이어의 위치와 회전 정보를 경과 시간에 따라 갱신하는 함수이다.
-	void Update(float fTimeElapsed);
+	virtual void Update(float fTimeElapsed);
 
 	//플레이어의 위치가 바뀔 때마다 호출되는 함수와 그 함수에서 사용하는 정보를 설정하는 함수이다.
 	virtual void OnPlayerUpdated(float fTimeElapsed);
@@ -87,6 +87,7 @@ class CInGamePlayer : public CTerrainPlayer
 {
 public:
 	WORD mwd1HMagicShot[2] = {eANI_1H_CAST, eANI_1H_MAGIC_ATTACK};
+	const short mMAX_HEALTH            = 100;
 
 	const float mfIdleAnim              = 1.5f;
 	const float mfRunForwardAnim        = 0.8f;
@@ -96,11 +97,9 @@ public:
 	const float mf1HMagicAreaAnimTime   = 2.5f;
 
 private:
-	ElementEnergy	m_nElemental;
-	StatusInfo		m_Status;
+	CStateMachine<CInGamePlayer>* m_pStateMachine;
 
-	CBuff		  * m_pBuff;
-	CDeBuff       * m_pDebuff;
+	ElementEnergy	m_nElemental;
 
 public:
 	CInGamePlayer(int m_nMeshes);
@@ -111,9 +110,16 @@ public:
 	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
 
 	virtual void InitializeAnimCycleTime();
+	virtual void Update(float fTimeElapsed);
+
+public:
+	virtual void Attack(CCharacter * pToChar, short stDamage);
+	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
+	virtual void Damaged(CCharacter * pByChar, short stDamage);
+
 public:
 	void PlayerKeyEventOn(WORD key, void * extra);
-
+	CStateMachine<CInGamePlayer>* GetFSM() { return m_pStateMachine; }
 
 public:
 	XMFLOAT3 GetCenterPosition() { return XMFLOAT3(m_xv3Position.x, m_xv3Position.y + 9.0f, m_xv3Position.z); }
@@ -128,6 +134,7 @@ public:
 	UINT UseAllEnergy(UINT energyNum, bool bForced = false);
 
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
+	virtual void Reset();
 
 public:
 	PARTILCE_ON_INFO Get1HAnimShotParticleOnInfo();

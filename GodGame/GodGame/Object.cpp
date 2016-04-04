@@ -10,9 +10,12 @@ CGameObject::CGameObject(int nMeshes)
 
 	m_nMeshes  = nMeshes;
 	m_ppMeshes = nullptr;
+
 	if (m_nMeshes > 0)
 		m_ppMeshes = new CMesh*[m_nMeshes];
-	for (int i = 0; i < m_nMeshes; i++)m_ppMeshes[i] = nullptr;
+
+	for (int i = 0; i < m_nMeshes; i++)
+		m_ppMeshes[i] = nullptr;
 
 	m_bcMeshBoundingCube = AABB();
 
@@ -157,7 +160,7 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 		{
 #ifdef _QUAD_TREE
 			m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
-			if (!(uRenderState & DRAW_AND_ACTIVE))
+			if (false == (uRenderState & DRAW_AND_ACTIVE))
 				m_bActive = false;
 #else
 			bool bIsVisible = true;

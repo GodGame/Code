@@ -67,4 +67,19 @@ public:
 	virtual float Evaluate();
 };
 
+class CTargetDotAndDistEvaluator : public CTargetEvaluator
+{
+	float m_fMinValue;
+	float m_fMaxValue;
+	float m_fDist;
+
+public:
+	CTargetDotAndDistEvaluator();
+	virtual ~CTargetDotAndDistEvaluator() {}
+
+	void SetEvaluate(CGameObject * pTarget) { m_pTarget = pTarget; }
+	void SetEvaluate(CGameObject * pTarget, CGameObject * pThis, float fDist, float fMin = 0.0f, float fMax = 0.0f);
+	virtual float Evaluate();
+};
+
 #endif

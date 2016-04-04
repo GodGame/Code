@@ -80,6 +80,19 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Damaged_Forward01.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_damaged_f01");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Damaged_Forward02.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_damaged_f02");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Death_Front.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_death_f");
+
 		vcTxFileNames.clear();
 	}
 	// 워록 몬스터
@@ -105,7 +118,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Death.ad", 0.5f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_death");
-		//vcTxFileNames.clear();
+		vcTxFileNames.clear();
 	}
 
 	//{
@@ -211,15 +224,14 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 		m_pCamera->GenerateViewMatrix();
+	
+		m_ppShaders[iStaticShaderNum]->GetGameMessage(nullptr, eMessage::MSG_PASS_PLAYERPTR, m_pCamera->GetPlayer());
 	}
 	{
 		CInGameUIShader * pUIShader = new CInGameUIShader();
 		pUIShader->CreateShader(pd3dDevice);
 		pUIShader->BuildObjects(pd3dDevice, SceneInfo->pd3dBackRTV, this);
 		m_pUIShader = pUIShader;
-	}
-	{
-		m_ppShaders[iStaticShaderNum]->GetGameMessage(nullptr, eMessage::MSG_PASS_PLAYERPTR, m_pCamera->GetPlayer());
 	}
 
 	CreateShaderVariables(pd3dDevice);
@@ -322,9 +334,9 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	pSdwMgr->UpdateStaticShadowResource(pd3dDeviceContext);
 }
 
-void CSceneInGame::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+void CSceneInGame::PreProcessing(ID3D11DeviceContext * pd3dDeviceContext)
 {
-	UINT uRenderState = (NOT_PSUPDATE | RS_SHADOWMAP);
+	UINT uRenderState = (NOT_PSUPDATE | RS_SHADOWMAP | DRAW_AND_ACTIVE);
 
 	ShadowMgr.SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 
@@ -393,6 +405,18 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case '5':
 			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(5, true, nullptr, 0);
 			return(false);
+
+		case 'I':
+			pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_01, true, nullptr, 0);
+			return false;
+
+		case 'O':
+			pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_02, true, nullptr, 0);
+			return false;
+
+		case 'P':
+			pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, true, nullptr, 0);
+			return false;
 
 		case 'N':
 		case 'M':
@@ -508,6 +532,8 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 	{
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 	}
+	m_pPlayerShader->AnimateObjects(fTimeElapsed);
+
 #ifdef _QUAD_TREE
 	QUADMgr.Update(m_pCamera);
 #endif
@@ -516,12 +542,9 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 
 void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)
 {
-	//UpdateLights(pd3dDeviceContext);
-	//CPlayer * pPlayer = m_pCamera->GetPlayer();
 #ifdef _THREAD
 	int index = pRenderInfo->ThreadID;
-	//if (index == 3 && bIsKeyDown == true)
-	//	return;
+
 	if (index == m_nShaders - 1)
 	{
 		m_pPlayerShader->Render(pd3dDeviceContext, *pRenderInfo->pRenderState, pRenderInfo->pCamera);

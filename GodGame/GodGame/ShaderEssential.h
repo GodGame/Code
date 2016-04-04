@@ -260,6 +260,8 @@ public:
 
 class CPlayerShader : public CShader
 {
+#define PLAYER_INDEX 0
+
 public:
 	CPlayerShader();
 	virtual ~CPlayerShader();
@@ -267,8 +269,9 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	virtual void AnimateObjects(float fTimeElapsed);
 
-	CPlayer *GetPlayer(int nIndex = 0) { return((CPlayer *)m_ppObjects[nIndex]); }
+	CPlayer *GetPlayer(int nIndex = PLAYER_INDEX) { return static_cast<CPlayer *>(m_ppObjects[nIndex]); }
 };
 
 class CWaterShader : public CTexturedShader

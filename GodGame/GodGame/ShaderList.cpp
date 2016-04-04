@@ -468,7 +468,7 @@ void CStaticShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 	if (eMSG == eMessage::MSG_PASS_PLAYERPTR)
 	{
 		for (int i = 0; i < m_nObjects; ++i)
-			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CGameObject*>(extra));
+			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CCharacter*>(extra));
 	}
 }
 

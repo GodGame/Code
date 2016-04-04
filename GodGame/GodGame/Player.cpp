@@ -3,6 +3,7 @@
 //#include "Object.h"
 //#include "Character.h"
 #include "Player.h"
+#include "StatePlayer.h"
 
 CPlayer::CPlayer(int nMeshes) : CCharacter(nMeshes)
 {
@@ -45,6 +46,7 @@ void CPlayer::InitPosition(XMFLOAT3 xv3Position)
 
 void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 {
+	if (false == m_Status.IsCanMove()) return;
 	if (dwDirection)
 	{
 		WORD wdNextState = 0;
@@ -117,7 +119,7 @@ void CPlayer::Move(XMFLOAT3& xv3Shift, bool bUpdateVelocity)
 
 		m_xv3Position = xv3Position;
 		//플레이어의 위치가 변경되었으므로 카메라의 위치도 xv3Shift 벡터 만큼 이동한다.
-		m_pCamera->Move(xv3Shift);
+		if (m_pCamera) m_pCamera->Move(xv3Shift);
 	}
 }
 
@@ -129,7 +131,7 @@ void CPlayer::Rotate(float x, float y, float z)
 	XMVECTOR xmvLook  = XMLoadFloat3(&m_xv3Look);
 
 	XMMATRIX mtxRotate;
-	DWORD nCurrentCameraMode = m_pCamera->GetMode();
+	DWORD nCurrentCameraMode = m_pCamera ? m_pCamera->GetMode() : THIRD_PERSON_CAMERA;
 
 	//1인칭 카메라 또는 3인칭 카메라의 경우 플레이어의 회전은 약간의 제약이 따른다.
 	if ((nCurrentCameraMode == FIRST_PERSON_CAMERA) || (nCurrentCameraMode == THIRD_PERSON_CAMERA))
@@ -156,7 +158,7 @@ void CPlayer::Rotate(float x, float y, float z)
 			if (m_fRoll < -20.0f) { z -= (m_fRoll + 20.0f); m_fRoll = -20.0f; }
 		}
 		//카메라를 x, y, z 만큼 회전한다. 플레이어를 회전하면 카메라가 회전하게 된다.
-		m_pCamera->Rotate(x, y, z);
+		if (m_pCamera) m_pCamera->Rotate(x, y, z);
 
 		/*플레이어를 회전한다. 1인칭 카메라 또는 3인칭 카메라에서 플레이어의 회전은 로컬 y-축에서만 일어난다. 플레이어의 로컬 y-축(Up 벡터)을 기준으로 로컬 z-축(Look 벡터)와 로컬 x-축(Right 벡터)을 회전시킨다. 기본적으로 Up 벡터를 기준으로 회전하는 것은 플레이어가 똑바로 서있는 것을 가정한다는 의미이다.*/
 		if (y != 0.0f)
@@ -169,7 +171,7 @@ void CPlayer::Rotate(float x, float y, float z)
 	else if (nCurrentCameraMode == SPACESHIP_CAMERA)
 	{
 		/*스페이스-쉽 카메라에서 플레이어의 회전은 회전 각도의 제한이 없다. 그리고 모든 축을 중심으로 회전을 할 수 있다.*/
-		m_pCamera->Rotate(x, y, z);
+		if (m_pCamera) m_pCamera->Rotate(x, y, z);
 		if (x != 0.0f)
 		{
 			mtxRotate = XMMatrixRotationAxis(xmvRight, (float)XMConvertToRadians(x));
@@ -235,21 +237,23 @@ void CPlayer::Update(float fTimeElapsed)
 	이러한 상황에서 플레이어의 위치를 유효한 위치로 다시 변경할 수 있다.*/
 	if (m_pUpdatedContext) OnPlayerUpdated(fTimeElapsed);
 
-	DWORD nCurrentCameraMode = m_pCamera->GetMode();
-	//플레이어의 위치가 변경되었으므로 카메라의 상태를 갱신한다.
-	m_pCamera->Update(m_xv3Position, fTimeElapsed);
-
-	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) 
+	if (m_pCamera)
 	{
-		//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
-		if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
-		//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
-		m_pCamera->SetLookAt(m_xv3Position);
-	}
-	else if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
-	//카메라의 카메라 변환 행렬을 다시 생성한다.
-	m_pCamera->RegenerateViewMatrix();
+		DWORD nCurrentCameraMode = m_pCamera->GetMode();
+		//플레이어의 위치가 변경되었으므로 카메라의 상태를 갱신한다.
+		m_pCamera->Update(m_xv3Position, fTimeElapsed);
 
+		if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
+		{
+			//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
+			if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
+			//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
+			m_pCamera->SetLookAt(m_xv3Position);
+		}
+		else if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
+		//카메라의 카메라 변환 행렬을 다시 생성한다.
+		m_pCamera->RegenerateViewMatrix();
+	}
 	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다. 
 	속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다. 
 	단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다. 
@@ -364,14 +368,19 @@ void CPlayer::Animate(float fTimeElapsed)
 	CGameObject::Animate(fTimeElapsed);
 	CAnimatedObject::Animate(fTimeElapsed);
 
-	UINT uSize = m_uSize;
-	m_uSize = 40.0f;
-	vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
-	QUADMgr.ContainedErase();
-	
-	//QUADMgr.CollisionCheck(this);
-	//cout << "에너지 : " << m_nEnergy << endl;
-	m_uSize = uSize;
+	// HACK : 나중에 서버 처리할 것. 일단은 컨트롤하는 플레이어만 충돌체크 하도록 한다.
+	if (m_pCamera)
+	{
+		UINT uSize = m_uSize;
+		m_uSize = 40.0f;
+
+		vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
+		QUADMgr.ContainedErase();
+
+		//QUADMgr.CollisionCheck(this);
+		//cout << "에너지 : " << m_nEnergy << endl;
+		m_uSize = uSize;
+	}
 }
 
 ///////////////////
@@ -472,21 +481,16 @@ CInGamePlayer::CInGamePlayer(int m_nMeshes) : CTerrainPlayer(m_nMeshes)
 {
 	ZeroMemory(&m_nElemental, sizeof(m_nElemental));
 
-	m_pBuff = nullptr;
-	m_pDebuff = nullptr;
+	m_pStateMachine = nullptr;
 }
 
 CInGamePlayer::~CInGamePlayer()
 {
-	if (m_pBuff) delete m_pBuff;
-	if (m_pDebuff) delete m_pDebuff;
+	if (m_pStateMachine) delete m_pStateMachine;
 }
 
 void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial, CHeightMapTerrain * pTerrain)
 {
-	if (!m_pBuff) m_pBuff = new CBuff();
-	if (!m_pDebuff) m_pDebuff = new CDeBuff();
-
 	for (int i = 0; i < eANI_TOTAL_NUM; ++i)
 	{
 		CInGamePlayer::SetMesh(ppMeshList[i], i);
@@ -496,20 +500,27 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 	CInGamePlayer::SetMaterial(pMaterial);
 	CInGamePlayer::SetTexture(pTexture);
 
+	m_pStateMachine = new CStateMachine<CInGamePlayer>(this);
+	m_pStateMachine->SetCurrentState(&CPlayerIdleState::GetInstance());
 	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
 	CInGamePlayer::SetPlayerUpdatedContext(pTerrain);
 	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
 	CInGamePlayer::SetCameraUpdatedContext(pTerrain);
 	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
 	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 1000.0f, 300));
-}
 
+	Reset();
+}
 
 void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 {
 	static XMFLOAT4 xmfInfo;
 	switch (eMSG)
 	{
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		cout << "Active!!";
+		return;
 	case eMessage::MSG_GET_SOUL:
 		xmfInfo = *(XMFLOAT4*)extra;
 		AddEnergy(xmfInfo.w);
@@ -555,12 +566,45 @@ void CInGamePlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * e
 
 void CInGamePlayer::InitializeAnimCycleTime()
 {
-	SetAnimationCycleTime(eANI_IDLE, mfIdleAnim);
-	SetAnimationCycleTime(eANI_RUN_FORWARD, mfRunForwardAnim);
+	SetAnimationCycleTime(eANI_IDLE,            mfIdleAnim);
+	SetAnimationCycleTime(eANI_RUN_FORWARD,     mfRunForwardAnim);
 
-	SetAnimationCycleTime(eANI_1H_CAST, mf1HCastAnimTime);
+	SetAnimationCycleTime(eANI_1H_CAST,         mf1HCastAnimTime);
 	SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, mf1HMagicAttackAnimTime);
-	SetAnimationCycleTime(eANI_1H_MAGIC_AREA, mf1HMagicAreaAnimTime);
+	SetAnimationCycleTime(eANI_1H_MAGIC_AREA,   mf1HMagicAreaAnimTime);
+}
+
+void CInGamePlayer::Update(float fTimeElapsed)
+{
+	m_pStateMachine->Update(fTimeElapsed);
+	CPlayer::Update(fTimeElapsed);
+}
+
+void CInGamePlayer::Attack(CCharacter * pToChar, short stDamage)
+{
+}
+
+void CInGamePlayer::AttackSuccess(CCharacter * pToChar, short stDamage)
+{
+	pToChar->Damaged(this, stDamage);
+}
+
+void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
+{
+	cout << "Damaged!! " << stDamage;
+	m_Status.Damaged(stDamage);
+
+	if (stDamage > 0.0f)
+	{
+		m_pStateMachine->ChangeState(&CPlayerDamagedState::GetInstance());
+	}
+}
+
+void CInGamePlayer::Reset()
+{
+	m_Status.ResetStatus();
+	m_Status.SetHP(mMAX_HEALTH);
+	GetAniMesh()->ResetIndex();
 }
 
 void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
@@ -578,7 +622,6 @@ void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
 		ChangeAnimationState(eANI_1H_MAGIC_AREA, true, nullptr, 0);
 		EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE, extra);
 		return;
-
 	}
 }
 

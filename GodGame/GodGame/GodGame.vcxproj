@@ -190,6 +190,7 @@
     <ClInclude Include="ShaderList.h" />
     <ClInclude Include="ShaderType.h" />
     <ClInclude Include="SlotList.h" />
+    <ClInclude Include="StatePlayer.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ResourceMgr.h" />
@@ -217,6 +218,7 @@
     <ClCompile Include="ShaderList.cpp" />
     <ClCompile Include="ShaderType.cpp" />
     <ClCompile Include="ShadowMgr.cpp" />
+    <ClCompile Include="StatePlayer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

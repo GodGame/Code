@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Character.h"
 #include "AIWarrock.h"
+#include "Player.h"
+#include "StatePlayer.h"
 
 CWarrockIdleState & CWarrockIdleState::GetInstance()
 {
@@ -47,20 +49,36 @@ CWarrockPunchState & CWarrockPunchState::GetInstance()
 void CWarrockPunchState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_PUNCH, false, nullptr, 0);
-
-	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock);
+	pWarrock->LookToTarget(pWarrock->GetTarget());
+	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock, mfMAX_RAGNE);
 }
 
 void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
 {
-	if (pWarrock->GetAniMesh()->IsEndAnimation())
+	CAnimatedMesh * pMesh = pWarrock->GetAniMesh();
+	CInGamePlayer * pTarget = static_cast<CInGamePlayer*>(pWarrock->GetTarget());
+
+	if (pMesh->IsEndAnimation())
 	{
-		pWarrock->GetFSM()->ChangeState(&CWarrockIdleState::GetInstance());
+		pWarrock->GetFSM()->ChangeState(&CWarrockDelayState::GetInstance());
+	}
+	else if (false == pTarget->GetFSM()->isInState(CPlayerDamagedState::GetInstance()))
+	{
+		float fIndexPercent = (static_cast<float>(pMesh->GetAnimIndex()) / static_cast<float>(pMesh->GetAnimationAllIndex()));
+		if (fIndexPercent < 0.3f || fIndexPercent > 0.8f) return;
+
+		mEvaluator.SetEvaluate(pWarrock->GetTarget());
+		if (mEvaluator.Evaluate() < 0.0f)
+		{
+			pWarrock->AttackSuccess(pTarget, pWarrock->GetPunchDamage());
+		}
 	}
 }
 
 void CWarrockPunchState::Exit(CWarrock * pWarrock)
 {
+	EVENTMgr.InsertDelayMessage(m_fDelay, eMessage::MSG_OBJECT_STATE_CHANGE,
+		CGameEventMgr::MSG_TYPE_OBJECT, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
 }
 ////////////////////////////////////////////////////////////////////////////////////
 CWarrockSwipingState & CWarrockSwipingState::GetInstance()
@@ -78,14 +96,30 @@ void CWarrockSwipingState::Enter(CWarrock * pWarrock)
 
 void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
 {
-	if (pWarrock->GetAniMesh()->IsEndAnimation())
+	CAnimatedMesh * pMesh = pWarrock->GetAniMesh();
+	CInGamePlayer * pTarget = static_cast<CInGamePlayer*>(pWarrock->GetTarget());
+
+	if (pMesh->IsEndAnimation())
 	{
-		pWarrock->GetFSM()->ChangeState(&CWarrockIdleState::GetInstance());
+		pWarrock->GetFSM()->ChangeState(&CWarrockDelayState::GetInstance());
+	}
+	else if (false == pTarget->GetFSM()->isInState(CPlayerDamagedState::GetInstance()))
+	{
+		float fIndexPercent = (static_cast<float>(pMesh->GetAnimIndex()) / static_cast<float>(pMesh->GetAnimationAllIndex()));
+		if (fIndexPercent < 0.3f || fIndexPercent > 0.8f) return;
+
+		mEvaluator.SetEvaluate(pWarrock->GetTarget());
+		if (mEvaluator.Evaluate() < 0.0f)
+		{
+			pWarrock->AttackSuccess(pTarget, pWarrock->GetSwipingDamage());
+		}
 	}
 }
 
 void CWarrockSwipingState::Exit(CWarrock * pWarrock)
 {
+	EVENTMgr.InsertDelayMessage(m_fDelay, eMessage::MSG_OBJECT_STATE_CHANGE,
+		CGameEventMgr::MSG_TYPE_OBJECT, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
 }
 /////////////////////////////////////////////////////////////////////////////////////////////
 CWarrockRoarState & CWarrockRoarState::GetInstance()
@@ -154,4 +188,23 @@ void CWarrockChaseTargetState::Execute(CWarrock * pWarrock, float fFrameTime)
 void CWarrockChaseTargetState::Exit(CWarrock * pWarrock)
 {
 	pWarrock->SetVelocity(XMFLOAT3(0, 0, 0));
+}
+
+CWarrockDelayState & CWarrockDelayState::GetInstance()
+{
+	static CWarrockDelayState instance;
+	return instance;
+}
+
+void CWarrockDelayState::Enter(CWarrock * pWarrock)
+{
+	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_IDLE, false, nullptr, 0);
+}
+
+void CWarrockDelayState::Execute(CWarrock * pWarrock, float fFrameTime)
+{
+}
+
+void CWarrockDelayState::Exit(CWarrock * pWarrock)
+{
 }

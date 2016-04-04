@@ -649,13 +649,12 @@ void CGameFramework::AnimateObjects()
 {
 	float fFrameTime = m_GameTimer.GetTimeElapsed();
 	gpScene->AnimateObjects(fFrameTime);
-	if (m_pPlayer) m_pPlayer->Animate(fFrameTime);
 	if (m_pSceneShader) m_pSceneShader->AnimateObjects(fFrameTime);
 }
 
 void CGameFramework::Render()
 {
-	gpScene->OnCreateShadowMap(m_pd3dDeviceContext);
+	gpScene->PreProcessing(m_pd3dDeviceContext);
 
 	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.0f };	//렌더 타겟 뷰를 채우기 위한 색상을 설정한다.
 															/* 렌더 타겟 뷰를 fClearColor[] 색상으로 채운다. 즉, 렌더 타겟 뷰에 연결된 스왑 체인의 첫 번째 후면버퍼를 fClearColor[] 색상으로 지운다. */
@@ -695,7 +694,6 @@ void CGameFramework::DeferredRender()
 
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
-		//UpdateShadowResource();
 		m_pd3dDeviceContext->ExecuteCommandList(m_pRenderingThreadInfo[i].m_pd3dCommandList, TRUE);
 		m_pRenderingThreadInfo[i].m_pd3dCommandList->Release();
 	}

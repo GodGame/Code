@@ -126,7 +126,7 @@ void CScene::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 {
 }
 
-void CScene::OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
+void CScene::PreProcessing(ID3D11DeviceContext * pd3dDeviceContext)
 {
 }
 
@@ -171,6 +171,9 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nShaders; i++)
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
+
+	if (m_pPlayerShader) 
+		m_pPlayerShader->AnimateObjects(fTimeElapsed);
 
 	EVENTMgr.Update(fTimeElapsed);
 }

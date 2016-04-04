@@ -31,6 +31,7 @@ enum eMessage : BYTE
 	// Object
 	MSG_OBJECT_RENEW,
 	MSG_OBJECT_ANIM_CHANGE,
+	MSG_OBJECT_STATE_CHANGE,
 	// Player
 	MSG_PLAYER_USE_MAGIC,
 	// Magic

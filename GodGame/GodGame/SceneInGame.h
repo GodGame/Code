@@ -33,7 +33,7 @@ public:
 	virtual void ReleaseShaderVariables();
 
 	virtual void BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
-	virtual void OnCreateShadowMap(ID3D11DeviceContext * pd3dDeviceContext);
+	virtual void PreProcessing(ID3D11DeviceContext * pd3dDeviceContext);
 
 	virtual void GetGameMessage(CScene * byObj, eMessage eMSG, void * extra = nullptr);
 	virtual void SendGameMessage(CScene * toObj, eMessage eMSG, void * extra = nullptr);

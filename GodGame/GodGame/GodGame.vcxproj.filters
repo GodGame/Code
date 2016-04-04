@@ -148,6 +148,9 @@
     <ClInclude Include="AIWarrock.h">
       <Filter>Local\5_Objects\AI</Filter>
     </ClInclude>
+    <ClInclude Include="StatePlayer.h">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -220,6 +223,9 @@
       <Filter>Local\5_Objects\AI</Filter>
     </ClCompile>
     <ClCompile Include="AIWarrock.cpp">
+      <Filter>Local\5_Objects\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="StatePlayer.cpp">
       <Filter>Local\5_Objects\AI</Filter>
     </ClCompile>
   </ItemGroup>

@@ -4,6 +4,7 @@
 #define __CHARACTER
 
 #include "Object.h"
+#include "GameInfo.h"
 
 class CCharacter : public CAnimatedObject
 {
@@ -35,11 +36,15 @@ protected:
 	//플레이어의 위치가 바뀔 때마다 호출되는 OnPlayerUpdated() 함수에서 사용하는 데이터이다.
 	LPVOID   m_pUpdatedContext;
 
+	StatusInfo		m_Status;
+
 public:
-	void SetFriction(float fFriction) { m_fFriction = fFriction; }
+	void SetFriction(float fFriction)           { m_fFriction = fFriction; }
 	void SetGravity(const XMFLOAT3& xv3Gravity) { m_xv3Gravity = xv3Gravity; }
-	void SetMaxVelocityXZ(float fMaxVelocity) { m_fMaxVelocityXZ = fMaxVelocity; }
-	void SetMaxVelocityY(float fMaxVelocity) { m_fMaxVelocityY = fMaxVelocity; }
+	void SetMaxVelocityXZ(float fMaxVelocity)   { m_fMaxVelocityXZ = fMaxVelocity; }
+	void SetMaxVelocityY(float fMaxVelocity)    { m_fMaxVelocityY = fMaxVelocity; }
+
+	StatusInfo& GetStatus() {return m_Status;}
 
 public:
 	CCharacter(int nMeshes);
@@ -51,6 +56,12 @@ public:
 	virtual void OnPrepareRender();
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 	virtual void Animate(float fTimeElapsed);
+
+public:
+	virtual void Attack(CCharacter * pToChar, short stDamage);
+	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
+	virtual void Damaged(CCharacter * pByChar, short stDamage);
+	virtual void Reset() { m_Status.ResetStatus(); }
 
 public:
 	virtual void SetPosition(float x, float y, float z);
@@ -75,16 +86,16 @@ public:
 class CMonster : public CCharacter
 {
 protected:
-	CGameObject * m_pTarget;
+	CCharacter * m_pTarget;
 
 public:
 	CMonster(int nMeshes); 
 	virtual ~CMonster();
-	virtual void BuildObject(CGameObject * pTarget) {SetTarget(pTarget);}
+	virtual void BuildObject(CCharacter * pTarget) {SetTarget(pTarget);}
 
 public:
-	void SetTarget(CGameObject * pTarget) { m_pTarget = pTarget; }
-	CGameObject* GetTarget() { return m_pTarget; }
+	void SetTarget(CCharacter * pTarget) { m_pTarget = pTarget; }
+	CCharacter* GetTarget() { return m_pTarget; }
 };
 
 class CSkeleton : public CMonster
@@ -112,6 +123,11 @@ private:
 	const float mfSWIP_ANIM    = 2.0f;
 	const float mfDEATH_ANIM   = 2.0f;
 
+private:
+	const float mfMAX_HEALTH     = 100.0f;
+	const float mfSWIPING_DAMAGE = 10.0f;
+	const float mfPUNCH_DAMAGE   = 5.0f;
+
 public:
 	enum eWarrockAnim : WORD
 	{
@@ -134,7 +150,7 @@ public:
 	CWarrock(int nMeshes);
 	virtual ~CWarrock();
 
-	virtual void BuildObject(CGameObject * pTarget);
+	virtual void BuildObject(CCharacter * pTarget);
 	virtual void InitializeAnimCycleTime();
 
 	//virtual void OnPrepareRender();
@@ -143,8 +159,16 @@ public:
 	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
 
 public:
+	virtual void Attack(CCharacter * pToChar, short stDamage);
+	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
+	virtual void Damaged(CCharacter * pByChar, short stDamage);
+	virtual void Reset() {m_Status.ResetStatus(); m_Status.ChangeHP(mfMAX_HEALTH); }
+
+public:
 	CStateMachine<CWarrock>* GetFSM() { return m_pStateMachine; }
 
+	float GetPunchDamage()   { return mfPUNCH_DAMAGE; }
+	float GetSwipingDamage() { return mfSWIPING_DAMAGE; }
 };
 
 

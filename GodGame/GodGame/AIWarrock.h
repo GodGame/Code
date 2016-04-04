@@ -29,7 +29,11 @@ public:
 class CWarrockPunchState : public CAIState<CWarrock>
 {
 private:
-	CTargetDotEvaluator mEvaluator;
+	const float m_fDelay = 0.5f;
+
+	const float mfMAX_RAGNE = 30.0f;
+	CTargetDotAndDistEvaluator mEvaluator;
+
 
 private:
 	CWarrockPunchState() : CAIState<CWarrock>(){}
@@ -46,6 +50,8 @@ public:
 class CWarrockSwipingState : public CAIState<CWarrock>
 {
 private:
+	const float m_fDelay = 1.0f;
+
 	CTargetDotEvaluator mEvaluator;
 
 private:
@@ -96,5 +102,23 @@ public:
 	virtual void Exit(CWarrock * pWarrock);
 };
 
+class CWarrockDelayState : public CAIState<CWarrock>
+{
+private:
+	const float mfCHASE_RAGNE = 100.0f;
+
+	CDistanceEvaluator mEvaluator;
+
+private:
+	CWarrockDelayState() : CAIState<CWarrock>() {}
+	virtual ~CWarrockDelayState() {}
+	CWarrockDelayState& operator=(const CWarrockDelayState&);
+
+public:
+	static CWarrockDelayState & GetInstance();
+	virtual void Enter(CWarrock * pWarrock);
+	virtual void Execute(CWarrock * pWarrock, float fFrameTime);
+	virtual void Exit(CWarrock * pWarrock);
+};
 
 #endif

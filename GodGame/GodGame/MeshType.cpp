@@ -356,7 +356,7 @@ CAnimatedMesh::CAnimatedMesh(ID3D11Device * pd3dDevice) : CMesh(pd3dDevice)
 {
 	m_fFramePerTime = 30.0f;
 	m_fNowFrameTime = 0.0f;
-	m_iIndex = -1;
+	m_iIndex = 0;
 	m_bTerminal = false;
 	m_pvcMeshBuffers.reserve(30);
 }

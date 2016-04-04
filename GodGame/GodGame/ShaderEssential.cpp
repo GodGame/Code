@@ -774,17 +774,10 @@ void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene)
 {
-	m_nObjects = 1;
+	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	CMaterial * pPlayerMaterial = MaterialMgr.GetObjects("White");
-	//CMaterial *pPlayerMaterial               = new CMaterial();
-	//pPlayerMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
-	//pPlayerMaterial->m_Material.m_xcAmbient  = XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f);
-	//pPlayerMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
-	//pPlayerMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.2f, 1.0f);
-
-	CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 
 	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
 
@@ -798,49 +791,75 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pMesh[eANI_1H_MAGIC_ATTACK] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_attack01");
 	pMesh[eANI_1H_MAGIC_AREA]   = mgrScene.mgrMesh.GetObjects("scene_aure_magic_area01");
 
-	CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
-	pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial,  pTerrain);
-	pPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
-	pPlayer->Rotate(0, 180, 0);
+	pMesh[eANI_DAMAGED_FRONT_01] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f01");
+	pMesh[eANI_DAMAGED_FRONT_02] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f02");
+	pMesh[eANI_DEATH_FRONT]      = mgrScene.mgrMesh.GetObjects("scene_aure_death_f");
 
-	pPlayer->AddRef();
-	m_ppObjects[0] = pPlayer;
-
-	char name[56];
-	for (int i = 1; i < 7; ++i)
+	for (int j = 0; j < m_nObjects; ++j)
 	{
-		CRevolvingObject * pObject = nullptr;
-		pObject = new CRevolvingObject(1);
-		pObject->SetRevolutionAxis(XMFLOAT3(0, 1, 0));
-		pObject->SetRevolutionSpeed(60.0f);
+		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
+		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
+		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial, pTerrain);
+		if (j == 0)	// 플레이어일 때, 카메라를 셋팅해준다.
+		{
+			pPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
+			pPlayer->Rotate(0, 180, 0);
+		}
+		else
+		{
+			float fHeight = pTerrain->GetHeight(1180, 255, false);
+			pPlayer->SetPosition(XMFLOAT3(1180, fHeight, 255));
+		}
 
-		sprintf(name, "scene_staff_0%d", i);
+		pPlayer->AddRef();
+		m_ppObjects[j] = pPlayer;
 
-		pObject->SetMesh(mgrScene.mgrMesh.GetObjects(name));
-		pObject->SetTexture(mgrScene.mgrTexture.GetObjects(name));
-		pObject->SetMaterial(pPlayerMaterial);
-		pObject->SetPosition(cosf(XMConvertToRadians(i * 60)) * 15, 10, sinf(XMConvertToRadians(i * 60)) * 15);
-		pObject->Rotate(0, 0, 0);
+		char name[56];
+		for (int i = 1; i < 7; ++i)
+		{
+			CRevolvingObject * pObject = nullptr;
+			pObject = new CRevolvingObject(1);
+			pObject->SetRevolutionAxis(XMFLOAT3(0, 1, 0));
+			pObject->SetRevolutionSpeed(60.0f);
 
-		pPlayer->SetChild(pObject);
-		//pBrickTexture->Release();
+			sprintf(name, "scene_staff_0%d", i);
+
+			pObject->SetMesh(mgrScene.mgrMesh.GetObjects(name));
+			pObject->SetTexture(mgrScene.mgrTexture.GetObjects(name));
+			pObject->SetMaterial(pPlayerMaterial);
+			pObject->SetPosition(cosf(XMConvertToRadians(i * 60)) * 15, 10, sinf(XMConvertToRadians(i * 60)) * 15);
+			pObject->Rotate(0, 0, 0);
+
+			pPlayer->SetChild(pObject);
+			//pBrickTexture->Release();
+		}
 	}
-
-	QUADMgr.EntityDynamicObject(m_ppObjects[0]);
+	for (int i = 0; i < m_nObjects; ++i)
+		QUADMgr.EntityDynamicObject(m_ppObjects[i]);
 }
 
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
-	//XMFLOAT3 pos = m_ppObjects[0]->GetPosition();
+
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
-	//3인칭 카메라일 때 플레이어를 렌더링한다.
+
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	m_ppObjects[0]->SetActive(true);
+	//m_ppObjects[1]->SetActive(true);
+
+	cout << "1 Player : " << m_ppObjects[1]->IsVisible() << endl;// m_bcMeshBoundingCube << endl;
 
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
 		CShader::Render(pd3dDeviceContext, uRenderState);
+	}
+}
+void CPlayerShader::AnimateObjects(float fTimeElapsed)
+{
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppObjects[i]->Animate(fTimeElapsed);
 	}
 }
 #pragma endregion PlayerShader

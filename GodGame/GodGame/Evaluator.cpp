@@ -63,6 +63,7 @@ void CTargetDotEvaluator::SetEvaluate(CGameObject * pTarget, CGameObject * pThis
 	m_fMinValue = fMin;
 }
 
+
 float CTargetDotEvaluator::Evaluate()
 {
 	CGameObject * pTarget = GetTarget();
@@ -75,5 +76,44 @@ float CTargetDotEvaluator::Evaluate()
 	float fResult = 0.0f;
 	XMStoreFloat(&fResult, XMVector3Dot(xmvLook, XMVector3Normalize(xmvToVector)));
 
+	return fResult;
+}
+
+CTargetDotAndDistEvaluator::CTargetDotAndDistEvaluator()
+{
+	m_fMinValue = 0.0f;
+	m_fMaxValue = 0.0f;
+	m_fDist = 0.0f;
+}
+
+void CTargetDotAndDistEvaluator::SetEvaluate(CGameObject * pTarget, CGameObject * pThis, float fDist, float fMin, float fMax)
+{
+	m_pTarget = pTarget;
+	m_pThis = pThis;
+	m_fMaxValue = fMax;
+	m_fMinValue = fMin;
+	m_fDist = fDist;
+}
+
+float CTargetDotAndDistEvaluator::Evaluate()
+{
+	CGameObject * pTarget = GetTarget();
+	CGameObject * pThis   = GetThis();
+
+	XMVECTOR xmvToVector = XMLoadFloat3(&pTarget->GetPosition()) 
+		- XMLoadFloat3(&pThis->GetPosition());
+	
+	float fDistanceSq = EVAL_NULL;
+	float fWantDistSq = m_fDist * m_fDist;
+
+	XMStoreFloat(&fDistanceSq, XMVector3LengthSq(xmvToVector));
+	float fResult = EVAL_NULL;
+
+	if (fDistanceSq - fWantDistSq < 0.0f)
+	{
+		XMVECTOR xmvLook = XMLoadFloat3(&static_cast<CCharacter*>(pTarget)->GetLookVector());
+		
+		XMStoreFloat(&fResult, XMVector3Dot(xmvLook, XMVector3Normalize(xmvToVector)));
+	}
 	return fResult;
 }
