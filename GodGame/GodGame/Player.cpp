@@ -59,18 +59,18 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 		}
 		if (dwDirection & DIR_BACKWARD)
 		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance;
+			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance * 0.8f;
 			wdNextState = eANI_WALK_BACK;
 		}
 		//화살표 키 ‘→’를 누르면 로컬 x-축 방향으로 이동한다. ‘←’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_RIGHT)
 		{
-			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance;
+			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
 			wdNextState = eANI_WALK_RIGHT;
 		}
 		if (dwDirection & DIR_LEFT)
 		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance;
+			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
 			wdNextState = eANI_WALK_LEFT;
 		}
 		//‘Page Up’을 누르면 로컬 y-축 방향으로 이동한다. ‘Page Down’을 누르면 반대 방향으로 이동한다.
@@ -146,7 +146,7 @@ void CPlayer::Rotate(float x, float y, float z)
 		//로컬 y-축을 중심으로 회전하는 것은 몸통을 돌리는 것이므로 회전 각도의 제한이 없다.
 		if (y != 0.0f)
 		{
-			m_fYaw += y;
+			m_fYaw = m_fYaw + y;
 			if (m_fYaw > 360.0f) m_fYaw -= 360.0f;
 			if (m_fYaw < 0.0f) m_fYaw += 360.0f;
 		}
@@ -212,11 +212,11 @@ void CPlayer::Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle)
 void CPlayer::Update(float fTimeElapsed)
 {
 	/*플레이어의 속도 벡터를 중력 벡터와 더한다. 중력 벡터에 fTimeElapsed를 곱하는 것은 중력을 시간에 비례하도록 적용한다는 의미이다.*/
-	m_xv3Velocity.x += m_xv3Gravity.x * fTimeElapsed;
-	m_xv3Velocity.y += m_xv3Gravity.y * fTimeElapsed;
-	m_xv3Velocity.z += m_xv3Gravity.z * fTimeElapsed;
+	m_xv3Velocity.y += m_fGravity * fTimeElapsed;
 	/*플레이어의 속도 벡터의 XZ-성분의 크기를 구한다. 이것이 XZ-평면의 최대 속력보다 크면 속도 벡터의 x와 z-방향 성분을 조정한다.*/
-	float fLength = sqrtf(m_xv3Velocity.x * m_xv3Velocity.x + m_xv3Velocity.z * m_xv3Velocity.z);
+	float fLength = 0.0f; // = sqrtf(m_xv3Velocity.x * m_xv3Velocity.x + m_xv3Velocity.z * m_xv3Velocity.z);
+	XMStoreFloat(&fLength, XMVector2Length(XMLoadFloat3(&m_xv3Velocity)));
+
 	float fMaxVelocityXZ = m_fMaxVelocityXZ * fTimeElapsed;
 	if (fLength > fMaxVelocityXZ)
 	{
@@ -224,17 +224,16 @@ void CPlayer::Update(float fTimeElapsed)
 		m_xv3Velocity.z *= (fMaxVelocityXZ / fLength);
 	}
 	/*플레이어의 속도 벡터의 Y-성분의 크기를 구한다. 이것이 Y 축 방향의 최대 속력보다 크면 속도 벡터의 y-방향 성분을 조정한다.*/
-	fLength = sqrtf(m_xv3Velocity.y * m_xv3Velocity.y);
+	fLength = m_xv3Velocity.y * m_xv3Velocity.y;
 	float fMaxVelocityY = m_fMaxVelocityY * fTimeElapsed;
-	if (fLength > fMaxVelocityY) m_xv3Velocity.y *= (fMaxVelocityY / fLength);
+	if (fLength > fMaxVelocityY * fMaxVelocityY) m_xv3Velocity.y *= (fMaxVelocityY * fMaxVelocityY / fLength);
 
+	XMFLOAT3 xmfVelocity = m_xv3Velocity;
+	XMStoreFloat3(&m_xv3Velocity, XMLoadFloat3(&m_xv3Velocity) + XMLoadFloat3(&m_xv3ExternalPower) * fTimeElapsed);
 	//플레이어를 속도 벡터 만큼 실제로 이동한다(카메라도 이동될 것이다).
-	CPlayer::Move(m_xv3Velocity, false);
+	Move(m_xv3Velocity, false);
+	m_xv3Velocity = xmfVelocity;
 
-	/*플레이어의 위치가 변경될 때 추가로 수행할 작업을 수행한다. 
-	예를 들어, 플레이어의 위치가 변경되었지만 플레이어 객체에는 지형(Terrain)의 정보가 없다. 
-	플레이어의 새로운 위치가 유효한 위치가 아닐 수도 있고 또는 플레이어의 충돌 검사 등을 수행할 필요가 있다. 
-	이러한 상황에서 플레이어의 위치를 유효한 위치로 다시 변경할 수 있다.*/
 	if (m_pUpdatedContext) OnPlayerUpdated(fTimeElapsed);
 
 	if (m_pCamera)
@@ -254,23 +253,8 @@ void CPlayer::Update(float fTimeElapsed)
 		//카메라의 카메라 변환 행렬을 다시 생성한다.
 		m_pCamera->RegenerateViewMatrix();
 	}
-	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다. 
-	속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다. 
-	단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다. 
-	마찰력이 속력보다 크면 속력은 0이 될 것이다.*/
 
-	XMVECTOR xvVelocity = XMLoadFloat3(&m_xv3Velocity);
-	XMVECTOR xvDeceleration = -xvVelocity;
-
-	xvDeceleration = XMVector3Normalize(xvDeceleration);
-	XMVECTOR xfLength = XMVector3Length(xvVelocity);
-	XMStoreFloat(&fLength, xfLength);
-
-	float fDeceleration = (m_fFriction * fTimeElapsed);
-	if (fDeceleration > fLength) fDeceleration = fLength;
-	xvVelocity += xvDeceleration * fDeceleration;
-
-	XMStoreFloat3(&m_xv3Velocity, xvVelocity);
+	CCharacter::CalculateFriction(fTimeElapsed);
 }
 
 CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode)
@@ -402,7 +386,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 	case FIRST_PERSON_CAMERA:
 		SetFriction(250.0f);
 		//1인칭 카메라일 때 플레이어에 y-축 방향으로 중력이 작용한다.
-		SetGravity(XMFLOAT3(0.0f, -300.0f, 0.0f));
+		SetGravity(-20.0f);
 		SetMaxVelocityXZ(300.0f);
 		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, nCurrentCameraMode);
@@ -413,7 +397,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 	case SPACESHIP_CAMERA:
 		SetFriction(125.0f);
 		//스페이스 쉽 카메라일 때 플레이어에 중력이 작용하지 않는다.
-		SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		SetGravity(0.0f);
 		SetMaxVelocityXZ(300.0f);
 		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, SPACESHIP_CAMERA, nCurrentCameraMode);
@@ -424,7 +408,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 	case THIRD_PERSON_CAMERA:
 		SetFriction(250.0f);
 		//3인칭 카메라일 때 플레이어에 y-축 방향으로 중력이 작용한다.
-		SetGravity(XMFLOAT3(0.0f, -300.0f, 0.0f));
+		SetGravity(-20.0f);
 		SetMaxVelocityXZ(300.0f);
 		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
@@ -519,7 +503,6 @@ void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 	{
 	case eMessage::MSG_CULL_IN:
 		m_bActive = true;
-		cout << "Active!!";
 		return;
 	case eMessage::MSG_GET_SOUL:
 		xmfInfo = *(XMFLOAT4*)extra;
@@ -572,6 +555,10 @@ void CInGamePlayer::InitializeAnimCycleTime()
 	SetAnimationCycleTime(eANI_1H_CAST,         mf1HCastAnimTime);
 	SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, mf1HMagicAttackAnimTime);
 	SetAnimationCycleTime(eANI_1H_MAGIC_AREA,   mf1HMagicAreaAnimTime);
+
+	SetAnimationCycleTime(eANI_DAMAGED_FRONT_01, mfDamagedAnimTime01);
+	SetAnimationCycleTime(eANI_DAMAGED_FRONT_02, mfDamagedAnimTime02);
+	SetAnimationCycleTime(eANI_DEATH_FRONT,     mfDeathAnimTime);
 }
 
 void CInGamePlayer::Update(float fTimeElapsed)
@@ -593,11 +580,44 @@ void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 {
 	cout << "Damaged!! " << stDamage;
 	m_Status.Damaged(stDamage);
+	m_Status.SetUnbeatable(true);
 
-	if (stDamage > 0.0f)
+	if (stDamage > 9)
+	{
+		m_pStateMachine->ChangeState(&CPlayerKnockbackState::GetInstance());
+	}
+	else
 	{
 		m_pStateMachine->ChangeState(&CPlayerDamagedState::GetInstance());
 	}
+
+	if (m_Status.GetHP() < 0)
+	{
+		m_pStateMachine->ChangeState(&CPlayerDeathState::GetInstance());
+	}
+}
+
+void CInGamePlayer::Revive()
+{
+	Reset();
+	m_pStateMachine->ChangeState(&CPlayerIdleState::GetInstance());
+
+	CCamera * pCamera = GetCamera();
+	XMFLOAT3 xmfVector = pCamera->GetLookVector();
+	m_xmf44World._31 = xmfVector.x;
+	m_xmf44World._32 = xmfVector.y;
+	m_xmf44World._33 = xmfVector.z;
+
+	xmfVector = pCamera->GetRightVector();
+	m_xmf44World._11 = xmfVector.x;
+	m_xmf44World._12 = xmfVector.y;
+	m_xmf44World._13 = xmfVector.z;
+
+	xmfVector = pCamera->GetUpVector();
+	m_xmf44World._21 = xmfVector.x;
+	m_xmf44World._22 = xmfVector.y;
+	m_xmf44World._23 = xmfVector.z;
+
 }
 
 void CInGamePlayer::Reset()

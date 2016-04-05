@@ -174,6 +174,7 @@ class CAnimatedMesh : public CMesh
 {
 protected:
 	vector<MeshBuffer> m_pvcMeshBuffers;
+	bool m_bStop;
 	bool m_bTerminal;
 
 	int m_iIndex;
@@ -193,6 +194,8 @@ public:
 	float SetOneCycleTime(float fCycleTime);
 	void SetFramePerTime(float fFramePerTime);
 
+	void Stop() { m_bStop = true; }
+	void Start() { m_bStop = false; }
 	void SetAnimationIndex(int iIndex);
 	int GetAnimationAllIndex() { return m_pvcMeshBuffers.size(); }
 	int GetAnimIndex() { return m_iIndex; }
@@ -369,7 +372,7 @@ public:
 class CLoadAnimatedMeshByADFile : public CAnimatedMesh
 {
 public:
-	CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, vector<wstring> & vcFileName);
+	CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, vector<wstring> & vcFileName, int iStartIndex = 0, int iCutLastIndex = 0);
 	virtual ~CLoadAnimatedMeshByADFile();
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };

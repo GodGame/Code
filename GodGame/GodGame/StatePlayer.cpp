@@ -66,9 +66,7 @@ CPlayerDamagedState & CPlayerDamagedState::GetInstance()
 
 void CPlayerDamagedState::Enter(CInGamePlayer * pPlayer)
 {
-	pPlayer->GetStatus().Damaged(10.0f);
-	cout << "HP : " << pPlayer->GetStatus().GetHP() << endl;
-	pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_02, false, nullptr, 0);
+	pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_01, false, nullptr, 0);
 }
 
 void CPlayerDamagedState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
@@ -82,8 +80,43 @@ void CPlayerDamagedState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
 void CPlayerDamagedState::Exit(CInGamePlayer * pPlayer)
 {
 	pPlayer->GetStatus().SetCanMove(true);
+	pPlayer->GetStatus().SetUnbeatable(false);
+}
+///////////////////////////////////////////////////////////////////////////////////
+CPlayerKnockbackState & CPlayerKnockbackState::GetInstance()
+{
+	static CPlayerKnockbackState instance;
+	return instance;
 }
 
+void CPlayerKnockbackState::Enter(CInGamePlayer * pPlayer)
+{
+	XMFLOAT3 xmf3LookInverse = pPlayer->GetLookVectorInverse();
+	xmf3LookInverse.y = 0.0f;
+
+	XMVECTOR xmvLookInverse =  XMLoadFloat3(&xmf3LookInverse);
+	xmvLookInverse = XMVector3Normalize(xmvLookInverse) * mfKnockBackLength;
+	XMStoreFloat3(&xmf3LookInverse, xmvLookInverse);
+	pPlayer->SetExternalPower(xmf3LookInverse);
+
+	pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_02, false, nullptr, 0);
+	cout << "HP : " << pPlayer->GetStatus().GetHP() << endl;
+}
+
+void CPlayerKnockbackState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
+{
+	if (pPlayer->GetAniMesh()->IsEndAnimation())
+	{
+		pPlayer->GetFSM()->ChangeState(&CPlayerIdleState::GetInstance());
+	}
+}
+
+void CPlayerKnockbackState::Exit(CInGamePlayer * pPlayer)
+{
+	pPlayer->GetStatus().SetCanMove(true);
+	pPlayer->GetStatus().SetUnbeatable(false);
+}
+//////////////////////////////////////////////////////////////////////////////
 CPlayerDeathState & CPlayerDeathState::GetInstance()
 {
 	static CPlayerDeathState instance;
@@ -92,13 +125,21 @@ CPlayerDeathState & CPlayerDeathState::GetInstance()
 
 void CPlayerDeathState::Enter(CInGamePlayer * pPlayer)
 {
+	pPlayer->GetStatus().SetCanMove(false);
+	pPlayer->GetStatus().SetAilive(false);
 	pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, false, nullptr, 0);
 }
 
 void CPlayerDeathState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
 {
+	if (pPlayer->GetAniMesh()->IsEndAnimation())
+	{
+		pPlayer->GetAniMesh()->Stop();
+	}
 }
 
 void CPlayerDeathState::Exit(CInGamePlayer * pPlayer)
 {
+	pPlayer->GetStatus().SetCanMove(true);
+	pPlayer->GetStatus().SetAilive(true);
 }

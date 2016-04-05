@@ -358,6 +358,7 @@ CAnimatedMesh::CAnimatedMesh(ID3D11Device * pd3dDevice) : CMesh(pd3dDevice)
 	m_fNowFrameTime = 0.0f;
 	m_iIndex = 0;
 	m_bTerminal = false;
+	m_bStop = false;
 	m_pvcMeshBuffers.reserve(30);
 }
 
@@ -370,10 +371,12 @@ CAnimatedMesh::~CAnimatedMesh()
 
 void CAnimatedMesh::Animate(float fFrameTime)
 {
+	if (m_bStop) return;
+
 	m_fNowFrameTime += fFrameTime * m_fFramePerTime;
 	m_iIndex = (int(m_fNowFrameTime)) % m_pvcMeshBuffers.size();
 
-	if (!m_bTerminal) { m_bTerminal = (m_fNowFrameTime > m_pvcMeshBuffers.size() - 1); }
+	if (false == m_bTerminal) { m_bTerminal = (m_fNowFrameTime > m_pvcMeshBuffers.size() - 1); }
 }
 
 void CAnimatedMesh::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)
@@ -1367,7 +1370,8 @@ CLoadMeshByChae::~CLoadMeshByChae()
 {
 }
 
-CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, vector<wstring> & vcFileName) : CAnimatedMesh(pd3dDevice)
+CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, 
+	vector<wstring> & vcFileName, int iStartIndex, int iCutLastIndex) : CAnimatedMesh(pd3dDevice)
 {
 	int nReadBytes;
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -1397,12 +1401,14 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		vcFileName.push_back(file);
 	}
 	m_nVertices = 0;
+
+
 	//정점 개수
 	__int32 sz = 0;
+	__int32 nType = 0;
 
 	MeshBuffer MeshInfo;
 	
-	__int32 nType = 0;
 	vector<NormalMapVertex> pVertexInfo;
 	NormalMapVertex ZeroVertex;
 	ZeroMemory(&ZeroVertex, sizeof(ZeroVertex));
@@ -1418,6 +1424,8 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		if (nType == 0)
 		{
 			nReadBytes = ::fread(&pVertexInfo[0], sizeof(NormalMapVertex), sz, pFile);
+			if (nIndex < iStartIndex) // 시작 인덱스가 아니면 다음으로 넘어간다.
+				continue;
 			MeshInfo = CMesh::GetNormalMapVertexBuffer(pd3dDevice, &pVertexInfo[0], sz, fScale);
 		}
 		else if (nType == 1)
@@ -1428,12 +1436,14 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 				nReadBytes = ::fread(&pVertexInfo[index], sizeof(V3T2N3), 1, pFile);
 				//pVertexInfo[index] = temp;
 			}
+			if (nIndex < iStartIndex) // 시작 인덱스가 아니면 다음으로 넘어간다.
+				continue;
 			MeshInfo = CMesh::GetNormalMapVertexBufferAndCalculateTangent(pd3dDevice, &pVertexInfo[0], sz, fScale);
 		}
 		else
 			break;
 
-		if (nIndex == 0)
+		if (nIndex == iStartIndex)
 		{
 			m_bcBoundingCube = MeshInfo.bb;
 			cout << "Max : " << m_bcBoundingCube.m_xv3Maximum;
@@ -1455,6 +1465,13 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 	}
 	::fclose(pFile);
 	pVertexInfo.clear();
+
+	int iLastIndex = m_pvcMeshBuffers.size() - 1;
+	for (int i = 0; i < iCutLastIndex; ++i, --iLastIndex)
+	{
+		m_pvcMeshBuffers[iLastIndex].pd3dBuffer->Release();
+		m_pvcMeshBuffers.pop_back();
+	}
 
 	CreateRasterizerState(pd3dDevice);
 }

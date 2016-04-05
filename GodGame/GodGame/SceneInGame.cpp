@@ -72,10 +72,10 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Run_Left.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_walk_left");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Attack01.ad", 0.1f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Attack01.ad", 0.1f, vcTxFileNames, 5);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_attack01");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Cast_01.ad", 0.1f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Cast_01.ad", 0.1f, vcTxFileNames, 0, 15);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_cast01");
 
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
@@ -84,7 +84,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Damaged_Forward01.ad", 0.1f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Damaged_Forward01.ad", 0.1f, vcTxFileNames, 14);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_damaged_f01");
 
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Damaged_Forward02.ad", 0.1f, vcTxFileNames);
@@ -418,6 +418,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, true, nullptr, 0);
 			return false;
 
+		case '0':
+			pPlayer->Revive();
+			return false;
 		case 'N':
 		case 'M':
 			pPlayer->PlayerKeyEventOn(wParam, this);
@@ -473,15 +476,25 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 			if (pKeyBuffer[VK_NEXT]  & 0xF0) dwDirection |= DIR_DOWN;
 		}
 		//플레이어를 이동하거나(dwDirection) 회전한다(cxDelta 또는 cyDelta).
-		if (dwDirection || (cxDelta != 0.0f) || (cyDelta != 0.0f))
+		if ( dwDirection || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
 			if (cxDelta || cyDelta)
 			{
 				/*cxDelta는 y-축의 회전을 나타내고 cyDelta는 x-축의 회전을 나타낸다. 오른쪽 마우스 버튼이 눌려진 경우 cxDelta는 z-축의 회전을 나타낸다.*/
 				if (pKeyBuffer[VK_RBUTTON] & 0xF0)
-					pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
+				{
+					if (pPlayer->GetStatus().IsAlive())
+						pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
+					else 
+						m_pCamera->Rotate(cyDelta, 0.0f, -cxDelta);
+				}
 				else
-					pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
+				{
+					if (pPlayer->GetStatus().IsAlive())
+						pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
+					else 
+						m_pCamera->Rotate(cyDelta, cxDelta, 0.0f);
+				}
 			}
 			/*플레이어를 dwDirection 방향으로 이동한다(실제로는 속도 벡터를 변경한다). 이동 거리는 시간에 비례하도록 한다. 플레이어의 이동 속력은 (50/초)로 가정한다. 만약 플레이어의 이동 속력이 있다면 그 값을 사용한다.*/
 			if (dwDirection)

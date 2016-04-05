@@ -20,6 +20,9 @@ void CWarrockIdleState::Enter(CWarrock * pWarrock)
 void CWarrockIdleState::Execute(CWarrock * pWarrock, float fFrameTime)
 {
 	//WORD wdAnimState = pWarrock->GetAnimationState();
+	CCharacter * pChar = pWarrock->GetTarget();
+	if (false == pChar->GetStatus().IsCanDamaged()) return;
+
 	mEvaluator.SetEvaluate(pWarrock->GetTarget());
 
 	float fEvaluateValue = mEvaluator.Evaluate();
@@ -62,13 +65,15 @@ void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
 	{
 		pWarrock->GetFSM()->ChangeState(&CWarrockDelayState::GetInstance());
 	}
-	else if (false == pTarget->GetFSM()->isInState(CPlayerDamagedState::GetInstance()))
+	else if (pTarget->GetStatus().IsCanDamaged())
 	{
 		float fIndexPercent = (static_cast<float>(pMesh->GetAnimIndex()) / static_cast<float>(pMesh->GetAnimationAllIndex()));
 		if (fIndexPercent < 0.3f || fIndexPercent > 0.8f) return;
 
 		mEvaluator.SetEvaluate(pWarrock->GetTarget());
-		if (mEvaluator.Evaluate() < 0.0f)
+		float fResult = mEvaluator.Evaluate();
+		// -70~70도 사이
+		if (fResult > 0.342f)
 		{
 			pWarrock->AttackSuccess(pTarget, pWarrock->GetPunchDamage());
 		}
@@ -103,13 +108,15 @@ void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
 	{
 		pWarrock->GetFSM()->ChangeState(&CWarrockDelayState::GetInstance());
 	}
-	else if (false == pTarget->GetFSM()->isInState(CPlayerDamagedState::GetInstance()))
+	else if (pTarget->GetStatus().IsCanDamaged())
 	{
 		float fIndexPercent = (static_cast<float>(pMesh->GetAnimIndex()) / static_cast<float>(pMesh->GetAnimationAllIndex()));
-		if (fIndexPercent < 0.3f || fIndexPercent > 0.8f) return;
+		if (fIndexPercent < 0.5f || fIndexPercent > 0.8f) return;
 
 		mEvaluator.SetEvaluate(pWarrock->GetTarget());
-		if (mEvaluator.Evaluate() < 0.0f)
+		float fResult = mEvaluator.Evaluate();
+		// -70~70도 사이
+		if (fResult > 0.342f)
 		{
 			pWarrock->AttackSuccess(pTarget, pWarrock->GetSwipingDamage());
 		}

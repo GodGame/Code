@@ -148,11 +148,16 @@ public:
 //	float GetAttackDamage()			{ return m_fAttackDamage; }
 
 
+	void SetUnbeatable(bool bVal) { m_bUnbeatable = bVal; }
+	bool IsUnbeatable() { return m_bUnbeatable; }
+
 	bool IsCanMove()          { return m_bCanMove; }
 	void SetCanMove(bool val) { m_bCanMove = val; }
 
 	bool IsAlive()            { return m_bAlive; }
 	void SetAilive(bool val)  { m_bAlive = m_bAlive; }
+
+	bool IsCanDamaged() { return (m_bAlive && !m_bUnbeatable); }
 };
 
 struct ElementEnergy

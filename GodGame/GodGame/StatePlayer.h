@@ -80,6 +80,23 @@ public:
 	virtual void Exit(CInGamePlayer * pPlayer);
 };
 
+class CPlayerKnockbackState : public CAIState<CInGamePlayer>
+{
+private:
+	const float mfKnockBackLength = 100.0f;
+
+private:
+	CPlayerKnockbackState() : CAIState<CInGamePlayer>() {}
+	virtual ~CPlayerKnockbackState() {}
+	CPlayerKnockbackState& operator=(const CPlayerKnockbackState&);
+
+public:
+	static CPlayerKnockbackState & GetInstance();
+	virtual void Enter(CInGamePlayer * pPlayer);
+	virtual void Execute(CInGamePlayer * pPlayer, float fFrameTime);
+	virtual void Exit(CInGamePlayer * pPlayer);
+};
+
 class CPlayerDeathState : public CAIState<CInGamePlayer>
 {
 private:

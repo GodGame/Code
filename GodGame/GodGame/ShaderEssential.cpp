@@ -800,19 +800,20 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
 		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial, pTerrain);
+		pPlayer->AddRef();
+		m_ppObjects[j] = pPlayer;
+
 		if (j == 0)	// 플레이어일 때, 카메라를 셋팅해준다.
 		{
 			pPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
 			pPlayer->Rotate(0, 180, 0);
+			continue;
 		}
 		else
 		{
 			float fHeight = pTerrain->GetHeight(1180, 255, false);
 			pPlayer->SetPosition(XMFLOAT3(1180, fHeight, 255));
 		}
-
-		pPlayer->AddRef();
-		m_ppObjects[j] = pPlayer;
 
 		char name[56];
 		for (int i = 1; i < 7; ++i)
@@ -847,8 +848,6 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	m_ppObjects[0]->SetActive(true);
 	//m_ppObjects[1]->SetActive(true);
-
-	cout << "1 Player : " << m_ppObjects[1]->IsVisible() << endl;// m_bcMeshBoundingCube << endl;
 
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{

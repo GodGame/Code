@@ -71,7 +71,7 @@ float CTargetDotEvaluator::Evaluate()
 
 	XMVECTOR xmvToVector  = XMLoadFloat3(&pTarget->GetPosition()) - XMLoadFloat3(&pThis->GetPosition());
 	XMVECTOR xmvLook = XMLoadFloat3(
-		&static_cast<CCharacter*>(pTarget)->GetLookVector());
+		&static_cast<CCharacter*>(pThis)->GetLookVector());
 
 	float fResult = 0.0f;
 	XMStoreFloat(&fResult, XMVector3Dot(xmvLook, XMVector3Normalize(xmvToVector)));
@@ -111,7 +111,7 @@ float CTargetDotAndDistEvaluator::Evaluate()
 
 	if (fDistanceSq - fWantDistSq < 0.0f)
 	{
-		XMVECTOR xmvLook = XMLoadFloat3(&static_cast<CCharacter*>(pTarget)->GetLookVector());
+		XMVECTOR xmvLook = XMLoadFloat3(&static_cast<CCharacter*>(pThis)->GetLookVector());
 		
 		XMStoreFloat(&fResult, XMVector3Dot(xmvLook, XMVector3Normalize(xmvToVector)));
 	}

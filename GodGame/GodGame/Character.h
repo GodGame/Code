@@ -25,8 +25,8 @@ public:
 	XMFLOAT3 GetRightVectorInverse() { return XMFLOAT3(-m_xv3Right.x, -m_xv3Right.y, -m_xv3Right.z); }
 
 protected:
-	//플레이어에 작용하는 중력을 나타내는 벡터이다.
-	XMFLOAT3 m_xv3Gravity;
+	float m_fGravity;
+	XMFLOAT3 m_xv3ExternalPower;
 	//xz-평면에서 (한 프레임 동안) 플레이어의 이동 속력의 최대값을 나타낸다.
 	float    m_fMaxVelocityXZ;
 	//y-축 방향으로 (한 프레임 동안) 플레이어의 이동 속력의 최대값을 나타낸다.
@@ -40,11 +40,13 @@ protected:
 
 public:
 	void SetFriction(float fFriction)           { m_fFriction = fFriction; }
-	void SetGravity(const XMFLOAT3& xv3Gravity) { m_xv3Gravity = xv3Gravity; }
+	void SetGravity(const float fGravity)		{ m_fGravity = fGravity; }
 	void SetMaxVelocityXZ(float fMaxVelocity)   { m_fMaxVelocityXZ = fMaxVelocity; }
 	void SetMaxVelocityY(float fMaxVelocity)    { m_fMaxVelocityY = fMaxVelocity; }
+	void SetExternalPower(XMFLOAT3 & xmf3Power);
 
 	StatusInfo& GetStatus() {return m_Status;}
+	void CalculateFriction(float fTimeElapsed);
 
 public:
 	CCharacter(int nMeshes);
@@ -62,7 +64,7 @@ public:
 	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
 	virtual void Reset() { m_Status.ResetStatus(); }
-
+	virtual void Revive() { Reset(); }
 public:
 	virtual void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3& xv3Position);
@@ -124,7 +126,7 @@ private:
 	const float mfDEATH_ANIM   = 2.0f;
 
 private:
-	const float mfMAX_HEALTH     = 100.0f;
+	const float mfMAX_HEALTH     = 50.0f;
 	const float mfSWIPING_DAMAGE = 10.0f;
 	const float mfPUNCH_DAMAGE   = 5.0f;
 

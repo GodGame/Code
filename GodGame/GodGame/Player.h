@@ -87,14 +87,19 @@ class CInGamePlayer : public CTerrainPlayer
 {
 public:
 	WORD mwd1HMagicShot[2] = {eANI_1H_CAST, eANI_1H_MAGIC_ATTACK};
-	const short mMAX_HEALTH            = 100;
+private:
+	const short mMAX_HEALTH             = 50;
 
-	const float mfIdleAnim              = 1.5f;
+	const float mfIdleAnim              = 2.0f;
 	const float mfRunForwardAnim        = 0.8f;
 
-	const float mf1HCastAnimTime        = 1.5f;
-	const float mf1HMagicAttackAnimTime = 1.5f;
+	const float mf1HCastAnimTime        = 1.0f;
+	const float mf1HMagicAttackAnimTime = 1.4f;
 	const float mf1HMagicAreaAnimTime   = 2.5f;
+
+	const float mfDamagedAnimTime01     = 0.8f;
+	const float mfDamagedAnimTime02     = 1.3f;
+	const float mfDeathAnimTime         = 3.0f;
 
 private:
 	CStateMachine<CInGamePlayer>* m_pStateMachine;
@@ -116,7 +121,8 @@ public:
 	virtual void Attack(CCharacter * pToChar, short stDamage);
 	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
-
+	virtual void Reset();
+	virtual void Revive();
 public:
 	void PlayerKeyEventOn(WORD key, void * extra);
 	CStateMachine<CInGamePlayer>* GetFSM() { return m_pStateMachine; }
@@ -134,7 +140,6 @@ public:
 	UINT UseAllEnergy(UINT energyNum, bool bForced = false);
 
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
-	virtual void Reset();
 
 public:
 	PARTILCE_ON_INFO Get1HAnimShotParticleOnInfo();

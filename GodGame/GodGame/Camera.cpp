@@ -482,48 +482,46 @@ CThirdPersonCamera::CThirdPersonCamera(CCamera *pCamera) : CCamera(pCamera)
 void CThirdPersonCamera::Update(XMFLOAT3& xv3LookAt, float fTimeElapsed)
 {
 	/*플레이어의 회전에 따라 3인칭 카메라도 회전해야 한다.*/
-	if (m_pPlayer)
+	XMFLOAT4X4 mtxRotate;
+	Chae::XMFloat4x4Identity(&mtxRotate);
+	XMFLOAT3 xv3Right  = m_pPlayer->GetRightVector();
+	XMFLOAT3 xv3Up     = m_pPlayer->GetUpVector();
+	XMFLOAT3 xv3Look   = m_pPlayer->GetLookVector();
+	XMFLOAT3 xv3Player = m_pPlayer->GetPosition();
+	m_xv3Position.y = max(m_xv3Position.y, xv3Player.y + m_xv3Offset.y);
+
+	//플레이어의 로컬 x-축, y-축, z-축 벡터로부터 회전 행렬을 생성한다.
+	mtxRotate._11 = xv3Right.x; mtxRotate._21 = xv3Up.x; mtxRotate._31 = xv3Look.x;
+	mtxRotate._12 = xv3Right.y; mtxRotate._22 = xv3Up.y; mtxRotate._32 = xv3Look.y;
+	mtxRotate._13 = xv3Right.z; mtxRotate._23 = xv3Up.z; mtxRotate._33 = xv3Look.z;
+
+	XMMATRIX xmtxRotate = XMLoadFloat4x4(&mtxRotate);
+	XMVECTOR xmv3Offset = XMLoadFloat3(&m_xv3Offset);
+	XMVECTOR xmvCameraPos = XMLoadFloat3(&m_xv3Position);
+	XMVECTOR xmvPlayerPos = XMLoadFloat3(&m_pPlayer->GetPosition());
+
+	xmv3Offset = XMVector3TransformCoord(xmv3Offset, xmtxRotate); // xv3ec3TransformCoord(&xv3Offset, &m_xv3Offset, &mtxRotate);
+	//회전한 카메라의 위치는 플레이어의 위치에 회전한 카메라 오프셋 벡터를 더한 것이다.
+	XMVECTOR xv3Position = (xmvPlayerPos + xmv3Offset);
+	//현재의 카메라의 위치에서 회전한 카메라의 위치까지의 벡터이다.
+	XMVECTOR xv3Direction = xv3Position - xmvCameraPos;
+
+	float fLength;
+	XMStoreFloat(&fLength, XMVector3Length(xv3Direction));
+	xv3Direction = XMVector3Normalize(xv3Direction);
+	/*3인칭 카메라의 래그(Lag)는 플레이어가 회전하더라도 카메라가 동시에 따라서 회전하지 않고 약간의 시차를 두고 회전하는 효과를 구현하기 위한 것이다. m_fTimeLag가 1보다 크면 fTimeLagScale이 작아지고 실제 회전이 적게 일어날 것이다.*/
+
+	float fTimeLagScale = (m_fTimeLag) ? fTimeElapsed * (1.0f / m_fTimeLag) : 1.0f;
+	float fDistance = fLength * fTimeLagScale;
+	if (fDistance > fLength) fDistance = fLength;
+	if (fLength < 0.01f) fDistance = fLength;
+	if (fDistance > 0)
 	{
-		XMFLOAT4X4 mtxRotate;
-		Chae::XMFloat4x4Identity(&mtxRotate);
-		XMFLOAT3 xv3Right = m_pPlayer->GetRightVector();
-		XMFLOAT3 xv3Up = m_pPlayer->GetUpVector();
-		XMFLOAT3 xv3Look = m_pPlayer->GetLookVector();
-		XMFLOAT3 xv3Player = m_pPlayer->GetPosition();
-		m_xv3Position.y = max(m_xv3Position.y, xv3Player.y + m_xv3Offset.y);
-
-		//플레이어의 로컬 x-축, y-축, z-축 벡터로부터 회전 행렬을 생성한다.
-		mtxRotate._11 = xv3Right.x; mtxRotate._21 = xv3Up.x; mtxRotate._31 = xv3Look.x;
-		mtxRotate._12 = xv3Right.y; mtxRotate._22 = xv3Up.y; mtxRotate._32 = xv3Look.y;
-		mtxRotate._13 = xv3Right.z; mtxRotate._23 = xv3Up.z; mtxRotate._33 = xv3Look.z;
-
-		XMMATRIX xmtxRotate   = XMLoadFloat4x4(&mtxRotate);
-		XMVECTOR xmv3Offset   = XMLoadFloat3(&m_xv3Offset);
-		XMVECTOR xmvCameraPos = XMLoadFloat3(&m_xv3Position);
-		XMVECTOR xmvPlayerPos = XMLoadFloat3(&m_pPlayer->GetPosition());
-
-		xmv3Offset = XMVector3TransformCoord(xmv3Offset, xmtxRotate); // xv3ec3TransformCoord(&xv3Offset, &m_xv3Offset, &mtxRotate);
-		//회전한 카메라의 위치는 플레이어의 위치에 회전한 카메라 오프셋 벡터를 더한 것이다.
-		XMVECTOR xv3Position = (xmvPlayerPos + xmv3Offset);
-		//현재의 카메라의 위치에서 회전한 카메라의 위치까지의 벡터이다.
-		XMVECTOR xv3Direction = xv3Position - xmvCameraPos;
-
-		float fLength;
-		XMStoreFloat(&fLength, XMVector3Length(xv3Direction));
-		xv3Direction = XMVector3Normalize(xv3Direction);
-		/*3인칭 카메라의 래그(Lag)는 플레이어가 회전하더라도 카메라가 동시에 따라서 회전하지 않고 약간의 시차를 두고 회전하는 효과를 구현하기 위한 것이다. m_fTimeLag가 1보다 크면 fTimeLagScale이 작아지고 실제 회전이 적게 일어날 것이다.*/
-
-		float fTimeLagScale = (m_fTimeLag) ? fTimeElapsed * (1.0f / m_fTimeLag) : 1.0f;
-		float fDistance = fLength * fTimeLagScale;
-		if (fDistance > fLength) fDistance = fLength;
-		if (fLength < 0.01f) fDistance = fLength;
-		if (fDistance > 0)
-		{
-			xmvCameraPos += xv3Direction * fDistance;
-			SetLookAt(xv3LookAt);
-		}
-		XMStoreFloat3(&m_xv3Position, xmvCameraPos);
+		xmvCameraPos += xv3Direction * fDistance;
+		SetLookAt(xv3LookAt);
 	}
+	XMStoreFloat3(&m_xv3Position, xmvCameraPos);
+
 }
 
 void CThirdPersonCamera::SetLookAt(XMFLOAT3& xv3LookAt)

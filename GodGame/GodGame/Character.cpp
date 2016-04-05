@@ -4,6 +4,49 @@
 #include "AIWarrock.h"
 
 
+void CCharacter::SetExternalPower(XMFLOAT3 & xmf3Power)
+{
+	m_xv3ExternalPower.x += xmf3Power.x;
+	m_xv3ExternalPower.y += xmf3Power.y;
+	m_xv3ExternalPower.z += xmf3Power.z;
+}
+
+void CCharacter::CalculateFriction(float fTimeElapsed)
+{
+
+	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다.
+	속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다.
+	단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다.
+	마찰력이 속력보다 크면 속력은 0이 될 것이다.*/
+	float fDeceleration = (m_fFriction * fTimeElapsed);
+	float fLength = 0.0f;
+	float fy = m_xv3Velocity.y;
+	m_xv3Velocity.y = 0.f;
+	XMVECTOR xvVelocity = XMLoadFloat3(&m_xv3Velocity);
+	XMVECTOR xvDeceleration = XMVector3Normalize(-xvVelocity);
+	XMStoreFloat(&fLength, XMVector3Length(xvVelocity));
+
+	if (fDeceleration > fLength) fDeceleration = fLength;
+	xvVelocity += xvDeceleration * fDeceleration;
+
+	XMStoreFloat3(&m_xv3Velocity, xvVelocity);
+	m_xv3Velocity.y = fy;
+
+	// 외부의 힘 마찰력 계싼
+	fDeceleration = (m_fFriction * fTimeElapsed);
+	xvVelocity = XMLoadFloat3(&m_xv3ExternalPower);
+	XMStoreFloat(&fLength, XMVector3LengthSq(xvVelocity));
+	if (fLength > 0.0f)
+	{
+		xvDeceleration = XMVector3Normalize(-xvVelocity);
+		XMStoreFloat(&fLength, XMVector3Length(xvVelocity));
+
+		if (fDeceleration > fLength) fDeceleration = fLength;
+		xvVelocity += xvDeceleration * fDeceleration;
+		XMStoreFloat3(&m_xv3ExternalPower, xvVelocity);
+	}
+}
+
 CCharacter::CCharacter(int nMeshes) : CAnimatedObject(nMeshes)
 {
 	m_xv3Position     = XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -12,7 +55,8 @@ CCharacter::CCharacter(int nMeshes) : CAnimatedObject(nMeshes)
 	m_xv3Up           = XMFLOAT3(0.0f, 1.0f, 0.0f);
 	m_xv3Look         = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
-	m_xv3Gravity      = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_xv3ExternalPower = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_fGravity        = 0.0f;
 	m_fMaxVelocityXZ  = 0.0f;
 	m_fMaxVelocityY   = 0.0f;
 	m_fFriction       = 0.0f;
@@ -146,11 +190,12 @@ void CCharacter::LookToTarget(CGameObject * pTarget)
 void CCharacter::Update(float fTimeElapsed)
 {
 	/*플레이어의 속도 벡터를 중력 벡터와 더한다. 중력 벡터에 fTimeElapsed를 곱하는 것은 중력을 시간에 비례하도록 적용한다는 의미이다.*/
-	m_xv3Velocity.x += m_xv3Gravity.x * fTimeElapsed;
-	m_xv3Velocity.y += m_xv3Gravity.y * fTimeElapsed;
-	m_xv3Velocity.z += m_xv3Gravity.z * fTimeElapsed;
+	m_xv3Velocity.y += m_fGravity * fTimeElapsed;
 	/*플레이어의 속도 벡터의 XZ-성분의 크기를 구한다. 이것이 XZ-평면의 최대 속력보다 크면 속도 벡터의 x와 z-방향 성분을 조정한다.*/
-	float fLength = sqrtf(m_xv3Velocity.x * m_xv3Velocity.x + m_xv3Velocity.z * m_xv3Velocity.z);
+	float fLength = 0.0f; // = sqrtf(m_xv3Velocity.x * m_xv3Velocity.x + m_xv3Velocity.z * m_xv3Velocity.z);
+	XMStoreFloat(&fLength, XMVector2Length(XMLoadFloat3(&m_xv3Velocity)));
+	//XMStoreFloat3(&m_xv3Velocity, velocity);
+
 	float fMaxVelocityXZ = m_fMaxVelocityXZ * fTimeElapsed;
 	if (fLength > fMaxVelocityXZ)
 	{
@@ -162,27 +207,15 @@ void CCharacter::Update(float fTimeElapsed)
 	float fMaxVelocityY = m_fMaxVelocityY * fTimeElapsed;
 	if (fLength > fMaxVelocityY) m_xv3Velocity.y *= (fMaxVelocityY / fLength);
 
-	//플레이어를 속도 벡터 만큼 실제로 이동한다(카메라도 이동될 것이다).
+	XMFLOAT3 xmfVelocity = m_xv3Velocity;
+	XMStoreFloat3(&m_xv3Velocity, XMLoadFloat3(&m_xv3Velocity) + XMLoadFloat3(&m_xv3ExternalPower) * fTimeElapsed);
+
 	Move(m_xv3Velocity, false);
+	m_xv3Velocity = xmfVelocity;
 
 	if (m_pUpdatedContext) OnContextUpdated(fTimeElapsed);
 
-	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다.
-	속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다.
-	단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다.
-	마찰력이 속력보다 크면 속력은 0이 될 것이다.*/
-	XMVECTOR xvVelocity = XMLoadFloat3(&m_xv3Velocity);
-	XMVECTOR xvDeceleration = -xvVelocity;
-
-	xvDeceleration = XMVector3Normalize(xvDeceleration);
-	XMVECTOR xfLength = XMVector3Length(xvVelocity);
-	XMStoreFloat(&fLength, xfLength);
-
-	float fDeceleration = (m_fFriction * fTimeElapsed);
-	if (fDeceleration > fLength) fDeceleration = fLength;
-	xvVelocity += xvDeceleration * fDeceleration;
-
-	XMStoreFloat3(&m_xv3Velocity, xvVelocity);
+	CCharacter::CalculateFriction(fTimeElapsed);
 }
 
 void CCharacter::OnContextUpdated(float fTimeElapsed)
@@ -193,7 +226,7 @@ void CCharacter::OnContextUpdated(float fTimeElapsed)
 	int z = (int)(xv3Position.z / xv3Scale.z);
 	bool bReverseQuad = (z % 2);//((z % 2) != 0);
 								
-	float fHeight = pTerrain->GetHeight(xv3Position.x, xv3Position.z, bReverseQuad) - 2.0f;//+2.0f;
+	float fHeight = pTerrain->GetHeight(xv3Position.x, xv3Position.z, bReverseQuad);
 
 	if (xv3Position.y < fHeight)
 	{
@@ -223,7 +256,7 @@ void CCharacter::Damaged(CCharacter * pByChar, short stDamage)
 
 CMonster::CMonster(int nMeshes) : CCharacter(nMeshes)
 {
-	SetGravity(XMFLOAT3(0, -100, 0));
+	SetGravity(-50);
 	SetMaxVelocityY(50.0f);
 	m_pTarget = nullptr;
 }
@@ -279,10 +312,9 @@ void CWarrock::InitializeAnimCycleTime()
 
 void CWarrock::Animate(float fTimeElapsed)
 {
+	CAnimatedObject::Animate(fTimeElapsed);
 	m_pStateMachine->Update(fTimeElapsed);
 	CCharacter::Update(fTimeElapsed);
-
-	CAnimatedObject::Animate(fTimeElapsed);
 }
 
 void CWarrock::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
