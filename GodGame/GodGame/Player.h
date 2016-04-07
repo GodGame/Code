@@ -111,8 +111,8 @@ public:
 	virtual ~CInGamePlayer();
 	virtual void BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial, CHeightMapTerrain * pTerrain);
 
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra);
-	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra);
+	virtual void GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra);
+	virtual void SendGameMessage(CEntity * toObj, eMessage eMSG, void * extra);
 
 	virtual void InitializeAnimCycleTime();
 	virtual void Update(float fTimeElapsed);

@@ -22,7 +22,6 @@ public:
 	virtual void Exit(obj*) = 0;
 };
 
-
 template <class entity_type>
 class CStateMachine
 {

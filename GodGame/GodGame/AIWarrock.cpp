@@ -73,7 +73,7 @@ void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
 		mEvaluator.SetEvaluate(pWarrock->GetTarget());
 		float fResult = mEvaluator.Evaluate();
 		// -70~70도 사이
-		if (fResult > 0.342f)
+		if (fResult > COS_70)
 		{
 			pWarrock->AttackSuccess(pTarget, pWarrock->GetPunchDamage());
 		}
@@ -83,7 +83,7 @@ void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
 void CWarrockPunchState::Exit(CWarrock * pWarrock)
 {
 	EVENTMgr.InsertDelayMessage(m_fDelay, eMessage::MSG_OBJECT_STATE_CHANGE,
-		CGameEventMgr::MSG_TYPE_OBJECT, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
+		CGameEventMgr::MSG_TYPE_ENTITY, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
 }
 ////////////////////////////////////////////////////////////////////////////////////
 CWarrockSwipingState & CWarrockSwipingState::GetInstance()
@@ -116,7 +116,7 @@ void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
 		mEvaluator.SetEvaluate(pWarrock->GetTarget());
 		float fResult = mEvaluator.Evaluate();
 		// -70~70도 사이
-		if (fResult > 0.342f)
+		if (fResult > COS_70)
 		{
 			pWarrock->AttackSuccess(pTarget, pWarrock->GetSwipingDamage());
 		}
@@ -126,7 +126,7 @@ void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
 void CWarrockSwipingState::Exit(CWarrock * pWarrock)
 {
 	EVENTMgr.InsertDelayMessage(m_fDelay, eMessage::MSG_OBJECT_STATE_CHANGE,
-		CGameEventMgr::MSG_TYPE_OBJECT, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
+		CGameEventMgr::MSG_TYPE_ENTITY, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
 }
 /////////////////////////////////////////////////////////////////////////////////////////////
 CWarrockRoarState & CWarrockRoarState::GetInstance()

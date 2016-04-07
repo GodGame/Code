@@ -161,7 +161,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	CMaterial *pBlueMaterial  = MaterialMgr.GetObjects("Blue");
 	CMaterial *pWhiteMaterial = MaterialMgr.GetObjects("White");
 
-	int iStaticShaderNum = -1;
+	int iCharacterShaderNum = -1;
 	//¸Þ½Ã ºôµå
 	BuildMeshes(pd3dDevice);
 	{
@@ -179,8 +179,8 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_ppShaders[index]->CreateShader(pd3dDevice);
 		m_ppShaders[index++]->BuildObjects(pd3dDevice);
 
-		iStaticShaderNum = index;
-		CStaticShader *pStaticObjectsShader = new CStaticShader();
+		iCharacterShaderNum = index;
+		CCharacterShader *pStaticObjectsShader = new CCharacterShader();
 		pStaticObjectsShader->CreateShader(pd3dDevice);
 		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial, m_SceneResoucres);
 		m_ppShaders[index++] = pStaticObjectsShader;
@@ -225,7 +225,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 		m_pCamera->GenerateViewMatrix();
 	
-		m_ppShaders[iStaticShaderNum]->GetGameMessage(nullptr, eMessage::MSG_PASS_PLAYERPTR, m_pCamera->GetPlayer());
+		m_ppShaders[iCharacterShaderNum]->GetGameMessage(nullptr, eMessage::MSG_PASS_PLAYERPTR, m_pCamera->GetPlayer());
 	}
 	{
 		CInGameUIShader * pUIShader = new CInGameUIShader();
@@ -635,12 +635,13 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	{
 	case eMessage::MSG_PARTICLE_ON:
 		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
-		((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn((XMFLOAT3*)&xmf4Data, xmf4Data.w);
+		static_cast<CParticleShader*>(m_ppShaders[m_nParticleShaderNum])->ParticleOn((XMFLOAT3*)&xmf4Data, xmf4Data.w);
 		return;
 		
 	case eMessage::MSG_MAGIC_SHOT:
 		static_cast<CParticleShader*>(m_ppShaders[m_nParticleShaderNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
 		return;
+
 	case eMessage::MSG_MAGIC_AREA:
 		((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(0, &pPlayer->GetCenterPosition());
 		return;

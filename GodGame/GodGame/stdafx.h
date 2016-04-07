@@ -89,6 +89,23 @@ using namespace DirectX;
 #define COLOR_GRAY   8
 #define COLOR_BLACK_GRAY   9
 
+#define COS_10 0.984807
+#define COS_15 0.965925
+#define COS_20 0.939692
+#define COS_25 0.906307
+#define COS_30 0.866025
+#define COS_35 0.819152
+#define COS_40 0.766044
+#define COS_45 0.707106
+#define COS_50 0.642787
+#define COS_55 0.573576
+#define COS_60 0.5
+#define COS_65 0.422618
+#define COS_70 0.34202
+#define COS_75 0.258819
+#define COS_80 0.173648
+#define COS_85 0.087155
+
 using namespace std;
 
 ostream& operator<<(ostream& os, POINT & pt);

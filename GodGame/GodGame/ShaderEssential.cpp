@@ -512,9 +512,9 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 //		if(pCamera->GetPlayer()->m_nEnergy < 10)
 //			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
 		if(!gbStartEffect)
-			cbCS = { XMFLOAT4(1.0f, 1000.0f, m_fTotalTime, m_fFrameTime) };
+			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
 		else
-			cbCS = { XMFLOAT4(1.0f, 250000.0f, m_fTotalTime, m_fFrameTime) };
+			cbCS = { XMFLOAT4(1.0f, 200000.0f, m_fTotalTime, m_fFrameTime) };
 
 		MapConstantBuffer(pd3dDeviceContext, &cbCS, sizeof(CB_CS), m_pd3dCBComputeInfo);
 		pd3dDeviceContext->CSSetConstantBuffers(0, 1, &m_pd3dCBComputeInfo);
@@ -800,6 +800,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
 		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial, pTerrain);
+		pPlayer->SetCollide(true);
 		pPlayer->AddRef();
 		m_ppObjects[j] = pPlayer;
 
@@ -835,8 +836,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 			//pBrickTexture->Release();
 		}
 	}
-	for (int i = 0; i < m_nObjects; ++i)
-		QUADMgr.EntityDynamicObject(m_ppObjects[i]);
+	EntityAllDynamicObjects();
 }
 
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)

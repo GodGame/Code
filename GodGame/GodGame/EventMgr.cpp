@@ -29,9 +29,9 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 	switch (eType)
 	{
 
-	case MSGType::MSG_TYPE_OBJECT:
-		m_mpMessageList.insert(new cMessageSystem<CGameObject>
-			(m_fCurrentTime + fDelayeTime, eMsg, (CGameObject*)pToObj, (CGameObject*)pByObj, extra));
+	case MSGType::MSG_TYPE_ENTITY:
+		m_mpMessageList.insert(new cMessageSystem<CEntity>
+			(m_fCurrentTime + fDelayeTime, eMsg, (CEntity*)pToObj, (CEntity*)pByObj, extra));
 		return;
 
 	case MSGType::MSG_TYPE_SHADER:

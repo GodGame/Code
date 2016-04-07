@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CollisionMgr.h"
 #include "Object.h"
+//#include "Player.h"
 #include "Camera.h"
 #include <algorithm>
 
@@ -69,6 +70,14 @@ void AABB::Update(XMFLOAT4X4 &pmtxTransform, AABB * bbMesh)
 		if (xmvVertcies.z > m_xv3Maximum.z) m_xv3Maximum.z = xmvVertcies.z;
 	}
 }
+void AABB::Update(XMFLOAT3 & xmf3Postion, float fSize)
+{
+	XMVECTOR xmvPos = XMLoadFloat3(&xmf3Postion);
+	XMVECTOR xmvSize = XMVectorReplicate(fSize);
+	XMStoreFloat3(&m_xv3Maximum, xmvPos + xmvSize);
+	XMStoreFloat3(&m_xv3Minimum, xmvPos - xmvSize);
+}
+
 bool AABB::CollisionAABB(AABB & one, AABB & two)
 {
 	if (CollisionAABBBy2D(one, two)) return true;
@@ -198,7 +207,7 @@ CPartitionNode * DirectQuadTree::GetNodeContaining(float fLeft, float fRight, fl
 	return &m_pNodesArray[index];
 }
 
-int DirectQuadTree::EntryObject(CGameObject * pObject)
+int DirectQuadTree::EntryObject(CEntity * pObject)
 {
 	int index = GetNodeContainingIndex(pObject->m_bcMeshBoundingCube);
 
@@ -207,7 +216,7 @@ int DirectQuadTree::EntryObject(CGameObject * pObject)
 	return index;
 }
 
-void DirectQuadTree::EntryObjects(CGameObject ** ppObjectArrays, int nObjects)
+void DirectQuadTree::EntryObjects(CEntity ** ppObjectArrays, int nObjects)
 {
 	for (int i = 0; i < nObjects; ++i)
 		DirectQuadTree::EntryObject(ppObjectArrays[i]);
@@ -287,7 +296,7 @@ void QuadTree::FrustumCulling(CCamera * pCamera)
 
 	m_bCulled = !(pCamera->IsInFrustum(xmfMin, xmfMax));
 	if (m_bCulled) return;
-	CGameObject * pObj = nullptr;
+	CEntity * pObj = nullptr;
 
 	if (m_uHalfLength > 512.0f)
 	{
@@ -324,7 +333,7 @@ void QuadTree::PreCutCulling()
 		m_pNodes[i]->PreCutCulling();
 }
 
-Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
+Location QuadTree::IsContained(CEntity * pObject, bool bCheckCollide)
 {
 	AABB & bbObj = pObject->m_bcMeshBoundingCube;
 	const XMFLOAT3 pos = pObject->GetPosition();
@@ -381,7 +390,7 @@ Location QuadTree::IsContained(CGameObject * pObject, bool bCheckCollide)
 	return Location(uCheck);
 }
 
-void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGameObject*> & vcArray)
+void QuadTree::FindContainedObjects_InChilds(CEntity * pObject, vector<CEntity*> & vcArray)
 {
 	if (!m_bLeaf) //말단노드 아니면 계산해서 넣는다.
 	{
@@ -402,38 +411,38 @@ void QuadTree::FindContainedObjects_InChilds(CGameObject * pObject, vector<CGame
 			vcArray.push_back(*it);
 }
 
-QuadTree * QuadTree::EntityObject(CGameObject * pObject)
+QuadTree * QuadTree::InsertEntity(CEntity * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
 
 	if (eLoc != LOC_ALL && !m_bLeaf)
-		return m_pNodes[eLoc]->EntityObject(pObject);
+		return m_pNodes[eLoc]->InsertEntity(pObject);
 
 	m_vpObjectList.push_back(pObject);
 	//cout << "등록 : " << m_uTreeNum << endl;
 	return this;
 }
 
-void QuadTree::DeleteObject(CGameObject * pObject)
+void QuadTree::DeleteEntity(CEntity * pObject)
 {
 	Location eLoc = IsContained(pObject, false);
 
 	if (eLoc != LOC_ALL && !m_bLeaf) 
 	{
-		m_pNodes[eLoc]->DeleteObject(pObject);
+		m_pNodes[eLoc]->DeleteEntity(pObject);
 		return;
 	}
 
-	EraseObject(pObject);
+	EraseEntity(pObject);
 }
 
-void QuadTree::EraseObject(CGameObject * pObject)
+void QuadTree::EraseEntity(CEntity * pObject)
 {
-	auto it = find_if(m_vpObjectList.begin(), m_vpObjectList.end(), [=](const CGameObject * pObj) { return pObject == pObj; });
+	auto it = find_if(m_vpObjectList.begin(), m_vpObjectList.end(), [=](const CEntity * pObj) { return pObject == pObj; });
 	m_vpObjectList.erase(it);
 }
 
-bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*>* pContainedArray)
+bool QuadTree::SphereCollision(CEntity * pTarget, vector<CEntity*>* pContainedArray)
 {
 	bool bCheck = false;
 	if (m_pNodes[LOC_PARENT])
@@ -453,7 +462,7 @@ bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*>* pCon
 	return bCheck;
 }
 
-bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*> * pContainedArray, bool bIsUp)
+bool QuadTree::SphereCollision(CEntity * pTarget, vector<CEntity*> * pContainedArray, bool bIsUp)
 {
 	bool bCheck = false;
 	if (bIsUp && m_pNodes[LOC_PARENT])
@@ -474,29 +483,43 @@ bool QuadTree::SphereCollision(CGameObject * pTarget, vector<CGameObject*> * pCo
 }
 
 
-QuadTree * QuadTree::RenewalObject(CGameObject * pObject, bool bStart)
+QuadTree * QuadTree::RenewalEntity(CEntity * pObject, bool bStart)
 {
-	CGameObject * pObj = pObject;
+	CEntity * pObj = pObject;
 	Location eContain = IsContained(pObj, true);
 
 	if (eContain != Location::LOC_ALL) // 다른 이동할 곳이 존재할때만 갱신한다.
 	{
 		if (bStart)	// 시작지이면 리스트에서 제거한다.
 		{
-			vector<CGameObject*>::iterator it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObject);
+			vector<CEntity*>::iterator it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObj);
+#if 0
+			if (it == m_vpObjectList.end())
+			{
+				cout << "WTF!!!!!";
+				if (dynamic_cast<CWarrock*>(pObject)) cout << "WARROCK ";
+				else if (dynamic_cast<CSkeleton*>(pObject) != NULL) cout << "SKELETON ";
+				else cout << "Player Etc..";
+				cout << "Tree Num  : " << m_uTreeNum << "\t" << "ptr Name : " << pObject << endl;
+			}
+#endif	
 			m_vpObjectList.erase(it);
-			pObj->UpdateBoundingBox();
+
+			pObj->UpdateBoundingBox();// d?
 		}
 		if (eContain == Location::LOC_NONE) // 충돌하지 않으면 부모로 올라가 찾아본다.
-			return m_pNodes[Location::LOC_PARENT]->RenewalObject(pObj, false);
+			return m_pNodes[Location::LOC_PARENT]->RenewalEntity(pObj, false);
 
-		if (!m_bLeaf)	// 말단 노드가 아니면 하위 노드를 찾아본다.
-			return m_pNodes[eContain]->RenewalObject(pObj, false);
+		if (false == m_bLeaf)	// 말단 노드가 아니면 하위 노드를 찾아본다.
+			return m_pNodes[eContain]->RenewalEntity(pObj, false);
 
 		// 말단 노드이면 오브젝트를 추가한다.
 	//	pObj->UpdateBoundingBox();
+
+		// 내부에 충돌하는데, 말단일 경우
 		m_vpObjectList.push_back(pObj);
 		pObj = nullptr;
+		//cout << pObject << "안에서 삽입!!" << endl;
 	}
 
 	if (pObj && bStart == false)
@@ -550,7 +573,7 @@ void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)
 	m_pRootTree->FrustumCulling(pCamera);
 }
 
-vector<CGameObject*>& CQuadTreeManager::CollisionCheckList(CGameObject * pObject)
+vector<CEntity*>& CQuadTreeManager::CollisionCheckList(CEntity * pObject)
 {
 	m_vcContainedArray.clear();
 	QuadTree * pTree = GetDynamicInfo(pObject)->first;
@@ -563,7 +586,7 @@ vector<CGameObject*>& CQuadTreeManager::CollisionCheckList(CGameObject * pObject
 	return m_vcContainedArray;
 }
 
-bool CQuadTreeManager::CollisionCheck(CGameObject * pObject)
+bool CQuadTreeManager::CollisionCheck(CEntity * pObject)
 {
 	QuadTree * pTree = GetDynamicInfo(pObject)->first;
 
@@ -576,18 +599,17 @@ bool CQuadTreeManager::CollisionCheck(CGameObject * pObject)
 UINT CQuadTreeManager::ContainedErase()
 {
 	UINT sz = m_vcContainedArray.size();
-	if (sz > 0) 
+	for (int i = sz - 1; i >= 0; --i)
 	{
-		for (int i = sz - 1; i >= 0; --i)
-		{
-			m_pRootTree->DeleteObject(m_vcContainedArray[i]);
-			m_vcContainedArray.pop_back();
-		}
+		if (dynamic_cast<CAbsorbMarble*>(m_vcContainedArray[i]))
+			m_pRootTree->DeleteEntity(m_vcContainedArray[i]);
+		m_vcContainedArray.pop_back();
 	}
+
 	return sz;
 }
 
-vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pObject)
+vector<CEntity*>* CQuadTreeManager::GetContainedObjectList(CEntity * pObject)
 {
 	m_vcContainedArray.clear();
 
@@ -597,35 +619,36 @@ vector<CGameObject*>* CQuadTreeManager::GetContainedObjectList(CGameObject * pOb
 	return &m_vcContainedArray;
 }
 
-vector<pair<QuadTree*, CGameObject*>>::iterator CQuadTreeManager::GetDynamicInfo(CGameObject * pObject)
+vector<pair<QuadTree*, CEntity*>>::iterator CQuadTreeManager::GetDynamicInfo(CEntity * pObject)
 {
 	return find_if(m_vcDynamicArray.begin(), m_vcDynamicArray.end(),
 		[=](const DynamicInfo & a) { return pObject == a.second;});
 }
 
-QuadTree * CQuadTreeManager::EntityStaticObject(CGameObject * pObject)
+QuadTree * CQuadTreeManager::InsertStaticEntity(CEntity * pObject)
 {
-	return m_pRootTree->EntityObject(pObject);
+	return m_pRootTree->InsertEntity(pObject);
 }
 
-QuadTree * CQuadTreeManager::EntityDynamicObject(CGameObject * pObject)
+QuadTree * CQuadTreeManager::InsertDynamicEntity(CEntity * pObject)
 {
-	QuadTree * pTree = m_pRootTree->EntityObject(pObject);
+	QuadTree * pTree = m_pRootTree->InsertEntity(pObject);
 	m_vcDynamicArray.push_back(DynamicInfo(pTree, pObject));
+	//cout << "Dynamic Insert !! : " << pTree->m_uTreeNum << endl;
 	return pTree;
 }
 
-void CQuadTreeManager::DeleteStaticObject(CGameObject * pObject)
+void CQuadTreeManager::DeleteStaticEntity(CEntity * pObject)
 {
-	m_pRootTree->DeleteObject(pObject);
+	m_pRootTree->DeleteEntity(pObject);
 }
 
-void CQuadTreeManager::DeleteDynamicObject(CGameObject * pObject)
+void CQuadTreeManager::DeleteDynamicEntity(CEntity * pObject)
 {
 	auto it = GetDynamicInfo(pObject);
+	it->first->EraseEntity(pObject);
 	m_vcDynamicArray.erase(it);
-
-	m_pRootTree->DeleteObject(pObject);
+	//m_pRootTree->DeleteEntity(pObject);
 }
 
 UINT CQuadTreeManager::RenewalDynamicObjects()
@@ -633,7 +656,7 @@ UINT CQuadTreeManager::RenewalDynamicObjects()
 	UINT uCountRenewal = 0;
 	QuadTree * pBefore = nullptr;
 	QuadTree * pTree = nullptr;
-	CGameObject * pObject = nullptr;
+	CEntity * pObject = nullptr;
 
 	for (auto it = m_vcDynamicArray.begin(); it != m_vcDynamicArray.end(); ++it)
 	{
@@ -642,14 +665,15 @@ UINT CQuadTreeManager::RenewalDynamicObjects()
 
 		pObject = it->second;
 		pObject->UpdateBoundingBox();
-		pTree = pBefore->RenewalObject(pObject, true);
-
-		if (pBefore != pTree)
-		{
-			it->first = pTree;
-			cout << "새로운 트리 넘버 : " << pTree->m_uTreeNum << endl;
-			++uCountRenewal;
-		}
+		//cout << "obj : " << pObject->m_bcMeshBoundingCube << endl;
+		pTree = pBefore->RenewalEntity(pObject, true);
+		it->first = pTree;
+		
+		//if (pBefore != pTree)
+		//{
+		//	it->first = pTree;
+		//	++uCountRenewal;
+		//}
 	}
 
 	return uCountRenewal;
@@ -676,9 +700,9 @@ CCollisionMgr & CCollisionMgr::GetInstance()
 	return instance;
 }
 
-CGameObject* CCollisionMgr::SphereCollisionObject(CGameObject * pTarget, vector<CGameObject*>& vcObjList)
+CEntity* CCollisionMgr::SphereCollisionObject(CEntity * pTarget, vector<CEntity*>& vcObjList)
 {
-	CGameObject * pObject = nullptr;
+	CEntity * pObject = nullptr;
 	m_bbSphereTarget.Center = pTarget->GetPosition();
 	m_bbSphereTarget.Radius = pTarget->GetSize();
 
@@ -698,10 +722,10 @@ CGameObject* CCollisionMgr::SphereCollisionObject(CGameObject * pTarget, vector<
 	return nullptr;
 }
 
-bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameObject*>& vcObjList)
+bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList)
 {
 	bool bCheck = false;
-	CGameObject * pObject = nullptr;
+	CEntity * pObject = nullptr;
 	m_bbSphereTarget.Center = pTarget->GetPosition();
 	m_bbSphereTarget.Radius = pTarget->GetSize();
 
@@ -715,17 +739,17 @@ bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameO
 			if (m_bbSphereTarget.Intersects(m_bbSphereOther))
 			{
 				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
-				if (!bCheck) bCheck = !bCheck;
+				bCheck = true;
 			}
 		}
 	}
 	return bCheck;
 }
 
-bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameObject*>& vcObjList, vector<CGameObject*>& vcContained)
+bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList, vector<CEntity*>& vcContained)
 {
 	bool bCheck = false;
-	CGameObject * pObject = nullptr;
+	CEntity * pObject = nullptr;
 	m_bbSphereTarget.Center = pTarget->GetPosition();
 	m_bbSphereTarget.Radius = pTarget->GetSize();
 
@@ -740,7 +764,7 @@ bool CCollisionMgr::SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameO
 			{
 				pTarget->SendGameMessage(pObject, eMessage::MSG_COLLIDE);
 				vcContained.push_back(pObject);
-				if (!bCheck) bCheck = !bCheck;
+				bCheck = true;
 			}
 		}
 	}

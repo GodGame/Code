@@ -26,7 +26,7 @@ void CDeBuff::PlayerDelayMessage(eDeBuff eType, float fDebuffTime)
 		m_DebuffMessageList.push_back(eType);
 		void * DebuffMsg = &(*(--m_DebuffMessageList.end()));
 
-		EVENTMgr.InsertDelayMessage(fDebuffTime, eMessage::MSG_DEBUFF_OFF, CGameEventMgr::MSG_TYPE_OBJECT,
+		EVENTMgr.InsertDelayMessage(fDebuffTime, eMessage::MSG_DEBUFF_OFF, CGameEventMgr::MSG_TYPE_ENTITY,
 			(void*) this, nullptr, DebuffMsg);
 	}
 }
@@ -64,7 +64,7 @@ void CBuff::PlayerDelayMessage(eBuff eType, float fBuffTime)
 		m_BuffMessageList.push_back(eType);
 		void * DebuffMsg = &(*(--m_BuffMessageList.end()));
 
-		EVENTMgr.InsertDelayMessage(fBuffTime, eMessage::MSG_BUFF_OFF, CGameEventMgr::MSG_TYPE_OBJECT,
+		EVENTMgr.InsertDelayMessage(fBuffTime, eMessage::MSG_BUFF_OFF, CGameEventMgr::MSG_TYPE_ENTITY,
 			(void*) this, nullptr, DebuffMsg);
 	}
 }

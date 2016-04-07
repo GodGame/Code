@@ -317,7 +317,7 @@ void CWarrock::Animate(float fTimeElapsed)
 	CCharacter::Update(fTimeElapsed);
 }
 
-void CWarrock::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
+void CWarrock::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 {
 	eWarrockAnim eAnim = eWarrockAnim::eANI_WARROCK_IDLE;
 
@@ -337,6 +337,10 @@ void CWarrock::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
 		}
 		return;
 #endif
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		return;
+
 	case eMessage::MSG_OBJECT_STATE_CHANGE:
 		m_pStateMachine->ChangeState(static_cast<CAIState<CWarrock>*>(extra));
 		return;

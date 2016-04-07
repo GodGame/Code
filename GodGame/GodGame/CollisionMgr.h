@@ -39,6 +39,7 @@ public:
 	void Union(AABB *pAABB);
 	//바운딩 박스의 8개의 꼭지점을 행렬로 변환하고 최소점과 최대점을 다시 계산한다.
 	void Update(XMFLOAT4X4 & xmtxTransform, AABB * bbMesh = nullptr);
+	void Update(XMFLOAT3 & xmvPostion, float uSize);
 
 	static bool CollisionAABB(AABB & one, AABB & two);
 	static ePartition IsIncludeAABB(AABB & bbSmall, AABB & bbLarge, bool bCollideCheck);
@@ -49,13 +50,13 @@ public:
 
 ostream& operator<<(ostream& os, AABB & bb);
 
-class CGameObject;
+class CEntity;
 
 struct CPartitionNode
 {
 	unsigned int		 m_uIndex;
 	AABB				 m_BoundingBox;
-	vector<CGameObject*> m_vpObjects;
+	vector<CEntity*> m_vpObjects;
 };
 
 class DirectQuadTree
@@ -82,8 +83,8 @@ public:
 	CPartitionNode * GetNodeContaining(AABB & objBoundingBox);
 	CPartitionNode * GetNodeContaining(float fLeft, float fRight, float fNear, float fFar);
 
-	int EntryObject(CGameObject * pObject);
-	void EntryObjects(CGameObject ** ppObjectArrays, int nObjects);
+	int EntryObject(CEntity * pObject);
+	void EntryObjects(CEntity ** ppObjectArrays, int nObjects);
 public:
 	//CPartitionNode * GetChildNode(int index);
 };
@@ -98,7 +99,7 @@ class QuadTree
 public:
 
 private:
-	vector<CGameObject*> m_vpObjectList;
+	vector<CEntity*> m_vpObjectList;
 	QuadTree * m_pNodes[5];
 
 private:
@@ -126,17 +127,17 @@ public:
 	void PreCutCulling();
 	bool IsCulled() { return m_bCulled; }
 
-	Location IsContained(CGameObject * pObject, bool bCheckCollide);
-	void FindContainedObjects_InChilds(CGameObject * pObject, vector<CGameObject*> & vcArray);
+	Location IsContained(CEntity * pObject, bool bCheckCollide);
+	void FindContainedObjects_InChilds(CEntity * pObject, vector<CEntity*> & vcArray);
 
-	QuadTree* EntityObject(CGameObject * pObject);
-	QuadTree* RenewalObject(CGameObject * pObject, bool bStart = true);
-	void DeleteObject(CGameObject * pObject);
-	void EraseObject(CGameObject * pObject);
+	QuadTree* InsertEntity(CEntity * pObject);
+	QuadTree* RenewalEntity(CEntity * pObject, bool bStart = true);
+	void DeleteEntity(CEntity * pObject);
+	void EraseEntity(CEntity * pObject);
 
 public:	// 충돌체크
-	bool SphereCollision(CGameObject * pTarget, vector<CGameObject*> * pContainedArray);
-	bool SphereCollision(CGameObject * pTarget, vector<CGameObject*> * pContainedArray, bool bIsUp);
+	bool SphereCollision(CEntity * pTarget, vector<CEntity*> * pContainedArray);
+	bool SphereCollision(CEntity * pTarget, vector<CEntity*> * pContainedArray, bool bIsUp);
 //s	bool ReleaseTree();
 };
 
@@ -144,7 +145,7 @@ class CCamera;
 class CQuadTreeManager
 {
 public:
-	typedef pair<QuadTree*, CGameObject*> DynamicInfo;
+	typedef pair<QuadTree*, CEntity*> DynamicInfo;
 private:
 	CQuadTreeManager();
 	~CQuadTreeManager();
@@ -153,7 +154,7 @@ private:
 private:
 	QuadTree * m_pRootTree;
 	
-	vector<CGameObject*> m_vcContainedArray;
+	vector<CEntity*> m_vcContainedArray;
 	vector<DynamicInfo> m_vcDynamicArray;
 
 public:
@@ -162,25 +163,26 @@ public:
 	void ReleaseQuadTree();
 
 	QuadTree * GetRootTree() { return m_pRootTree; }
-	QuadTree* EntityStaticObject(CGameObject* pObject);
-	QuadTree* EntityDynamicObject(CGameObject* pObject);
+	QuadTree* InsertStaticEntity(CEntity* pObject);
+	QuadTree* InsertDynamicEntity(CEntity* pObject);
 
-	void DeleteStaticObject(CGameObject* pObject);
-	void DeleteDynamicObject(CGameObject* pObject);
+	void DeleteStaticEntity(CEntity* pObject);
+	void DeleteDynamicEntity(CEntity* pObject);
 
 public:
 	UINT RenewalDynamicObjects();
 	void FrustumCullObjects(CCamera * pCamera);
 
-	vector<CGameObject*>& CollisionCheckList(CGameObject * pObject);
-	bool CollisionCheck(CGameObject * pObject);
+	vector<CEntity*>& CollisionCheckList(CEntity * pObject);
+	bool CollisionCheck(CEntity * pObject);
+	// 충돌 처리 된 것 모두 지워주기 위한 함수
 	UINT ContainedErase();
 
-	vector<CGameObject*>* GetContainedObjectList(CGameObject * pObject);
+	vector<CEntity*>* GetContainedObjectList(CEntity * pObject);
 public:
 	void Update(CCamera * pCamera);
 
-	vector<DynamicInfo>::iterator GetDynamicInfo(CGameObject * pObject);
+	vector<DynamicInfo>::iterator GetDynamicInfo(CEntity * pObject);
 };
 #define QUADMgr CQuadTreeManager::GetInstance()
 
@@ -196,9 +198,9 @@ class CCollisionMgr
 public:
 	static CCollisionMgr& GetInstance();
 
-	CGameObject* SphereCollisionObject(CGameObject * pTarget, vector<CGameObject*>& vcObjList);
-	bool SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameObject*>& vcObjList);
-	bool SphereCollisionOneToMul(CGameObject * pTarget, vector<CGameObject*>& vcObjList, vector<CGameObject*>& vcContained);
+	CEntity* SphereCollisionObject(CEntity * pTarget, vector<CEntity*>& vcObjList);
+	bool SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList);
+	bool SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList, vector<CEntity*>& vcContained);
 };
 #define COLLISION CCollisionMgr::GetInstance()
 

@@ -93,9 +93,10 @@ protected:
 	ID3D11HullShader	 * m_pd3dHullShader;
 	ID3D11DomainShader   * m_pd3dDomainShader;
 	//ID3D11ComputeShader  * m_p3dComputeShader;
+
 protected:
 	//쉐이더 객체가 게임 객체들의 리스트를 가진다.
-	CGameObject **m_ppObjects;
+	CGameObject ** m_ppObjects;
 	int m_nObjects;
 
 	//월드 변환 행렬을 위한 상수 버퍼는 하나만 있어도 되므로 정적 멤버로 선언한다.

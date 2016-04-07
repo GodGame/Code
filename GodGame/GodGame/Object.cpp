@@ -3,6 +3,57 @@
 #include "Object.h"
 #include "Shader.h"
 //////////////////////////////////////////////////////////////////////////
+
+CEntity::CEntity()
+{
+	m_uSize = 0;
+	m_bActive = true;
+	m_bUseCollide = false;
+
+	ZeroMemory(&m_bcMeshBoundingCube, sizeof(m_bcMeshBoundingCube));
+}
+
+void CEntity::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		return;
+	case eMessage::MSG_CULL_OUT:
+		m_bActive = false;
+		return;
+	case eMessage::MSG_COLLIDE:
+		return;
+	case eMessage::MSG_COLLIDED:
+		return;
+	case eMessage::MSG_NORMAL:
+		return;
+	}
+}
+
+void CEntity::SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_NORMAL:
+		return;
+		// 반대로 메세지 전송하도록 하자
+	case eMessage::MSG_COLLIDE:
+		toEntity->GetGameMessage(this, MSG_COLLIDED);
+		return;
+	case eMessage::MSG_COLLIDED:
+		toEntity->GetGameMessage(this, MSG_COLLIDE);
+		return;
+	}
+}
+
+void CEntity::MessageEntToEnt(CEntity * byEntity, CEntity * toEntity, eMessage eMSG, void * extra)
+{
+	byEntity->SendGameMessage(toEntity, eMSG);
+	toEntity->GetGameMessage(byEntity, eMSG);
+}
+
 #pragma region GameObject
 CGameObject::CGameObject(int nMeshes)
 {
@@ -18,9 +69,6 @@ CGameObject::CGameObject(int nMeshes)
 		m_ppMeshes[i] = nullptr;
 
 	m_bcMeshBoundingCube = AABB();
-
-	m_bActive     = true;
-	m_bUseCollide = false;
 
 	m_nReferences = 0;
 	m_pMaterial   = nullptr;
@@ -98,7 +146,7 @@ void CGameObject::UpdateSubResources(ID3D11DeviceContext *pd3dDeviceContext, UIN
 
 void CGameObject::UpdateBoundingBox()
 {
-	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());//&m_ppMeshes[0]->GetBoundingCube());
+	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());
 }
 
 void CGameObject::SetMesh(CMesh* const pMesh, int nIndex)
@@ -124,7 +172,7 @@ void CGameObject::SetMesh(CMesh* const pMesh, int nIndex)
 
 		float fSize;
 		XMStoreFloat(&fSize, xmvMax);
-		m_uSize = (UINT)(fSize / 3.0f);
+		m_uSize = (UINT)(fSize * 0.25f);
 	}
 }
 
@@ -297,47 +345,6 @@ XMFLOAT3 CGameObject::GetRight() const
 	return(xv3Right);
 }
 
-void CGameObject::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
-{
-	switch (eMSG)
-	{
-	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
-		return;
-	case eMessage::MSG_CULL_OUT:
-		m_bActive = false;
-		return;
-	case eMessage::MSG_COLLIDE:
-		return;
-	case eMessage::MSG_COLLIDED:
-		return;
-	case eMessage::MSG_NORMAL:
-		return;
-	}
-}
-
-void CGameObject::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra)
-{
-	switch (eMSG)
-	{
-	case eMessage::MSG_NORMAL:
-		return;
-	// 반대로 메세지 전송하도록 하자
-	case eMessage::MSG_COLLIDE:
-		toObj->GetGameMessage(this, MSG_COLLIDED);
-		return;
-	case eMessage::MSG_COLLIDED:
-		toObj->GetGameMessage(this, MSG_COLLIDE);
-		return;
-	}
-}
-
-void CGameObject::MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG, void * extra)
-{
-	byObj->SendGameMessage(toObj, eMSG);
-	toObj->GetGameMessage(byObj, eMSG);
-}
-
 void CGameObject::MoveStrafe(float fDistance)
 {
 	//게임 객체를 로컬 x-축 방향으로 이동한다.
@@ -464,6 +471,11 @@ void CAnimatedObject::SetMesh(CMesh * pMesh, int nIndex)
 
 	m_vcfFramePerTime[nIndex] =
 		static_cast<ANI_MESH*>(m_ppMeshes[nIndex])->SetOneCycleTime(m_vcfAnimationCycleTime[nIndex]);
+}
+
+void CAnimatedObject::UpdateBoundingBox()
+{
+	m_bcMeshBoundingCube.Update(m_xmf44World, &m_ppMeshes[0]->GetBoundingCube());// m_wdAnimateState]->GetBoundingCube());
 }
 
 void CAnimatedObject::Animate(float fTimeElapsed)
@@ -809,7 +821,7 @@ bool CBillboardObject::IsVisible(CCamera *pCamera)
 	return(bIsVisible);
 }
 ///////////////////////////////////////////////////////////////////////////////////////
-CEffect::CEffect()
+CEffect::CEffect() : CEntity()
 {
 	m_nStartVertex        = 0;
 	m_nVertexOffsets      = 0;
@@ -821,6 +833,7 @@ CEffect::CEffect()
 	m_bMove        = false;
 	m_bTerminal    = false;
 	m_bSubordinate = false;
+	m_bReserveDelete = false;
 
 	m_pd3dSRVImagesArrays = nullptr;
 	m_pd3dDrawVertexBuffer = nullptr;
@@ -830,6 +843,55 @@ CEffect::~CEffect()
 {
 	if (m_pd3dSRVImagesArrays) m_pd3dSRVImagesArrays->Release();
 	if (m_pd3dDrawVertexBuffer) m_pd3dDrawVertexBuffer->Release();
+}
+
+void CEffect::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		return;
+	case eMessage::MSG_CULL_OUT:
+		m_bActive = false;
+		return;
+	case eMessage::MSG_COLLIDE:
+		return;
+	case eMessage::MSG_COLLIDED:
+		return;
+	case eMessage::MSG_NORMAL:
+		return;
+	}
+}
+
+void CEffect::SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra)
+{
+	if (dynamic_cast<CAbsorbMarble*>(toEntity)) return;
+
+	switch (eMSG)
+	{
+	case eMessage::MSG_NORMAL:
+		return;
+		// 반대로 메세지 전송하도록 하자
+	case eMessage::MSG_COLLIDE:
+		toEntity->GetGameMessage(this, MSG_COLLIDED);
+		Collide();
+		cout << "충돌!! At : " << toEntity->GetPosition() << endl;
+		return;
+	case eMessage::MSG_COLLIDED:
+		//toEntity->GetGameMessage(this, MSG_COLLIDE);
+		//Collide();
+		//cout << "충돌!! At : " << toEntity->GetPosition() << endl;
+		return;
+	}
+}
+
+void CEffect::Collide()
+{
+	if (false == m_bReserveDelete)
+	{
+		NextEffectOn();
+	}
 }
 
 void CEffect::MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos)
@@ -957,6 +1019,8 @@ bool CTxAnimationObject::Enable(XMFLOAT3 * pos, int nColorNum)
 
 	if (nColorNum != COLOR_NONE) m_cbInfo.m_nColorNum = nColorNum;
 
+	m_bReserveDelete = false;
+
 	return true;
 }
 
@@ -968,8 +1032,15 @@ bool CTxAnimationObject::Disable()
 
 void CTxAnimationObject::NextEffectOn()
 {
-	m_pNextEffect->Enable(&m_cbInfo.m_xmf3Pos);
-	m_bTerminal = true;
+	if (m_pNextEffect)
+	{
+		m_pNextEffect->Enable(&m_cbInfo.m_xmf3Pos);
+		m_bTerminal = true;
+	}
+	else 
+		Disable();
+
+	m_bReserveDelete = true;
 }
 
 void CTxAnimationObject::Animate(float fTimeElapsed)
@@ -986,8 +1057,7 @@ void CTxAnimationObject::Animate(float fTimeElapsed)
 
 		if (m_cbInfo.m_fGameTime > m_fDurability)
 		{
-			if (m_pNextEffect)  NextEffectOn();
-			else Disable();
+			NextEffectOn();
 		}
 		else if (m_bMove)
 		{
@@ -1026,7 +1096,8 @@ void CCircleMagic::Initialize(ID3D11Device * pd3dDevice)
 	move.fWeightSpeed    = 1.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
-	XMFLOAT2 xmf2Size      { 60, 60 };
+	float fSize = m_uSize = 60;
+	XMFLOAT2 xmf2Size      { fSize, fSize };
 	XMFLOAT2 xmf2ImageSize { 960, 768 };
 	XMFLOAT2 xmf2FrameSize { 192, 192 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 20, 0.05f);
@@ -1045,7 +1116,8 @@ void CIceSpear::Initialize(ID3D11Device * pd3dDevice)
 	move.fWeightSpeed    = 1.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
-	XMFLOAT2 xmf2Size      { 20, 20 };
+	float fSize = m_uSize = 20;
+	XMFLOAT2 xmf2Size      { fSize, fSize };
 	XMFLOAT2 xmf2ImageSize { 960, 576 };
 	XMFLOAT2 xmf2FrameSize { 192, 192 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 13, 0.05f);
@@ -1064,7 +1136,8 @@ void CElementSpike::Initialize(ID3D11Device * pd3dDevice)
 	move.fWeightSpeed    = 1.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
-	XMFLOAT2 xmf2Size      { 20, 20 };
+	float fSize = m_uSize = 20;
+	XMFLOAT2 xmf2Size      { fSize, fSize };
 	XMFLOAT2 xmf2ImageSize { 640, 128 };
 	XMFLOAT2 xmf2FrameSize { 128, 128 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 5, 0.1f);
@@ -1084,7 +1157,8 @@ void CIceBolt::Initialize(ID3D11Device * pd3dDevice)
 	move.fWeightSpeed    = 10.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
-	XMFLOAT2 xmf2Size      { 10, 10 };
+	float fSize = m_uSize = 10;
+	XMFLOAT2 xmf2Size      { fSize, fSize };
 	XMFLOAT2 xmf2ImageSize { 128, 128 };
 	XMFLOAT2 xmf2FrameSize { 128, 128 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 1, 5.0f);
@@ -1107,7 +1181,8 @@ void CElectricBolt::Initialize(ID3D11Device * pd3dDevice)
 	move.fWeightSpeed    = 10.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
-	XMFLOAT2 xmf2Size      { 8, 8 };
+	float fSize = m_uSize = 8;
+	XMFLOAT2 xmf2Size      { fSize, fSize };
 	XMFLOAT2 xmf2ImageSize { 128, 128 };
 	XMFLOAT2 xmf2FrameSize { 128, 128 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 1, 5.0f);
@@ -1147,7 +1222,7 @@ void CParticle::Initialize(ID3D11Device *pd3dDevice)
 {
 	CB_PARTICLE cbParticle;
 	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
-	MoveVelocity mov = MoveVelocity();
+	MoveVelocity mov;
 
 	CParticle::SetParticle(cbParticle, mov, 1.0f, 200.0f);
 
@@ -1258,6 +1333,42 @@ void CParticle::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext)
 	pd3dDeviceContext->Unmap(m_pd3dCSParticleBuffer, 0);
 }
 
+//void CParticle::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
+//{
+//	switch (eMSG)
+//	{
+//	case eMessage::MSG_CULL_IN:
+//		m_bActive = true;
+//		return;
+//	case eMessage::MSG_CULL_OUT:
+//		m_bActive = false;
+//		return;
+//	case eMessage::MSG_COLLIDE:
+//		return;
+//	case eMessage::MSG_COLLIDED:
+//		return;
+//	case eMessage::MSG_NORMAL:
+//		return;
+//	}
+//}
+//
+//void CParticle::SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra)
+//{
+//	switch (eMSG)
+//	{
+//	case eMessage::MSG_NORMAL:
+//		return;
+//		// 반대로 메세지 전송하도록 하자
+//	case eMessage::MSG_COLLIDE:
+//		toEntity->GetGameMessage(this, MSG_COLLIDED);
+//		Disable();
+//		return;
+//	case eMessage::MSG_COLLIDED:
+//		toEntity->GetGameMessage(this, MSG_COLLIDE);
+//		return;
+//	}
+//}
+
 void CParticle::Update(float fTimeElapsed)
 {
 	if (m_bTerminal)
@@ -1273,8 +1384,11 @@ void CParticle::Update(float fTimeElapsed)
 		float fGameTime = m_cbParticle.m_fGameTime;
 
 		LifeUpdate(fGameTime, fTimeElapsed);
-		if (m_bMove && m_cbParticle.m_bEnable) 
+		if (m_bMove && m_cbParticle.m_bEnable)
+		{
+			QUADMgr.CollisionCheck(this);
 			MoveUpdate(fGameTime, fTimeElapsed, m_cbParticle.m_vParticleEmitPos);
+		}
 	}
 }
 
@@ -1283,12 +1397,12 @@ void CParticle::LifeUpdate(const float & fGameTime, const float & fTimeElapsed)
 	if (fGameTime > m_fDurability + m_cbParticle.m_fLifeTime)
 	{
 		m_cbParticle.m_fGameTime = 0.0f;
-		if (!m_bTerminal) Disable();
+		if (false == m_bTerminal) Disable();
 	}
 	else if (fGameTime > m_fDurability)
 	{
 		m_cbParticle.m_bEnable = 0;
-		if (m_pcNextParticle)  NextParticleOn();
+		NextEffectOn();
 	}
 }
 
@@ -1300,6 +1414,16 @@ bool CParticle::Enable(XMFLOAT3 * pos, int nColorNum)
 		m_velocity.xmf3InitPos = *pos;
 	}
 
+	if (m_bMove)
+	{
+ 		UpdateBoundingBox();
+		cout << "BB : " << m_bcMeshBoundingCube << endl;
+		QUADMgr.InsertDynamicEntity(this);
+	}
+	//else QUADMgr.InsertStaticEntity(this);
+
+	m_bReserveDelete = false;
+	m_bActive				 = true;
 	m_bEnable                = true;
 	m_bTerminal              = false;
 	m_bInitilize             = true;
@@ -1312,13 +1436,23 @@ bool CParticle::Enable(XMFLOAT3 * pos, int nColorNum)
 
 bool CParticle::Disable()
 {
+	if (m_bMove) QUADMgr.DeleteDynamicEntity(this);
+	//else QUADMgr.DeleteStaticEntity(this);
+
 	return (m_bEnable = false);
 }
 
-void CParticle::NextParticleOn()
+void CParticle::NextEffectOn()
 {
-	m_pcNextParticle->Enable(&m_cbParticle.m_vParticleEmitPos);
-	m_bTerminal = true;
+	if (m_pcNextParticle)
+	{
+		m_pcNextParticle->Enable(&m_cbParticle.m_vParticleEmitPos);
+		m_bTerminal = true;
+	}
+	else 
+		m_cbParticle.m_fGameTime = m_fDurability;
+
+	m_bReserveDelete = true;
 }
 
 void CSmokeBoomParticle::Initialize(ID3D11Device * pd3dDevice)
@@ -1333,10 +1467,13 @@ void CSmokeBoomParticle::Initialize(ID3D11Device * pd3dDevice)
 	cbParticle.m_fNewTime          = 0.008f;
 	cbParticle.m_fMaxSize          = 8.0f;
 	cbParticle.m_nColorNum		   = COLOR_GRAY;
+	
+	m_uSize = 20;
 
-	MoveVelocity mov = MoveVelocity();
+	MoveVelocity mov;
 
 	CParticle::SetParticle(cbParticle, mov, 0.5f, m_nMaxParticlenum);
+	//m_bMove = false;
 
 	PARTICLE_INFO cParticle;
 	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
@@ -1358,7 +1495,9 @@ void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
 	cbParticle.m_fMaxSize          = 16.0f;
 	cbParticle.m_nColorNum	       = COLOR_WHITE;
 
-	MoveVelocity mov = MoveVelocity();
+	m_uSize = 10;
+
+	MoveVelocity mov;
 	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
 	mov.xmf3Accelate = XMFLOAT3(0, 0, -10);
 	mov.fWeightSpeed = 100.0f;
@@ -1503,8 +1642,10 @@ void CAbsorbMarble::Animate(float fTimeElapsed)
 	}
 }
 
-void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
+void CAbsorbMarble::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 {
+	CInGamePlayer * pPlayer = nullptr;
+
 	switch (eMSG)
 	{
 	case eMessage::MSG_CULL_IN:
@@ -1521,7 +1662,8 @@ void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 		//EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, this);
 		return;
 	case eMessage::MSG_COLLIDED:
-		SetTarget(byObj);
+		if(pPlayer = dynamic_cast<CInGamePlayer*>(byObj))
+			SetTarget(static_cast<CGameObject*>(pPlayer));
 		return;
 
 	//case eMessage::MSG_QUAD_DELETE:
@@ -1530,7 +1672,7 @@ void CAbsorbMarble::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 	case eMessage::MSG_OBJECT_RENEW:
 		CBillboardObject::UpdateInstanceData();
 		SetCollide(true);
-		QUADMgr.EntityStaticObject(this);
+		QUADMgr.InsertStaticEntity(this);
 		return;
 	case eMessage::MSG_NORMAL:
 		return;

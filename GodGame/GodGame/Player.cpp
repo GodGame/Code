@@ -358,9 +358,8 @@ void CPlayer::Animate(float fTimeElapsed)
 		UINT uSize = m_uSize;
 		m_uSize = 40.0f;
 
-		vector<CGameObject*> vcArray = QUADMgr.CollisionCheckList(this);
+		vector<CEntity*> vcArray = QUADMgr.CollisionCheckList(this);
 		QUADMgr.ContainedErase();
-
 		//QUADMgr.CollisionCheck(this);
 		//cout << "에너지 : " << m_nEnergy << endl;
 		m_uSize = uSize;
@@ -439,11 +438,11 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad);
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 8.0f;
 
 	if (xv3CameraPosition.y < fHeight)
 	{
-		xv3CameraPosition.y = fHeight + 8.0f;
+		xv3CameraPosition.y = fHeight;
 		pCamera->SetPosition(xv3CameraPosition);
 
 		//3인칭 카메라의 경우 카메라의 y-위치가 변경되었으므로 카메라가 플레이어를 바라보도록 한다.
@@ -496,7 +495,7 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 	Reset();
 }
 
-void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra)
+void CInGamePlayer::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 {
 	static XMFLOAT4 xmfInfo;
 	switch (eMSG)
@@ -508,7 +507,7 @@ void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 		xmfInfo = *(XMFLOAT4*)extra;
 		AddEnergy(xmfInfo.w);
 		EVENTMgr.InsertDelayMessage(0.0f, MSG_PARTICLE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, extra);
-		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, byObj);
+		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_ENTITY, byObj);
 		//m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
 		return;
 	case eMessage::MSG_COLLIDE:
@@ -526,7 +525,7 @@ void CInGamePlayer::GetGameMessage(CGameObject * byObj, eMessage eMSG, void * ex
 	}
 }
 
-void CInGamePlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra)
+void CInGamePlayer::SendGameMessage(CEntity * toObj, eMessage eMSG, void * extra)
 {
 	CGameObject * pObj = nullptr;
 
@@ -536,9 +535,6 @@ void CInGamePlayer::SendGameMessage(CGameObject * toObj, eMessage eMSG, void * e
 		return;
 		// 반대로 메세지 전송하도록 하자
 	case eMessage::MSG_COLLIDE:
-		//pObj = dynamic_cast<CAbsorbMarble*>(toObj);
-		//if (dynamic_cast<CAbsorbMarble*>(toObj))
-		//	QUADMgr.DeleteStaticObject(toObj);
 		toObj->GetGameMessage(this, MSG_COLLIDED);
 		return;
 	case eMessage::MSG_COLLIDED:
@@ -712,7 +708,7 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 {
 	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
-	mtx = XMMatrixTranslation(0, 9.0f, 10.0f) * mtx;
+	mtx = XMMatrixTranslation(0, 9.0f, 25.0f) * mtx;
 	XMFLOAT4X4 xmf44Change;
 	XMStoreFloat4x4(&xmf44Change, mtx);
 

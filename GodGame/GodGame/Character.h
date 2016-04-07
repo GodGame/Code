@@ -15,6 +15,7 @@ protected:
 	XMFLOAT3 m_xv3Look;
 
 public:
+	virtual XMFLOAT3 GetPosition() const { return m_xv3Position; }
 	XMFLOAT3 & GetPosition()         { return(m_xv3Position); }
 	XMFLOAT3 & GetLookVector()       { return(m_xv3Look); }
 	XMFLOAT3 & GetUpVector()         { return(m_xv3Up); }
@@ -65,6 +66,7 @@ public:
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
 	virtual void Reset() { m_Status.ResetStatus(); }
 	virtual void Revive() { Reset(); }
+
 public:
 	virtual void SetPosition(float x, float y, float z);
 	void SetPosition(XMFLOAT3& xv3Position);
@@ -158,7 +160,7 @@ public:
 	//virtual void OnPrepareRender();
 	//virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera);
 	virtual void Animate(float fTimeElapsed);
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra = nullptr);
 
 public:
 	virtual void Attack(CCharacter * pToChar, short stDamage);

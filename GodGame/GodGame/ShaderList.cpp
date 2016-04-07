@@ -437,6 +437,7 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 		CCharacter * pAnimObject = nullptr;
 		if (pAnimObject = dynamic_cast<CCharacter*>(m_ppObjects[i]))
 		{
+			pAnimObject->SetCollide(true);
 			pAnimObject->UpdateFramePerTime();
 			pAnimObject->SetUpdatedContext(pHeightMapTerrain);
 		}
@@ -471,6 +472,144 @@ void CStaticShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CCharacter*>(extra));
 	}
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+CCharacterShader::CCharacterShader()
+{
+	m_pMaterial = nullptr;
+}
+
+CCharacterShader::~CCharacterShader()
+{
+	if (m_pMaterial) m_pMaterial->Release();
+}
+
+void CCharacterShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSNormalAndSF", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
+}
+
+void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain * pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+{
+	m_pMaterial = pMaterial;
+	if (pMaterial) pMaterial->AddRef();
+
+	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
+	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
+
+	m_nObjects = 2;
+	m_ppObjects = new CGameObject*[m_nObjects];
+
+	char ManagerNames[2][50] = { { "scene_skull" },{ "scene_warrok" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
+																		//int Pos[5][2] = { {1085, 220}, {1085, 260}, {} };
+	CGameObject *pObject = nullptr;
+
+	float fHeight = 0;
+	//fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
+	//m_ppObjects[0] = new CGameObject(1);
+	//m_ppObjects[0]->AddRef();
+	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
+
+	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
+	CMonster * pAnimatedObject = new CSkeleton(1);
+	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
+	cout << "Skeleton Size : " << pAnimatedObject->GetSize() << endl;
+	pAnimatedObject->SetSize(10);
+
+	m_ppObjects[0] = pAnimatedObject;
+	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
+	m_ppObjects[0]->AddRef();
+
+	char AnimNames[6][50] = { "scene_warrok_idle", "scene_warrok_run", "scene_warrok_roar", "scene_warrok_punch", "scene_warrok_swiping", "scene_warrok_death" };
+
+	fHeight = pHeightMapTerrain->GetHeight(1115, 275, false);
+	pAnimatedObject = new CWarrock(CWarrock::eANI_WARROCK_ANIM_NUM);
+
+	for (int i = 0; i < 6; ++i)
+		pAnimatedObject->SetMesh(meshmgr.GetObjects(AnimNames[i]), i);
+
+	cout << "Size : " << pAnimatedObject->GetSize() << endl;
+
+	pAnimatedObject->InitializeAnimCycleTime();
+	//static_cast<CWarrock*>(pAnimatedObject)->BuildObject(pAnimatedObject);
+
+	m_ppObjects[1] = pAnimatedObject;
+	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
+	m_ppObjects[1]->Rotate(0, 90.f, 0);
+	m_ppObjects[1]->AddRef();
+
+	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
+	//pAnimatedObject = new CAnimatedObject(1);
+	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	//m_ppObjects[3] = pAnimatedObject;
+	//m_ppObjects[3]->SetPosition(1140, fHeight + 5, 255);
+	//m_ppObjects[3]->AddRef();
+	////m_ppObjects[3]->SetPosition(1100, 170, 255);
+	//
+	//fHeight = pHeightMapTerrain->GetHeight(1180, 255, false);
+	//pAnimatedObject = new CAnimatedObject(1);
+	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
+	//m_ppObjects[4] = pAnimatedObject;
+	//m_ppObjects[4]->SetPosition(1180, fHeight, 255);
+	//m_ppObjects[4]->AddRef();
+
+
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppObjects[i]->SetTexture(txmgr.GetObjects(ManagerNames[i]));
+
+		CCharacter * pAnimObject = nullptr;
+		if (pAnimObject = dynamic_cast<CCharacter*>(m_ppObjects[i]))
+		{
+			pAnimObject->UpdateFramePerTime();
+			pAnimObject->SetUpdatedContext(pHeightMapTerrain);
+		}
+	}
+	/// 이상 스테틱 객체들
+	EntityAllDynamicObjects();
+}
+
+
+void CCharacterShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	ID3D11ShaderResourceView * pd3dNullSRV[] = { nullptr, nullptr };
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
+		//m_ppObjects[j]->SetActive(true);
+		if (m_ppObjects[j]->IsVisible())
+		{
+			//cout << j << " BB : " << m_ppObjects[j]->m_bcMeshBoundingCube << endl;
+			pd3dDeviceContext->PSSetShaderResources(2, 2, pd3dNullSRV);
+			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
+		}
+	}
+}
+
+void CCharacterShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	if (eMSG == eMessage::MSG_PASS_PLAYERPTR)
+	{
+		for (int i = 0; i < m_nObjects; ++i)
+			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CCharacter*>(extra));
+	}
+}
+
 
 #pragma region PointInstanceShader
 CPointInstanceShader::CPointInstanceShader() : CShader(), CInstanceShader()
@@ -510,8 +649,8 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputLayout);
-	CreateVertexShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
-	CreatePixelShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "PSBillboardColor", "ps_5_0", &m_pd3dPixelShader);
+	CreateVertexShaderFromFile(pd3dDevice,   L"fx/BillBoard.fx", "VSBillboard", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice,    L"fx/BillBoard.fx", "PSBillboardColor", "ps_5_0", &m_pd3dPixelShader);
 	CreateGeometryShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "GSBillboardColor", "gs_5_0", &m_pd3dGeometryShader);
 #endif
 }
@@ -1087,7 +1226,8 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
 	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
-		it->second->Render(pd3dDeviceContext, uRenderState, pCamera);
+		if (it->second->IsActvie())
+			it->second->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 
 	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);

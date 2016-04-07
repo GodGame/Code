@@ -14,12 +14,49 @@
 #define PARTICLE_TYPE_EMITTER	0
 #define PARTICLE_TYPE_FLARE		1
 
-class CEffect
+class CEntity
+{
+protected:
+	UINT	m_uSize : 14;
+	bool	m_bActive : 1;
+	bool	m_bUseCollide : 1;
+
+public:
+	CEntity();
+	virtual ~CEntity(){}
+
+public:
+	AABB         m_bcMeshBoundingCube;
+
+	void SetActive(const bool bActive = false) { m_bActive = bActive; }
+	bool IsActvie() { return m_bActive; }
+
+	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
+	bool CanCollide(CEntity * pObj) const
+	{
+		if (false == m_bUseCollide) return false;
+		if (this == pObj) return false;
+		return true;
+	}
+
+	UINT GetSize() const { return m_uSize; }
+	void SetSize(UINT uSize) { m_uSize = uSize; }
+
+	virtual XMFLOAT3 GetPosition() const { return XMFLOAT3(0, 0, 0); }
+	virtual void UpdateBoundingBox() = 0;
+
+	virtual void GetGameMessage (CEntity * byEntity, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra = nullptr);
+	static void MessageEntToEnt (CEntity * byObj, CEntity * toObj, eMessage eMSG, void * extra = nullptr);
+};
+
+class CEffect : public CEntity
 {
 protected:
 	MoveVelocity m_velocity;
 	float m_fDurability;
 
+	bool m_bReserveDelete : 1;
 	bool m_bEnable      : 1;
 	bool m_bTerminal    : 1;
 	bool m_bSubordinate : 1;
@@ -65,6 +102,15 @@ public:
 	{
 		pd3dDeviceContext->PSSetShaderResources(0, 1, &m_pd3dSRVImagesArrays);
 	}
+	virtual void UpdateBoundingBox() = 0;
+	virtual void NextEffectOn(){}
+
+	virtual void GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra = nullptr);
+	virtual void SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra = nullptr);
+
+	virtual bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE) { return false; }
+	virtual bool Disable() { return false; }
+	virtual void Collide();
 };
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 struct TX_ANIMATION_VERTEX
@@ -94,10 +140,15 @@ public:
 
 public:
 	void UseAnimation() { m_bUseAnimation = true; }
+	virtual XMFLOAT3 GetPosition() const { return m_cbInfo.m_xmf3Pos; }
+	virtual void UpdateBoundingBox()
+	{
+		m_bcMeshBoundingCube.Update(m_cbInfo.m_xmf3Pos, m_uSize);
+	}
 
-	bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE);
-	bool Disable();
-	void NextEffectOn();
+	virtual bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE);
+	virtual bool Disable();
+	virtual void NextEffectOn();
 	bool IsTermainal() { return (m_pNextEffect) ? m_pNextEffect->IsTermainal() : !m_bEnable; }
 
 public:
@@ -187,16 +238,26 @@ public:
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 
 public:
+	// virtual void GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra = nullptr);
+	//virtual void SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra = nullptr);
+	virtual XMFLOAT3 GetPosition() const { return m_cbParticle.m_vParticleEmitPos; }
+	virtual void UpdateBoundingBox()
+	{
+		m_bcMeshBoundingCube.Update(m_cbParticle.m_vParticleEmitPos, m_uSize);
+		//cout << "BB : " << m_bcMeshBoundingCube << endl;
+	}
+
+public:
 	void SetLifeTime(float fLifeTime)     { m_cbParticle.m_fLifeTime = fLifeTime; }
 	void SetEmitPosition(XMFLOAT3 & pos)  { m_cbParticle.m_vParticleEmitPos = pos; }
 	void SetEmitDirection(XMFLOAT3 & dir) { m_cbParticle.m_vParticleVelocity = dir; }
 	void SetAccelation(XMFLOAT3 & accel)  { m_cbParticle.m_vAccel = accel; }
 	void SetParticleSize(float fSize)     { m_cbParticle.m_fMaxSize = fSize; }
 
-	bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE);
-	bool Disable();
-
-	void NextParticleOn();
+	virtual bool Enable(XMFLOAT3 * pos = nullptr, int fColorNum = COLOR_NONE);
+	virtual bool Disable();
+	virtual void NextEffectOn();
+	//void NextParticleOn();
 
 	bool IsTermainal() { return (m_pcNextParticle) ? m_pcNextParticle->IsTermainal() : !m_bEnable; }
 };
@@ -235,17 +296,14 @@ public:
 	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
 
-class CGameObject
+class CGameObject : public CEntity
 {
 public:
 	CGameObject(int nMeshes = 0);
 	virtual ~CGameObject();
 
 protected:
-	UINT	m_uSize       : 15;
-	UINT	m_nReferences : 15;
-	bool	m_bActive     : 1;
-	bool	m_bUseCollide : 1;
+	UINT	m_nReferences : 16;
 
 	CGameObject * m_pChild;
 	CGameObject * m_pSibling;
@@ -258,7 +316,7 @@ public:
 	//객체가 가지는 메쉬들에 대한 포인터와 그 개수이다.
 	CMesh **     m_ppMeshes;
 	int          m_nMeshes;
-	AABB         m_bcMeshBoundingCube;
+	//AABB         m_bcMeshBoundingCube;
 
 	//게임 객체는 하나의 재질을 가질 수 있다.
 	CMaterial  * m_pMaterial;
@@ -279,13 +337,9 @@ public:
 	CTexture* m_pTexture;
 
 	void SetTexture(CTexture* const pTexture, bool beforeRelease = true);
-	void SetActive(const bool bActive = false) { m_bActive = bActive; }
-	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
 
 	virtual void UpdateBoundingBox();
-
 	virtual void SetMesh(CMesh* const pMesh, int nIndex = 0);
-
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 	// child, sibling 객체를 그리고, 월드 좌표계를 셋 한다.
@@ -295,17 +349,10 @@ public:
 	void SetPosition(const XMFLOAT3& xv3Position);
 	void SetPosition(const XMVECTOR* xv3Position);
 
-	XMFLOAT3 GetPosition() const;
-	UINT GetSize() const { return m_uSize; }
+	virtual XMFLOAT3 GetPosition() const;
 
 public:
 	virtual bool IsVisible(CCamera *pCamera = nullptr);
-	bool CanCollide(CGameObject * pObj) const
-	{ 
-		if (!m_bUseCollide) return false;
-		if (this == pObj) return false;
-		return true;
-	}
 
 	//로컬 x-축, y-축, z-축 방향으로 이동한다.
 	void MoveStrafe(float fDistance = 1.0f);
@@ -323,9 +370,7 @@ public:
 
 	//객체를 렌더링하기 전에 호출되는 함수이다.
 	virtual void OnPrepareRender() { }
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
-	virtual void SendGameMessage(CGameObject * toObj, eMessage eMSG, void * extra = nullptr);
-	static void MessageObjToObj(CGameObject * byObj, CGameObject * toObj, eMessage eMSG, void * extra = nullptr);
+
 #ifdef PICKING
 	//월드 좌표계의 픽킹 광선을 생성한다.
 	void GenerateRayForPicking(XMFLOAT3 *pxv3PickPosition, XMFLOAT4X4 *pxmtxWorld, XMFLOAT4X4 *pxmtxView, XMFLOAT3 *pxv3PickRayPosition, XMFLOAT3 *pxv3PickRayDirection);
@@ -383,6 +428,7 @@ public:
 	ANI_MESH* GetAniMesh() { return static_cast<ANI_MESH*>(m_ppMeshes[m_wdAnimateState]); }
 
 	virtual void SetMesh(CMesh *pMesh, int nIndex = 0);
+	virtual void UpdateBoundingBox();
 
 	virtual void Animate(float fTimeElapsed);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
@@ -541,5 +587,5 @@ public:
 
 	virtual bool IsVisible(CCamera *pCamera = nullptr);
 	virtual void Animate(float fTimeElapsed);
-	virtual void GetGameMessage(CGameObject * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra = nullptr);
 };
