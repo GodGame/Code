@@ -26,6 +26,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	CTexture * pTexture = nullptr;
 	CMesh * pMesh = nullptr;
 
+	// 스태프 1
 	for (int i = 1; i < 7; ++i)
 	{
 		pTexture = new CTexture(2, 1, 0, 0);
@@ -52,6 +53,35 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
 	}
+#if 0
+	// 스태프2
+	for (int i = 1; i < 7; ++i)
+	{
+		pTexture = new CTexture(1, 1, 0, 0);
+		{
+			wchar_t result[256];
+			wsprintf(result, _T("../Assets/Image/Objects/staff2/Staff2_0%d_Diff.png"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			//wsprintf(result, _T("../Assets/Image/Objects/staff/Staff0%d_Diff_NRM.png"), i);
+			//ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			//pTexture->SetTexture(1, pd3dsrvTexture);
+			//pd3dsrvTexture->Release();
+
+			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		}
+		char file[256];
+		sprintf(file, "../Assets/Image/Objects/staff2/Staff2_0%d.fbxcjh", i);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.2f, vcTxFileNames);
+		vcTxFileNames.clear();
+
+		sprintf(file, "scene_staff_0%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+	}
+#endif
 	// 플레이어 캐릭터
 	{
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.1f, vcTxFileNames);
@@ -215,7 +245,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	}
 	{
 		//m_ppShaders[2]->EntityAllStaticObjects();
-		m_ppShaders[3]->EntityAllStaticObjects();
+		//m_ppShaders[3]->EntityAllStaticObjects();
 
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
@@ -322,7 +352,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	float fHalf = pTerrain->GetWidth() * 0.5;
 
 	CShadowMgr * pSdwMgr = &ShadowMgr;
-	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf - 1000.0f, 0.0f, fHalf), XMFLOAT3(fHalf, fHalf, fHalf), fHalf);
+	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf, 0.0f, fHalf), XMFLOAT3(fHalf + 250.f, fHalf * 0.25f, fHalf), fHalf);
 
 	UINT uRenderState = (RS_SHADOWMAP);
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
@@ -331,6 +361,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	m_ppShaders[4]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
+
 	pSdwMgr->UpdateStaticShadowResource(pd3dDeviceContext);
 }
 
@@ -338,12 +369,24 @@ void CSceneInGame::PreProcessing(ID3D11DeviceContext * pd3dDeviceContext)
 {
 	UINT uRenderState = (NOT_PSUPDATE | RS_SHADOWMAP | DRAW_AND_ACTIVE);
 
-	ShadowMgr.SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
+	//CHeightMapTerrain * pTerrain = GetTerrain();
+	float fHalf = 200.0f;//pTerrain->GetWidth() * 0.3;
+	XMFLOAT3 xmfTarget = m_pCamera->GetPlayer()->GetPosition();
+	XMFLOAT3 xmfLight = xmfTarget;
+	
+	xmfLight.x += 50.0f;
+	xmfLight.y += 50.0f;
+
+	CShadowMgr * pSdwMgr = &ShadowMgr;
+	pSdwMgr->BuildShadowMap(pd3dDeviceContext, xmfTarget, xmfLight, fHalf);
+	pSdwMgr->SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 
 	m_pPlayerShader->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
-	ShadowMgr.ResetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
+	pSdwMgr->ResetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
+	pSdwMgr->UpdateDynamicShadowResource(pd3dDeviceContext);
+
 	uRenderState = NULL;
 }
 
@@ -645,7 +688,6 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_MAGIC_AREA:
 		((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(0, &pPlayer->GetCenterPosition());
 		return;
-		
 
 	case eMessage::MSG_MOUSE_DOWN:
 		m_ptOldCursorPos = *(POINT*)extra;

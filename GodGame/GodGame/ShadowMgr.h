@@ -26,7 +26,9 @@ private:
 
 	D3D11_VIEWPORT m_d3dxShadowMapViewport;
 	ID3D11Buffer * m_pd3dcbShadowMap;
+	ID3D11Buffer * m_pd3dcbStaticShadowMap;
 
+	XMFLOAT4X4 m_xmf44StaticShadowMap;
 	XMFLOAT4X4 m_xmf44ShadowMap;
 	XMFLOAT4X4 m_xmf44ShadowVP;
 	ID3D11SamplerState * m_pd3dShadowSamplerState;

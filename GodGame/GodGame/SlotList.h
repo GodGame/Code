@@ -9,8 +9,8 @@
 //#define CB_SLOT_CAMERAPOS		     0x02
 #define CB_SLOT_DISPLACEMENT	     0x03
 #define CB_SLOT_PARTICLE		     0x04
-#define CB_SLOT_SHADOWMAP		     0x05
-#define CB_SLOT_SSAO			     0x06
+#define CB_SLOT_STATIC_SHADOWMAP	 0x05
+#define CB_SLOT_DYNAMIC_SHADOWMAP	 0x06
 
 #define CB_PS_SLOT_LIGHT		     0x00
 #define CB_PS_SLOT_MATERIAL		     0x01

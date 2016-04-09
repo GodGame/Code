@@ -108,9 +108,14 @@ cbuffer cbDisplacement : register(b3)
 	float  gnBumpMax;
 };
 
-cbuffer cbShadow : register(b5)
+cbuffer cbStaticShadow : register(b5)
 {
-	matrix gmtxShadowTransform : packoffset(c0);
+	matrix gmtxStaticShadowTransform : packoffset(c0);
+}
+
+cbuffer cbDynamicShadow : register(b6)
+{
+	matrix gmtxDynamicShadowTransform : packoffset(c0);
 }
 
 /*(주의) register(b0)에서 b는 레지스터가 상수 버퍼를 위해 사용되는 것을 의미한다. 0는 레지스터의 번호이며

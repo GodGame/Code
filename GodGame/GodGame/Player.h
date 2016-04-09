@@ -117,6 +117,7 @@ public:
 	virtual void InitializeAnimCycleTime();
 	virtual void Update(float fTimeElapsed);
 
+	void ForcedByObj(CEntity * pObj);
 public:
 	virtual void Attack(CCharacter * pToChar, short stDamage);
 	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);

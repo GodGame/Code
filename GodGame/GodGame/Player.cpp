@@ -50,7 +50,7 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 	if (dwDirection)
 	{
 		WORD wdNextState = 0;
-		XMVECTOR xv3Shift = XMVectorSet(0, 0, 0, 0);
+		XMVECTOR xv3Shift = XMVectorReplicate(0);
 		//화살표 키 ‘↑’를 누르면 로컬 z-축 방향으로 이동(전진)한다. ‘↓’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_FORWARD)
 		{
@@ -355,14 +355,14 @@ void CPlayer::Animate(float fTimeElapsed)
 	// HACK : 나중에 서버 처리할 것. 일단은 컨트롤하는 플레이어만 충돌체크 하도록 한다.
 	if (m_pCamera)
 	{
-		UINT uSize = m_uSize;
-		m_uSize = 40.0f;
+		//UINT uSize = m_uSize;
+		//m_uSize = 10.0f;
 
 		vector<CEntity*> vcArray = QUADMgr.CollisionCheckList(this);
 		QUADMgr.ContainedErase();
 		//QUADMgr.CollisionCheck(this);
 		//cout << "에너지 : " << m_nEnergy << endl;
-		m_uSize = uSize;
+		//m_uSize = uSize;
 	}
 }
 
@@ -535,6 +535,7 @@ void CInGamePlayer::SendGameMessage(CEntity * toObj, eMessage eMSG, void * extra
 		return;
 		// 반대로 메세지 전송하도록 하자
 	case eMessage::MSG_COLLIDE:
+		ForcedByObj(toObj);
 		toObj->GetGameMessage(this, MSG_COLLIDED);
 		return;
 	case eMessage::MSG_COLLIDED:
@@ -561,6 +562,23 @@ void CInGamePlayer::Update(float fTimeElapsed)
 {
 	m_pStateMachine->Update(fTimeElapsed);
 	CPlayer::Update(fTimeElapsed);
+}
+
+void CInGamePlayer::ForcedByObj(CEntity * pObj)
+{
+	if (dynamic_cast<CAbsorbMarble*>(pObj) == nullptr)
+	{
+		XMVECTOR xmvOtherPos = XMLoadFloat3(&pObj->GetPosition());
+		XMVECTOR toThisVector = XMLoadFloat3(&GetPosition()) - xmvOtherPos;
+		toThisVector = XMVector3Normalize(toThisVector);
+		
+		XMVECTOR xmvSize = XMVectorReplicate(GetSize() + pObj->GetSize() + 1);
+		xmvOtherPos = xmvOtherPos + (toThisVector * xmvSize);
+
+		XMFLOAT3 xmf3NewPos;
+		XMStoreFloat3(&xmf3NewPos, xmvOtherPos);
+		SetPosition(xmf3NewPos);
+	}
 }
 
 void CInGamePlayer::Attack(CCharacter * pToChar, short stDamage)
@@ -599,12 +617,7 @@ void CInGamePlayer::Revive()
 	m_pStateMachine->ChangeState(&CPlayerIdleState::GetInstance());
 
 	CCamera * pCamera = GetCamera();
-	XMFLOAT3 xmfVector = pCamera->GetLookVector();
-	m_xmf44World._31 = xmfVector.x;
-	m_xmf44World._32 = xmfVector.y;
-	m_xmf44World._33 = xmfVector.z;
-
-	xmfVector = pCamera->GetRightVector();
+	XMFLOAT3 xmfVector = pCamera->GetRightVector();
 	m_xmf44World._11 = xmfVector.x;
 	m_xmf44World._12 = xmfVector.y;
 	m_xmf44World._13 = xmfVector.z;
@@ -614,6 +627,10 @@ void CInGamePlayer::Revive()
 	m_xmf44World._22 = xmfVector.y;
 	m_xmf44World._23 = xmfVector.z;
 
+	xmfVector = pCamera->GetLookVector();
+	m_xmf44World._31 = xmfVector.x;
+	m_xmf44World._32 = xmfVector.y;
+	m_xmf44World._33 = xmfVector.z;
 }
 
 void CInGamePlayer::Reset()

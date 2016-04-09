@@ -66,6 +66,7 @@ public:
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
 	virtual void Reset() { m_Status.ResetStatus(); }
 	virtual void Revive() { Reset(); }
+	virtual void Collide(CEntity * pEntity) {}
 
 public:
 	virtual void SetPosition(float x, float y, float z);
@@ -100,6 +101,9 @@ public:
 public:
 	void SetTarget(CCharacter * pTarget) { m_pTarget = pTarget; }
 	CCharacter* GetTarget() { return m_pTarget; }
+
+	virtual void GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void Collide(CEntity * pEntity);
 };
 
 class CSkeleton : public CMonster

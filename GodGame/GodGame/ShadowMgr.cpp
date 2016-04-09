@@ -15,6 +15,8 @@ CShadowMgr::CShadowMgr()
 
 	ZeroMemory(&m_d3dxShadowMapViewport, sizeof(D3D11_VIEWPORT));
 	m_pd3dcbShadowMap = nullptr;
+	m_pd3dcbStaticShadowMap = nullptr;
+
 	m_pd3dShadowSamplerState = nullptr;
 	m_pd3dShadowRS = nullptr;
 	m_pd3dNormalRS = nullptr;
@@ -48,7 +50,8 @@ void CShadowMgr::ReleaseDevices()
 	if (m_pd3dStaticSRVShadowMap) m_pd3dStaticSRVShadowMap->Release();
 								  
 	if (m_pd3dcbShadowMap)		  m_pd3dcbShadowMap->Release();
-								  
+	if (m_pd3dcbStaticShadowMap)  m_pd3dcbStaticShadowMap->Release();
+
 	if (m_pd3dNormalRS)			  m_pd3dNormalRS->Release();
 	if (m_pd3dShadowRS)			  m_pd3dShadowRS->Release();
 								 
@@ -107,6 +110,7 @@ void CShadowMgr::CreateShadowDevice(ID3D11Device * pd3dDevice)
 	d3dBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	d3dBufferDesc.ByteWidth      = sizeof(XMFLOAT4X4);
 	ASSERT_S(pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbShadowMap));
+	ASSERT_S(pd3dDevice->CreateBuffer(&d3dBufferDesc, nullptr, &m_pd3dcbStaticShadowMap));
 
 #define PCF
 #ifdef PCF
@@ -173,6 +177,8 @@ void CShadowMgr::SetStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCa
 	ID3D11RenderTargetView* renderTargets[1] = { 0 };
 	pd3dDeviceContext->OMSetRenderTargets(0, nullptr, m_pd3dStaticDSVShadowMap);
 	pd3dDeviceContext->ClearDepthStencilView(m_pd3dStaticDSVShadowMap, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	m_xmf44StaticShadowMap = m_xmf44ShadowMap;
 }
 
 void CShadowMgr::ResetStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
@@ -193,12 +199,12 @@ void CShadowMgr::UpdateStaticShadowResource(ID3D11DeviceContext * pd3dDeviceCont
 	pd3dDeviceContext->PSSetShaderResources(m_iStaticMapSlot, 1, &m_pd3dStaticSRVShadowMap);
 
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
-	pd3dDeviceContext->Map(m_pd3dcbShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	pd3dDeviceContext->Map(m_pd3dcbStaticShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	XMFLOAT4X4 * pd3dxmtxShadowTransform = (XMFLOAT4X4*)d3dMappedResource.pData;
-	Chae::XMFloat4x4Transpose(pd3dxmtxShadowTransform, &m_xmf44ShadowMap);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
-	pd3dDeviceContext->Unmap(m_pd3dcbShadowMap, 0);
+	Chae::XMFloat4x4Transpose(pd3dxmtxShadowTransform, &m_xmf44StaticShadowMap);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
+	pd3dDeviceContext->Unmap(m_pd3dcbStaticShadowMap, 0);
 
-	pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SHADOWMAP, 1, &m_pd3dcbShadowMap);
+	pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_STATIC_SHADOWMAP, 1, &m_pd3dcbStaticShadowMap);
 }
 
 void CShadowMgr::SetDynamicShadowMap(ID3D11DeviceContext * pd3dDeviceContext, CCamera * pCamera)
@@ -224,5 +230,16 @@ void CShadowMgr::ResetDynamicShadowMap(ID3D11DeviceContext * pd3dDeviceContext, 
 void CShadowMgr::UpdateDynamicShadowResource(ID3D11DeviceContext * pd3dDeviceContext)
 {
 	pd3dDeviceContext->PSSetShaderResources(m_iMapSlot, 1, &m_pd3dSRVShadowMap);
+
+#define USE_CHANGE_MTX
+#ifdef USE_CHANGE_MTX
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dcbShadowMap, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	XMFLOAT4X4 * pd3dxmtxShadowTransform = (XMFLOAT4X4*)d3dMappedResource.pData;
+	Chae::XMFloat4x4Transpose(pd3dxmtxShadowTransform, &m_xmf44ShadowMap);	//XMFLOAT4X4Transpose(&pcbViewProjection->m_xmf44View, &m_xmf44View);
+	pd3dDeviceContext->Unmap(m_pd3dcbShadowMap, 0);
+
+	pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_DYNAMIC_SHADOWMAP, 1, &m_pd3dcbShadowMap);
+#endif
 }
 

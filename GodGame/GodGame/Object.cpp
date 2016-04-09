@@ -797,6 +797,7 @@ CBillboardObject::CBillboardObject(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : 
 {
 	m_xv4InstanceData = XMFLOAT4(pos.x, pos.y, pos.z, (float)fID);
 	m_xv2Size = xmf2Size;
+	SetSize((m_xv2Size.x + m_xv2Size.y) * 0.5);
 	SetPosition(pos);
 }
 
@@ -876,7 +877,7 @@ void CEffect::SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra)
 	case eMessage::MSG_COLLIDE:
 		toEntity->GetGameMessage(this, MSG_COLLIDED);
 		Collide();
-		cout << "충돌!! At : " << toEntity->GetPosition() << endl;
+		//cout << "충돌!! At : " << toEntity->GetPosition() << endl;
 		return;
 	case eMessage::MSG_COLLIDED:
 		//toEntity->GetGameMessage(this, MSG_COLLIDE);
@@ -1422,7 +1423,7 @@ bool CParticle::Enable(XMFLOAT3 * pos, int nColorNum)
 	}
 	//else QUADMgr.InsertStaticEntity(this);
 
-	m_bReserveDelete = false;
+	m_bReserveDelete	     = false;
 	m_bActive				 = true;
 	m_bEnable                = true;
 	m_bTerminal              = false;
@@ -1449,9 +1450,11 @@ void CParticle::NextEffectOn()
 		m_pcNextParticle->Enable(&m_cbParticle.m_vParticleEmitPos);
 		m_bTerminal = true;
 	}
-	else 
+	else
+	{
 		m_cbParticle.m_fGameTime = m_fDurability;
-
+		Disable();
+	}
 	m_bReserveDelete = true;
 }
 
@@ -1567,12 +1570,12 @@ void CRainParticle::Initialize(ID3D11Device * pd3dDevice)
 //////////////////////////////////////
 CAbsorbMarble::CAbsorbMarble() : CBillboardObject()
 {
-	Initialize();
+	//Initialize();
 }
 
 CAbsorbMarble::CAbsorbMarble(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : CBillboardObject(pos, fID, xmf2Size)
 {
-	Initialize();
+	//Initialize();
 }
 
 CAbsorbMarble::~CAbsorbMarble()
@@ -1588,6 +1591,8 @@ void CAbsorbMarble::Initialize()
 	m_fSpeed           = 0.0f;
 	m_pTargetObject    = nullptr;
 
+	SetSize(miAbsorbSize);
+
 	m_xvRandomVelocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
 }
 
@@ -1595,6 +1600,8 @@ void CAbsorbMarble::SetTarget(CGameObject * pGameObject)
 {
 	if (!m_bAbsorb)
 	{
+		SetSize(10);
+
 		SetCollide(false);
 
 		m_pTargetObject = pGameObject;
@@ -1662,6 +1669,7 @@ void CAbsorbMarble::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 		//EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, this);
 		return;
 	case eMessage::MSG_COLLIDED:
+		cout << byObj->GetSize() << endl;
 		if(pPlayer = dynamic_cast<CInGamePlayer*>(byObj))
 			SetTarget(static_cast<CGameObject*>(pPlayer));
 		return;
@@ -1685,7 +1693,7 @@ bool CAbsorbMarble::IsVisible(CCamera *pCamera)
 
 	if (pCamera)
 		bIsVisible = CBillboardObject::IsVisible(pCamera);
-	else if (!bIsVisible || m_bAbsorb)
+	else if (bIsVisible || m_bAbsorb)
 		bIsVisible = m_bActive = true;
 
 	return(bIsVisible);

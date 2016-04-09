@@ -215,3 +215,29 @@ void CWarrockDelayState::Execute(CWarrock * pWarrock, float fFrameTime)
 void CWarrockDelayState::Exit(CWarrock * pWarrock)
 {
 }
+
+CWarrockDeathState & CWarrockDeathState::GetInstance()
+{
+	static CWarrockDeathState instance;
+	return instance;
+}
+
+void CWarrockDeathState::Enter(CWarrock * pWarrock)
+{
+	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_DEATH, false, nullptr, 0);
+}
+
+void CWarrockDeathState::Execute(CWarrock * pWarrock, float fFrameTime)
+{
+	if (pWarrock->GetStatus().IsAlive())
+	{
+		if (pWarrock->GetAniMesh()->IsEndAnimation())
+		{
+			pWarrock->GetStatus().SetAlive(false);
+		}
+	}
+}
+
+void CWarrockDeathState::Exit(CWarrock * pWarrock)
+{
+}

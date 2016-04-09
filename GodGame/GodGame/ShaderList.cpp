@@ -228,6 +228,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false) + 18;
 		pTree = new CBillboardObject(xmf3Pos, i, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
+		pTree->SetCollide(true);
 		pTree->AddRef();
 		m_ppObjects[i] = pTree;
 	}
@@ -240,13 +241,13 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 	// 크기 동일'
 	//ID3D11ShaderResourceView * pd3dsrvArray = nullptr;
 	ID3D11ShaderResourceView * pd3dsrvArray = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), _T("png"), 4);
-	//HRESULT hr = D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Tree01.png"), nullptr, nullptr, &pd3dsrvArray, nullptr);
-	//if (FAILED(hr)) printf("오류 \n");
 
 	m_pTexture->SetTexture(0, pd3dsrvArray);
 	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	pd3dsrvArray->Release();
+
+	EntityAllStaticObjects();
 }
 
 void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -273,7 +274,7 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 		pTree = (CBillboardObject*)m_ppObjects[j];
 
 		//pTree->SetActive(true);
-		if (pTree->IsVisible(pCamera))
+		if (pTree->IsVisible())
 		{
 			pnTreeInstances[nTreeInstance] = pTree->GetInstanceData();
 		//	printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
@@ -684,7 +685,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 #else
 	CBillBoardVertex * pPointMesh = new CBillBoardVertex(pd3dDevice, 6, 6);
 #endif
-	CGameObject *pObject = nullptr;
+	CAbsorbMarble *pObject = nullptr;
 	for (int i = 0; i < m_nObjects; i++)
 	{
 		float fx = rand() % cxTerrain;
@@ -696,8 +697,9 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 		pObject = new CAbsorbMarble(XMFLOAT3(fx, fy, fz), (i % ELEMENT_NUM), xmf2Size);
 #endif
 		pObject->SetMesh(pPointMesh);
-		//pObject->SetMaterial(pMat);
-		pObject->SetPosition(fx, fy, fz);
+		pObject->Initialize();
+		//pObject->SetMaterial(pMat);	
+		//pObject->SetPosition(fx, fy, fz);
 		pObject->AddRef();
 		m_ppObjects[i] = pObject;
 
@@ -715,6 +717,8 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	pd3dsrvArray->Release();
+
+	EntityAllStaticObjects();
 }
 
 void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -1245,7 +1249,7 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (!m_ppParticle[i]->IsAble())
+		if (false == m_ppParticle[i]->IsAble())
 		{
 			if(i != 4)
 				m_vcAbleParticleArray.push_back(m_ppParticle[i]);

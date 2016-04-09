@@ -121,4 +121,23 @@ public:
 	virtual void Exit(CWarrock * pWarrock);
 };
 
+class CWarrockDeathState : public CAIState<CWarrock>
+{
+private:
+	//const float mfCHASE_RAGNE = 100.0f;
+
+	//CDistanceEvaluator mEvaluator;
+
+private:
+	CWarrockDeathState() : CAIState<CWarrock>() {}
+	virtual ~CWarrockDeathState() {}
+	CWarrockDeathState& operator=(const CWarrockDeathState&);
+
+public:
+	static CWarrockDeathState & GetInstance();
+	virtual void Enter(CWarrock * pWarrock);
+	virtual void Execute(CWarrock * pWarrock, float fFrameTime);
+	virtual void Exit(CWarrock * pWarrock);
+};
+
 #endif

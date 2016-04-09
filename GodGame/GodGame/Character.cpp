@@ -265,6 +265,43 @@ CMonster::~CMonster()
 {
 }
 
+void CMonster::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
+{
+	switch (eMSG)
+	{
+#if 0
+	case eMessage::MSG_OBJECT_ANIM_CHANGE:
+		eAnim = eWarrockAnim(*static_cast<int*>(extra));
+
+		switch (*static_cast<int*>(extra))
+		{
+		case eANI_WARROCK_PUNCH:
+		case eANI_WARROCK_SWIPING:
+		case eANI_WARROCK_ROAR:
+			ChangeAnimationState(eAnim, true, nullptr, 0);
+			break;
+		}
+		return;
+#endif
+	case eMessage::MSG_CULL_IN:
+		m_bActive = true;
+		return;
+
+	case eMessage::MSG_COLLIDED:
+		Collide(byObj);
+		return;
+
+	}
+}
+
+void CMonster::Collide(CEntity * pEntity)
+{
+	if (dynamic_cast<CEffect*>(pEntity))
+	{
+		Damaged(nullptr, 60);
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CSkeleton::CSkeleton(int nMeshes) : CMonster(nMeshes)
@@ -312,6 +349,8 @@ void CWarrock::InitializeAnimCycleTime()
 
 void CWarrock::Animate(float fTimeElapsed)
 {
+	if (false == m_Status.IsAlive()) return;
+
 	CAnimatedObject::Animate(fTimeElapsed);
 	m_pStateMachine->Update(fTimeElapsed);
 	CCharacter::Update(fTimeElapsed);
@@ -319,7 +358,8 @@ void CWarrock::Animate(float fTimeElapsed)
 
 void CWarrock::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 {
-	eWarrockAnim eAnim = eWarrockAnim::eANI_WARROCK_IDLE;
+	//eWarrockAnim eAnim = eWarrockAnim::eANI_WARROCK_IDLE;
+	
 
 	switch (eMSG)
 	{
@@ -337,13 +377,12 @@ void CWarrock::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 		}
 		return;
 #endif
-	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
-		return;
-
 	case eMessage::MSG_OBJECT_STATE_CHANGE:
 		m_pStateMachine->ChangeState(static_cast<CAIState<CWarrock>*>(extra));
 		return;
+
+	default : 
+		CMonster::GetGameMessage(byObj, eMSG, extra);
 	}
 }
 
@@ -359,4 +398,10 @@ void CWarrock::AttackSuccess(CCharacter * pToChar, short stDamage)
 void CWarrock::Damaged(CCharacter * pByChar, short stDamage)
 {
 	m_Status.Damaged(stDamage);
+	cout << m_Status.GetHP();
+
+	if (0 > m_Status.GetHP())
+	{
+		m_pStateMachine->ChangeState(&CWarrockDeathState::GetInstance());
+	}
 }

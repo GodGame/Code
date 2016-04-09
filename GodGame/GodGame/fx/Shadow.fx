@@ -11,11 +11,11 @@ cbuffer stShadow
 	static float gfBias = 0.0006f;
 };
 
-float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowMap,*/ float4 shadowPos)
+float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowMap,*/ float4 StaticShadowPos, float4 DyanamicShadowPos)
 {
-	float3 shadowPosH = shadowPos.xyz;// / shadowPos.w;
+	//float3 shadowPosH = shadowPos.xyz;// / shadowPos.w;
 
-	float fDepth = shadowPosH.z;
+	//float fDepth = shadowPosH.z;
 
 	const float dx = 1.0 / 2048.0f;
 	float percentLit = 0.0f;
@@ -31,8 +31,8 @@ float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowM
 	{
 		percentLit +=
 			min(
-				gtxtShadowMap.SampleCmpLevelZero(gsComShadow, shadowPosH.xy + offsets[i], fDepth).r,
-				gtxtStaticShadow.SampleCmpLevelZero(gsComShadow, shadowPosH.xy + offsets[i], fDepth).r
+				gtxtShadowMap.SampleCmpLevelZero(gsComShadow, DyanamicShadowPos.xy + offsets[i] * 2, DyanamicShadowPos.z).r,
+				gtxtStaticShadow.SampleCmpLevelZero(gsComShadow, StaticShadowPos.xy + offsets[i], StaticShadowPos.z).r
 				);
 	}
 

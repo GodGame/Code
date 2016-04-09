@@ -1502,6 +1502,7 @@ CLoadMeshByFbxcjh::CLoadMeshByFbxcjh(ID3D11Device * pd3dDevice, char * tMeshName
 
 	m_nBuffers = 0;
 
+#ifdef _FBXCJH_USE_TX_READ
 	//텍스쳐 개수
 	UINT nTextures = 0;
 	nReadBytes = ::fread(&nTextures, sizeof(UINT), 1, pFile);
@@ -1520,7 +1521,7 @@ CLoadMeshByFbxcjh::CLoadMeshByFbxcjh(ID3D11Device * pd3dDevice, char * tMeshName
 
 		vcFileName.push_back(fileName);
 	}
-
+#endif
 	//정점 개수
 	UINT nMeshes = 0;
 	nReadBytes = ::fread(&nMeshes, sizeof(UINT), 1, pFile);
@@ -1539,6 +1540,7 @@ CLoadMeshByFbxcjh::CLoadMeshByFbxcjh(ID3D11Device * pd3dDevice, char * tMeshName
 	{
 		nReadBytes = ::fread(&pChaeInfo[0], sizeof(NormalMapVertex), m_nVertices, pFile);
 	}
+
 
 	//nReadBytes = ::fread(&m_nIndices, sizeof(UINT), 1, pFile);
 	//m_pnIndices = new UINT[m_nIndices];
@@ -1572,9 +1574,9 @@ CLoadMeshByFbxcjh::CLoadMeshByFbxcjh(ID3D11Device * pd3dDevice, char * tMeshName
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
-	d3dBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
-	d3dBufferDesc.ByteWidth      = sizeof(NormalMapVertex) * m_nVertices;
-	d3dBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(NormalMapVertex) * m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	d3dBufferDesc.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA d3dBufferData;

@@ -570,6 +570,8 @@ public:
 
 class CAbsorbMarble : public CBillboardObject
 {
+	const int miAbsorbSize = 50;
+
 	bool	m_bAbsorb;
 	float	m_fAbsorbTime;
 	float	m_fSpeed;

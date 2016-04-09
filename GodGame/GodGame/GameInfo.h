@@ -138,7 +138,7 @@ public:
 
 	short GetHP()	{ return m_sHP; }
 	void SetHP(short hp) { m_sHP = hp; }
-	void ChangeHP(short hpValue) { m_sHP += hpValue; if(m_sHP < 0) m_bAlive = false; }
+	void ChangeHP(short hpValue) { m_sHP += hpValue; }
 	void Damaged(short damage) { ChangeHP(-damage); m_bCanMove = false; }
 
 	float GetAttackSpeed()          { return m_fAttackSpeed; }
@@ -155,7 +155,7 @@ public:
 	void SetCanMove(bool val) { m_bCanMove = val; }
 
 	bool IsAlive()            { return m_bAlive; }
-	void SetAilive(bool val)  { m_bAlive = m_bAlive; }
+	void SetAlive(bool val)  { m_bAlive = val; }
 
 	bool IsCanDamaged() { return (m_bAlive && !m_bUnbeatable); }
 };

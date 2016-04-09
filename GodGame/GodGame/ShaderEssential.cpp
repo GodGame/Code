@@ -1322,8 +1322,8 @@ void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	pd3dDeviceContext->Unmap(m_pd3dcbSSAOInfo, 0);
 
 	//상수 버퍼를 디바이스의 슬롯(CB_SLOT_WORLD_MATRIX)에 연결한다.
-	pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
-	pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
+	//pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
+	//pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 }
 
 CUIShader::CUIShader() : CShader()

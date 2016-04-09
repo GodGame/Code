@@ -61,11 +61,12 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 	float distance = 0;
 	if (diffuse.a > 0.0)
 	{
-		float4 shadowPos = mul(float4(pos, 1.0f), gmtxShadowTransform);
+		float4 StaticShadowPos = mul(float4(pos, 1.0f), gmtxStaticShadowTransform);
+		float4 DynamicShadowPos = mul(float4(pos, 1.0f), gmtxDynamicShadowTransform);
 
-		float fShadowFactor = 0.3f;
+		float fShadowFactor = 0.0f;
 #ifdef SHADOW_PCF
-		fShadowFactor = CalcShadowFactorByPCF(shadowPos);
+		fShadowFactor = CalcShadowFactorByPCF(StaticShadowPos, DynamicShadowPos);
 #else
 		fShadowFactor = CalcOneShadowFactor(shadowPos, fShadowFactor);
 #endif
