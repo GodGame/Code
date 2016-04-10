@@ -35,12 +35,12 @@ CShader::CShader()
 
 CShader::~CShader()
 {
-	if (m_pd3dVertexShader) m_pd3dVertexShader->Release();
-	if (m_pd3dVertexLayout) m_pd3dVertexLayout->Release();
-	if (m_pd3dPixelShader) m_pd3dPixelShader->Release();
+	if (m_pd3dVertexShader  ) m_pd3dVertexShader->Release();
+	if (m_pd3dVertexLayout  ) m_pd3dVertexLayout->Release();
+	if (m_pd3dPixelShader   ) m_pd3dPixelShader->Release();
 	if (m_pd3dGeometryShader) m_pd3dGeometryShader->Release();
-	if (m_pd3dHullShader) m_pd3dHullShader->Release();
-	if (m_pd3dDomainShader) m_pd3dDomainShader->Release();
+	if (m_pd3dHullShader    ) m_pd3dHullShader->Release();
+	if (m_pd3dDomainShader  ) m_pd3dDomainShader->Release();
 	//if (m_p3dComputeShader) m_p3dComputeShader->Release();
 }
 

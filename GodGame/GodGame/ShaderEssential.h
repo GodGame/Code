@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef __SHADER_TYPE
-#define __SHADER_TYPE
+#ifndef __SHADER_ESSTENTIAL
+#define __SHADER_ESSTENTIAL
 
 #include "ShaderType.h"
 
@@ -267,7 +267,7 @@ public:
 	virtual ~CPlayerShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 
@@ -302,7 +302,7 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	//	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
-	CHeightMapTerrain *GetTerrain();
+	//CHeightMapTerrain *GetTerrain();
 };
 
 class CSkyBoxShader : public CTexturedShader

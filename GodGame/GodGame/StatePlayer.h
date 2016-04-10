@@ -105,7 +105,7 @@ private:
 	//CPlayerIdleState mEvaluator;
 
 private:
-	CPlayerDeathState() : CAIState<CInGamePlayer>() {}
+	CPlayerDeathState() : CAIState<CInGamePlayer>() { m_bCanChangeState = false; }
 	virtual ~CPlayerDeathState() {}
 	CPlayerDeathState& operator=(const CPlayerDamagedState&);
 

@@ -11,15 +11,18 @@ class CGameObject;
 template <class obj>
 class CAIState
 {
-private:
+protected:
+	bool m_bCanChangeState;
 
 public:
-	CAIState() {}
+	CAIState() { m_bCanChangeState = true; }
 	virtual ~CAIState() {};
 
 	virtual void Enter(obj*) = 0;
 	virtual void Execute(obj*, float) = 0;
 	virtual void Exit(obj*) = 0;
+
+	bool CanChange() { return m_bCanChangeState; }
 };
 
 template <class entity_type>
@@ -54,14 +57,14 @@ public:
 		if (m_pCurrentState) m_pCurrentState->Execute(m_pOwner, fFrameTime);
 	}
 
-	//change to a new state
+	//생존해 있을때만, 스테이트를 바꿀 수 있다.
 	void  ChangeState(CAIState<entity_type>* pNewState)
 	{
 		assert(pNewState && "<StateMachine::ChangeState>:trying to assign null state to current");
 
 		m_pPreviousState = m_pCurrentState;
 		m_pCurrentState->Exit(m_pOwner);
-		m_pCurrentState = pNewState;
+		m_pCurrentState  = pNewState;
 		m_pCurrentState->Enter(m_pOwner);
 	}
 
@@ -75,6 +78,7 @@ public:
 		if (typeid(*m_pCurrentState) == typeid(st)) return true;
 		return false;
 	}
+	bool CanChangeState() { return m_pCurrentState->CanChange();}
 
 	CAIState<entity_type>*  CurrentState()  const { return m_pCurrentState; }
 	CAIState<entity_type>*  GlobalState()   const { return m_pGlobalState; }

@@ -44,7 +44,7 @@ void CInstancingShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSInstancedTexturedColor", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial *pMaterial, CTexture *pTexture, int k)
+void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial *pMaterial, CTexture *pTexture, int k)
 {
 	m_pMaterial = pMaterial;
 	if (pMaterial) pMaterial->AddRef();
@@ -62,6 +62,7 @@ void CInstancingShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain
 	float fyPitch = 18.0f * 3.5f;
 	float fzPitch = 18.0f * 3.5f;
 
+	CMapManager * pHeightMapTerrain = &MAPMgr;
 	float fTerrainWidth = pHeightMapTerrain->GetWidth();
 	float fTerrainLength = pHeightMapTerrain->GetLength();
 
@@ -203,7 +204,7 @@ void CBillboardShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreateGeometryShaderFromFile(pd3dDevice, L"fx/BillBoard.fx", "GSBillboard", "gs_5_0", &m_pd3dGeometryShader);
 }
 
-void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain)
+void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 {
 	m_nObjects = m_nTrees = 100;
 
@@ -216,7 +217,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 	CBillboardObject * pTree = nullptr;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	CHeightMapTerrain * pTerrain = pHeightMapTerrain;
+	CMapManager * pTerrain = &MAPMgr;
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 
@@ -228,6 +229,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain 
 		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false) + 18;
 		pTree = new CBillboardObject(xmf3Pos, i, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
+		pTree->SetSize(20.0f);
 		pTree->SetCollide(true);
 		pTree->AddRef();
 		m_ppObjects[i] = pTree;
@@ -331,13 +333,11 @@ void CBillboardShader::AllRender(ID3D11DeviceContext * pd3dDeviceContext, UINT u
 
 CStaticShader::CStaticShader() : CShader()
 {
-	//m_pTexture = nullptr;
 	m_pMaterial = nullptr;
 }
 
 CStaticShader::~CStaticShader()
 {
-	//if (m_pTexture) m_pTexture->Release();
 	if (m_pMaterial) m_pMaterial->Release();
 }
 
@@ -367,7 +367,7 @@ void CStaticShader::CreateShader(ID3D11Device *pd3dDevice)
 	//CreateShaderVariables(pd3dDevice);
 }
 
-void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_pMaterial = pMaterial;
 	if (pMaterial) pMaterial->AddRef();
@@ -389,6 +389,7 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pH
 	//m_ppObjects[0]->AddRef();
 	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
+	CMapManager * pHeightMapTerrain = &MAPMgr;
 	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
 	CMonster * pAnimatedObject = new CMonster(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
@@ -473,7 +474,6 @@ void CStaticShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CCharacter*>(extra));
 	}
 }
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 CCharacterShader::CCharacterShader()
 {
@@ -500,7 +500,7 @@ void CCharacterShader::CreateShader(ID3D11Device * pd3dDevice)
 	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain * pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_pMaterial = pMaterial;
 	if (pMaterial) pMaterial->AddRef();
@@ -521,7 +521,7 @@ void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain
 	//m_ppObjects[0]->AddRef();
 	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
-	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
+	fHeight = MAPMgr.GetHeight(1085, 260, true);
 	CMonster * pAnimatedObject = new CSkeleton(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
 	pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
@@ -534,7 +534,7 @@ void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain
 
 	char AnimNames[6][50] = { "scene_warrok_idle", "scene_warrok_run", "scene_warrok_roar", "scene_warrok_punch", "scene_warrok_swiping", "scene_warrok_death" };
 
-	fHeight = pHeightMapTerrain->GetHeight(1115, 275, false);
+	fHeight = MAPMgr.GetHeight(1115, 275, false);
 	pAnimatedObject = new CWarrock(CWarrock::eANI_WARROCK_ANIM_NUM);
 
 	for (int i = 0; i < 6; ++i)
@@ -574,7 +574,7 @@ void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain
 		if (pAnimObject = dynamic_cast<CCharacter*>(m_ppObjects[i]))
 		{
 			pAnimObject->UpdateFramePerTime();
-			pAnimObject->SetUpdatedContext(pHeightMapTerrain);
+			pAnimObject->SetUpdatedContext(&MAPMgr);
 		}
 	}
 	/// ÀÌ»ó ½ºÅ×Æ½ °´Ã¼µé
@@ -610,7 +610,117 @@ void CCharacterShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * ext
 			static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CCharacter*>(extra));
 	}
 }
+///////////////////////////////////////////////////////////////////////////////////////////
+CItemShader::CItemShader() : CShader(), CInstanceShader()
+{
+	m_pMaterial = nullptr;
 
+	m_vcItemList.reserve(10);
+}
+
+CItemShader::~CItemShader()
+{
+	if (m_pMaterial) m_pMaterial->Release();
+
+	for (auto ItemList : m_vcItemList)
+	{
+		for (auto it : ItemList)
+			delete it;
+		ItemList.clear();
+	}
+	m_vcItemList.clear();
+}
+
+void CItemShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VS_VNT", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PS_VNT", "ps_5_0", &m_pd3dPixelShader);
+}
+
+void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+{
+	m_pMaterial = pMaterial;
+	m_pMaterial->AddRef();
+
+	m_nInstanceBufferStride = sizeof(XMFLOAT4X4);
+	m_nInstanceBufferOffset = 0;
+
+	char name[48];
+	CMapManager * pTerrain = &MAPMgr;
+
+	int MapWidth = static_cast<int>(pTerrain->GetWidth() - 100) + 50;
+	int MapLength = static_cast<int>(pTerrain->GetLength() - 100) + 50;
+
+	for (int i = 0; i < 13; ++i)
+	{
+		m_vcItemList.push_back(ItemList());
+
+		auto it = m_vcItemList.end() - 1;
+		if (i < 12)
+			sprintf(name, "scene_staff%d_%d", (i % 2), (int)(((float)i / 2.0f) + 1));
+		else
+			sprintf(name, "scene_staff1_7");
+		cout << "I : " << i << ", name : " << name << endl;
+
+		XMFLOAT3 xmfPos;
+		for (int j = 0; j < 10; ++j)
+		{
+			CGameObject * pItem = new CGameObject(1);
+			pItem->AddRef();
+			pItem->SetMesh(SceneMgr.mgrMesh.GetObjects(name));
+			pItem->SetTexture(SceneMgr.mgrTexture.GetObjects(name));
+
+			xmfPos.x = rand() % MapWidth;
+			xmfPos.z = rand() % MapLength;
+
+			xmfPos.y = pTerrain->GetHeight(xmfPos.x, xmfPos.z,
+				(static_cast<int>(xmfPos.z) % 2)) + 4;
+			pItem->SetPosition(xmfPos);
+
+			pItem->UpdateBoundingBox();
+			QUADMgr.InsertStaticEntity(pItem);
+			it->push_back(pItem);
+		}
+	}
+}
+
+void CItemShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	ID3D11ShaderResourceView * pd3dNullSRV[] = { nullptr, nullptr };
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+
+	for (auto ItemList : m_vcItemList)
+	{
+		(*ItemList.begin())->GetTexture()->UpdateShaderVariable(pd3dDeviceContext);
+
+		for (auto it : ItemList)
+		{
+			if ((uRenderState & RS_SHADOWMAP) || it->IsVisible())
+				it->Render(pd3dDeviceContext, uRenderState, pCamera);
+		}
+	}
+}
+
+void CItemShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	//if (eMSG == eMessage::MSG_PASS_PLAYERPTR)
+	//{
+	//	for (int i = 0; i < m_nObjects; ++i)
+	//		static_cast<CMonster*>(m_ppObjects[i])->BuildObject(static_cast<CCharacter*>(extra));
+	//}
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma region PointInstanceShader
 CPointInstanceShader::CPointInstanceShader() : CShader(), CInstanceShader()
@@ -656,7 +766,7 @@ void CPointInstanceShader::CreateShader(ID3D11Device *pd3dDevice)
 #endif
 }
 
-void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
+void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial)
 {
 	CMaterial * pMat              = new CMaterial();
 	pMat->m_Material.m_xcAmbient  = XMFLOAT4(100, 100, 100, 10);
@@ -677,7 +787,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerr
 
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	CHeightMapTerrain * pTerrain = pHeightMapTerrain;
+	CMapManager * pTerrain = &MAPMgr;
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 #ifdef DRAW_GS_SPHERE
@@ -829,12 +939,12 @@ void CNormalShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalMap", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
+void CNormalShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial)
 {
 	m_Bump.m_fBumpMax = 30.0f;
 	m_Bump.m_xv3BumpScale = XMFLOAT3(30.0f, 30.f, 30.0f);
 
-	CHeightMapTerrain * pTerrain = pHeightMapTerrain;
+	CMapManager * pTerrain = &MAPMgr;
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 
@@ -993,7 +1103,7 @@ void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
 	m_pd3dSamplerState->AddRef();
 }
 
-void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CHeightMapTerrain * pHeightMapTerrain, CMaterial * pMaterial)
+void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial)
 {
 	m_nObjects = 3;
 
@@ -1162,7 +1272,7 @@ void CParticleShader::CreateStates(ID3D11Device * pd3dDevice)
 	m_pd3dSamplerState->AddRef();
 }
 
-void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial)
+void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial)
 {
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
@@ -1188,7 +1298,7 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *
 
 	m_pRainParticle = new CRainParticle();
 	m_pRainParticle->Initialize(pd3dDevice);
-	m_pRainParticle->Enable();
+	m_pRainParticle->Enable(nullptr);
 
 	m_pd3dRandomSRV = ViewMgr.GetSRV("srv_random1d");// CShader::CreateRandomTexture1DSRV(pd3dDevice);
 	m_pd3dRandomSRV->AddRef();

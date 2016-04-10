@@ -29,6 +29,8 @@ public:
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
 	CCamera *GetCamera() { return(m_pCamera); }
 	void SetScene(CScene* pScene) { m_pScene = pScene; }
+	CScene * GetScene() { return m_pScene; }
+	
 	//플레이어의 상수 버퍼를 생성하고 갱신하는 멤버 함수를 선언한다.
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
@@ -109,7 +111,7 @@ private:
 public:
 	CInGamePlayer(int m_nMeshes);
 	virtual ~CInGamePlayer();
-	virtual void BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial, CHeightMapTerrain * pTerrain);
+	virtual void BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial);
 
 	virtual void GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra);
 	virtual void SendGameMessage(CEntity * toObj, eMessage eMSG, void * extra);

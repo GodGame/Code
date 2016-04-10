@@ -3,7 +3,6 @@
 #include "Character.h"
 #include "AIWarrock.h"
 
-
 void CCharacter::SetExternalPower(XMFLOAT3 & xmf3Power)
 {
 	m_xv3ExternalPower.x += xmf3Power.x;
@@ -13,7 +12,6 @@ void CCharacter::SetExternalPower(XMFLOAT3 & xmf3Power)
 
 void CCharacter::CalculateFriction(float fTimeElapsed)
 {
-
 	/*플레이어의 속도 벡터가 마찰력 때문에 감속이 되어야 한다면 감속 벡터를 생성한다.
 	속도 벡터의 반대 방향 벡터를 구하고 단위 벡터로 만든다. 마찰 계수를 시간에 비례하도록 하여 마찰력을 구한다.
 	단위 벡터에 마찰력을 곱하여 감속 벡터를 구한다. 속도 벡터에 감속 벡터를 더하여 속도 벡터를 줄인다.
@@ -220,7 +218,7 @@ void CCharacter::Update(float fTimeElapsed)
 
 void CCharacter::OnContextUpdated(float fTimeElapsed)
 {
-	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pUpdatedContext;
+	CMapManager *pTerrain = (CMapManager *)m_pUpdatedContext;
 	XMFLOAT3 xv3Scale = pTerrain->GetScale();
 	XMFLOAT3 xv3Position = GetPosition();
 	int z = (int)(xv3Position.z / xv3Scale.z);
@@ -359,8 +357,6 @@ void CWarrock::Animate(float fTimeElapsed)
 void CWarrock::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 {
 	//eWarrockAnim eAnim = eWarrockAnim::eANI_WARROCK_IDLE;
-	
-
 	switch (eMSG)
 	{
 #if 0
@@ -378,7 +374,8 @@ void CWarrock::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 		return;
 #endif
 	case eMessage::MSG_OBJECT_STATE_CHANGE:
-		m_pStateMachine->ChangeState(static_cast<CAIState<CWarrock>*>(extra));
+		if (m_pStateMachine->CanChangeState())
+			m_pStateMachine->ChangeState(static_cast<CAIState<CWarrock>*>(extra));
 		return;
 
 	default : 

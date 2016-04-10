@@ -672,6 +672,11 @@ PS_WORLD_NORMALMAP DSBump(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation, Ou
 	return output;
 }
 
+Texture2D	  TxDiffuse            : register(t0);
+Texture2D     TxNormal             : register(t1);
+Texture2D     TxSpecluar           : register(t2);
+Texture2D     TxGlow               : register(t3);
+
 PS_WORLD_NORMALMAP VSNormalAndSF(MODEL_NORMALMAP input)
 {
 	PS_WORLD_NORMALMAP output;
@@ -684,11 +689,6 @@ PS_WORLD_NORMALMAP VSNormalAndSF(MODEL_NORMALMAP input)
 
 	return output;
 }
-
-Texture2D	  TxDiffuse            : register(t0);
-Texture2D     TxNormal             : register(t1);
-Texture2D     TxSpecluar           : register(t2);
-Texture2D     TxGlow               : register(t3);
 
 PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 {
@@ -716,5 +716,45 @@ PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f);// +glow;
 	output.vSpec    = float4(gMaterial.m_cSpecular.rgb, TxSpecluar.Sample(gSamplerState, input.tex).r) + glow;
 	output.vTxColor = color + glow;
+	return output;
+}
+
+PS_WORLD_NORMALMAP VS_VNT(MODEL_NORMALMAP input)
+{
+	PS_WORLD_NORMALMAP output;
+	output.pos = mul(float4(input.pos, 1.0f), gmtxWorld);
+	output.posW = output.pos.xyz;
+	output.tangentW = mul(input.tangent, (float3x3)gmtxWorld);
+	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
+	output.pos = mul(output.pos, gmtxViewProjection);
+	output.tex = input.tex;
+
+	return output;
+}
+
+PS_MRT_OUT PS_VNT(PS_WORLD_NORMALMAP input)
+{
+	float4 displacementInfo = TxNormal.SampleLevel(gSamplerState, input.tex, 0);
+	float3 normal = input.normalW;
+
+	if (dot(displacementInfo.rgb, float3(1, 1, 1)) != 0)
+	{
+		float3 N = normalize(normal);
+		float3 T = normalize(input.tangentW - dot(input.tangentW, N) * N);
+		float3x3 TBN = float3x3(T, cross(N, T), N);
+
+		normal = (2.0f * displacementInfo.rgb) - 1.0f; //.rgb;
+		normal = mul(normal, TBN);
+
+		input.posW -= normal * 4.0f;
+	}
+	float4 color = TxDiffuse.Sample(gSamplerState, input.tex);
+
+	PS_MRT_OUT output;
+	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
+	output.vPos     = float4(input.posW, 1.0);
+	output.vDiffuse = color;//float4(gMaterial.m_cDiffuse.xyz, 1.0f);// +glow;
+	output.vSpec    = gMaterial.m_cSpecular;
+	output.vTxColor = color;
 	return output;
 }

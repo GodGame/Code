@@ -428,7 +428,7 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 
 void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 {
-	CHeightMapTerrain *pTerrain = (CHeightMapTerrain *)m_pCameraUpdatedContext;
+	CMapManager *pTerrain		= (CMapManager*)m_pCameraUpdatedContext;
 	XMFLOAT3 xv3Scale           = pTerrain->GetScale();
 	CCamera *pCamera            = GetCamera();
 	XMFLOAT3 xv3CameraPosition  = pCamera->GetPosition();
@@ -472,7 +472,7 @@ CInGamePlayer::~CInGamePlayer()
 	if (m_pStateMachine) delete m_pStateMachine;
 }
 
-void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial, CHeightMapTerrain * pTerrain)
+void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTexture, CMaterial * pMaterial)
 {
 	for (int i = 0; i < eANI_TOTAL_NUM; ++i)
 	{
@@ -485,6 +485,7 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 
 	m_pStateMachine = new CStateMachine<CInGamePlayer>(this);
 	m_pStateMachine->SetCurrentState(&CPlayerIdleState::GetInstance());
+	CMapManager * pTerrain = &MAPMgr;
 	//플레이어의 위치가 변경될 때 지형의 정보에 따라 플레이어의 위치를 변경할 수 있도록 설정한다.
 	CInGamePlayer::SetPlayerUpdatedContext(pTerrain);
 	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
@@ -503,7 +504,7 @@ void CInGamePlayer::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_CULL_IN:
 		m_bActive = true;
 		return;
-	case eMessage::MSG_GET_SOUL:
+	case eMessage::MSG_PLAYER_SOUL:
 		xmfInfo = *(XMFLOAT4*)extra;
 		AddEnergy(xmfInfo.w);
 		EVENTMgr.InsertDelayMessage(0.0f, MSG_PARTICLE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, extra);
@@ -648,12 +649,12 @@ void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
 	{
 	case 'N':
 		ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
-		EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, extra);
+		EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, extra, nullptr, this);
 		return;
 
 	case 'M':
 		ChangeAnimationState(eANI_1H_MAGIC_AREA, true, nullptr, 0);
-		EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE, extra);
+		EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE, extra, nullptr, this);
 		return;
 	}
 }
@@ -730,6 +731,7 @@ PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 	XMStoreFloat4x4(&xmf44Change, mtx);
 
 	PARTILCE_ON_INFO info;
+	info.m_pObject = this;
 	info.fColor = 0;
 	info.iNum = 4;
 	info.m_xmf3Pos = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));

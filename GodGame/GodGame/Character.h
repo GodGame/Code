@@ -5,6 +5,7 @@
 
 #include "Object.h"
 #include "GameInfo.h"
+#include "EffectEntity.h"
 
 class CCharacter : public CAnimatedObject
 {

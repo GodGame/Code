@@ -101,6 +101,10 @@ void CPlayerKnockbackState::Enter(CInGamePlayer * pPlayer)
 
 	pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_02, false, nullptr, 0);
 	cout << "HP : " << pPlayer->GetStatus().GetHP() << endl;
+
+	EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_RADIAL_ON, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+	EVENTMgr.InsertDelayMessage(0.3f, eMessage::MSG_EFFECT_RADIAL_OFF, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+
 }
 
 void CPlayerKnockbackState::Execute(CInGamePlayer * pPlayer, float fFrameTime)

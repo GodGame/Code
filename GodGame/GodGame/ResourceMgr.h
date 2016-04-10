@@ -161,6 +161,8 @@ public:
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class CMesh;
 typedef CMgr<CMesh> MESH_MGR;
+class CGameObject;
+typedef CMgr<CGameObject> OBJ_MGR;
 #ifdef _USE_MESH_MGR
 class CMesh;
 class CMeshMgr : public CMgr<CMesh>

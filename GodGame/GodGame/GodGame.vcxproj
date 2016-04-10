@@ -167,13 +167,16 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="CollisionMgr.h" />
+    <ClInclude Include="EffectEntity.h" />
     <ClInclude Include="Evaluator.h" />
     <ClInclude Include="GameInfo.h" />
     <ClInclude Include="EventMgr.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="GodGame.h" />
+    <ClInclude Include="MapManager.h" />
     <ClInclude Include="MgrList.h" />
     <ClInclude Include="ObjectsList.h" />
+    <ClInclude Include="ParentShader.h" />
     <ClInclude Include="SceneInGame.h" />
     <ClInclude Include="SceneTitle.h" />
     <ClInclude Include="ShadowMgr.h" />
@@ -195,6 +198,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ResourceMgr.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Weapon.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Action.cpp" />
@@ -202,14 +206,17 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="CollisionMgr.cpp" />
+    <ClCompile Include="EffectEntity.cpp" />
     <ClCompile Include="Evaluator.cpp" />
     <ClCompile Include="GameInfo.cpp" />
     <ClCompile Include="EventMgr.cpp" />
     <ClCompile Include="GameFramework.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MapManager.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshType.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="ParentShader.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneInGame.cpp" />
@@ -227,6 +234,7 @@
     </ClCompile>
     <ClCompile Include="ResourceMgr.cpp" />
     <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GodGame.rc" />

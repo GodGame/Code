@@ -6,8 +6,8 @@
 
 class CSceneInGame : public CScene
 {
-	UINT m_nParticleShaderNum;
-	UINT m_nEffectShaderNum;
+	//UINT m_nParticleShaderNum;
+	CHAR m_nEffectShaderNum;
 
 	POINT m_ptOldCursorPos;
 	UINT  m_uHeightMapIndex;
@@ -41,7 +41,7 @@ public:
 #ifdef PICKING
 	CGameObject *PickObjectPointedByCursor(int xClient, int yClient);
 #endif
-	CHeightMapTerrain *GetTerrain();
+	//CHeightMapTerrain *GetTerrain();
 };
 
 #endif

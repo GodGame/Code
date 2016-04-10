@@ -5,7 +5,7 @@
 #include <D3Dcompiler.h>
 
 CInGamePlayer * gpPlayer = nullptr;
-bool gbStartEffect = false;
+bool gbStartGlare = false;
 bool gbStartRadial = false;
 
 static float GaussianDistribution(float x, float y, float rho)
@@ -317,15 +317,15 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 void CSceneShader::AnimateObjects(float fTimeElapsed)
 {
-	if (gpPlayer && !gbStartEffect &&gpPlayer->GetEnergyNum() > 10)
+	if (gpPlayer && false == gbStartGlare &&gpPlayer->GetEnergyNum() > 10)
 	{
 		GetGameMessage(this, MSG_EFFECT_GLARE_ON);
 		EVENTMgr.InsertDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SHADER, (void*)this); //ShaderDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, (CShader*)this);
-		EVENTMgr.InsertDelayMessage(2.0f, MSG_CULL_OUT, CGameEventMgr::MSG_TYPE_SHADER, (void*)this);
+	//	EVENTMgr.InsertDelayMessage(2.0f, MSG_CULL_OUT, CGameEventMgr::MSG_TYPE_SHADER, (void*)this);
 	//	EVENTMgr.ShaderDelayMessage(2.0f, MSG_CULL_OUT, (CShader*)this);
 	}
 	m_fFrameTime = fTimeElapsed;
-	if (gbStartEffect) m_fTotalTime += fTimeElapsed;
+	if (gbStartGlare) m_fTotalTime += fTimeElapsed;
 
 	//cout << "SceneFrame : " << m_fTotalTime << endl;
 }
@@ -335,13 +335,16 @@ void CSceneShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_EFFECT_GLARE_ON :
-		gbStartEffect = true;
+		gbStartGlare = true;
+	case eMessage::MSG_EFFECT_RADIAL_ON:
+		m_iDrawOption = 2;
 		return;
 
 	case eMessage::MSG_EFFECT_GLARE_OFF:
 		m_fTotalTime        = 0.0f;
-		gbStartEffect       = false;
+		gbStartGlare		= false;
 		gpPlayer->UseEnergy(10, true);
+	case eMessage::MSG_EFFECT_RADIAL_OFF :
 		m_iDrawOption       = 0;
 		return;
 
@@ -371,8 +374,6 @@ void CSceneShader::PostProcessingRender(ID3D11DeviceContext * pd3dDeviceContext,
 
 	static ID3D11ShaderResourceView * pd3dNullSRV[1] = { nullptr };
 	static ID3D11UnorderedAccessView * pd3dNullUAV[2] = { nullptr, nullptr };
-
-	if (gbStartEffect) m_iDrawOption = 2;
 
 	switch (m_iDrawOption)
 	{
@@ -511,10 +512,7 @@ void CSceneShader::MeasureLuminance(ID3D11DeviceContext * pd3dDeviceContext, UIN
 		CB_CS cbCS;
 //		if(pCamera->GetPlayer()->m_nEnergy < 10)
 //			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
-		if(!gbStartEffect)
-			cbCS = { XMFLOAT4(1.0f, 0.0f, m_fTotalTime, m_fFrameTime) };
-		else
-			cbCS = { XMFLOAT4(1.0f, 200000.0f, m_fTotalTime, m_fFrameTime) };
+		cbCS = { XMFLOAT4(1.0f, gbStartGlare * 200000.0f, m_fTotalTime, m_fFrameTime) };
 
 		MapConstantBuffer(pd3dDeviceContext, &cbCS, sizeof(CB_CS), m_pd3dCBComputeInfo);
 		pd3dDeviceContext->CSSetConstantBuffers(0, 1, &m_pd3dCBComputeInfo);
@@ -772,7 +770,7 @@ void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * pTerrain, CShader::BUILD_RESOURCES_MGR & mgrScene)
+void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene)
 {
 	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
@@ -795,11 +793,12 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 	pMesh[eANI_DAMAGED_FRONT_02] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f02");
 	pMesh[eANI_DEATH_FRONT]      = mgrScene.mgrMesh.GetObjects("scene_aure_death_f");
 
+	CMapManager * pTerrain = &MAPMgr;
 	for (int j = 0; j < m_nObjects; ++j)
 	{
 		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
-		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial, pTerrain);
+		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial);
 		pPlayer->SetCollide(true);
 		pPlayer->AddRef();
 		m_ppObjects[j] = pPlayer;
@@ -817,19 +816,19 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 		}
 
 		char name[56];
-		for (int i = 1; i < 7; ++i)
+		for (int i = 1; i <= 7; ++i)
 		{
 			CRevolvingObject * pObject = nullptr;
 			pObject = new CRevolvingObject(1);
 			pObject->SetRevolutionAxis(XMFLOAT3(0, 1, 0));
 			pObject->SetRevolutionSpeed(60.0f);
 
-			sprintf(name, "scene_staff_0%d", i);
+			sprintf(name, "scene_staff1_%d", i);
 
 			pObject->SetMesh(mgrScene.mgrMesh.GetObjects(name));
 			pObject->SetTexture(mgrScene.mgrTexture.GetObjects(name));
 			pObject->SetMaterial(pPlayerMaterial);
-			pObject->SetPosition(cosf(XMConvertToRadians(i * 60)) * 15, 10, sinf(XMConvertToRadians(i * 60)) * 15);
+			pObject->SetPosition(cosf(XMConvertToRadians(i * 51)) * 15, 10, sinf(XMConvertToRadians(i * 51)) * 15);
 			pObject->Rotate(0, 0, 0);
 
 			pPlayer->SetChild(pObject);
@@ -842,12 +841,9 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain * p
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
-
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
-
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
-	m_ppObjects[0]->SetActive(true);
-	//m_ppObjects[1]->SetActive(true);
+	m_ppObjects[0]->SetActive(true);//m_ppObjects[1]->SetActive(true);
 
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
@@ -950,9 +946,9 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	delete[] ppd3dsrvTexture;
 #else
 	wchar_t ** ppTextureName, **ppAlphaName, **ppEntityTexture;
-	ppEntityTexture = new wchar_t*[m_nLayerNumber];
-	ppTextureName = new wchar_t *[m_nLayerNumber];
-	ppAlphaName = new wchar_t *[m_nLayerNumber];
+	ppEntityTexture = new wchar_t *[m_nLayerNumber];
+	ppTextureName   = new wchar_t *[m_nLayerNumber];
+	ppAlphaName     = new wchar_t *[m_nLayerNumber];
 
 	for (int i = 0; i < m_nLayerNumber; ++i)
 	{
@@ -1032,10 +1028,10 @@ void CTerrainShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 	//pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
 }
 
-CHeightMapTerrain *CTerrainShader::GetTerrain()
-{
-	return((CHeightMapTerrain *)m_ppObjects[0]);
-}
+//CHeightMapTerrain *CTerrainShader::GetTerrain()
+//{
+//	return((CHeightMapTerrain *)m_ppObjects[0]);
+//}
 
 CWaterShader::CWaterShader() : CTexturedShader()
 {
@@ -1325,6 +1321,7 @@ void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	//pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 	//pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CUIShader::CUIShader() : CShader()
 {

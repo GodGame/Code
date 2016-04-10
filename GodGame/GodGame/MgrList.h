@@ -7,6 +7,7 @@
 #include "ShadowMgr.h"
 #include "CollisionMgr.h"
 #include "EventMgr.h"
+#include "MapManager.h"
 
 class CManagers
 {

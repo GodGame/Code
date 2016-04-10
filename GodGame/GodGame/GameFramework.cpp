@@ -771,7 +771,7 @@ UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter)
 	RenderInfo.ThreadID                        = pRenderingThreadInfo->m_nRenderingThreadID;
 	RenderInfo.pRenderState                    = pRenderingThreadInfo->m_puRenderState;
 
-	if (NUM_THREAD == 1) RenderInfo.ThreadID = -1;
+	//if (NUM_SHADER == 1) RenderInfo.ThreadID = -1;
 
 	pd3dDeferredContext->OMSetDepthStencilState(nullptr, 1);
 	while (true)

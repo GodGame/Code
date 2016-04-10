@@ -191,7 +191,7 @@ public:
 	CInstanceShader();
 	~CInstanceShader();
 
-	virtual ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
+	ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 };
 
 class CSplatLightingShader : public CTexturedIlluminatedShader
@@ -205,4 +205,3 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
 };
-

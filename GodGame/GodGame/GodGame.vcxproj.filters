@@ -151,6 +151,18 @@
     <ClInclude Include="StatePlayer.h">
       <Filter>Local\5_Objects\AI</Filter>
     </ClInclude>
+    <ClInclude Include="MapManager.h">
+      <Filter>Global\2_Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectEntity.h">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="Weapon.h">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClInclude>
+    <ClInclude Include="ParentShader.h">
+      <Filter>Local\4_Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -227,6 +239,18 @@
     </ClCompile>
     <ClCompile Include="StatePlayer.cpp">
       <Filter>Local\5_Objects\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="MapManager.cpp">
+      <Filter>Global\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectEntity.cpp">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="Weapon.cpp">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="ParentShader.cpp">
+      <Filter>Local\4_Shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

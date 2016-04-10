@@ -11,7 +11,26 @@ public:
 	virtual ~CStaticShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+};
+
+class CItemShader : public CShader, public CInstanceShader
+{
+	CMaterial * m_pMaterial;
+
+//	typedef vector<CItem*> ItemList;
+	typedef vector<CGameObject*> ItemList;
+	vector<ItemList> m_vcItemList;
+
+public:
+	CItemShader();
+	virtual ~CItemShader();
+
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
@@ -26,7 +45,7 @@ public:
 	virtual ~CCharacterShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
@@ -41,7 +60,7 @@ public:
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial *pMaterial, CTexture *pTexture, int k);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial *pMaterial, CTexture *pTexture, int k);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 private:
@@ -64,13 +83,14 @@ class CBillboardShader : public CShader, public CInstanceShader
 private:
 	ID3D11Buffer * m_pd3dTreeInstanceBuffer;
 	int m_nTrees;
+
 public:
 	CBillboardShader();
 	~CBillboardShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 	void AllRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
@@ -95,7 +115,7 @@ public:
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 	//static void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, CCamera *pCamera);
@@ -118,7 +138,7 @@ public:
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 };
@@ -136,15 +156,15 @@ public:
 	void CreateStates(ID3D11Device * pd3dDevice);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 
 public:
-	bool SetEffect(int index, XMFLOAT3 * pos = nullptr)
+	bool SetEffect(int index, CGameObject * pObj, XMFLOAT3 * pos = nullptr)
 	{
 		if (m_ppEffctsObjects[index]->IsAble()) return false;
-		return m_ppEffctsObjects[index]->Enable(pos);
+		return m_ppEffctsObjects[index]->Enable(pObj, pos);
 	}
 	CTxAnimationObject * GetEffect(int index) { return m_ppEffctsObjects[index]; }
 
@@ -157,9 +177,9 @@ public:
 	//	m_vcAbleParticleArray.pop_back();
 	//}
 
-	void EffectOn(int num, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
+	void EffectOn(int num, CGameObject * pObj, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
 	{
-		m_ppEffctsObjects[num]->Enable(pos, fColor);
+		m_ppEffctsObjects[num]->Enable(pObj, pos, fColor);
 		if (vel) m_ppEffctsObjects[num]->SetMoveVelocity(*vel);
 		if (acc) m_ppEffctsObjects[num]->SetMoveAccel(*acc);
 	}
@@ -210,7 +230,7 @@ public :
 	void	CreateStates(ID3D11Device * pd3dDevice);
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain, CMaterial * pMaterial);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 
@@ -218,31 +238,31 @@ public :
 
 	void RainDrawShader(ID3D11DeviceContext * pd3dDeviceContext);
 
-	bool SetParticle(int index, XMFLOAT3 * pos = nullptr)
+	bool SetParticle(int index, CGameObject * pObj, XMFLOAT3 * pos = nullptr)
 	{ 
 		if (m_ppParticle[index]->IsAble() ) return false;
-		return m_ppParticle[index]->Enable(pos); 
+		return m_ppParticle[index]->Enable(pObj);
 	}
 	CParticle * GetParticle(int index) { return m_ppParticle[index]; }
 
-	void ParticleOn(XMFLOAT3 * pos = nullptr, float fColor = COLOR_NONE)
+	void ParticleOn(CGameObject * pObj = nullptr, XMFLOAT3 * pos = nullptr, float fColor = COLOR_NONE)
 	{
 		if (m_vcAbleParticleArray.empty()) return;
 
 		auto it = m_vcAbleParticleArray.end() - 1;
-		(*it)->Enable(pos, fColor);
+		(*it)->Enable(pObj, pos, fColor);
 		m_vcAbleParticleArray.pop_back();
 	}
 
-	void ParticleOn(int num, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
+	void ParticleOn(int num, CGameObject * pObj = nullptr, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
 	{
-		m_ppParticle[num]->Enable(pos, fColor);
+		m_ppParticle[num]->Enable(pObj, pos, fColor);
 		if (vel) m_ppParticle[num]->SetMoveVelocity(*vel);
 		if (acc) m_ppParticle[num]->SetMoveAccel(*acc);
 	}
 
 	void ParticleOn(PARTILCE_ON_INFO & info)
 	{
-		ParticleOn(info.iNum, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fColor);
+		ParticleOn(info.iNum, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fColor);
 	}
 };

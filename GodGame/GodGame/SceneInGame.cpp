@@ -9,7 +9,6 @@ bool bIsKeyDown = false;
 
 CSceneInGame::CSceneInGame() : CScene()
 {
-	m_nParticleShaderNum = 0;
 	m_nEffectShaderNum = 0;
 }
 
@@ -25,10 +24,11 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	CTexture * pTexture = nullptr;
 	CMesh * pMesh = nullptr;
+	char file[128];
 
-	// 스태프 1
 	for (int i = 1; i < 7; ++i)
 	{
+		// 스태프 1
 		pTexture = new CTexture(2, 1, 0, 0);
 		{
 			wchar_t result[256];
@@ -44,18 +44,18 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 
 			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 		}
-		char file[256];
+		
 		sprintf(file, "../Assets/Image/Objects/staff/Staff0%d.fbxcjh", i);
 		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.2f, vcTxFileNames);
 		vcTxFileNames.clear();
 
-		sprintf(file, "scene_staff_0%d", i);
+		sprintf(file, "scene_staff0_%d", i);
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
 	}
-#if 0
+
 	// 스태프2
-	for (int i = 1; i < 7; ++i)
+	for (int i = 1; i < 8; ++i)
 	{
 		pTexture = new CTexture(1, 1, 0, 0);
 		{
@@ -65,23 +65,18 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 			pTexture->SetTexture(0, pd3dsrvTexture);
 			pd3dsrvTexture->Release();
 
-			//wsprintf(result, _T("../Assets/Image/Objects/staff/Staff0%d_Diff_NRM.png"), i);
-			//ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
-			//pTexture->SetTexture(1, pd3dsrvTexture);
-			//pd3dsrvTexture->Release();
-
 			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 		}
-		char file[256];
+
 		sprintf(file, "../Assets/Image/Objects/staff2/Staff2_0%d.fbxcjh", i);
 		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.2f, vcTxFileNames);
 		vcTxFileNames.clear();
 
-		sprintf(file, "scene_staff_0%d", i);
+		sprintf(file, "scene_staff1_%d", i);
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
 	}
-#endif
+
 	// 플레이어 캐릭터
 	{
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_idle_01.ad", 0.1f, vcTxFileNames);
@@ -140,13 +135,13 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Roar.ad", 0.5f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_roar");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Punch.ad", 0.5f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Punch.ad", 0.5f, vcTxFileNames, 2);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_punch");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Swiping.ad", 0.5f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Swiping.ad", 0.5f, vcTxFileNames, 2);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_swiping");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Death.ad", 0.5f, vcTxFileNames);
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Warrok/Warrok_Death.ad", 0.5f, vcTxFileNames, 5);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_warrok_death");
 		vcTxFileNames.clear();
 	}
@@ -183,7 +178,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo)
 {
 	m_nMRT     = NUM_MRT;
-	m_nThread  = NUM_THREAD;
+
 
 	//재질을 생성한다.
 	CMaterial *pRedMaterial   = MaterialMgr.GetObjects("Red");
@@ -197,45 +192,53 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	{
 		UINT index = 0;
 		m_nShaders = NUM_SHADER;
+		m_nThread = m_nShaders;
 		m_ppShaders = new CShader*[m_nShaders];
 
-		//첫 번째로 그릴 객체는 스카이 박스이다.
-		m_ppShaders[index] = new CSkyBoxShader();
-		m_ppShaders[index]->CreateShader(pd3dDevice);
-		m_ppShaders[index++]->BuildObjects(pd3dDevice);
-		
-		m_uHeightMapIndex = index;
-		m_ppShaders[index] = new CTerrainShader();
-		m_ppShaders[index]->CreateShader(pd3dDevice);
+		//스카이박스와 터레인 셰이더
+		m_ppShaders[index] = new CEnviromentShader();
 		m_ppShaders[index++]->BuildObjects(pd3dDevice);
 
 		iCharacterShaderNum = index;
 		CCharacterShader *pStaticObjectsShader = new CCharacterShader();
 		pStaticObjectsShader->CreateShader(pd3dDevice);
-		pStaticObjectsShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial, m_SceneResoucres);
+		pStaticObjectsShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
 		m_ppShaders[index++] = pStaticObjectsShader;
+
+		CItemShader *pItemShader = new CItemShader();
+		pItemShader->CreateShader(pd3dDevice);
+		pItemShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
+		m_ppShaders[index++] = pItemShader;
 
 		CPointInstanceShader *pPointShader = new CPointInstanceShader();
 		pPointShader->CreateShader(pd3dDevice);
-		pPointShader->BuildObjects(pd3dDevice, GetTerrain(), pWhiteMaterial);
+		pPointShader->BuildObjects(pd3dDevice, pWhiteMaterial);
 		m_ppShaders[index++] = pPointShader;
 
 		CBillboardShader * pTrees = new CBillboardShader();
 		pTrees->CreateShader(pd3dDevice);
-		pTrees->BuildObjects(pd3dDevice, GetTerrain());
+		pTrees->BuildObjects(pd3dDevice);
 		m_ppShaders[index++] = pTrees;
 
+#if 0
 		CTextureAniShader * pTxAni = new CTextureAniShader();
 		pTxAni->CreateShader(pd3dDevice);
-		pTxAni->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
+		pTxAni->BuildObjects(pd3dDevice, nullptr);
 		m_nEffectShaderNum = index;
 		m_ppShaders[index++] = pTxAni;
 
 		CParticleShader * pParticleShader = new CParticleShader();
 		pParticleShader->CreateShader(pd3dDevice);
-		pParticleShader->BuildObjects(pd3dDevice, GetTerrain(), nullptr);
+		pParticleShader->BuildObjects(pd3dDevice, nullptr);
 		m_nParticleShaderNum = index;
 		m_ppShaders[index++] = pParticleShader;
+#endif
+		m_nEffectShaderNum = index;
+		CEffectShader * pTxAni = new CEffectShader();
+		pTxAni->CreateShader(pd3dDevice);
+		pTxAni->BuildObjects(pd3dDevice);
+		m_nEffectShaderNum = index;
+		m_ppShaders[index++] = pTxAni;
 
 		CSceneShader * pSceneShader = new CSceneShader();
 		pSceneShader->CreateShader(pd3dDevice);
@@ -249,12 +252,12 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
-		m_pPlayerShader->BuildObjects(pd3dDevice, GetTerrain(), m_SceneResoucres);
+		m_pPlayerShader->BuildObjects(pd3dDevice, m_SceneResoucres);
 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 		m_pCamera->GenerateViewMatrix();
-	
+
 		m_ppShaders[iCharacterShaderNum]->GetGameMessage(nullptr, eMessage::MSG_PASS_PLAYERPTR, m_pCamera->GetPlayer());
 	}
 	{
@@ -348,8 +351,8 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 {
 	// 방향성 광원은 위치 필요 없다.
 	//LIGHT * pLight = m_pScene->GetLight(2);
-	CHeightMapTerrain * pTerrain = GetTerrain();
-	float fHalf = pTerrain->GetWidth() * 0.5;
+	CMapManager * pTerrain = &MAPMgr;
+	float fHalf = MAPMgr.GetWidth() * 0.5f;//pTerrain->GetWidth() * 0.5;
 
 	CShadowMgr * pSdwMgr = &ShadowMgr;
 	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf, 0.0f, fHalf), XMFLOAT3(fHalf + 250.f, fHalf * 0.25f, fHalf), fHalf);
@@ -357,11 +360,11 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	UINT uRenderState = (RS_SHADOWMAP);
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 
-	m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	m_ppShaders[0]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 	m_ppShaders[4]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
-
 	pSdwMgr->UpdateStaticShadowResource(pd3dDeviceContext);
 }
 
@@ -382,7 +385,7 @@ void CSceneInGame::PreProcessing(ID3D11DeviceContext * pd3dDeviceContext)
 	pSdwMgr->SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 
 	m_pPlayerShader->Render(pd3dDeviceContext, uRenderState, m_pCamera);
-	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	//m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 	pSdwMgr->UpdateDynamicShadowResource(pd3dDeviceContext);
@@ -418,35 +421,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		//	bIsKeyDown = !bIsKeyDown;
 		//	break;
 		case 'B' :
-			((CParticleShader*)m_ppShaders[m_nParticleShaderNum])->ParticleOn(4, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
-			return(false);
-
 		case 'X':
-			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(1, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVector());
-			return(false);
-
 		case 'C':
-			((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(2, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), nullptr);
-			return(false);
-
-		case '1':
-			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(1, true, nullptr, 0);
-			return(false);
-
-		case '2':
-			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(2, true, nullptr, 0);
-			return(false);
-
-		case '3':
-			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(3, true, nullptr, 0);
-			return(false);
-
-		case '4':
-			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(4, true, nullptr, 0);
-			return(false);
-
-		case '5':
-			static_cast<CAnimatedObject*>(m_ppShaders[2]->GetObj(1))->ChangeAnimationState(5, true, nullptr, 0);
+			((CEffectShader*)m_ppShaders[m_nEffectShaderNum])->ShaderKeyEventOn(m_pPlayerShader->GetPlayer(), wParam, nullptr);
 			return(false);
 
 		case 'I':
@@ -565,7 +542,7 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 		m_pLights->m_xv4CameraPosition = XMFLOAT4(xv3CameraPosition.x, xv3CameraPosition.y, xv3CameraPosition.z, 1.0f);
 
 		//점 조명이 지형의 중앙을 중심으로 회전하도록 설정한다.
-		CHeightMapTerrain *pTerrain = GetTerrain();
+		CMapManager *pTerrain = &MAPMgr;
 		static XMVECTOR	xvRotated = XMVectorSet(pTerrain->GetWidth()*0.3f, 0.0f, 0.0f, 0.0f);
 		//XMVECTOR	xvRotated = XMLoadFloat3(&xmf3Rotated);
 		XMMATRIX xmtxRotate = XMMatrixRotationRollPitchYaw((float)XMConvertToRadians(30.0f*fTimeElapsed), 0.0f, 0.0f);
@@ -663,30 +640,22 @@ CGameObject *CScene::PickObjectPointedByCursor(int xClient, int yClient)
 }
 #endif
 
-CHeightMapTerrain *CSceneInGame::GetTerrain()
-{
-	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[m_uHeightMapIndex];
-	return(pTerrainShader->GetTerrain());
-}
+//CHeightMapTerrain *CSceneInGame::GetTerrain()
+//{
+//	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[m_uHeightMapIndex];
+//	return(pTerrainShader->GetTerrain());
+//}
 
 void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
-	XMFLOAT4 xmf4Data;
-	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
+	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(extra);
 
 	switch (eMSG)
 	{
 	case eMessage::MSG_PARTICLE_ON:
-		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
-		static_cast<CParticleShader*>(m_ppShaders[m_nParticleShaderNum])->ParticleOn((XMFLOAT3*)&xmf4Data, xmf4Data.w);
-		return;
-		
 	case eMessage::MSG_MAGIC_SHOT:
-		static_cast<CParticleShader*>(m_ppShaders[m_nParticleShaderNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
-		return;
-
 	case eMessage::MSG_MAGIC_AREA:
-		((CTextureAniShader*)m_ppShaders[m_nEffectShaderNum])->EffectOn(0, &pPlayer->GetCenterPosition());
+		m_ppShaders[m_nEffectShaderNum]->GetGameMessage(nullptr, eMSG, extra);
 		return;
 
 	case eMessage::MSG_MOUSE_DOWN:
@@ -698,6 +667,13 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_MOUSE_UP:
 		m_pUIShader->GetGameMessage(nullptr, eMSG, extra);
 	case eMessage::MSG_MOUSE_UP_OVER:
+		return;
+
+	case eMessage::MSG_EFFECT_RADIAL_ON :
+	case eMessage::MSG_EFFECT_RADIAL_OFF:
+	case eMessage::MSG_EFFECT_GLARE_ON  :
+	case eMessage::MSG_EFFECT_GLARE_OFF :
+		m_pSceneShader->GetGameMessage(nullptr, eMSG);
 		return;
 	}
 }
