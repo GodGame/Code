@@ -145,5 +145,9 @@ public:
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
 
 public:
+	void AcquireItem();
+	void ThrowItem();
+
+public:
 	PARTILCE_ON_INFO Get1HAnimShotParticleOnInfo();
 };

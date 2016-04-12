@@ -222,7 +222,7 @@ void CCharacter::OnContextUpdated(float fTimeElapsed)
 	XMFLOAT3 xv3Scale = pTerrain->GetScale();
 	XMFLOAT3 xv3Position = GetPosition();
 	int z = (int)(xv3Position.z / xv3Scale.z);
-	bool bReverseQuad = (z % 2);//((z % 2) != 0);
+	bool bReverseQuad = !(z % 2);//((z % 2) != 0);
 								
 	float fHeight = pTerrain->GetHeight(xv3Position.x, xv3Position.z, bReverseQuad);
 

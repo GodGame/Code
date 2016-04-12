@@ -666,7 +666,7 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 
 		auto it = m_vcItemList.end() - 1;
 		if (i < 12)
-			sprintf(name, "scene_staff%d_%d", (i % 2), (int)(((float)i / 2.0f) + 1));
+			sprintf(name, "scene_staff%d_%d", (i % 2), (int)((float)i / 2.0f) + 1);
 		else
 			sprintf(name, "scene_staff1_7");
 		cout << "I : " << i << ", name : " << name << endl;
@@ -674,23 +674,26 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 		XMFLOAT3 xmfPos;
 		for (int j = 0; j < 10; ++j)
 		{
-			CGameObject * pItem = new CGameObject(1);
+			CStaff * pItem = new CStaff(1);
 			pItem->AddRef();
 			pItem->SetMesh(SceneMgr.mgrMesh.GetObjects(name));
+			pItem->SetCollide(true);
 			pItem->SetTexture(SceneMgr.mgrTexture.GetObjects(name));
+			pItem->SetMaterial(m_pMaterial);
 
-			xmfPos.x = rand() % MapWidth;
-			xmfPos.z = rand() % MapLength;
-
-			xmfPos.y = pTerrain->GetHeight(xmfPos.x, xmfPos.z,
-				(static_cast<int>(xmfPos.z) % 2)) + 4;
-			pItem->SetPosition(xmfPos);
-
-			pItem->UpdateBoundingBox();
-			QUADMgr.InsertStaticEntity(pItem);
+			pItem->AllocPositionAndEntityQuadTree();
 			it->push_back(pItem);
 		}
 	}
+}
+
+void CItemShader::AnimateObjects(float fTimeElapsed)
+{
+	for (auto ItemList : m_vcItemList)
+		for (auto it : ItemList)
+		{
+			it->Animate(fTimeElapsed);
+		}
 }
 
 void CItemShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
@@ -698,6 +701,7 @@ void CItemShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderSt
 	ID3D11ShaderResourceView * pd3dNullSRV[] = { nullptr, nullptr };
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
+	// 각자 재질은 설정 되어있지만, 배치 처리한다.
 	CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 
 	for (auto ItemList : m_vcItemList)

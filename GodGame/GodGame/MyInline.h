@@ -30,6 +30,10 @@ namespace Chae
 	{
 		XMStoreFloat3(Result, XMLoadFloat3(v1) + XMLoadFloat3(v2));
 	}
+	inline void XMFloat3AddAndMulFloat(XMFLOAT3 * Result, XMFLOAT3 * v1, float f1, XMFLOAT3 * v2, float f2)
+	{
+		XMStoreFloat3(Result, XMLoadFloat3(v1) * f1 + XMLoadFloat3(v2) * f2);
+	}
 	inline void XMFloat3Sub(XMFLOAT3 * Result, XMFLOAT3 * v1, XMFLOAT3 * v2)
 	{
 		XMStoreFloat3(Result, XMLoadFloat3(v1) - XMLoadFloat3(v2));
@@ -45,6 +49,18 @@ namespace Chae
 	inline void XMFloat3Div(XMFLOAT3 * Result, XMFLOAT3 * v1, XMFLOAT3 * v2)
 	{
 		XMStoreFloat3(Result, XMLoadFloat3(v1) / XMLoadFloat3(v2));
+	}
+	inline float XMFloat3LengthSq(XMFLOAT3 * v1)
+	{
+		float fOut;
+		XMStoreFloat(&fOut, XMVector3LengthSq(XMLoadFloat3(v1)));
+		return fOut;
+	}
+	inline float XMFloat3Length(XMFLOAT3 * v1)
+	{
+		float fOut;
+		XMStoreFloat(&fOut, XMVector3Length(XMLoadFloat3(v1)));
+		return fOut;
 	}
 	inline float XMFloat3Dot(XMFLOAT3 * v1, XMFLOAT3 * v2)
 	{

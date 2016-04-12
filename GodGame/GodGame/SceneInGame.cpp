@@ -249,7 +249,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	{
 		//m_ppShaders[2]->EntityAllStaticObjects();
 		//m_ppShaders[3]->EntityAllStaticObjects();
-
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
 		m_pPlayerShader->BuildObjects(pd3dDevice, m_SceneResoucres);
@@ -355,13 +354,12 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	float fHalf = MAPMgr.GetWidth() * 0.5f;//pTerrain->GetWidth() * 0.5;
 
 	CShadowMgr * pSdwMgr = &ShadowMgr;
-	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf, 0.0f, fHalf), XMFLOAT3(fHalf + 250.f, fHalf * 0.25f, fHalf), fHalf);
+	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf, 0.0f, fHalf), XMFLOAT3(fHalf + 80.f, 80.f, fHalf), fHalf);
 
 	UINT uRenderState = (RS_SHADOWMAP);
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 
 	m_ppShaders[0]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
-	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 	m_ppShaders[4]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
@@ -373,19 +371,20 @@ void CSceneInGame::PreProcessing(ID3D11DeviceContext * pd3dDeviceContext)
 	UINT uRenderState = (NOT_PSUPDATE | RS_SHADOWMAP | DRAW_AND_ACTIVE);
 
 	//CHeightMapTerrain * pTerrain = GetTerrain();
-	float fHalf = 200.0f;//pTerrain->GetWidth() * 0.3;
+	float fHalf = 100.0f;//pTerrain->GetWidth() * 0.3;
 	XMFLOAT3 xmfTarget = m_pCamera->GetPlayer()->GetPosition();
 	XMFLOAT3 xmfLight = xmfTarget;
 	
-	xmfLight.x += 50.0f;
-	xmfLight.y += 50.0f;
+	xmfLight.x += 20.0f;
+	xmfLight.y += 20.0f;
 
 	CShadowMgr * pSdwMgr = &ShadowMgr;
 	pSdwMgr->BuildShadowMap(pd3dDeviceContext, xmfTarget, xmfLight, fHalf);
 	pSdwMgr->SetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 
 	m_pPlayerShader->Render(pd3dDeviceContext, uRenderState, m_pCamera);
-	//m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	m_ppShaders[1]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	m_ppShaders[2]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetDynamicShadowMap(pd3dDeviceContext, m_pCamera);
 	pSdwMgr->UpdateDynamicShadowResource(pd3dDeviceContext);
@@ -441,6 +440,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case '0':
 			pPlayer->Revive();
 			return false;
+		case 'E':
 		case 'N':
 		case 'M':
 			pPlayer->PlayerKeyEventOn(wParam, this);

@@ -14,12 +14,12 @@ CShadowMgr::CShadowMgr()
 	m_pd3dStaticSRVShadowMap = m_pd3dSRVShadowMap = nullptr;
 
 	ZeroMemory(&m_d3dxShadowMapViewport, sizeof(D3D11_VIEWPORT));
-	m_pd3dcbShadowMap = nullptr;
-	m_pd3dcbStaticShadowMap = nullptr;
+	m_pd3dcbShadowMap        = nullptr;
+	m_pd3dcbStaticShadowMap  = nullptr;
 
 	m_pd3dShadowSamplerState = nullptr;
-	m_pd3dShadowRS = nullptr;
-	m_pd3dNormalRS = nullptr;
+	m_pd3dShadowRS           = nullptr;
+	m_pd3dNormalRS           = nullptr;
 
 	Chae::XMFloat4x4Identity(&m_xmf44ShadowMap);
 }

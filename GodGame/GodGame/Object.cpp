@@ -9,6 +9,7 @@ CEntity::CEntity()
 	m_uSize = 0;
 	m_bActive = true;
 	m_bUseCollide = false;
+	m_bObstacle = true;
 
 	ZeroMemory(&m_bcMeshBoundingCube, sizeof(m_bcMeshBoundingCube));
 }
@@ -94,6 +95,12 @@ CGameObject::~CGameObject()
 	if (m_pTexture) m_pTexture->Release();
 
 	// child, sibling은 ReleaseRelationShip을 이용해 외부에서 지워준다.
+}
+
+void CGameObject::_SetMaterialAndTexture(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 }
 
 void CGameObject::AddRef() { m_nReferences++; }
@@ -202,9 +209,7 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 	if (m_ppMeshes && (m_bActive || pmtxParentWorld || uRenderState & RS_SHADOWMAP))
 	{
 		CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
-
-		if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
-		if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
+		CGameObject::_SetMaterialAndTexture(pd3dDeviceContext);
 
 		for (int i = 0; i < m_nMeshes; i++)
 		{
@@ -235,6 +240,7 @@ void CGameObject::SetPosition(float x, float y, float z)
 }
 void CGameObject::SetPosition(const XMFLOAT3& xv3Position)
 {
+//	memcpy(&m_xmf44World._41, &xv3Position, sizeof(XMFLOAT3));
 	m_xmf44World._41 = xv3Position.x;
 	m_xmf44World._42 = xv3Position.y;
 	m_xmf44World._43 = xv3Position.z;
@@ -416,6 +422,8 @@ XMFLOAT3 CGameObject::GetPosition() const
 
 CStaticObject::CStaticObject(int nMeshes) : CGameObject(nMeshes)
 {
+	m_xmf3ExternalPower = { 0, 0, 0 };
+	m_fFriction = 0.f;
 }
 
 CStaticObject::~CStaticObject()
@@ -733,7 +741,7 @@ bool CBillboardObject::IsVisible(CCamera *pCamera)
 //////////////////////////////////////
 CAbsorbMarble::CAbsorbMarble() : CBillboardObject()
 {
-	//Initialize();
+	m_bObstacle = false;
 }
 
 CAbsorbMarble::CAbsorbMarble(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : CBillboardObject(pos, fID, xmf2Size)

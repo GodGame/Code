@@ -811,7 +811,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 		}
 		else
 		{
-			float fHeight = pTerrain->GetHeight(1180, 255, false);
+			float fHeight = pTerrain->GetHeight(1180, 255, true);// +10.f;
 			pPlayer->SetPosition(XMFLOAT3(1180, fHeight, 255));
 		}
 
@@ -996,7 +996,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 #endif
 
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
-	XMFLOAT3 xv3Scale(8.0f, 2.0f, 8.0f);
+	XMFLOAT3 xv3Scale(8.0f, 1.5f, 8.0f);
 	const int ImageWidth = 255;
 	const int ImageLength = 255;
 

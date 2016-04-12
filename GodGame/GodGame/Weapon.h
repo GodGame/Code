@@ -8,15 +8,33 @@ class CItem : public CStaticObject
 {
 protected:
 	CGameObject * m_pMaster;
+	bool m_bThrowing : 1;
 
 public:
 	CItem(int nMesh);
 	virtual ~CItem();
 
+public:
+	//virtual void SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra = nullptr);
+	virtual void GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra = nullptr);
+	virtual bool IsVisible(CCamera *pCamera = nullptr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 
+	virtual void Update(float fFrameTime);
+	virtual void Animate(float fTimeElapsed);
+
 public:
+	void Collide(CEntity * byEntity);
+
 	void SetMaster(CGameObject * pObj);
+	void ResetMaster();
+	void ResetMaster(XMFLOAT3 & ThrowVelocity);
+
+	void InheritByPlayer(const XMFLOAT3 & xmfRelativePos);
+	void AllocPositionAndEntityQuadTree();
+	void AllocPositionAndEntityQuadTree(float fx, float fy, float fz);
+	void AllocPositionAndEntityQuadTree(XMFLOAT3 & xmfPos);
+
 	CGameObject * GetMaster() { return m_pMaster; }
 };
 

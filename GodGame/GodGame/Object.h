@@ -15,11 +15,18 @@
 #define PARTICLE_TYPE_FLARE		1
 
 class CEntity
-{
+{	
 protected:
-	UINT	m_uSize : 14;
-	bool	m_bActive : 1;
+	UINT	m_uSize       : 14;
+	bool	m_bActive     : 1;
 	bool	m_bUseCollide : 1;
+	bool    m_bObstacle   : 1;
+
+protected:
+	void _ResetActive(UINT uRenderState)
+	{
+		m_bActive = uRenderState & DRAW_AND_ACTIVE;
+	}
 
 public:
 	CEntity();
@@ -30,6 +37,7 @@ public:
 
 	void SetActive(const bool bActive = false) { m_bActive = bActive; }
 	bool IsActvie() { return m_bActive; }
+	bool IsObstacle() { return m_bObstacle; }
 
 	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
 	bool CanCollide(CEntity * pObj) const
@@ -42,6 +50,7 @@ public:
 	UINT GetSize() const { return m_uSize; }
 	void SetSize(UINT uSize) { m_uSize = uSize; }
 
+public:
 	virtual XMFLOAT3 GetPosition() const { return XMFLOAT3(0, 0, 0); }
 	virtual void UpdateBoundingBox() = 0;
 
@@ -61,6 +70,9 @@ protected:
 
 	CGameObject * m_pChild;
 	CGameObject * m_pSibling;
+
+protected:
+	void _SetMaterialAndTexture(ID3D11DeviceContext *pd3dDeviceContext);
 
 public:
 	void	 AddRef();
@@ -139,10 +151,15 @@ public:
 class CStaticObject : public CGameObject
 {
 protected:
+	float m_fFriction;
+	XMFLOAT3 m_xmf3ExternalPower;
 
 public:
 	CStaticObject(int nMeshes);
 	virtual ~CStaticObject();
+
+public:
+	void SetExternalPower(XMFLOAT3 & xmfPower) { m_xmf3ExternalPower = xmfPower; }
 };
 
 // 스스로 움직일 수 있는 유동적인 객체

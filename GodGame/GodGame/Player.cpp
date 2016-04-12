@@ -2,6 +2,7 @@
 #include "MyInline.h"
 //#include "Object.h"
 //#include "Character.h"
+#include "Weapon.h"
 #include "Player.h"
 #include "StatePlayer.h"
 
@@ -353,16 +354,16 @@ void CPlayer::Animate(float fTimeElapsed)
 	CAnimatedObject::Animate(fTimeElapsed);
 
 	// HACK : 나중에 서버 처리할 것. 일단은 컨트롤하는 플레이어만 충돌체크 하도록 한다.
-	if (m_pCamera)
+	//if (m_pCamera)
 	{
-		//UINT uSize = m_uSize;
-		//m_uSize = 10.0f;
-
 		vector<CEntity*> vcArray = QUADMgr.CollisionCheckList(this);
+		auto it = find(vcArray.begin(), vcArray.end(), m_pChild);
+		if (it != vcArray.end())
+		{
+			dynamic_cast<CStaff*>(*it)->InheritByPlayer(XMFLOAT3(10, 0, 0));
+		}
+
 		QUADMgr.ContainedErase();
-		//QUADMgr.CollisionCheck(this);
-		//cout << "에너지 : " << m_nEnergy << endl;
-		//m_uSize = uSize;
 	}
 }
 
@@ -433,12 +434,12 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	CCamera *pCamera            = GetCamera();
 	XMFLOAT3 xv3CameraPosition  = pCamera->GetPosition();
 	int z                       = (int)(xv3CameraPosition.z / xv3Scale.z);
-	bool bReverseQuad = (z % 2);//((z % 2) != 1);
+	bool bReverseQuad = !(z % 2);//((z % 2) != 1);
 	/*높이 맵에서 카메라의 현재 위치 (x, z)의 높이(y 값)를 구한다. 이 값이 카메라의 위치에 해당하는 지형의 높이 보다 작으면 카메라가 땅속에 있게 된다.
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 8.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 4.0f;
 
 	if (xv3CameraPosition.y < fHeight)
 	{
@@ -567,7 +568,7 @@ void CInGamePlayer::Update(float fTimeElapsed)
 
 void CInGamePlayer::ForcedByObj(CEntity * pObj)
 {
-	if (dynamic_cast<CAbsorbMarble*>(pObj) == nullptr)
+	if (pObj->IsObstacle())
 	{
 		XMVECTOR xmvOtherPos = XMLoadFloat3(&pObj->GetPosition());
 		XMVECTOR toThisVector = XMLoadFloat3(&GetPosition()) - xmvOtherPos;
@@ -647,6 +648,10 @@ void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
 
 	switch (key)
 	{
+	case 'E':
+		ThrowItem();
+		return;
+
 	case 'N':
 		ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
 		EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, extra, nullptr, this);
@@ -721,6 +726,26 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 		UseEnergy(i, energyNum, bForced);
 
 	return true;
+}
+
+void CInGamePlayer::AcquireItem()
+{
+}
+
+void CInGamePlayer::ThrowItem()
+{
+	if (m_pChild)
+	{
+		CStaff * pMyItem = static_cast<CStaff*>(m_pChild);
+		
+		XMFLOAT3 ThrowVelocity;
+		Chae::XMFloat3AddAndMulFloat(&ThrowVelocity, &GetPosition(), 1.f, &GetLookVector(), 20.f);
+
+		pMyItem->ResetMaster(ThrowVelocity);
+
+		m_pChild->Release();
+		m_pChild = nullptr;
+	}
 }
 
 PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()

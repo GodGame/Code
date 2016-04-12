@@ -96,7 +96,7 @@ void CWarrockSwipingState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_SWIPING, false, nullptr, 0);
 
-	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock);
+	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock, mfMAX_RAGNE);
 }
 
 void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)

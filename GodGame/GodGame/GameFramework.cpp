@@ -392,27 +392,27 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case 'Q':
+		case '0':
 			if (m_pSceneShader) 
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 0));
 			break;
-		case 'W':
+		case '1':
 			if (m_pSceneShader)
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 1));
 			break;
-		case 'E':
+		case '2':
 			if (m_pSceneShader)
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 2));
 			break;
-		case 'R':
+		case '3':
 			if (m_pSceneShader)
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 3));
 			break;
-		case 'T':
+		case '4':
 			if (m_pSceneShader)
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 4));
 			break;
-		case 'Y':
+		case '5':
 			if (m_pSceneShader)
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 5));
 			break;

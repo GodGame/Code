@@ -17,7 +17,7 @@ float CalcShadowFactorByPCF(/*SamplerComparisonState ssShadow, Texture2D shadowM
 
 	//float fDepth = shadowPosH.z;
 
-	const float dx = 1.0 / 2048.0f;
+	const float dx = 1.0 / 1024.f; //2048.0f;
 	float percentLit = 0.0f;
 	const float2 offsets[9] =
 	{

@@ -99,7 +99,7 @@ class QuadTree
 public:
 
 private:
-	vector<CEntity*> m_vpObjectList;
+	list<CEntity*> m_vpObjectList;
 	QuadTree * m_pNodes[5];
 
 private:
@@ -198,9 +198,9 @@ class CCollisionMgr
 public:
 	static CCollisionMgr& GetInstance();
 
-	CEntity* SphereCollisionObject(CEntity * pTarget, vector<CEntity*>& vcObjList);
-	bool SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList);
-	bool SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList, vector<CEntity*>& vcContained);
+	CEntity* SphereCollisionObject(CEntity * pTarget, list<CEntity*>& vcObjList);
+	bool SphereCollisionOneToMul(CEntity * pTarget, list<CEntity*>& vcObjList);
+	bool SphereCollisionOneToMul(CEntity * pTarget, list<CEntity*>& vcObjList, vector<CEntity*>& vcContained);
 };
 #define COLLISION CCollisionMgr::GetInstance()
 

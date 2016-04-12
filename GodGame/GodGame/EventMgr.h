@@ -101,7 +101,7 @@ public:
 	virtual void MessageExecute() const
 	{
 		//if (m_pByObj)		m_pByObj->SendGameMessage(m_pToObj, m_eMessage, m_pExtra);
-		m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
+		if (m_pToObj) m_pToObj->GetGameMessage(nullptr, m_eMessage, m_pExtra);
 	}
 
 	virtual bool MessageUpdate(float fTime) const

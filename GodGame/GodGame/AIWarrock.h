@@ -32,7 +32,7 @@ private:
 	const float m_fDelay = 0.8f;
 
 	const float mfMAX_RAGNE = 30.0f;
-	CTargetDotAndDistEvaluator mEvaluator;
+	CTargetDotEvaluator mEvaluator;
 
 
 private:
@@ -52,7 +52,8 @@ class CWarrockSwipingState : public CAIState<CWarrock>
 private:
 	const float m_fDelay = 1.2f;
 
-	CTargetDotEvaluator mEvaluator;
+	const float mfMAX_RAGNE = 50.0f;
+	CTargetDotAndDistEvaluator mEvaluator;
 
 private:
 	CWarrockSwipingState() : CAIState<CWarrock>() {}

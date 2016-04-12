@@ -435,10 +435,12 @@ void QuadTree::DeleteEntity(CEntity * pObject)
 
 	EraseEntity(pObject);
 }
-
+ 
 void QuadTree::EraseEntity(CEntity * pObject)
 {
-	auto it = find_if(m_vpObjectList.begin(), m_vpObjectList.end(), [=](const CEntity * pObj) { return pObject == pObj; });
+	auto it = find_if(m_vpObjectList.begin(), m_vpObjectList.end(), 
+		[=](const CEntity * pObj) { return pObject == pObj; });
+
 	m_vpObjectList.erase(it);
 }
 
@@ -492,7 +494,7 @@ QuadTree * QuadTree::RenewalEntity(CEntity * pObject, bool bStart)
 	{
 		if (bStart)	// 시작지이면 리스트에서 제거한다.
 		{
-			vector<CEntity*>::iterator it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObj);
+			auto it = find(m_vpObjectList.begin(), m_vpObjectList.end(), pObj);
 #if 0
 			if (it == m_vpObjectList.end())
 			{
@@ -700,7 +702,7 @@ CCollisionMgr & CCollisionMgr::GetInstance()
 	return instance;
 }
 
-CEntity* CCollisionMgr::SphereCollisionObject(CEntity * pTarget, vector<CEntity*>& vcObjList)
+CEntity* CCollisionMgr::SphereCollisionObject(CEntity * pTarget, list<CEntity*>& vcObjList)
 {
 	CEntity * pObject = nullptr;
 	m_bbSphereTarget.Center = pTarget->GetPosition();
@@ -722,7 +724,7 @@ CEntity* CCollisionMgr::SphereCollisionObject(CEntity * pTarget, vector<CEntity*
 	return nullptr;
 }
 
-bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList)
+bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, list<CEntity*>& vcObjList)
 {
 	bool bCheck = false;
 	CEntity * pObject = nullptr;
@@ -746,7 +748,7 @@ bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>&
 	return bCheck;
 }
 
-bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, vector<CEntity*>& vcObjList, vector<CEntity*>& vcContained)
+bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, list<CEntity*>& vcObjList, vector<CEntity*>& vcContained)
 {
 	bool bCheck = false;
 	CEntity * pObject = nullptr;
