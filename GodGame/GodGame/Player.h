@@ -7,6 +7,7 @@
 class CPlayer : public CCharacter //public CAnimatedObject
 {
 protected:
+	int m_iPlayerNum;
 	//플레이어가 로컬 x-축(Right), y-축(Up), z-축(Look)으로 얼마만큼 회전했는가를 나타낸다.
 	float    m_fPitch;
 	float    m_fYaw;
@@ -27,10 +28,13 @@ public:
 
 	//플레이어의 현재 카메라를 설정하고 반환하는 멤버 함수를 선언한다.
 	void SetCamera(CCamera *pCamera) { m_pCamera = pCamera; }
-	CCamera *GetCamera() { return(m_pCamera); }
+	CCamera* GetCamera() { return(m_pCamera); }
 	void SetScene(CScene* pScene) { m_pScene = pScene; }
-	CScene * GetScene() { return m_pScene; }
+	CScene* GetScene() { return m_pScene; }
 	
+	void SetPlayerNum(int iNum) { m_iPlayerNum = iNum; }
+	int GetPlayerNum() { return m_iPlayerNum; }
+
 	//플레이어의 상수 버퍼를 생성하고 갱신하는 멤버 함수를 선언한다.
 	void CreateShaderVariables(ID3D11Device *pd3dDevice);
 	void UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext);
@@ -54,6 +58,7 @@ public:
 	//플레이어의 위치와 회전 정보를 경과 시간에 따라 갱신하는 함수이다.
 	virtual void Update(float fTimeElapsed);
 
+public:
 	//플레이어의 위치가 바뀔 때마다 호출되는 함수와 그 함수에서 사용하는 정보를 설정하는 함수이다.
 	virtual void OnPlayerUpdated(float fTimeElapsed);
 	void SetPlayerUpdatedContext(LPVOID pContext) { m_pUpdatedContext = pContext; }
@@ -66,6 +71,7 @@ public:
 	CCamera *OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode);
 
 	virtual void ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float fTimeElapsed);
+	virtual void CollisionProcess(float fTimeElapsed);
 	//플레이어의 위치와 회전축으로부터 월드 변환 행렬을 생성하는 함수이다.
 	virtual void OnPrepareRender();
 	//플레이어의 카메라가 3인칭 카메라일 때 플레이어 메쉬를 렌더링한다.
@@ -89,6 +95,7 @@ class CInGamePlayer : public CTerrainPlayer
 {
 public:
 	WORD mwd1HMagicShot[2] = {eANI_1H_CAST, eANI_1H_MAGIC_ATTACK};
+
 private:
 	const short mMAX_HEALTH             = 50;
 
@@ -119,13 +126,16 @@ public:
 	virtual void InitializeAnimCycleTime();
 	virtual void Update(float fTimeElapsed);
 
+	virtual void CollisionProcess(float fTimeElapsed);
 	void ForcedByObj(CEntity * pObj);
+
 public:
 	virtual void Attack(CCharacter * pToChar, short stDamage);
 	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
 	virtual void Reset();
 	virtual void Revive();
+
 public:
 	void PlayerKeyEventOn(WORD key, void * extra);
 	CStateMachine<CInGamePlayer>* GetFSM() { return m_pStateMachine; }

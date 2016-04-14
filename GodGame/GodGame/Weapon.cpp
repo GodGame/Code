@@ -130,7 +130,7 @@ void CItem::SetMaster(CGameObject * pObj)
 
 	m_pMaster = pObj;
 	// 오류나면 빼자. 부모 객체는 AddRedf 없애는 것이 나을 수도..
-	m_pMaster->AddRef();
+	//m_pMaster->AddRef();
 	m_pMaster->SetChild(this);
 }
 
@@ -139,7 +139,7 @@ void CItem::ResetMaster()
 	if (m_pMaster)
 	{
 		SetPosition(m_pMaster->GetPosition());
-		m_pMaster->Release();
+		//m_pMaster->Release();
 		m_pMaster = nullptr;
 
 		AllocPositionAndEntityQuadTree();
@@ -155,7 +155,7 @@ void CItem::ResetMaster(XMFLOAT3 & ThrowVelocity)
 
 
 		//SetPosition(xmfPos);
-		m_pMaster->Release();
+		//m_pMaster->Release();
 		m_pMaster = nullptr;
 
 		AllocPositionAndEntityQuadTree(ThrowVelocity);

@@ -275,6 +275,13 @@ public:
 	virtual ~CPlaneMesh();
 };
 
+class CDoublePlaneMesh : public CMeshTextured
+{
+public:
+	CDoublePlaneMesh(ID3D11Device * pd3dDevice, int fx, int fy);
+	virtual ~CDoublePlaneMesh();
+};
+
 class CMeshDetailTextured : public CMeshTextured
 {
 public:

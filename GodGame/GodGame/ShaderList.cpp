@@ -375,46 +375,27 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
 	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	m_nObjects = 2;
+	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	char ManagerNames[2][50] = { { "scene_skull" }, {"scene_warrok"} };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
-	//int Pos[5][2] = { {1085, 220}, {1085, 260}, {} };
 
-	CGameObject *pObject = nullptr;
+	string names[] = { "scene_portal" };
 
 	float fHeight = 0;
-	//fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
-	//m_ppObjects[0] = new CGameObject(1);
-	//m_ppObjects[0]->AddRef();
-	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
 
 	CMapManager * pHeightMapTerrain = &MAPMgr;
 	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
-	CMonster * pAnimatedObject = new CMonster(1);
-	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
-	
-	m_ppObjects[0] = pAnimatedObject;
+	CGameObject * pObject = new CPortalGate(1);
+
+	m_ppObjects[0] = pObject;
 	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
 	m_ppObjects[0]->AddRef();
 
 
-	char AnimNames[6][50] = { "scene_warrok_idle", "scene_warrok_run", "scene_warrok_roar", "scene_warrok_punch", "scene_warrok_swiping", "scene_warrok_death"};
-
-	fHeight = pHeightMapTerrain->GetHeight(1115, 275, false);
-	pAnimatedObject = new CWarrock(CWarrock::eANI_WARROCK_ANIM_NUM);
-
-	for (int i = 0; i < 6; ++i)
-		pAnimatedObject->SetMesh(meshmgr.GetObjects(AnimNames[i]), i);
-
-	pAnimatedObject->InitializeAnimCycleTime();
-	//static_cast<CWarrock*>(pAnimatedObject)->BuildObject(pAnimatedObject);
-
-	m_ppObjects[1] = pAnimatedObject;
-	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
-	m_ppObjects[1]->Rotate(0, 90.f, 0);
-	m_ppObjects[1]->AddRef();
+	//m_ppObjects[1] = pAnimatedObject;
+	//m_ppObjects[1]->SetPosition(1115, fHeight, 275);
+	//m_ppObjects[1]->Rotate(0, 90.f, 0);
+	//m_ppObjects[1]->AddRef();
 
 	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
 	//pAnimatedObject = new CAnimatedObject(1);
@@ -434,16 +415,13 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		m_ppObjects[i]->SetTexture(txmgr.GetObjects(ManagerNames[i]));
-
-		CCharacter * pAnimObject = nullptr;
-		if (pAnimObject = dynamic_cast<CCharacter*>(m_ppObjects[i]))
-		{
-			pAnimObject->SetCollide(true);
-			pAnimObject->UpdateFramePerTime();
-			pAnimObject->SetUpdatedContext(pHeightMapTerrain);
-		}
+		m_ppObjects[i]->SetMesh(meshmgr.GetObjects(names[i]));
+		m_ppObjects[i]->SetTexture(txmgr.GetObjects(names[i]));
+		m_ppObjects[i]->SetCollide(true);
+		//m_ppObjects[i]->UpdateBoundingBox();
 	}
+
+	EntityAllStaticObjects();
 	/// 이상 스테틱 객체들
 }
 
@@ -452,13 +430,13 @@ void CStaticShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	ID3D11ShaderResourceView * pd3dNullSRV[] = { nullptr, nullptr };
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
-	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+	CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
 		//카메라의 절두체에 포함되는 객체들만을 렌더링한다.
 		//m_ppObjects[j]->SetActive(true);
-		if (m_ppObjects[j]->IsVisible(pCamera))
+		if (m_ppObjects[j]->IsVisible())
 		{
 			pd3dDeviceContext->PSSetShaderResources(2, 2, pd3dNullSRV);
 			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
@@ -911,7 +889,64 @@ void CPointInstanceShader::AnimateObjects(float fTimeElapsed)
 	}
 }
 #pragma endregion
+#pragma region BlackAlpha
+CBlackAlphaShader::CBlackAlphaShader() : CShader()
+{
+}
 
+CBlackAlphaShader::~CBlackAlphaShader()
+{
+}
+
+void CBlackAlphaShader::CreateShader(ID3D11Device * pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputElements);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSTexturedColor", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSTexturedBlackAlpha", "ps_5_0", &m_pd3dPixelShader);
+}
+
+void CBlackAlphaShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+{
+	m_nObjects = 1;
+	
+	CTexture * pTexture = new CTexture(1, 1);
+	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_portal_zone_01"));
+	pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+	CGameObject * pObject = nullptr;
+	m_ppObjects = new CGameObject*[m_nObjects];
+	pObject = new CGameObject(1);
+	pObject->SetMesh(new CDoublePlaneMesh(pd3dDevice, 28, 28));
+
+	pObject->SetMaterial(MaterialMgr.GetObjects("WhiteLight")); //pMaterial);
+	pObject->SetTexture(pTexture);
+
+	pObject->SetPosition(1084.5f, 157, 260);
+	pObject->UpdateBoundingBox();
+	m_ppObjects[0] = pObject;
+
+	EntityAllStaticObjects();
+}
+
+void CBlackAlphaShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
+{
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		//m_ppObjects[j]->UpdateBoundingBox();
+		if (m_ppObjects[j]->IsVisible())
+		{
+			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
+		}
+	}
+}
+#pragma endregion
 CNormalShader::CNormalShader()
 {
 	m_pMaterial = nullptr;

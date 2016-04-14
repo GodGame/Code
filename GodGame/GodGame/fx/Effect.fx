@@ -132,6 +132,23 @@ PS_MRT_OUT PSTexturedColor(VS_TEXTURED_COLOR_OUTPUT input)
 	return(output);
 }
 
+PS_MRT_OUT PSTexturedBlackAlpha(VS_TEXTURED_COLOR_OUTPUT input)
+{
+	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord);
+	float fAlpha = dot(cColor, float4(1, 1, 1, 0)) * 0.333f;
+	if (fAlpha <= 0.4f) discard;
+	cColor.a = fAlpha;
+
+	PS_MRT_OUT output;
+	output.vNormal = float4(1, 1, 1, input.position.w * gfDepthFar);
+	output.vPos = float4(input.posW, 1.0f);
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 0.0f/*fShadowFactor*/);
+	output.vSpec = gMaterial.m_cSpecular;
+	output.vTxColor = cColor;
+
+	return(output);
+}
+
 // 스카이박스 큐브맵 전용 -----------------------------
 VS_SKYBOX_CUBEMAP_OUTPUT VSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_INPUT input)
 {
@@ -713,7 +730,7 @@ PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 	PS_MRT_OUT output;
 	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
 	output.vPos     = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 1.0f);// +glow;
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1.0f);// +glow;
 	output.vSpec    = float4(gMaterial.m_cSpecular.rgb, TxSpecluar.Sample(gSamplerState, input.tex).r) + glow;
 	output.vTxColor = color + glow;
 	return output;

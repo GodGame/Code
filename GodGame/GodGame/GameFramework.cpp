@@ -642,7 +642,7 @@ void CGameFramework::ProcessInput()
 	//ClientToScreen(m_hWnd, &ptCursorPos);	// SetCursorPos랑 같이 쓰인다.
 	gpScene->SetMouseCursor(m_hWnd, ptCursorPos);
 
-	if (gpScene) bProcessedByScene = gpScene->ProcessInput(m_hWnd, m_GameTimer.GetTimeElapsed(), ptCursorPos);
+	gpScene->ProcessInput(m_hWnd, m_GameTimer.GetTimeElapsed(), ptCursorPos);
 }
 
 void CGameFramework::AnimateObjects()

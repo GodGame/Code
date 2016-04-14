@@ -28,8 +28,6 @@ void CEntity::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
 		return;
 	case eMessage::MSG_COLLIDED:
 		return;
-	case eMessage::MSG_NORMAL:
-		return;
 	}
 }
 

@@ -72,7 +72,7 @@ float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad) const
 	//높이 맵의 x-좌표와 z-좌표가 높이 맵의 범위를 벗어나면 지형의 높이는 0이다.
 	if ((fx < 0.0f) || (fz < 0.0f) || (fx >= m_nWidth) || (fz >= m_nLength)) return(0.0f);
 	//높이 맵의 좌표의 정수 부분과 소수 부분을 계산한다.
-	int x = (int)fx, z = (int)fz;
+	int x = fx, z = fz;
 	float fxPercent = fx - x, fzPercent = fz - z;
 
 	float fTopLeft = m_pHeightMapImage[x + (z*m_nWidth)];
@@ -82,7 +82,11 @@ float CHeightMap::GetHeight(float fx, float fz, bool bReverseQuad) const
 
 	if (bReverseQuad)
 	{
-		/*지형의 삼각형들이 오른쪽에서 왼쪽 방향으로 나열되는 경우이다. <그림 12>의 오른쪽은 (fzPercent < fxPercent)인 경우이다. 이 경우 TopLeft의 픽셀 값은 (fTopLeft = fTopRight + (fBottomLeft - fBottomRight))로 근사한다. <그림 12>의 왼쪽은 (fzPercent ≥ fxPercent)인 경우이다. 이 경우 BottomRight의 픽셀 값은 (fBottomRight = fBottomLeft + (fTopRight - fTopLeft))로 근사한다.*/
+		/*지형의 삼각형들이 오른쪽에서 왼쪽 방향으로 나열되는 경우이다. 
+		<그림 12>의 오른쪽은 (fzPercent < fxPercent)인 경우이다. 
+		이 경우 TopLeft의 픽셀 값은 (fTopLeft = fTopRight + (fBottomLeft - fBottomRight))로 근사한다.
+		<그림 12>의 왼쪽은 (fzPercent ≥ fxPercent)인 경우이다. 
+		이 경우 BottomRight의 픽셀 값은 (fBottomRight = fBottomLeft + (fTopRight - fTopLeft))로 근사한다.*/
 		if (fzPercent >= fxPercent)
 			fBottomRight = fBottomLeft + (fTopRight - fTopLeft);
 		else

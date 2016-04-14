@@ -282,8 +282,8 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	HRESULT hr = 0;
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Miscellaneous/Brick02.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_brick2_jpg", 0);
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/PortalZone01.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_portal_zone_01", 0);
 	pd3dsrvTexture->Release();
 	
 	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
@@ -298,7 +298,10 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_loading.png", 0);
 	pd3dsrvTexture->Release();
 
-	
+	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/skull"), _T("png"), 1);
+	InsertShaderResourceView(pd3dsrvTexture, "srv_skull_array", 0);
+	pd3dsrvTexture->Release();
+
 	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_fire"), _T("png"), 2);
 	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
 	pd3dsrvTexture->Release();
@@ -347,13 +350,14 @@ CTexture * CTextureMgr::MakeFbxcjhTextures(ID3D11Device * pd3dDevice, wstring & 
 	CTexture * pTexture = new CTexture(vcFileNameArrays.size(), 1, nStartTxSlot, 0);
 	pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
-	for (int i = 0; i < vcFileNameArrays.size(); ++i)
+	int index = 0;
+	for (int i = 0; i < vcFileNameArrays.size(); ++i, ++index)
 	{
-		vcFileNameArrays[i] = wstrBaseDir + vcFileNameArrays[i];
-		LPCWSTR wstr = vcFileNameArrays[i].c_str();
+		vcFileNameArrays[index] = wstrBaseDir + vcFileNameArrays[i];
+		LPCWSTR wstr = vcFileNameArrays[index].c_str();
 
-		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, vcFileNameArrays[i].c_str(), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-		pTexture->SetTexture(i, pd3dsrvTexture);
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, vcFileNameArrays[index].c_str(), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pTexture->SetTexture(index, pd3dsrvTexture);
 		pd3dsrvTexture->Release();
 	}
 
@@ -437,9 +441,9 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "White");
 
 	pMaterial = new CMaterial();
-	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.5f, 1.5f, 1.5f, 0.8f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(2.0f, 2.0f, 2.0f, 4.0f);
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.8f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(4.0f, 4.0f, 4.0f, 4.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "WhiteLight");
 

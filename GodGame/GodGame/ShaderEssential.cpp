@@ -15,9 +15,7 @@ static float GaussianDistribution(float x, float y, float rho)
 
 	return g;
 }
-
-#pragma region PlayerShader
-
+#pragma region  SCENESHADER
 CSceneShader::CSceneShader() : CTexturedShader()
 {
 	m_fTotalTime = m_fFrameTime = 0;
@@ -746,9 +744,9 @@ void CSceneShader::UpdateShaders(ID3D11DeviceContext * pd3dDeviceContext)
 {
 	m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 }
-
+#pragma endregion
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#pragma region PlayerShader
 CPlayerShader::CPlayerShader() : CShader()
 {
 }
@@ -800,6 +798,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
 		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial);
 		pPlayer->SetCollide(true);
+		pPlayer->SetPlayerNum(j);
 		pPlayer->AddRef();
 		m_ppObjects[j] = pPlayer;
 
@@ -816,14 +815,14 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 		}
 
 		char name[56];
-		for (int i = 1; i <= 7; ++i)
+		for (int i = 1; i < 7; ++i)
 		{
 			CRevolvingObject * pObject = nullptr;
 			pObject = new CRevolvingObject(1);
 			pObject->SetRevolutionAxis(XMFLOAT3(0, 1, 0));
 			pObject->SetRevolutionSpeed(60.0f);
 
-			sprintf(name, "scene_staff1_%d", i);
+			sprintf(name, "scene_staff0_%d", i);
 
 			pObject->SetMesh(mgrScene.mgrMesh.GetObjects(name));
 			pObject->SetTexture(mgrScene.mgrTexture.GetObjects(name));
@@ -854,11 +853,13 @@ void CPlayerShader::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nObjects; ++i)
 	{
+		//m_ppObjects[i]->
 		m_ppObjects[i]->Animate(fTimeElapsed);
 	}
 }
 #pragma endregion PlayerShader
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region Terrain
 CTerrainShader::CTerrainShader() : CSplatLightingShader()
 {
 	m_nLayerNumber = 0;
@@ -997,8 +998,8 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
 	XMFLOAT3 xv3Scale(8.0f, 1.5f, 8.0f);
-	const int ImageWidth = 255;
-	const int ImageLength = 255;
+	const int ImageWidth = 256;
+	const int ImageLength = 256;
 
 	/*지형을 높이 맵 이미지 파일을 사용하여 생성한다. 높이 맵 이미지의 크기는 가로x세로(257x257)이고 격자 메쉬의 크기는 가로x세로(17x17)이다.
 	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
@@ -1147,7 +1148,9 @@ void CWaterShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 	m_ppObjects[0]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
 }
-
+#pragma endregion
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region SKYBOX
 CSkyBoxShader::CSkyBoxShader()
 {
 }
@@ -1195,7 +1198,9 @@ void CSkyBoxShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 
 	m_ppObjects[0]->Render(pd3dDeviceContext, uRenderState, pCamera);
 }
-
+#pragma endregion
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma region SSAO
 CSSAOShader::CSSAOShader()
 {
 	m_pMesh = nullptr;
@@ -1321,8 +1326,8 @@ void CSSAOShader::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext, 
 	//pd3dDeviceContext->VSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 	//pd3dDeviceContext->PSSetConstantBuffers(CB_SLOT_SSAO, 1, &m_pd3dcbSSAOInfo);
 }
+#pragma endregion
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 CUIShader::CUIShader() : CShader()
 {
 	m_pBackRTV             = nullptr;

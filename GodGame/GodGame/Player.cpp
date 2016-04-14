@@ -8,6 +8,7 @@
 
 CPlayer::CPlayer(int nMeshes) : CCharacter(nMeshes)
 {
+	m_iPlayerNum			= -1;
 	m_pCamera               = nullptr;
 
 	m_fPitch                = 0.0f;
@@ -48,6 +49,8 @@ void CPlayer::InitPosition(XMFLOAT3 xv3Position)
 void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 {
 	if (false == m_Status.IsCanMove()) return;
+	//if (GetAniMesh()->GetIn)
+
 	if (dwDirection)
 	{
 		WORD wdNextState = 0;
@@ -212,6 +215,8 @@ void CPlayer::Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle)
 
 void CPlayer::Update(float fTimeElapsed)
 {
+	CCharacter::Update(fTimeElapsed);
+#if 0
 	/*플레이어의 속도 벡터를 중력 벡터와 더한다. 중력 벡터에 fTimeElapsed를 곱하는 것은 중력을 시간에 비례하도록 적용한다는 의미이다.*/
 	m_xv3Velocity.y += m_fGravity * fTimeElapsed;
 	/*플레이어의 속도 벡터의 XZ-성분의 크기를 구한다. 이것이 XZ-평면의 최대 속력보다 크면 속도 벡터의 x와 z-방향 성분을 조정한다.*/
@@ -239,23 +244,24 @@ void CPlayer::Update(float fTimeElapsed)
 
 	if (m_pCamera)
 	{
-		DWORD nCurrentCameraMode = m_pCamera->GetMode();
+		//DWORD nCurrentCameraMode = m_pCamera->GetMode();
 		//플레이어의 위치가 변경되었으므로 카메라의 상태를 갱신한다.
 		m_pCamera->Update(m_xv3Position, fTimeElapsed);
-
-		if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
-		{
-			//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
-			if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
-			//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
-			m_pCamera->SetLookAt(m_xv3Position);
-		}
-		else if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
+		//if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
+		//{
+		//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
+		//if (m_pCameraUpdatedContext) 
+		//	OnCameraUpdated(fTimeElapsed);
+		//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
+		//m_pCamera->SetLookAt(m_xv3Position);
+		//}
+		if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
 		//카메라의 카메라 변환 행렬을 다시 생성한다.
 		m_pCamera->RegenerateViewMatrix();
 	}
 
 	CCharacter::CalculateFriction(fTimeElapsed);
+#endif
 }
 
 CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode)
@@ -326,6 +332,19 @@ void CPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, float
 {
 }
 
+void CPlayer::CollisionProcess(float fTimeElapsed)
+{
+	// HACK : 나중에 서버 처리할 것. 일단은 컨트롤하는 플레이어만 충돌체크 하도록 한다.
+	vector<CEntity*> vcArray = QUADMgr.CollisionCheckList(this);
+	auto it = find(vcArray.begin(), vcArray.end(), m_pChild);
+	if (it != vcArray.end())
+	{
+		dynamic_cast<CStaff*>(*it)->InheritByPlayer(XMFLOAT3(10, 0, 0));
+	}
+
+	QUADMgr.ContainedErase();
+}
+
 void CPlayer::OnPrepareRender()
 {
 	m_xmf44World._11 = m_xv3Right.x;
@@ -350,21 +369,14 @@ void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, 
 
 void CPlayer::Animate(float fTimeElapsed)
 {
-	CGameObject::Animate(fTimeElapsed);
-	CAnimatedObject::Animate(fTimeElapsed);
+	Update(fTimeElapsed);
 
-	// HACK : 나중에 서버 처리할 것. 일단은 컨트롤하는 플레이어만 충돌체크 하도록 한다.
-	//if (m_pCamera)
-	{
-		vector<CEntity*> vcArray = QUADMgr.CollisionCheckList(this);
-		auto it = find(vcArray.begin(), vcArray.end(), m_pChild);
-		if (it != vcArray.end())
-		{
-			dynamic_cast<CStaff*>(*it)->InheritByPlayer(XMFLOAT3(10, 0, 0));
-		}
+	CGameObject::Animate(fTimeElapsed); // child, sibling
+	CAnimatedObject::Animate(fTimeElapsed); 
 
-		QUADMgr.ContainedErase();
-	}
+	CollisionProcess(fTimeElapsed);
+
+	OnCameraUpdated(fTimeElapsed);
 }
 
 ///////////////////
@@ -429,6 +441,10 @@ void CTerrainPlayer::OnPlayerUpdated(float fTimeElapsed)
 
 void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 {
+	if (nullptr == m_pCamera) return;
+
+	m_pCamera->Update(m_xv3Position, fTimeElapsed);
+
 	CMapManager *pTerrain		= (CMapManager*)m_pCameraUpdatedContext;
 	XMFLOAT3 xv3Scale           = pTerrain->GetScale();
 	CCamera *pCamera            = GetCamera();
@@ -445,20 +461,13 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	{
 		xv3CameraPosition.y = fHeight;
 		pCamera->SetPosition(xv3CameraPosition);
-
-		//3인칭 카메라의 경우 카메라의 y-위치가 변경되었으므로 카메라가 플레이어를 바라보도록 한다.
-		if (pCamera->GetMode() == THIRD_PERSON_CAMERA)
-		{
-			CThirdPersonCamera *p3rdPersonCamera = (CThirdPersonCamera *)pCamera;
-			XMFLOAT3 look = GetPosition();
-			look.y += 1.0f;
-			//XMFLOAT3 pos = GetPosition();
-			//XMFLOAT3 look = GetLookVector();
-			//XMStoreFloat3(&pos, XMLoadFloat3(&pos) + ( XMLoadFloat3(&look) * 60.0f));
-
-			p3rdPersonCamera->SetLookAt(look);
-		}
 	}
+
+	XMFLOAT3 look = GetPosition();
+	look.y += 5.0f;
+	pCamera->SetLookAt(look);
+
+	m_pCamera->RegenerateViewMatrix();
 }
 
 CInGamePlayer::CInGamePlayer(int m_nMeshes) : CTerrainPlayer(m_nMeshes)
@@ -492,7 +501,7 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
 	CInGamePlayer::SetCameraUpdatedContext(pTerrain);
 	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
-	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 1000.0f, 300));
+	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 300.0f, 300));
 
 	Reset();
 }
@@ -564,6 +573,19 @@ void CInGamePlayer::Update(float fTimeElapsed)
 {
 	m_pStateMachine->Update(fTimeElapsed);
 	CPlayer::Update(fTimeElapsed);
+}
+
+void CInGamePlayer::CollisionProcess(float fTimeElapsed)
+{
+	// HACK : 나중에 서버 처리할 것. 일단은 컨트롤하는 플레이어만 충돌체크 하도록 한다.
+	vector<CEntity*> vcArray = QUADMgr.CollisionCheckList(this);
+	auto it = find(vcArray.begin(), vcArray.end(), m_pChild);
+	if (it != vcArray.end())
+	{
+		dynamic_cast<CStaff*>(*it)->InheritByPlayer(XMFLOAT3(10, 0, 0));
+	}
+
+	QUADMgr.ContainedErase();
 }
 
 void CInGamePlayer::ForcedByObj(CEntity * pObj)

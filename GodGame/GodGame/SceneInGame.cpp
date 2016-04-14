@@ -76,6 +76,31 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
 	}
+	// 포탈
+	{
+		pTexture = new CTexture(3, 1, 0, 0);
+
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Portal/portal_diffuse.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pTexture->SetTexture(0, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
+
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Portal/portal_normals.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pTexture->SetTexture(1, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
+
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Portal/portal_specular.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		pTexture->SetTexture(2, pd3dsrvTexture);
+		pd3dsrvTexture->Release();
+
+		pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Portal/portal.fbxcjh"), 0.5f, vcTxFileNames);
+		//pMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Portal/portal.chae"), 0.5f); 
+		vcTxFileNames.clear();
+
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_portal");
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_portal");
+	}
 
 	// 플레이어 캐릭터
 	{
@@ -205,10 +230,10 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pStaticObjectsShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
 		m_ppShaders[index++] = pStaticObjectsShader;
 
-		CItemShader *pItemShader = new CItemShader();
-		pItemShader->CreateShader(pd3dDevice);
-		pItemShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
-		m_ppShaders[index++] = pItemShader;
+		CStaticModelingShader *pStaticShader = new CStaticModelingShader();
+		pStaticShader->CreateShader(pd3dDevice);
+		pStaticShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
+		m_ppShaders[index++] = pStaticShader;
 
 		CPointInstanceShader *pPointShader = new CPointInstanceShader();
 		pPointShader->CreateShader(pd3dDevice);
@@ -521,7 +546,7 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 				pPlayer->Move(dwDirection, 50.0f * fFrameTime, true);
 		}
 		//플레이어를 실제로 이동하고 카메라를 갱신한다. 중력과 마찰력의 영향을 속도 벡터에 적용한다.
-		pPlayer->Update(fFrameTime);
+		//pPlayer->Update(fFrameTime);
 	}
 	if (pKeyBuffer[VK_SPACE] & 0xF0)
 	{

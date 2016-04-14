@@ -130,6 +130,17 @@ public:
 	//ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
 };
 
+class CBlackAlphaShader : public CShader
+{
+public:
+	CBlackAlphaShader();
+	virtual ~CBlackAlphaShader();
+
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+};
+
 class CNormalShader : public CNormalMapShader
 {
 	CTexture  * m_pTexture;

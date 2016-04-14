@@ -102,7 +102,7 @@ void CEffectShader::ShaderKeyEventOn(CPlayer * pPlayer, WORD key, void * extra)
 	}
 }
 
-	void CEffectShader::BuildObjects(ID3D11Device * pd3dDevice)
+void CEffectShader::BuildObjects(ID3D11Device * pd3dDevice)
 {
 	m_nShaders = 2;
 	m_ppShader = new CShader*[m_nShaders];
@@ -118,26 +118,55 @@ void CEffectShader::ShaderKeyEventOn(CPlayer * pPlayer, WORD key, void * extra)
 	m_ppShader[1] = pParticleShader;
 }
 
-	void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	XMFLOAT4 xmf4Data;
+	CInGamePlayer * pPlayer = nullptr; static_cast<CInGamePlayer*>(extra);
+
+	switch (eMSG)
 	{
-		XMFLOAT4 xmf4Data;
-		CInGamePlayer * pPlayer = nullptr; static_cast<CInGamePlayer*>(extra);
+	case eMessage::MSG_PARTICLE_ON:
+		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
+		static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(nullptr, (XMFLOAT3*)&xmf4Data, xmf4Data.w);
+		return;
 
-		switch (eMSG)
-		{
-		case eMessage::MSG_PARTICLE_ON:
-			memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
-			static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(nullptr, (XMFLOAT3*)&xmf4Data, xmf4Data.w);
-			return;
+	case eMessage::MSG_MAGIC_SHOT:
+		pPlayer = static_cast<CInGamePlayer*>(extra);
+		static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
+		return;
 
-		case eMessage::MSG_MAGIC_SHOT:
-			pPlayer = static_cast<CInGamePlayer*>(extra);
-			static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
-			return;
-
-		case eMessage::MSG_MAGIC_AREA:
-			pPlayer = static_cast<CInGamePlayer*>(extra);
-			((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(0, pPlayer, &pPlayer->GetCenterPosition());
-			return;
-		}
+	case eMessage::MSG_MAGIC_AREA:
+		pPlayer = static_cast<CInGamePlayer*>(extra);
+		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(0, pPlayer, &pPlayer->GetCenterPosition());
+		return;
 	}
+}
+
+CStaticModelingShader::CStaticModelingShader()
+{
+}
+
+CStaticModelingShader::~CStaticModelingShader()
+{
+}
+
+void CStaticModelingShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+{
+	m_nShaders = 3;
+	m_ppShader = new CShader*[m_nShaders];
+
+	CItemShader *pItemShader = new CItemShader();
+	pItemShader->CreateShader(pd3dDevice);
+	pItemShader->BuildObjects(pd3dDevice, pMaterial, SceneMgr);
+	m_ppShader[0] = pItemShader;
+
+	CStaticShader *pStaticShader = new CStaticShader();
+	pStaticShader->CreateShader(pd3dDevice);
+	pStaticShader->BuildObjects(pd3dDevice, pMaterial, SceneMgr);
+	m_ppShader[1] = pStaticShader;
+
+	CBlackAlphaShader *pBlackImageShader = new CBlackAlphaShader();
+	pBlackImageShader->CreateShader(pd3dDevice);
+	pBlackImageShader->BuildObjects(pd3dDevice, pMaterial, SceneMgr);
+	m_ppShader[2] = pBlackImageShader;
+}

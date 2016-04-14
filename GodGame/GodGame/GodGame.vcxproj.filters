@@ -163,6 +163,12 @@
     <ClInclude Include="ParentShader.h">
       <Filter>Local\4_Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="SystemManager.h">
+      <Filter>Global\2_Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="SystemObject.h">
+      <Filter>Local\5_Objects\Object</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -251,6 +257,12 @@
     </ClCompile>
     <ClCompile Include="ParentShader.cpp">
       <Filter>Local\4_Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemManager.cpp">
+      <Filter>Global\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="SystemObject.cpp">
+      <Filter>Local\5_Objects\Object</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

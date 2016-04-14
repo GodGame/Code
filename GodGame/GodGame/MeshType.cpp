@@ -189,7 +189,7 @@ MeshBuffer CMesh::GetNormalMapVertexBufferAndCalculateTangent(ID3D11Device * pd3
 	XMVECTOR edge1, edge2;
 	XMFLOAT3 tangent[3], normal[3];
 
-	int CalIndex[] = { 1, 2, 1, 2, 1, 2 }; 
+	int CalIndex[] = { +1, +2, +1, -1, -2, -1 };//{ 1, 2, 1, 2, 1, 2 }; 
 	UINT offsetLeft3 = 0, offset = 0;
 
 	for (unsigned int i = 0; i < nVertices; ++i)
@@ -287,8 +287,8 @@ void CMesh::CreateRasterizerState(ID3D11Device *pd3dDevice)
 	D3D11_RASTERIZER_DESC d3dRasterizerDesc;
 	ZeroMemory(&d3dRasterizerDesc, sizeof(D3D11_RASTERIZER_DESC));
 	//래스터라이저 단계에서 컬링(은면 제거)을 하지 않도록 래스터라이저 상태를 생성한다.
-	d3dRasterizerDesc.CullMode        = D3D11_CULL_NONE;
-	d3dRasterizerDesc.FillMode        = D3D11_FILL_WIREFRAME;
+	d3dRasterizerDesc.CullMode        = D3D11_CULL_BACK;
+	d3dRasterizerDesc.FillMode		  = D3D11_FILL_SOLID;//D3D11_FILL_WIREFRAME;
 	d3dRasterizerDesc.DepthClipEnable = true;
 	pd3dDevice->CreateRasterizerState(&d3dRasterizerDesc, &m_pd3dRasterizerState);
 }
@@ -1267,13 +1267,77 @@ CPlaneMesh::CPlaneMesh(ID3D11Device * pd3dDevice, int fx, int fy) : CMeshTexture
 	UINT pnBufferOffsets[2] = { 0, 0 };
 	AssembleToVertexBuffer(2, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
 
-	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-FLT_MIN, -FLT_MIN, 0);
-	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+FLT_MAX, +FLT_MAX, 0);
+	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-fx, -fy, 0);
+	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+fx, +fy, 0);
 }
 
 CPlaneMesh::~CPlaneMesh()
 {
+}
 
+CDoublePlaneMesh::CDoublePlaneMesh(ID3D11Device * pd3dDevice, int fx, int fy) : CMeshTextured(pd3dDevice)
+{
+	m_nVertices = 4;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;//D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+
+	XMFLOAT2 pxv2TexCoords[4];
+	m_pxv3Positions = new XMFLOAT3[m_nVertices];
+
+	int i = 0;
+	m_pxv3Positions[0] = XMFLOAT3(-fx, +fy, 0); pxv2TexCoords[i++] = XMFLOAT2(0.0f, 0.0f);
+	m_pxv3Positions[1] = XMFLOAT3(+fx, +fy, 0); pxv2TexCoords[i++] = XMFLOAT2(1.0f, 0.0f);
+	m_pxv3Positions[2] = XMFLOAT3(-fx, -fy, 0); pxv2TexCoords[i++] = XMFLOAT2(0.0f, 1.0f);
+	m_pxv3Positions[3] = XMFLOAT3(+fx, -fy, 0); pxv2TexCoords[i++] = XMFLOAT2(1.0f, 1.0f);
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = m_pxv3Positions;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
+
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
+	d3dBufferData.pSysMem = pxv2TexCoords;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
+
+	ID3D11Buffer *pd3dBuffers[2] = { m_pd3dPositionBuffer,  m_pd3dTexCoordBuffer };
+	UINT pnBufferStrides[2] = { sizeof(XMFLOAT3), sizeof(XMFLOAT2) };
+	UINT pnBufferOffsets[2] = { 0, 0 };
+	AssembleToVertexBuffer(2, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+
+	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(-fx, -fy, 0);
+	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3(+fx, +fy, 0);
+
+
+	// 인덱스 버퍼 생성
+	m_nIndices = 12;
+	m_pnIndices = new UINT[m_nIndices];
+
+	m_pnIndices[0] = 0; m_pnIndices[1] = 2; m_pnIndices[2] = 1; 
+	m_pnIndices[3] = 2; m_pnIndices[4] = 3; m_pnIndices[5] = 1;
+	m_pnIndices[6] = 0; m_pnIndices[7] = 1; m_pnIndices[8] = 2;
+	m_pnIndices[9] = 2; m_pnIndices[10] = 1; m_pnIndices[11] = 3;
+
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(UINT)* m_nIndices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	d3dBufferData.pSysMem = m_pnIndices;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
+
+	m_nStartIndex = 0;
+
+	CreateRasterizerState(pd3dDevice);
+}
+
+CDoublePlaneMesh::~CDoublePlaneMesh()
+{
 }
 
 CLoadMeshByChae::CLoadMeshByChae(ID3D11Device * pd3dDevice, char * tMeshName, float fScale) : CMeshTexturedIlluminated(pd3dDevice)
