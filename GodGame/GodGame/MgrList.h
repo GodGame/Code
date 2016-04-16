@@ -8,6 +8,7 @@
 #include "CollisionMgr.h"
 #include "EventMgr.h"
 #include "MapManager.h"
+#include "SystemManager.h"
 
 class CManagers
 {
@@ -20,6 +21,7 @@ public:
 		ShadowMgr.CreateShadowDevice(pd3dDevice);
 		UIMgr.BuildResources();
 		EVENTMgr.Initialize();
+		SYSTEMMgr.Build(pd3dDevice);
 		//MESHMgr.BuildResources(pd3dDevice);
 	}
 
@@ -27,6 +29,7 @@ public:
 	{
 		QUADMgr.Update(pCamera);
 		EVENTMgr.Update(fFrameTime);
+		SYSTEMMgr.Update(fFrameTime);
 	}
 
 	static void ReleaseManagers()

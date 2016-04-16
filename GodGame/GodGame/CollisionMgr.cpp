@@ -239,7 +239,10 @@ QuadTree::QuadTree()
 
 QuadTree::~QuadTree()
 {
-	for (int i = 0; i < 4; ++i) if (m_pNodes[i]) delete m_pNodes[i];
+	for (int i = 0; i < 4; ++i) 
+		if (m_pNodes[i]) 
+			delete m_pNodes[i];
+	m_vpObjectList.clear();
 }
 
 void QuadTree::BuildNodes(XMFLOAT3 & xmf3Center, UINT uWidth, UINT uLength, QuadTree * pParent, UINT uLevel)
@@ -563,11 +566,8 @@ void CQuadTreeManager::ReleaseQuadTree()
 	if (m_pRootTree) delete m_pRootTree;
 	m_pRootTree = nullptr;
 
-	for (int i = 0; i < m_vcDynamicArray.size(); ++i)
-		m_vcDynamicArray.pop_back();
-
-	for (int i = 0; i < m_vcContainedArray.size(); ++i)
-		m_vcContainedArray.pop_back();
+	m_vcDynamicArray.clear();
+	m_vcContainedArray.clear();
 }
 
 void CQuadTreeManager::FrustumCullObjects(CCamera * pCamera)

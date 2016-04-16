@@ -226,7 +226,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 	{
 		float fxTerrain = xmf3Pos.x = rand() % cxTerrain;
 		float fzTerrain = xmf3Pos.z = rand() % czTerrain;
-		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, false) + 18;
+		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2)) + 18;
 		pTree = new CBillboardObject(xmf3Pos, i, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
 		pTree->SetSize(20.0f);
@@ -378,17 +378,12 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-
 	string names[] = { "scene_portal" };
 
-	float fHeight = 0;
-
 	CMapManager * pHeightMapTerrain = &MAPMgr;
-	fHeight = pHeightMapTerrain->GetHeight(1085, 260, true);
-	CGameObject * pObject = new CPortalGate(1);
-
-	m_ppObjects[0] = pObject;
-	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
+	float fHeight = pHeightMapTerrain->GetHeight(1085, 480, false);
+	m_ppObjects[0] = SYSTEMMgr.GetPortalGate();
+	m_ppObjects[0]->SetPosition(1085, fHeight, 480);
 	m_ppObjects[0]->AddRef();
 
 
@@ -859,7 +854,7 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 			pnTreeInstance[nCubeInstance] = pTree->GetInstanceData();
 			nCubeInstance++;
 		}
-		m_ppObjects[j]->SetActive(false);
+		m_ppObjects[j]->SetVisible(false);
 	}
 #endif
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
@@ -913,20 +908,13 @@ void CBlackAlphaShader::CreateShader(ID3D11Device * pd3dDevice)
 void CBlackAlphaShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_nObjects = 1;
-	
-	CTexture * pTexture = new CTexture(1, 1);
-	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_portal_zone_01"));
-	pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	CGameObject * pObject = nullptr;
 	m_ppObjects = new CGameObject*[m_nObjects];
-	pObject = new CGameObject(1);
-	pObject->SetMesh(new CDoublePlaneMesh(pd3dDevice, 28, 28));
+	pObject = SYSTEMMgr.GetPortalZoneObject();
+	pObject->AddRef();
 
-	pObject->SetMaterial(MaterialMgr.GetObjects("WhiteLight")); //pMaterial);
-	pObject->SetTexture(pTexture);
-
-	pObject->SetPosition(1084.5f, 157, 260);
+	pObject->SetPosition(SYSTEMMgr.GetPortalGate()->GetZonePosition());
 	pObject->UpdateBoundingBox();
 	m_ppObjects[0] = pObject;
 
@@ -939,7 +927,6 @@ void CBlackAlphaShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRe
 
 	for (int j = 0; j < m_nObjects; j++)
 	{
-		//m_ppObjects[j]->UpdateBoundingBox();
 		if (m_ppObjects[j]->IsVisible())
 		{
 			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
@@ -1110,18 +1097,6 @@ void CTextureAniShader::CreateShader(ID3D11Device * pd3dDevice)
 
 void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
 {
-	//D3D11_DEPTH_STENCIL_DESC d3dDepthStencilDesc;
-	//ZeroMemory(&d3dDepthStencilDesc, sizeof(d3dDepthStencilDesc));
-	//d3dDepthStencilDesc.DepthEnable = false;
-	//d3dDepthStencilDesc.StencilEnable = false;
-	//d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	//pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dSODepthStencilState);
-
-	//d3dDepthStencilDesc.DepthEnable = true;
-	//d3dDepthStencilDesc.StencilEnable = false;
-	//d3dDepthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; //D3D11_DEPTH_WRITE_MASK_ZERO;
-	//pd3dDevice->CreateDepthStencilState(&d3dDepthStencilDesc, &m_pd3dDepthStencilState);
-
 	D3D11_BLEND_DESC d3dBlendStateDesc;
 	ZeroMemory(&d3dBlendStateDesc, sizeof(D3D11_BLEND_DESC));
 	d3dBlendStateDesc.IndependentBlendEnable = false;
@@ -1379,7 +1354,7 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	pd3dDeviceContext->OMSetBlendState(m_pd3dBlendState, nullptr, 0xffffffff);
 	for (auto it = m_vcUsingParticleArray.begin(); it != m_vcUsingParticleArray.end(); ++it)
 	{
-		if (it->second->IsActvie())
+		if (it->second->IsVisible())
 			it->second->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 

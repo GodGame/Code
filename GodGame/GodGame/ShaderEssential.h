@@ -355,12 +355,21 @@ public:
 
 class CInGameUIShader : public CUIShader
 {
+	const int miResultIndex = 0;
+	const string mWinLogo = "win_logo";
+	const string mLoseLogo = "lose_logo";
+
+	CMgr<CTexture> mTextureList;
+
 public:
 	CInGameUIShader();
 	virtual ~CInGameUIShader();
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+
+	void UIReadyWinLogo(bool Visible);
+	void UIReadyLoseLogo(bool Visible);
 };
 
 #endif

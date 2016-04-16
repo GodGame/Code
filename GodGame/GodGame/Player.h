@@ -97,23 +97,13 @@ public:
 	WORD mwd1HMagicShot[2] = {eANI_1H_CAST, eANI_1H_MAGIC_ATTACK};
 
 private:
-	const short mMAX_HEALTH             = 50;
-
-	const float mfIdleAnim              = 2.0f;
-	const float mfRunForwardAnim        = 0.8f;
-
-	const float mf1HCastAnimTime        = 1.0f;
-	const float mf1HMagicAttackAnimTime = 1.4f;
-	const float mf1HMagicAreaAnimTime   = 2.5f;
-
-	const float mfDamagedAnimTime01     = 0.8f;
-	const float mfDamagedAnimTime02     = 1.3f;
-	const float mfDeathAnimTime         = 3.0f;
-
-private:
 	CStateMachine<CInGamePlayer>* m_pStateMachine;
 
 	ElementEnergy	m_nElemental;
+
+	bool	m_bDominating : 1;
+	
+	float m_fDominateCoolTime;
 
 public:
 	CInGamePlayer(int m_nMeshes);
@@ -138,6 +128,7 @@ public:
 
 public:
 	void PlayerKeyEventOn(WORD key, void * extra);
+	void PlayerKeyEventOff(WORD key, void * extra);
 	CStateMachine<CInGamePlayer>* GetFSM() { return m_pStateMachine; }
 
 public:
@@ -158,6 +149,33 @@ public:
 	void AcquireItem();
 	void ThrowItem();
 
+	bool CanStartDominating() { return m_bDominating == false && (m_fDominateCoolTime < 0.f); }
+	
+	void StartDominate();
+	void StopDominate();
+	void CheckGameSystem(float fTimeElapsed);
+
 public:
 	PARTILCE_ON_INFO Get1HAnimShotParticleOnInfo();
+
+private:
+	const short mMAX_HEALTH             = 50;
+
+	const float mfIdleAnim              = 2.0f;
+	const float mfRunForwardAnim        = 0.8f;
+
+	const float mf1HCastAnimTime        = 1.0f;
+	const float mf1HMagicAttackAnimTime = 1.4f;
+	const float mf1HMagicAreaAnimTime   = 2.5f;
+
+	const float mfBlockStartAnimTime    = 0.3f;
+	const float mfBlockIdleAnimTime     = 1.f;
+	const float mfBlockEndAnimTime      = 1.f;
+
+	const float mfDamagedAnimTime01     = 0.8f;
+	const float mfDamagedAnimTime02     = 1.3f;
+	const float mfDeathAnimTime         = 3.0f;
+
+private:
+	const float mfDominateCoolTime		= 1.0f;
 };

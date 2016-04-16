@@ -179,9 +179,7 @@ void CCharacter::LookToTarget(CGameObject * pTarget)
 	float fLookY = m_xv3Look.y;
 
 	Chae::XMFloat3TargetToNormal(&m_xv3Look, &pTarget->GetPosition(), &GetPosition());
-
 	m_xv3Look.y = fLookY;
-
 	Chae::XMFloat3Cross(&m_xv3Right, &m_xv3Up, &m_xv3Look);
 }
 
@@ -282,7 +280,7 @@ void CMonster::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 		return;
 #endif
 	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
+		m_bVisible = true;
 		return;
 
 	case eMessage::MSG_COLLIDED:
@@ -324,6 +322,8 @@ void CWarrock::BuildObject(CCharacter * pTarget)
 	m_Status.ResetStatus();
 	m_Status.SetHP(mfMAX_HEALTH);
 
+	SetGravity(-30);
+	SetMaxVelocityY(50.f);
 	SetMaxVelocityXZ(30.0f);
 	SetFriction(20.0f);
 

@@ -92,10 +92,13 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pTexture->SetTexture(2, pd3dsrvTexture);
 		pd3dsrvTexture->Release();
 
+		//ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Objects/Portal/portal_glow.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		//pTexture->SetTexture(3, pd3dsrvTexture);
+		//pd3dsrvTexture->Release();
+
 		pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, ("../Assets/Image/Objects/Portal/portal.fbxcjh"), 0.5f, vcTxFileNames);
-		//pMesh = new CLoadMeshByChae(pd3dDevice, ("../Assets/Image/Objects/Portal/portal.chae"), 0.5f); 
 		vcTxFileNames.clear();
 
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, "scene_portal");
@@ -131,8 +134,14 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
 
-		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_1H_Magic_Area01.ad", 0.1f, vcTxFileNames);
-		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_magic_area01");
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Block_Start.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_block_start");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Block_Idle.ad", 0.1f, vcTxFileNames);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_block_idle");
+
+		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Block_End.ad", 0.1f, vcTxFileNames, 5);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_block_end");
 
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Aure/Aure_Damaged_Forward01.ad", 0.1f, vcTxFileNames, 14);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, "scene_aure_damaged_f01");
@@ -202,9 +211,9 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 
 void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo)
 {
+	SYSTEMMgr.SetScene(this);
+
 	m_nMRT     = NUM_MRT;
-
-
 	//재질을 생성한다.
 	CMaterial *pRedMaterial   = MaterialMgr.GetObjects("Red");
 	CMaterial *pGreenMaterial = MaterialMgr.GetObjects("Green");
@@ -299,6 +308,7 @@ void CSceneInGame::ReleaseObjects()
 {
 	CScene::ReleaseObjects();
 	QUADMgr.ReleaseQuadTree();
+	SYSTEMMgr.SetScene(nullptr);
 }
 
 void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
@@ -465,6 +475,11 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case '0':
 			pPlayer->Revive();
 			return false;
+		case 'Z':
+			SYSTEMMgr.RoundEnd();
+			return false;
+
+		case 'D':
 		case 'E':
 		case 'N':
 		case 'M':
@@ -481,6 +496,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case VK_LEFT:
 		case VK_RIGHT:
 			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+			return(false);
+		case 'D':
+			pPlayer->PlayerKeyEventOff(wParam, this);
 			return(false);
 		}
 	}
@@ -596,6 +614,7 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 	QUADMgr.Update(m_pCamera);
 #endif
 	EVENTMgr.Update(fTimeElapsed);
+	SYSTEMMgr.Update(fTimeElapsed);
 }
 
 void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * pRenderInfo)
@@ -680,6 +699,7 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_PARTICLE_ON:
 	case eMessage::MSG_MAGIC_SHOT:
 	case eMessage::MSG_MAGIC_AREA:
+	//case eMessage::MSG_EFFECT_DOMINATE_SUCCESS:
 		m_ppShaders[m_nEffectShaderNum]->GetGameMessage(nullptr, eMSG, extra);
 		return;
 
@@ -700,6 +720,23 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_EFFECT_GLARE_OFF :
 		m_pSceneShader->GetGameMessage(nullptr, eMSG);
 		return;
+
+	case eMessage::MSG_ROUND_ENTER:
+	case eMessage::MSG_ROUND_START:
+		return;
+
+	case eMessage::MSG_ROUND_END:
+		if (SYSTEMMgr.IsWinPlayer(pPlayer))
+			static_cast<CInGameUIShader*>(m_pUIShader)->UIReadyWinLogo(true);
+		else
+			static_cast<CInGameUIShader*>(m_pUIShader)->UIReadyLoseLogo(true);
+		return;
+
+	case eMessage::MSG_ROUND_CLEAR:
+		SYSTEMMgr.RoundClear();
+		FRAMEWORK.ChangeGameScene(new CSceneTitle());
+		return;
+
 	}
 }
 

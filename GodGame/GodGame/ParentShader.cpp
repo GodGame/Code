@@ -22,6 +22,14 @@ void CParentShader::CreateShader(ID3D11Device * pd3dDevice)
 {
 }
 
+void CParentShader::ReleaseObjects()
+{
+	for (int i = 0; i < m_nShaders; ++i)
+	{
+		m_ppShader[i]->ReleaseObjects();
+	}
+}
+
 void CParentShader::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nShaders; ++i)
@@ -121,7 +129,7 @@ void CEffectShader::BuildObjects(ID3D11Device * pd3dDevice)
 void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
 	XMFLOAT4 xmf4Data;
-	CInGamePlayer * pPlayer = nullptr; static_cast<CInGamePlayer*>(extra);
+	CInGamePlayer * pPlayer = nullptr;
 
 	switch (eMSG)
 	{
@@ -136,8 +144,8 @@ void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_MAGIC_AREA:
-		pPlayer = static_cast<CInGamePlayer*>(extra);
-		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(0, pPlayer, &pPlayer->GetCenterPosition());
+		//cout << "Magic Area : " << (XMFLOAT3*)extra << endl;
+		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(0, pPlayer, static_cast<XMFLOAT3*>(extra), nullptr, nullptr, SYSTEMMgr.GetDominatePlayerNum());
 		return;
 	}
 }

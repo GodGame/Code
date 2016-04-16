@@ -298,6 +298,14 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_loading.png", 0);
 	pd3dsrvTexture->Release();
 
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/youlose.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_lose.png", 0);
+	pd3dsrvTexture->Release();
+
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/youwin.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_win.png", 0);
+	pd3dsrvTexture->Release();
+
 	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/skull"), _T("png"), 1);
 	InsertShaderResourceView(pd3dsrvTexture, "srv_skull_array", 0);
 	pd3dsrvTexture->Release();
@@ -310,7 +318,7 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_smoke_array", 0);
 	pd3dsrvTexture->Release();
 		
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_circle_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_wcircle_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_circle.png", 0);
 	pd3dsrvTexture->Release();
 	
@@ -441,11 +449,32 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "White");
 
 	pMaterial = new CMaterial();
-	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(2.0f, 2.0f, 2.0f, 0.8f);
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(3.0f, 3.0f, 3.0f, 0.8f);
 	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);
-	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(4.0f, 4.0f, 4.0f, 4.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(2.0f, 2.0f, 2.0f, 4.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "WhiteLight");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(4.0f, 0.0f, 0.0f, 0.8f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(3.0f, 0.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(3.0f, 0.0f, 0.0f, 4.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "RedLight");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 3.0f, 0.0f, 0.8f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 2.0f, 0.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.0f, 2.0f, 0.0f, 4.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+	InsertObject(pMaterial, "GreenLight");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.0f, 0.0f, 4.0f, 0.8f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.0f, 0.0f, 3.0f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.0f, 0.0f, 3.0f, 4.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "BlueLight");
 
 	pMaterial                          = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse  = XMFLOAT4(0.3f, 0.5f, 0.3f, 1.0f);

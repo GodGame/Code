@@ -26,22 +26,24 @@ CGameEventMgr & CGameEventMgr::GetInstance()
 
 void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType eType, void* pToObj, void * pByObj, void * extra)
 {
+	const float fGoalTime = m_fCurrentTime + fDelayeTime;
 	switch (eType)
 	{
 
 	case MSGType::MSG_TYPE_ENTITY:
+		cout << "now : " << m_fCurrentTime << ", goal : " << fGoalTime << endl;
 		m_mpMessageList.insert(new cMessageSystem<CEntity>
-			(m_fCurrentTime + fDelayeTime, eMsg, (CEntity*)pToObj, (CEntity*)pByObj, extra));
+			(fGoalTime, eMsg, (CEntity*)pToObj, (CEntity*)pByObj, extra));
 		return;
 
 	case MSGType::MSG_TYPE_SHADER:
 		m_mpMessageList.insert(new cMessageSystem<CShader>
-			(m_fCurrentTime + fDelayeTime, eMsg, (CShader*)pToObj, (CShader*)pByObj, extra));
+			(fGoalTime, eMsg, (CShader*)pToObj, (CShader*)pByObj, extra));
 		return;
 
 	case MSGType::MSG_TYPE_SCENE:
 		m_mpMessageList.insert(new cMessageSystem<CScene>
-			(m_fCurrentTime + fDelayeTime, eMsg, (CScene*)pToObj, (CScene*)pByObj, extra));
+			(fGoalTime, eMsg, (CScene*)pToObj, (CScene*)pByObj, extra));
 		return;
 
 	//case MSGType::MSG_TYPE_FSM:
@@ -70,16 +72,18 @@ void CGameEventMgr::Initialize()
 void CGameEventMgr::Update(float fFrameTime)
 {
 	m_fCurrentTime += fFrameTime;
-
+	
 	if (!m_mpMessageList.empty())
 	{
 		auto it = m_mpMessageList.begin();
 
 		if ((*it)->IsTerminal(m_fCurrentTime))
 		{
+   			cout << "Event Terminal : " << m_fCurrentTime <<" , Goal : " << (*it)->GetLastTime() << endl;
 			cMessage * pMsg = *it;
 			m_mpMessageList.erase(it);
 			pMsg->MessageExecute();
+			delete pMsg;
 		}
 			//m_mpMessageList.dequeue();
 	}

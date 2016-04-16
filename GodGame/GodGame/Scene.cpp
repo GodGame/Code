@@ -57,6 +57,10 @@ void CScene::ReleaseObjects()
 			delete pShaderArray[i];
 		}
 	}
+
+	m_SceneResoucres.mgrMaterial.ReleaseObjects();
+	m_SceneResoucres.mgrMesh.ReleaseObjects();
+	m_SceneResoucres.mgrTexture.ReleaseObjects();
 }
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)

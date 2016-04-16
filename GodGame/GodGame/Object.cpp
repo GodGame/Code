@@ -6,10 +6,11 @@
 
 CEntity::CEntity()
 {
-	m_uSize = 0;
-	m_bActive = true;
+	m_uSize       = 0;
+	m_bVisible    = true;
+	m_bActive     = true;
 	m_bUseCollide = false;
-	m_bObstacle = true;
+	m_bObstacle   = true;
 
 	ZeroMemory(&m_bcMeshBoundingCube, sizeof(m_bcMeshBoundingCube));
 }
@@ -19,10 +20,10 @@ void CEntity::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
+		m_bVisible = true;
 		return;
 	case eMessage::MSG_CULL_OUT:
-		m_bActive = false;
+		m_bVisible = false;
 		return;
 	case eMessage::MSG_COLLIDE:
 		return;
@@ -57,6 +58,8 @@ void CEntity::MessageEntToEnt(CEntity * byEntity, CEntity * toEntity, eMessage e
 CGameObject::CGameObject(int nMeshes)
 {
 	Chae::XMFloat4x4Identity(&m_xmf44World);
+
+	m_bUseInheritAutoRender = true;
 
 	m_nMeshes  = nMeshes;
 	m_ppMeshes = nullptr;
@@ -133,7 +136,9 @@ void CGameObject::UpdateSubResources(ID3D11DeviceContext *pd3dDeviceContext, UIN
 {
 	XMFLOAT4X4 xmf44Result;
 
-	if (pmtxParentWorld)
+	if (false == m_bUseInheritAutoRender) 
+		CShader::UpdateShaderVariable(pd3dDeviceContext, m_xmf44World);
+	else if (pmtxParentWorld)
 	{
 		Chae::XMFloat4x4Mul(&xmf44Result, &m_xmf44World, pmtxParentWorld);
 
@@ -181,6 +186,11 @@ void CGameObject::SetMesh(CMesh* const pMesh, int nIndex)
 		XMStoreFloat(&fSize, xmvMax);
 		m_uSize = (UINT)(fSize * 0.25f);
 	}
+	else
+	{
+		m_bcMeshBoundingCube.m_xv3Maximum = { FLT_MIN, FLT_MIN, FLT_MIN };
+		m_bcMeshBoundingCube.m_xv3Minimum = { FLT_MAX, FLT_MAX, FLT_MAX };
+	}
 }
 
 void CGameObject::Animate(float fTimeElapsed)
@@ -197,14 +207,15 @@ bool CGameObject::IsVisible(CCamera * pCamera)
 	{
 		AABB bcBoundingCube = m_bcMeshBoundingCube;
 		bcBoundingCube.Update(m_xmf44World);
-		if (pCamera) m_bActive = pCamera->IsInFrustum(&bcBoundingCube);
+		if (pCamera) m_bVisible = pCamera->IsInFrustum(&bcBoundingCube);
 	}
-	return(m_bActive);
+	return(m_bVisible);
 }
 
 void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
-	if (m_ppMeshes && (m_bActive || pmtxParentWorld || uRenderState & RS_SHADOWMAP))
+	if (false == m_bActive) return;
+	if (m_bVisible || uRenderState & RS_SHADOWMAP || (pmtxParentWorld && m_bUseInheritAutoRender))
 	{
 		CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
 		CGameObject::_SetMaterialAndTexture(pd3dDeviceContext);
@@ -214,7 +225,7 @@ void CGameObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSta
 #ifdef _QUAD_TREE
 			m_ppMeshes[i]->Render(pd3dDeviceContext, uRenderState);
 			if (false == (uRenderState & DRAW_AND_ACTIVE))
-				m_bActive = false;
+				m_bVisible = false;
 #else
 			bool bIsVisible = true;
 			if (pCamera)
@@ -276,7 +287,7 @@ int CGameObject::PickObjectByRayIntersection(XMFLOAT3 *pxv3PickPosition, XMFLOAT
 	XMFLOAT3 xv3PickRayPosition, xv3PickRayDirection;
 	int nIntersected = 0;
 	//활성화된 객체에 대하여 메쉬가 있으면 픽킹 광선을 구하고 객체의 메쉬와 충돌 검사를 한다.
-	if (m_bActive && m_ppMeshes)
+	if (m_bVisible && m_ppMeshes)
 	{
 		//객체의 모델 좌표계의 픽킹 광선을 구한다.
 		GenerateRayForPicking(pxv3PickPosition, &m_xmf44World, pxmtxView, &xv3PickRayPosition, &xv3PickRayDirection);
@@ -462,6 +473,7 @@ void CAnimatedObject::ChangeAnimationState(WORD wd, bool bReserveIdle, WORD * pN
 			for (int i = 0; i < nNum; ++i)
 				m_vcNextAnimState.push_back(*(pNextStateArray + nNum - (i + 1)));
 		}
+
 	}
 }
 
@@ -524,7 +536,8 @@ void CAnimatedObject::Animate(float fTimeElapsed)
 
 void CAnimatedObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
-	if (m_ppMeshes && m_bActive)
+	if (false == m_bActive) return;
+	if (m_ppMeshes && m_bVisible)
 	{
 		CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
 		//객체의 재질(상수버퍼)을 쉐이더 변수에 설정(연결)한다.
@@ -534,7 +547,7 @@ void CAnimatedObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 #ifdef _QUAD_TREE
 		m_ppMeshes[m_wdAnimateState]->Render(pd3dDeviceContext, uRenderState);
 		if (!(uRenderState & DRAW_AND_ACTIVE))
-			m_bActive = false;
+			m_bVisible = false;
 #else
 		bool bIsVisible = true;
 		if (pCamera)
@@ -723,7 +736,7 @@ void CBillboardObject::UpdateInstanceData()
 
 bool CBillboardObject::IsVisible(CCamera *pCamera)
 {
-	bool bIsVisible = m_bActive;
+	bool bIsVisible = m_bVisible;
 
 	if (pCamera)
 	{
@@ -840,10 +853,10 @@ void CAbsorbMarble::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
+		m_bVisible = true;
 		return;
 	case eMessage::MSG_CULL_OUT:
-		m_bActive = false;
+		m_bVisible = false;
 		return;
 	case eMessage::MSG_COLLIDE:
 		m_pTargetObject->GetGameMessage(this, eMessage::MSG_PLAYER_SOUL, &GetInstanceData());
@@ -871,12 +884,12 @@ void CAbsorbMarble::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 
 bool CAbsorbMarble::IsVisible(CCamera *pCamera)
 {
-	bool bIsVisible = m_bActive;
+	bool bIsVisible = m_bVisible;
 
 	if (pCamera)
 		bIsVisible = CBillboardObject::IsVisible(pCamera);
 	else if (bIsVisible || m_bAbsorb)
-		bIsVisible = m_bActive = true;
+		bIsVisible = m_bVisible = true;
 
 	return(bIsVisible);
 }

@@ -315,13 +315,11 @@ void CSceneShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 void CSceneShader::AnimateObjects(float fTimeElapsed)
 {
-	if (gpPlayer && false == gbStartGlare &&gpPlayer->GetEnergyNum() > 10)
-	{
-		GetGameMessage(this, MSG_EFFECT_GLARE_ON);
-		EVENTMgr.InsertDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SHADER, (void*)this); //ShaderDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, (CShader*)this);
-	//	EVENTMgr.InsertDelayMessage(2.0f, MSG_CULL_OUT, CGameEventMgr::MSG_TYPE_SHADER, (void*)this);
-	//	EVENTMgr.ShaderDelayMessage(2.0f, MSG_CULL_OUT, (CShader*)this);
-	}
+	//if (gpPlayer && false == gbStartGlare &&gpPlayer->GetEnergyNum() > 10)
+	//{
+	//	GetGameMessage(this, MSG_EFFECT_GLARE_ON);
+	//	EVENTMgr.InsertDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SHADER, (void*)this); //ShaderDelayMessage(3.0f, MSG_EFFECT_GLARE_OFF, (CShader*)this);
+	//}
 	m_fFrameTime = fTimeElapsed;
 	if (gbStartGlare) m_fTotalTime += fTimeElapsed;
 
@@ -787,9 +785,14 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	pMesh[eANI_1H_MAGIC_ATTACK] = mgrScene.mgrMesh.GetObjects("scene_aure_magic_attack01");
 	pMesh[eANI_1H_MAGIC_AREA]   = mgrScene.mgrMesh.GetObjects("scene_aure_magic_area01");
 
+	pMesh[eANI_BLOCK_START]     = mgrScene.mgrMesh.GetObjects("scene_aure_block_start");
+	pMesh[eANI_BLOCK_IDLE]      = mgrScene.mgrMesh.GetObjects("scene_aure_block_idle");
+	pMesh[eANI_BLOCK_END]       = mgrScene.mgrMesh.GetObjects("scene_aure_block_end");
+
 	pMesh[eANI_DAMAGED_FRONT_01] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f01");
 	pMesh[eANI_DAMAGED_FRONT_02] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f02");
 	pMesh[eANI_DEATH_FRONT]      = mgrScene.mgrMesh.GetObjects("scene_aure_death_f");
+
 
 	CMapManager * pTerrain = &MAPMgr;
 	for (int j = 0; j < m_nObjects; ++j)
@@ -842,7 +845,7 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
-	m_ppObjects[0]->SetActive(true);//m_ppObjects[1]->SetActive(true);
+	m_ppObjects[0]->SetVisible(true);//m_ppObjects[1]->SetActive(true);
 
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
@@ -1023,7 +1026,7 @@ void CTerrainShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 	{
 		//m_ppObjects[0]->SetTexture(m_pptxLayerMap[0], false);
 		m_pptxLayerMap[i]->UpdateShaderVariable(pd3dDeviceContext);
-		m_ppObjects[i]->SetActive(true);
+		m_ppObjects[i]->SetVisible(true);
 		m_ppObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 	//pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
@@ -1488,13 +1491,13 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 		pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
 
 		pObject->SetTexture(pTexture);
-		pObject->SetActive(true);
+		pObject->SetVisible(true);
 		pObject->AddRef();
 
 		m_ppObjects[i] = pObject;
 	}
 
-	m_ppObjects[1]->SetActive(false);
+	m_ppObjects[1]->SetVisible(false);
 
 	{
 		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
@@ -1504,7 +1507,7 @@ void CTitleScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTar
 		m_pMousePoint = new CGameObject(1);
 		m_pMousePoint->SetMesh(pUIMesh);
 		m_pMousePoint->SetTexture(pTexture);
-		m_pMousePoint->SetActive(true);
+		m_pMousePoint->SetVisible(true);
 		m_pMousePoint->AddRef();
 	}
 	CUIShader::CreateUIResources(pd3dDevice);
@@ -1521,7 +1524,7 @@ void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * e
 		{
 		case UIMessage::MSG_UI_TITLE_INSERT_INGAME :
 			EVENTMgr.InsertDelayMessage(0.1f, eMessage::MSG_SCENE_CHANGE, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
-			m_ppObjects[1]->SetActive(true);
+			m_ppObjects[1]->SetVisible(true);
 			return;
 		}
 		return;
@@ -1536,12 +1539,13 @@ CInGameUIShader::CInGameUIShader() : CUIShader()
 
 CInGameUIShader::~CInGameUIShader()
 {
+	mTextureList.ReleaseObjects();
 }
 
 void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
-	//m_nObjects = 1;
-	//m_ppObjects = new CGameObject*[m_nObjects];
+	m_nObjects = 1;
+	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	//m_pBackRTV->AddRef();
 
@@ -1551,24 +1555,34 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	CGameObject  * pObject = nullptr;
 	CTexture     * pTexture = nullptr;
 
-	//XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f) };
-	//string   UIName[1] = { { "srv_title_jpg", } };
+	XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.3f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f) };
+	string   UIName[1] = { { "srv_lose.png", } };
+
+	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_lose.png"));
+	mTextureList.InsertObject(pTexture, mLoseLogo);
+
+	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_win.png"));
+	mTextureList.InsertObject(pTexture, mWinLogo);
 
 	////m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
 	////m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
-	//for (int i = 0; i < m_nObjects; i++)
-	//{
-	//	pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
-	//	pObject = new CGameObject(1);
-	//	pObject->SetMesh(pUIMesh);
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		//pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
 
-	//	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
-	//	pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
+		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
+		pObject = new CGameObject(1);
+		pObject->SetMesh(pUIMesh);
+		pObject->SetVisible(true);
+		pObject->AddRef();
 
-	//	pObject->SetTexture(pTexture);
-	//	m_ppObjects[i] = pObject;
-	//}
+		pObject->SetTexture(pTexture);
+		m_ppObjects[i] = pObject;
+	}
 	{
 		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
 		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
@@ -1576,9 +1590,10 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 		m_pMousePoint = new CUIObject(1);
 		m_pMousePoint->SetMesh(pUIMesh);
 		m_pMousePoint->SetTexture(pTexture);
-		m_pMousePoint->SetActive(true);
+		m_pMousePoint->SetVisible(true);
 		m_pMousePoint->AddRef();
 	}
+
 	CUIShader::CreateUIResources(pd3dDevice);
 }
 
@@ -1588,12 +1603,24 @@ void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extr
 	{
 	case eMessage::MSG_MOUSE_DOWN:
 	case eMessage::MSG_MOUSE_DOWN_OVER:
-		m_pMousePoint->SetActive(false);
+		m_pMousePoint->SetVisible(false);
 		return;
 	case eMessage::MSG_MOUSE_UP:
-		m_pMousePoint->SetActive(true);
+		m_pMousePoint->SetVisible(true);
 		return;
 	case eMessage::MSG_MOUSE_UP_OVER:
 		return;
 	}
+}
+
+void CInGameUIShader::UIReadyWinLogo(bool Visible)
+{
+	m_ppObjects[miResultIndex]->SetVisible(Visible);
+	m_ppObjects[miResultIndex]->SetTexture(mTextureList.GetObjects(mWinLogo));
+}
+
+void CInGameUIShader::UIReadyLoseLogo(bool Visible)
+{
+	m_ppObjects[miResultIndex]->SetVisible(Visible);
+	m_ppObjects[miResultIndex]->SetTexture(mTextureList.GetObjects(mLoseLogo));
 }

@@ -144,7 +144,7 @@ PS_MRT_OUT PSTexturedBlackAlpha(VS_TEXTURED_COLOR_OUTPUT input)
 	output.vPos = float4(input.posW, 1.0f);
 	output.vDiffuse = float4(gMaterial.m_cDiffuse.xyz, 0.0f/*fShadowFactor*/);
 	output.vSpec = gMaterial.m_cSpecular;
-	output.vTxColor = cColor;
+	output.vTxColor = cColor * output.vDiffuse;
 
 	return(output);
 }
@@ -730,7 +730,7 @@ PS_MRT_OUT PSNormalAndSF(PS_WORLD_NORMALMAP input)
 	PS_MRT_OUT output;
 	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
 	output.vPos     = float4(input.posW, 1.0);
-	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1.0f);// +glow;
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1.0f) +glow;
 	output.vSpec    = float4(gMaterial.m_cSpecular.rgb, TxSpecluar.Sample(gSamplerState, input.tex).r) + glow;
 	output.vTxColor = color + glow;
 	return output;

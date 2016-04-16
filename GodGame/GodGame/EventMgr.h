@@ -26,6 +26,11 @@ enum eMessage : BYTE
 	MSG_CULL_IN,
 	// Scene
 	MSG_SCENE_CHANGE,
+	// Round
+	MSG_ROUND_ENTER,
+	MSG_ROUND_START,
+	MSG_ROUND_END,
+	MSG_ROUND_CLEAR,
 	// Data-Pass
 	MSG_PASS_PLAYERPTR,
 	// Object
@@ -37,6 +42,8 @@ enum eMessage : BYTE
 	MSG_PLAYER_USE_MAGIC,
 	MSG_PLAYER_GETPOINT,
 	MSG_PLAYER_SOUL,
+	MSG_PLAYER_DOMIATE_END,
+	MSG_PLAYER_COOLTIME,
 	// Magic
 	MSG_MAGIC,
 	MSG_MAGIC_SHOT,
@@ -51,6 +58,7 @@ enum eMessage : BYTE
 	MSG_DEBUFF_OFF,
 
 	MSG_EFFECT,
+	MSG_EFFECT_DOMINATE_SUCCESS,
 	MSG_EFFECT_GLARE_ON,
 	MSG_EFFECT_GLARE_OFF,
 	MSG_EFFECT_RADIAL_ON,
@@ -75,7 +83,7 @@ public:
 	bool operator==(const cMessage & emsg)    { return m_fLastTime == emsg.m_fLastTime; }
 	bool operator==(float ftime)              { return m_fLastTime == ftime;            }
 
-	inline bool IsTerminal(float fTime) const        { return m_fLastTime < fTime; }
+	bool IsTerminal(float fTime) const        { return m_fLastTime < fTime; }
 
 	virtual void MessageExecute() const {}
 	virtual bool MessageUpdate(float fTime) const { return false; }

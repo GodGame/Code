@@ -656,10 +656,6 @@ CMeshSplatTexturedIlluminated::~CMeshSplatTexturedIlluminated()
 	if (m_pd3dAlphaTexCoordBuffer) m_pd3dAlphaTexCoordBuffer->Release();
 }
 
-
-
-
-
 CCubeMeshIlluminated::CCubeMeshIlluminated(ID3D11Device *pd3dDevice, float fWidth, float fHeight, float fDepth) : CMeshIlluminated(pd3dDevice)
 {
 	m_nVertices = 8;

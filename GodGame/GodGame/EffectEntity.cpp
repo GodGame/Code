@@ -34,10 +34,10 @@ void CEffect::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
+		m_bVisible = true;
 		return;
 	case eMessage::MSG_CULL_OUT:
-		m_bActive = false;
+		m_bVisible = false;
 		return;
 	case eMessage::MSG_COLLIDE:
 		return;
@@ -287,7 +287,7 @@ void CCircleMagic::Initialize(ID3D11Device * pd3dDevice)
 	XMFLOAT2 xmf2ImageSize{ 960, 768 };
 	XMFLOAT2 xmf2FrameSize{ 192, 192 };
 	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 20, 0.05f);
-
+	m_cbInfo.m_xmf3LookVector = { 0, 0, 1 };
 	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_circle.png"));
 }
 
@@ -524,10 +524,10 @@ void CParticle::UpdateShaderVariable(ID3D11DeviceContext * pd3dDeviceContext)
 //	switch (eMSG)
 //	{
 //	case eMessage::MSG_CULL_IN:
-//		m_bActive = true;
+//		m_bVisible = true;
 //		return;
 //	case eMessage::MSG_CULL_OUT:
-//		m_bActive = false;
+//		m_bVisible = false;
 //		return;
 //	case eMessage::MSG_COLLIDE:
 //		return;
@@ -610,7 +610,7 @@ bool CParticle::Enable(CGameObject * pObj, XMFLOAT3 * pos, int nColorNum)
 	m_pMaster = pObj;
 
 	m_bReserveDelete = false;
-	m_bActive = true;
+	m_bVisible = true;
 	m_bEnable = true;
 	m_bTerminal = false;
 	m_bInitilize = true;

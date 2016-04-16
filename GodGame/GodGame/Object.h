@@ -17,15 +17,16 @@
 class CEntity
 {	
 protected:
-	UINT	m_uSize       : 14;
-	bool	m_bActive     : 1;
-	bool	m_bUseCollide : 1;
-	bool    m_bObstacle   : 1;
+	UINT	m_uSize			: 14;
+	bool    m_bActive		: 1;
+	bool	m_bVisible		: 1;
+	bool	m_bUseCollide	: 1;
+	bool    m_bObstacle		: 1;
 
 protected:
-	void _ResetActive(UINT uRenderState)
+	void _ResetVisible(UINT uRenderState)
 	{
-		m_bActive = uRenderState & DRAW_AND_ACTIVE;
+		m_bVisible = uRenderState & DRAW_AND_ACTIVE;
 	}
 
 public:
@@ -35,8 +36,11 @@ public:
 public:
 	AABB         m_bcMeshBoundingCube;
 
-	void SetActive(const bool bActive = false) { m_bActive = bActive; }
-	bool IsActvie() { return m_bActive; }
+	void SetVisible(const bool bVisible = false) { m_bVisible = bVisible; }
+	bool IsVisible() { return m_bVisible; }
+	void SetActive(const bool bActive) { m_bActive = bActive; }
+	bool IsActive()  { return m_bActive; }
+
 	bool IsObstacle() { return m_bObstacle; }
 
 	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
@@ -66,10 +70,12 @@ public:
 	virtual ~CGameObject();
 
 protected:
-	UINT	m_nReferences : 16;
+	UINT	m_nReferences : 15;
+	bool    m_bUseInheritAutoRender : 1;
 
 	CGameObject * m_pChild;
 	CGameObject * m_pSibling;
+	//CGameObject * m_pParent;
 
 protected:
 	void _SetMaterialAndTexture(ID3D11DeviceContext *pd3dDeviceContext);
@@ -89,12 +95,15 @@ public:
 	void SetMaterial(CMaterial *pMaterial);
 
 public:
+	void SetInheritAutoRender(bool bUse) { m_bUseInheritAutoRender = bUse; }
 	void ChangeChild(CGameObject * pObject);
 	void SetChild(CGameObject* pObject);
 	void SetSibling(CGameObject * pObject);
+	//void SetParent(CGameObject * pObject) { m_pParent = pObject; }
 
 	CGameObject * GetChildObject() { return m_pChild; }
 	CGameObject * GetSiblingObject() { return m_pSibling; }
+	//CGameObject * GetParentObject() { return m_pParent; }
 
 	// 부모 형제 자식을 다 끊어버림
 	void ReleaseRelationShip();

@@ -363,7 +363,7 @@ void CPlayer::OnPrepareRender()
 
 void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	SetActive(true);
+	//if (pCamera->GetPlayer() == this SetVisible(true);
 	CAnimatedObject::Render(pd3dDeviceContext, uRenderState, pCamera);
 }
 
@@ -475,6 +475,10 @@ CInGamePlayer::CInGamePlayer(int m_nMeshes) : CTerrainPlayer(m_nMeshes)
 	ZeroMemory(&m_nElemental, sizeof(m_nElemental));
 
 	m_pStateMachine = nullptr;
+
+	m_bDominating = false;
+
+	m_fDominateCoolTime = 0.f;
 }
 
 CInGamePlayer::~CInGamePlayer()
@@ -512,14 +516,13 @@ void CInGamePlayer::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
+		m_bVisible = true;
 		return;
 	case eMessage::MSG_PLAYER_SOUL:
 		xmfInfo = *(XMFLOAT4*)extra;
 		AddEnergy(xmfInfo.w);
 		EVENTMgr.InsertDelayMessage(0.0f, MSG_PARTICLE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, extra);
 		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_ENTITY, byObj);
-		//m_pScene->GetGameMessage(nullptr, MSG_PARTICLE_ON, extra);
 		return;
 	case eMessage::MSG_COLLIDE:
 		return;
@@ -530,8 +533,10 @@ void CInGamePlayer::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_COLLIDE_LOCATION:
 		//toObj->GetGameMessage(this, MSG_COLLIDE);
 		return;
-
 	case eMessage::MSG_MAGIC_SHOT:
+		return;
+	case eMessage::MSG_PLAYER_DOMIATE_END:
+		StopDominate();
 		return;
 	}
 }
@@ -564,13 +569,18 @@ void CInGamePlayer::InitializeAnimCycleTime()
 	SetAnimationCycleTime(eANI_1H_MAGIC_ATTACK, mf1HMagicAttackAnimTime);
 	SetAnimationCycleTime(eANI_1H_MAGIC_AREA,   mf1HMagicAreaAnimTime);
 
+	SetAnimationCycleTime(eANI_BLOCK_START,		mfBlockStartAnimTime);
+	SetAnimationCycleTime(eANI_BLOCK_IDLE,		mfBlockIdleAnimTime);
+	SetAnimationCycleTime(eANI_BLOCK_END,		mfBlockEndAnimTime);
+
 	SetAnimationCycleTime(eANI_DAMAGED_FRONT_01, mfDamagedAnimTime01);
 	SetAnimationCycleTime(eANI_DAMAGED_FRONT_02, mfDamagedAnimTime02);
-	SetAnimationCycleTime(eANI_DEATH_FRONT,     mfDeathAnimTime);
+	SetAnimationCycleTime(eANI_DEATH_FRONT,      mfDeathAnimTime);
 }
 
 void CInGamePlayer::Update(float fTimeElapsed)
 {
+	m_fDominateCoolTime -= fTimeElapsed;
 	m_pStateMachine->Update(fTimeElapsed);
 	CPlayer::Update(fTimeElapsed);
 }
@@ -602,6 +612,11 @@ void CInGamePlayer::ForcedByObj(CEntity * pObj)
 		XMFLOAT3 xmf3NewPos;
 		XMStoreFloat3(&xmf3NewPos, xmvOtherPos);
 		SetPosition(xmf3NewPos);
+
+		cout << "Forced!!\t";
+
+		if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌! : " << pObj->GetSize() << endl;; }
+		//if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌!"; }
 	}
 }
 
@@ -683,6 +698,20 @@ void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
 		ChangeAnimationState(eANI_1H_MAGIC_AREA, true, nullptr, 0);
 		EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE, extra, nullptr, this);
 		return;
+
+	case 'D':
+		StartDominate();
+		return;
+	}
+}
+
+void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
+{
+	switch (key)
+	{
+	case 'D':
+		StopDominate();
+		return;
 	}
 }
 
@@ -752,6 +781,7 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 
 void CInGamePlayer::AcquireItem()
 {
+
 }
 
 void CInGamePlayer::ThrowItem()
@@ -760,14 +790,49 @@ void CInGamePlayer::ThrowItem()
 	{
 		CStaff * pMyItem = static_cast<CStaff*>(m_pChild);
 		
+
 		XMFLOAT3 ThrowVelocity;
-		Chae::XMFloat3AddAndMulFloat(&ThrowVelocity, &GetPosition(), 1.f, &GetLookVector(), 20.f);
+		Chae::XMFloat3AddAndMulFloat(&ThrowVelocity, &GetCenterPosition(), 1.f, &GetLookVector(), 20.f);
 
 		pMyItem->ResetMaster(ThrowVelocity);
 
 		m_pChild->Release();
 		m_pChild = nullptr;
 	}
+}
+
+void CInGamePlayer::StartDominate()
+{
+	if (CanStartDominating() && SYSTEMMgr.CheckCanDominateRange(this))
+	{
+		m_pStateMachine->ChangeState(&CPlayerDominateState::GetInstance());
+		m_bDominating = true;
+	}
+}
+
+void CInGamePlayer::StopDominate()
+{
+	if (m_bDominating)
+	{
+		m_fDominateCoolTime = mfDominateCoolTime;
+		m_bDominating = false;
+
+		WORD idle[] = { eANI_IDLE };
+		ChangeAnimationState(eANI_BLOCK_END, true, idle, 1);
+
+		if (SYSTEMMgr.CheckCanDomianteSuccess(this))
+		{
+			EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE,
+				m_pScene, nullptr, &SYSTEMMgr.GetPortalZonePos());
+			EVENTMgr.InsertDelayMessage(0.8f, eMessage::MSG_EFFECT_GLARE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+			EVENTMgr.InsertDelayMessage(2.0f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+		}
+	}
+}
+
+void CInGamePlayer::CheckGameSystem(float fTimeElapsed)
+{
+
 }
 
 PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
@@ -781,9 +846,9 @@ PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 	info.m_pObject = this;
 	info.fColor = 0;
 	info.iNum = 4;
-	info.m_xmf3Pos = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
+	info.m_xmf3Pos      = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
 	info.m_xmf3Velocity = move(XMFLOAT3(xmf44Change._31, xmf44Change._32, xmf44Change._33));
-	info.m_xmfAccelate = move(XMFLOAT3(-xmf44Change._31, -xmf44Change._32, -xmf44Change._33));
+	info.m_xmfAccelate  = move(XMFLOAT3(-xmf44Change._31, -xmf44Change._32, -xmf44Change._33));
 
 	return info;
 }

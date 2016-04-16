@@ -167,6 +167,8 @@ void CWarrockChaseTargetState::Enter(CWarrock * pWarrock)
 
 void CWarrockChaseTargetState::Execute(CWarrock * pWarrock, float fFrameTime)
 {
+	const XMVECTOR xmProjToXZ = XMVectorSet(1, 0, 1, 0);
+
 	CGameObject * pTarget = pWarrock->GetTarget();
 	mEvaluator.SetEvaluate(pTarget);
 
@@ -179,7 +181,7 @@ void CWarrockChaseTargetState::Execute(CWarrock * pWarrock, float fFrameTime)
 	else if (fEvaluateValue < 1.0f)
 	{
 		XMVECTOR ToTarget = XMLoadFloat3(&pTarget->GetPosition()) - XMLoadFloat3(&pWarrock->GetPosition());
-		ToTarget = XMVector3Normalize(ToTarget) * 10.0f;// *fFrameTime;
+		ToTarget = XMVector3Normalize(ToTarget * xmProjToXZ) * 10.0f;// *fFrameTime;
 		
 		XMFLOAT3 velocity; 
 		XMStoreFloat3(&velocity, ToTarget);

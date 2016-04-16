@@ -97,6 +97,23 @@ public:
 	virtual void Exit(CInGamePlayer * pPlayer);
 };
 
+class CPlayerDominateState : public CAIState<CInGamePlayer>
+{
+private:
+	const float mfKnockBackLength = 100.0f;
+
+private:
+	CPlayerDominateState() : CAIState<CInGamePlayer>() {}
+	virtual ~CPlayerDominateState() {}
+	CPlayerDominateState& operator=(const CPlayerDominateState&);
+
+public:
+	static CPlayerDominateState & GetInstance();
+	virtual void Enter(CInGamePlayer * pPlayer);
+	virtual void Execute(CInGamePlayer * pPlayer, float fFrameTime);
+	virtual void Exit(CInGamePlayer * pPlayer);
+};
+
 class CPlayerDeathState : public CAIState<CInGamePlayer>
 {
 private:

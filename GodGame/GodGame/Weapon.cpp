@@ -23,10 +23,10 @@ void CItem::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
 	switch(eMSG)
 	{
 	case eMessage::MSG_CULL_IN:
-		m_bActive = true;
+		m_bVisible = true;
 		return;
 	case eMessage::MSG_CULL_OUT:
-		m_bActive = false;
+		m_bVisible = false;
 		return;
 	case eMessage::MSG_COLLIDED :
 		Collide(byEntity);
@@ -42,15 +42,17 @@ bool CItem::IsVisible(CCamera * pCamera)
 	{
 		AABB bcBoundingCube = m_bcMeshBoundingCube;
 		bcBoundingCube.Update(m_xmf44World);
-		if (pCamera) m_bActive = pCamera->IsInFrustum(&bcBoundingCube);
+		if (pCamera) m_bVisible = pCamera->IsInFrustum(&bcBoundingCube);
 	}
-	return (m_bActive && m_pMaster == nullptr);
+	return (m_bVisible && m_pMaster == nullptr);
 }
 
 void CItem::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
+	if (false == m_bActive) return;
+
 	CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);
-	CEntity::_ResetActive(uRenderState);
+	CEntity::_ResetVisible(uRenderState);
 
 	if (m_pMaster)
 	{
@@ -62,8 +64,8 @@ void CItem::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, C
 
 void CItem::Update(float fFrameTime)
 {
-	const float fGravity = 30.f;
-	const float fMaxSpeed = 80.f;
+	const float fGravity = 20.f;
+	const float fMaxSpeed = 50.f;
 
 	XMFLOAT3 xmfPos = GetPosition();
 #if 0

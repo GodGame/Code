@@ -104,7 +104,6 @@ void CPlayerKnockbackState::Enter(CInGamePlayer * pPlayer)
 
 	EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_RADIAL_ON, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
 	EVENTMgr.InsertDelayMessage(0.3f, eMessage::MSG_EFFECT_RADIAL_OFF, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
-
 }
 
 void CPlayerKnockbackState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
@@ -120,6 +119,38 @@ void CPlayerKnockbackState::Exit(CInGamePlayer * pPlayer)
 	pPlayer->GetStatus().SetCanMove(true);
 	pPlayer->GetStatus().SetUnbeatable(false);
 }
+///////////////////////////////////////////////////////////////////////////////
+CPlayerDominateState & CPlayerDominateState::GetInstance()
+{
+	static CPlayerDominateState instance;
+	return instance;
+}
+
+void CPlayerDominateState::Enter(CInGamePlayer * pPlayer)
+{
+	WORD aniList[] = {eANI_BLOCK_IDLE};
+	pPlayer->ChangeAnimationState(eANI_BLOCK_START, false, aniList, 1);
+
+	EVENTMgr.InsertDelayMessage(SYSTEMMgr.GetDominateSpendTime(), 
+		eMessage::MSG_PLAYER_DOMIATE_END, CGameEventMgr::MSG_TYPE_ENTITY, pPlayer);
+}
+
+void CPlayerDominateState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
+{
+	if (pPlayer->GetAnimationState() == eANI_BLOCK_END)
+	{
+		if (pPlayer->GetAniMesh()->IsEndAnimation())
+		{
+			pPlayer->GetFSM()->ChangeState(&CPlayerIdleState::GetInstance());
+		}
+	}
+}
+
+void CPlayerDominateState::Exit(CInGamePlayer * pPlayer)
+{
+	//pPlayer->StopDominate();
+}
+
 //////////////////////////////////////////////////////////////////////////////
 CPlayerDeathState & CPlayerDeathState::GetInstance()
 {
