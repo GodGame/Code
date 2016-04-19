@@ -9,7 +9,7 @@
 #include "EventMgr.h"
 #include "MapManager.h"
 #include "SystemManager.h"
-
+#include "ItemManager.h"
 class CManagers
 {
 public:
@@ -22,6 +22,7 @@ public:
 		UIMgr.BuildResources();
 		EVENTMgr.Initialize();
 		SYSTEMMgr.Build(pd3dDevice);
+		ITEMMgr.Build();
 		//MESHMgr.BuildResources(pd3dDevice);
 	}
 

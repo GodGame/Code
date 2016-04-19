@@ -489,11 +489,6 @@ void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMate
 	CGameObject *pObject = nullptr;
 
 	float fHeight = 0;
-	//fHeight = pHeightMapTerrain->GetHeight(1085, 220, true);
-	//m_ppObjects[0] = new CGameObject(1);
-	//m_ppObjects[0]->AddRef();
-	//m_ppObjects[0]->SetPosition(1085, fHeight + 5, 220);//(1105, 200, 250);
-
 	fHeight = MAPMgr.GetHeight(1085, 260, true);
 	CMonster * pAnimatedObject = new CSkeleton(1);
 	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
@@ -627,7 +622,7 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 	m_nInstanceBufferStride = sizeof(XMFLOAT4X4);
 	m_nInstanceBufferOffset = 0;
 
-	char name[48];
+	string name;//char name[48];
 	CMapManager * pTerrain = &MAPMgr;
 
 	int MapWidth = static_cast<int>(pTerrain->GetWidth() - 100) + 50;
@@ -639,10 +634,10 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 
 		auto it = m_vcItemList.end() - 1;
 		if (i < 12)
-			sprintf(name, "scene_staff%d_%d", (i % 2), (int)((float)i / 2.0f) + 1);
+			name = ITEMMgr.StaffNameArray[(int)(i / 6)][i % 2]; //sprintf(name, "scene_staff%d_%d", (i % 2), (int)((float)i / 2.0f));
 		else
-			sprintf(name, "scene_staff1_7");
-		cout << "I : " << i << ", name : " << name << endl;
+			name = ITEMMgr.StaffNameArray[0][2];
+		//cout << "I : " << i << ", name : " << name << endl;
 
 		XMFLOAT3 xmfPos;
 		for (int j = 0; j < 10; ++j)

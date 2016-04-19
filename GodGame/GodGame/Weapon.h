@@ -2,8 +2,10 @@
 #ifndef __WEAPON_H
 #define __WEAPON_H
 
-#include "Object.h"
+#define WEAPON_LEVEL_MAX 3
 
+#include "Object.h"
+#include "GameInfo.h"
 class CItem : public CStaticObject
 {
 protected:
@@ -61,18 +63,35 @@ public:
 class CEffect;
 class CTxAnimationObject;
 class CParticle;
-class Element;
+//class Element;
 
 class CStaff : public CWeapon
 {
 protected:
-	UINT m_uCost : 8;
+	UINT mCost  : 8;
+	UINT mLevel : 3;
 
+	ELEMENT mElement;
 	CEffect * m_pHasEffect;
-
+	
 public:
 	CStaff(int nMesh);
 	virtual ~CStaff();
+
+	DWORD     GetCost()      { return mCost; }
+	WORD      GetLevel()     { return mLevel; }
+	ELEMENT   GetElement()   { return mElement; }
+	CEffect * GetEffect()    { return m_pHasEffect; }
+
+	void SetEffect(CEffect * pEffect) { m_pHasEffect = pEffect; }
+
+public:
+
+	void BuildObject(ELEMENT element, DWORD cost, DWORD level);
+	void BuildObject(CStaff & staff);
+
 };
+
+
 
 #endif

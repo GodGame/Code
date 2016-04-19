@@ -2,6 +2,7 @@
 #ifndef __GAME_INFO
 #define __GAME_INFO
 
+#define ELEMENT_NULL			-1
 #define ELEMENT_LIGHT			COLOR_WHITE
 #define ELEMENT_FIRE			COLOR_RED
 #define ELEMENT_WIND			COLOR_GREEN
@@ -37,6 +38,7 @@ private:
 	const float m_fTimeFreeze = 1.5f;
 	const float m_fTimeStun   = 1.5f;
 
+
 public:
 	CDeBuff();
 	~CDeBuff();
@@ -49,7 +51,7 @@ public:
 public:
 	void OnSlow()     { m_eDebuff |= DEBUFF_SLOW; PlayerDelayMessage(DEBUFF_SLOW, m_fTimeSlow); }
 	void DownSlow()   { m_eDebuff &= ~DEBUFF_SLOW; }
-	bool IsSlow()	  { return DEBUFF_SLOW & m_eDebuff;}
+	bool IsSlow()	  { return DEBUFF_SLOW & m_eDebuff; }
 	void OnFreeze()   { m_eDebuff |= DEBUFF_FREEZE;  PlayerDelayMessage(DEBUFF_FREEZE, m_fTimeFreeze);}
 	void DownFreeze() { m_eDebuff &= ~DEBUFF_FREEZE; }
 	bool IsFreeze()   { return DEBUFF_FREEZE & m_eDebuff; }
@@ -160,34 +162,14 @@ public:
 	bool IsCanDamaged() { return (m_bAlive && !m_bUnbeatable); }
 };
 
+typedef BYTE ELEMENT;
 struct ElementEnergy
 {
 	BYTE m_nSum;
 	BYTE m_nMinNum;
-	BYTE m_nEnergies[ELEMENT_NUM];
+	ELEMENT m_nEnergies[ELEMENT_NUM];
 };
 
 ostream& operator<<(ostream& os, ElementEnergy & element);
-
-class Element
-{
-public:
-	Element();
-	virtual ~Element();
-};
-
-class EFire : public Element
-{
-public:
-	EFire(){}
-	virtual ~EFire(){}
-};
-
-class EIce : public Element
-{
-public:
-	EIce() {}
-	virtual ~EIce(){}
-};
 
 #endif

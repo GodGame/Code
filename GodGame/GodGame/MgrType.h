@@ -79,7 +79,7 @@ protected:
 
 public:
 	CMgrCase() {}
-	virtual ~CMgrCase() {}
+	virtual ~CMgrCase() { m_mpList.clear(); }
 
 public:
 	virtual void InsertObject(Target & pObject, string name)

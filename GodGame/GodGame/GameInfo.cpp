@@ -110,14 +110,6 @@ void StatusInfo::ResetStatus()
 }
 
 ///////////////////////////////////////////
-Element::Element()
-{
-}
-
-Element::~Element()
-{
-}
-
 
 ostream& operator<<(ostream& os, ElementEnergy & element)
 {

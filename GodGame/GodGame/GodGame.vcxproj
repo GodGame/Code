@@ -173,6 +173,7 @@
     <ClInclude Include="EventMgr.h" />
     <ClInclude Include="GameFramework.h" />
     <ClInclude Include="GodGame.h" />
+    <ClInclude Include="ItemManager.h" />
     <ClInclude Include="MapManager.h" />
     <ClInclude Include="MgrList.h" />
     <ClInclude Include="ObjectsList.h" />
@@ -213,6 +214,7 @@
     <ClCompile Include="GameInfo.cpp" />
     <ClCompile Include="EventMgr.cpp" />
     <ClCompile Include="GameFramework.cpp" />
+    <ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MapManager.cpp" />
     <ClCompile Include="Mesh.cpp" />

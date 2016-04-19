@@ -816,16 +816,16 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 			float fHeight = pTerrain->GetHeight(1180, 255, true);// +10.f;
 			pPlayer->SetPosition(XMFLOAT3(1180, fHeight, 255));
 		}
-
+#if 0
 		char name[56];
-		for (int i = 1; i < 7; ++i)
+		for (int i = 0; i < 7; ++i)
 		{
 			CRevolvingObject * pObject = nullptr;
 			pObject = new CRevolvingObject(1);
 			pObject->SetRevolutionAxis(XMFLOAT3(0, 1, 0));
 			pObject->SetRevolutionSpeed(60.0f);
 
-			sprintf(name, "scene_staff0_%d", i);
+			sprintf(name, "scene_staff1_%d", i);
 
 			pObject->SetMesh(mgrScene.mgrMesh.GetObjects(name));
 			pObject->SetTexture(mgrScene.mgrTexture.GetObjects(name));
@@ -836,6 +836,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 			pPlayer->SetChild(pObject);
 			//pBrickTexture->Release();
 		}
+#endif
 	}
 	EntityAllDynamicObjects();
 }

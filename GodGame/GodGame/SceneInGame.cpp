@@ -25,13 +25,12 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	CTexture * pTexture = nullptr;
 	CMesh * pMesh = nullptr;
 	char file[128];
-
-	for (int i = 1; i < 7; ++i)
+	for (int i = 0; i < 6; ++i)
 	{
 		// 스태프 1
 		pTexture = new CTexture(2, 1, 0, 0);
 		{
-			wchar_t result[256];
+			wchar_t result[128];
 			wsprintf(result, _T("../Assets/Image/Objects/staff/Staff0%d_Diff.png"), i);
 			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
 			pTexture->SetTexture(0, pd3dsrvTexture);
@@ -44,25 +43,32 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 
 			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 		}
-		
 		sprintf(file, "../Assets/Image/Objects/staff/Staff0%d.fbxcjh", i);
 		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.2f, vcTxFileNames);
 		vcTxFileNames.clear();
 
-		sprintf(file, "scene_staff0_%d", i);
-		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
-		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+		string ObjName = ITEMMgr.StaffNameArray[i][0];
+		//sprintf(file, ITEMMgr.StaffNameArray[i][0] // "scene_staff0_%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, ObjName);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, ObjName);
 	}
 
 	// 스태프2
-	for (int i = 1; i < 8; ++i)
+	for (int i = 0; i < 7; ++i)
 	{
-		pTexture = new CTexture(1, 1, 0, 0);
+
+		pTexture = new CTexture(3, 1, 0, 0);
 		{
-			wchar_t result[256];
+			wchar_t result[128];
 			wsprintf(result, _T("../Assets/Image/Objects/staff2/Staff2_0%d_Diff.png"), i);
 			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
 			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+			pTexture->SetTexture(1, nullptr);
+
+			wsprintf(result, _T("../Assets/Image/Objects/staff2/Staff2_0%d_Spec.png"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(2, pd3dsrvTexture);
 			pd3dsrvTexture->Release();
 
 			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
@@ -72,9 +78,18 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.2f, vcTxFileNames);
 		vcTxFileNames.clear();
 
-		sprintf(file, "scene_staff1_%d", i);
-		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
-		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+		if (i != 6)
+		{
+			string ObjName = ITEMMgr.StaffNameArray[i][1];
+			m_SceneResoucres.mgrTexture.InsertObject(pTexture, ObjName);
+			m_SceneResoucres.mgrMesh.InsertObject(pMesh, ObjName);
+		}
+		else
+		{
+			string ObjName = ITEMMgr.StaffNameArray[0][2];
+			m_SceneResoucres.mgrTexture.InsertObject(pTexture, ObjName);
+			m_SceneResoucres.mgrMesh.InsertObject(pMesh, ObjName);
+		}
 	}
 	// 포탈
 	{
@@ -254,19 +269,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		pTrees->BuildObjects(pd3dDevice);
 		m_ppShaders[index++] = pTrees;
 
-#if 0
-		CTextureAniShader * pTxAni = new CTextureAniShader();
-		pTxAni->CreateShader(pd3dDevice);
-		pTxAni->BuildObjects(pd3dDevice, nullptr);
-		m_nEffectShaderNum = index;
-		m_ppShaders[index++] = pTxAni;
-
-		CParticleShader * pParticleShader = new CParticleShader();
-		pParticleShader->CreateShader(pd3dDevice);
-		pParticleShader->BuildObjects(pd3dDevice, nullptr);
-		m_nParticleShaderNum = index;
-		m_ppShaders[index++] = pParticleShader;
-#endif
 		m_nEffectShaderNum = index;
 		CEffectShader * pTxAni = new CEffectShader();
 		pTxAni->CreateShader(pd3dDevice);

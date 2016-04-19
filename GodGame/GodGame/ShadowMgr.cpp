@@ -8,7 +8,7 @@
 CShadowMgr::CShadowMgr()
 {
 	m_iStaticMapSlot = TX_SLOT_STATIC_SHADOW;
-	m_iMapSlot = TX_SLOT_SHADOWMAP;
+	m_iMapSlot       = TX_SLOT_SHADOWMAP;
 
 	m_pd3dStaticDSVShadowMap = m_pd3dDSVShadowMap = nullptr;
 	m_pd3dStaticSRVShadowMap = m_pd3dSRVShadowMap = nullptr;

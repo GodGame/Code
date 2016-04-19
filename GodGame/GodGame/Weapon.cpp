@@ -236,8 +236,28 @@ CWeapon::~CWeapon()
 CStaff::CStaff(int nMesh) : CWeapon(nMesh)
 {
 	m_pHasEffect = nullptr;
+	ZeroMemory(&mElement, sizeof(mElement));
+
+	mElement = ELEMENT_NULL;
+	mCost = 0;
+	mLevel = 0;
 }
 
 CStaff::~CStaff()
 {
+}
+
+void CStaff::BuildObject(ELEMENT element, DWORD cost, DWORD level)
+{
+	mElement = element;
+	mCost = cost;
+	mLevel = level;
+}
+
+void CStaff::BuildObject(CStaff & staff)
+{
+	mCost    = staff.GetCost();
+	mLevel   = staff.GetLevel();
+	mElement = staff.GetElement();
+	//m_pHasEffect = staff.GetEffect()
 }

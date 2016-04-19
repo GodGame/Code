@@ -169,6 +169,9 @@
     <ClInclude Include="SystemObject.h">
       <Filter>Local\5_Objects\Object</Filter>
     </ClInclude>
+    <ClInclude Include="ItemManager.h">
+      <Filter>Global\2_Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -263,6 +266,9 @@
     </ClCompile>
     <ClCompile Include="SystemObject.cpp">
       <Filter>Local\5_Objects\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemManager.cpp">
+      <Filter>Global\2_Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
