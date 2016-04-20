@@ -261,6 +261,7 @@ public:
 class CPlayerShader : public CShader
 {
 #define PLAYER_INDEX 0
+	int m_iPlayerIndex;
 
 public:
 	CPlayerShader();
@@ -271,7 +272,9 @@ public:
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 
-	CPlayer *GetPlayer(int nIndex = PLAYER_INDEX) { return static_cast<CPlayer *>(m_ppObjects[nIndex]); }
+	void SetPlayerID(ID3D11Device * pd3dDevice, int id);
+	CPlayer *GetPlayer(int nIndex) { return static_cast<CPlayer *>(m_ppObjects[nIndex]); }
+	CPlayer *GetPlayer() { return static_cast<CPlayer *>(m_ppObjects[m_iPlayerIndex]); }
 };
 
 class CWaterShader : public CTexturedShader

@@ -47,6 +47,9 @@
     <Filter Include="Local\5_Objects\AI">
       <UniqueIdentifier>{7a0dcc96-70b3-403a-9592-8a700ccc1a79}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Packet">
+      <UniqueIdentifier>{8ff60c0e-f8ee-490d-a3a5-f525212c4814}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameFramework.h">
@@ -172,6 +175,12 @@
     <ClInclude Include="ItemManager.h">
       <Filter>Global\2_Managers</Filter>
     </ClInclude>
+    <ClInclude Include="PacketMgr.h">
+      <Filter>Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="ClinetMgr.h">
+      <Filter>Packet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -269,6 +278,12 @@
     </ClCompile>
     <ClCompile Include="ItemManager.cpp">
       <Filter>Global\2_Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketMgr.cpp">
+      <Filter>Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="ClinetMgr.cpp">
+      <Filter>Packet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

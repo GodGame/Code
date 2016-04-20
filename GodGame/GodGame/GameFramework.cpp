@@ -95,6 +95,17 @@ CGameFramework::~CGameFramework()
 {
 }
 
+void CGameFramework::SetPlayer(CScene * pScene, CPlayer * pPlayer)
+{
+	m_pPlayer = pPlayer;
+	m_pPlayer->SetScene(pScene);
+
+	for (int i = 0; i < m_nRenderThreads; ++i)
+	{
+		m_pRenderingThreadInfo[i].m_pPlayer = m_pPlayer;
+	}
+}
+
 CGameFramework & CGameFramework::GetInstance()
 {
 	static CGameFramework instance;
@@ -354,6 +365,32 @@ bool CGameFramework::CreateDirect3DDisplay()
 	return(true);
 }
 
+void CGameFramework::ProcessPacket(LPARAM lParam)
+{
+	if (WSAGETSELECTERROR(lParam))
+	{
+		cout << "Error 입니다. 접속을 종료합니다.\n";
+		Sleep(1000);
+		CLIENT.CloseConnect();
+	}
+
+	switch (WSAGETSELECTEVENT(lParam))
+	{
+	case FD_WRITE:
+	case FD_READ:
+		gpScene->PacketProcess(lParam);
+		break;
+	case FD_CLOSE:
+		cout << "Close!! \n";
+		Sleep(1000);
+		CLIENT.CloseConnect();
+		::PostQuitMessage(0);
+		break;
+	default:
+		break;
+	}
+}
+
 void CGameFramework::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	//static POINT ptCursorPos;
@@ -431,17 +468,17 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		switch (wParam)
 		{
 			/*‘F1’ 키를 누르면 1인칭 카메라, ‘F2’ 키를 누르면 스페이스-쉽 카메라로 변경한다, ‘F3’ 키를 누르면 3인칭 카메라로 변경한다.*/
-		case VK_F1:
-		case VK_F2:
-		case VK_F3:
-			if (m_pPlayer)
-			{
-				m_pPlayer->ChangeCamera(m_pd3dDevice, (wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
-				m_pCamera = m_pPlayer->GetCamera();
-				//씬에 현재 카메라를 설정한다.
-				gpScene->SetCamera(m_pCamera);
-			}
-			break;
+		//case VK_F1:
+		//case VK_F2:
+		//case VK_F3:
+		//	if (m_pPlayer)
+		//	{
+		//		m_pPlayer->ChangeCamera(m_pd3dDevice, (wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
+		//		m_pCamera = m_pPlayer->GetCamera();
+		//		//씬에 현재 카메라를 설정한다.
+		//		gpScene->SetCamera(m_pCamera);
+		//	}
+		//	break;
 
 		case VK_ESCAPE:
 			::PostQuitMessage(0);

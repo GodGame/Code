@@ -15,8 +15,10 @@ class CSceneInGame : public CScene
 public:
 	CSceneInGame();
 	virtual ~CSceneInGame();
+	
+	void InitializeRecv();
 
-//	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	virtual bool PacketProcess(LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool ProcessInput(HWND hWnd, float fTime, POINT & pt);
 

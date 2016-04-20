@@ -16,6 +16,20 @@ CSceneInGame::~CSceneInGame()
 {
 }
 
+void CSceneInGame::InitializeRecv()
+{
+#ifdef USE_SERVER
+	if (false == CLIENT.Setting(FRAMEWORK.m_hWnd, SERVER_PORT))
+	{
+		cout << "Server와 접속이 되지 않았습니다." << endl;
+	}
+	PACKET_MGR.Recv(); // 초기값 받는다.
+	PACKET_MGR.GetRecvBuffer()->buf; // 미리 준비해둔 패킷 버퍼를 이용함 ( Async 에서는 CLIENT.GetRecvBuffer() )
+	// 플레이어 고유번호 설정, 맵 배치 등을 먼저 받고나서 빌드시킴
+	CLIENT.SetAsyncSelect(); // Async Select를 시작한다.
+#endif
+}
+
 void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 {
 	wstring baseDir{ _T("../Assets/Image/Objects/") };
@@ -238,6 +252,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	int iCharacterShaderNum = -1;
 	//메시 빌드
 	BuildMeshes(pd3dDevice);
+	InitializeRecv();
 	{
 		UINT index = 0;
 		m_nShaders = NUM_SHADER;
@@ -283,13 +298,16 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_pSceneShader = pSceneShader;
 	}
 	{
-		//m_ppShaders[2]->EntityAllStaticObjects();
-		//m_ppShaders[3]->EntityAllStaticObjects();
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
 		m_pPlayerShader->BuildObjects(pd3dDevice, m_SceneResoucres);
 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
+
+		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
+		ChangeGamePlayerID(1);
+		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
+
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 		m_pCamera->GenerateViewMatrix();
 
@@ -456,6 +474,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		//case 'B':
 		//	bIsKeyDown = !bIsKeyDown;
 		//	break;
+
 		case 'B' :
 		case 'X':
 		case 'C':
@@ -528,6 +547,7 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 	//else
 		//m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_MOUSE_UP_OVER, nullptr);
 	CPlayer * pPlayer = m_pCamera->GetPlayer();
+	//cout << "Num : " << pPlayer->GetPlayerNum() << endl;
 	{
 		DWORD dwDirection = 0;
 		/*키보드의 상태 정보를 반환한다. 화살표 키(‘→’, ‘←’, ‘↑’, ‘↓’)를 누르면 플레이어를 오른쪽/왼쪽(로컬 x-축), 앞/뒤(로컬 z-축)로 이동한다. ‘Page Up’과 ‘Page Down’ 키를 누르면 플레이어를 위/아래(로컬 y-축)로 이동한다.*/
@@ -684,13 +704,12 @@ CGameObject *CScene::PickObjectPointedByCursor(int xClient, int yClient)
 	}
 	return(pNearestObject);
 }
+CHeightMapTerrain *CSceneInGame::GetTerrain()
+{
+	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[m_uHeightMapIndex];
+	return(pTerrainShader->GetTerrain());
+}
 #endif
-
-//CHeightMapTerrain *CSceneInGame::GetTerrain()
-//{
-//	CTerrainShader *pTerrainShader = (CTerrainShader *)m_ppShaders[m_uHeightMapIndex];
-//	return(pTerrainShader->GetTerrain());
-//}
 
 void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
@@ -744,9 +763,45 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 
 void CSceneInGame::SendGameMessage(CScene * toObj, eMessage eMSG, void * extra)
 {
-	switch (eMSG)
+}
+
+bool CSceneInGame::PacketProcess(LPARAM lParam)
+{
+	CLIENT.ReadPacket();
+	static const int SC_PUT_PLAYER = 1;
+	static bool bFirstTime = true;
+	static int mId = -1;
+	char * buffer = CLIENT.GetRecvBuffer();
+	CInGamePlayer * pPlayer = nullptr;
+	switch (buffer[1])
 	{
-	default:
-		return;
+	case SC_PUT_PLAYER:
+	{	//sc_packet_put_player * my_packet = reinterpret_cast<sc_packet_put_player *>(ptr);
+		int id = 0;//my_packet->id;
+
+		if (bFirstTime)
+		{
+			bFirstTime = false;
+			mId = id;
+			m_pPlayerShader->SetPlayerID(FRAMEWORK.GetDevice() , mId);
+			m_pPlayerShader->GetPlayer(mId);
+
+			pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
+			pPlayer->SetPlayerNum(mId);
+			//pPlayer->SetPosition(XMFLOAT3(my_packet->x, my_packet->y));
+		}
+		if (id != mId)
+		{
+			pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(id));
+			//pPlayer->SetPosition();
+		}
+		pPlayer->SetActive(true);
+		break;
 	}
+	default:
+		printf("Unknown PACKET type [%d]\n", buffer[1]);
+		break;
+	}
+
+	return false;
 }

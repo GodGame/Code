@@ -747,6 +747,7 @@ void CSceneShader::UpdateShaders(ID3D11DeviceContext * pd3dDeviceContext)
 #pragma region PlayerShader
 CPlayerShader::CPlayerShader() : CShader()
 {
+	m_iPlayerIndex = 0;
 }
 CPlayerShader::~CPlayerShader()
 {
@@ -771,7 +772,8 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	CMaterial * pPlayerMaterial = MaterialMgr.GetObjects("White");
+	char material[4][10] = { "White", "Red", "Blue", "Green" };
+		//MaterialMgr.GetObjects("White"), 
 
 	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
 
@@ -793,19 +795,19 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	pMesh[eANI_DAMAGED_FRONT_02] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f02");
 	pMesh[eANI_DEATH_FRONT]      = mgrScene.mgrMesh.GetObjects("scene_aure_death_f");
 
-
 	CMapManager * pTerrain = &MAPMgr;
 	for (int j = 0; j < m_nObjects; ++j)
 	{
 		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
-		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, pPlayerMaterial);
+		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, 
+			MaterialMgr.GetObjects(material[j]));
 		pPlayer->SetCollide(true);
 		pPlayer->SetPlayerNum(j);
 		pPlayer->AddRef();
 		m_ppObjects[j] = pPlayer;
 
-		if (j == 0)	// 플레이어일 때, 카메라를 셋팅해준다.
+		if (j == m_iPlayerIndex)	// 플레이어일 때, 카메라를 셋팅해준다.
 		{
 			pPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
 			pPlayer->Rotate(0, 180, 0);
@@ -860,6 +862,28 @@ void CPlayerShader::AnimateObjects(float fTimeElapsed)
 		//m_ppObjects[i]->
 		m_ppObjects[i]->Animate(fTimeElapsed);
 	}
+}
+void CPlayerShader::SetPlayerID(ID3D11Device * pd3dDevice, int id)
+{
+	if (id == m_iPlayerIndex) return;
+
+	if (m_ppObjects) 
+	{
+		CPlayer * pBeforePlayer = static_cast<CPlayer*>(m_ppObjects[m_iPlayerIndex]);
+		CCamera * pCamera = pBeforePlayer->GetCamera();
+		pBeforePlayer->SetCamera(nullptr);
+		delete pCamera;
+
+		CPlayer * pAfterPlayer = static_cast<CPlayer*>(m_ppObjects[id]);
+		//pAfterPlayer->OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, NULL);
+		//pAfterPlayer->SetCamera(pCamera);
+		
+		pAfterPlayer->SetCamera(nullptr);
+		pAfterPlayer->ChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, 0.0f);
+		pCamera = pAfterPlayer->GetCamera();
+		pCamera->SetPlayer(pAfterPlayer);
+	}
+	m_iPlayerIndex = id;
 }
 #pragma endregion PlayerShader
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

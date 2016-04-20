@@ -634,10 +634,9 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 
 		auto it = m_vcItemList.end() - 1;
 		if (i < 12)
-			name = ITEMMgr.StaffNameArray[(int)(i / 6)][i % 2]; //sprintf(name, "scene_staff%d_%d", (i % 2), (int)((float)i / 2.0f));
+			name = ITEMMgr.StaffNameArray[(int)(i / 6)][i % 2]; 
 		else
 			name = ITEMMgr.StaffNameArray[0][2];
-		//cout << "I : " << i << ", name : " << name << endl;
 
 		XMFLOAT3 xmfPos;
 		for (int j = 0; j < 10; ++j)

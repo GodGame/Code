@@ -10,6 +10,10 @@
 #include "MapManager.h"
 #include "SystemManager.h"
 #include "ItemManager.h"
+
+#include "PacketMgr.h"
+#include "ClinetMgr.h"
+
 class CManagers
 {
 public:

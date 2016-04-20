@@ -41,8 +41,6 @@ struct RenderingThreadInfo
 class CGameFramework
 {
 private:
-	HINSTANCE	              m_hInstance;		// 윈도우 프로그램 인스턴스 핸들
-	HWND		              m_hWnd;			// 윈도우 핸들(Handle)
 
 	int                       m_nWndClientWidth;
 	int                       m_nWndClientHeight;
@@ -74,8 +72,8 @@ private:
 
 	UINT                              m_uRenderState;
 public:
-	//void BuildStaticShadowMap();
-	//void OnCreateShadowMap(CShader*ShaderList[], int nShaders);
+	HINSTANCE	              m_hInstance;		// 윈도우 프로그램 인스턴스 핸들
+	HWND		              m_hWnd;			// 윈도우 핸들(Handle)
 
 private:
 	//bool	                          m_bInGame;
@@ -91,6 +89,9 @@ private:
 	CGameFramework();
 	~CGameFramework();
 public:
+	void SetCamera(CCamera * pCamera) { m_pCamera = pCamera; }
+	void SetPlayer(CScene * pScene, CPlayer * pPlayer); 
+	ID3D11Device * GetDevice() { return m_pd3dDevice; }
 
 	bool OnCreate(HINSTANCE hInstance, HWND hMainWnd);
 	void OnDestroy();
@@ -117,6 +118,7 @@ public:
 	void PostProcess();
 
 	//윈도우의 메시지(키보드, 마우스 입력)를 처리하는 함수이다. 
+	void ProcessPacket(LPARAM lParam);
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

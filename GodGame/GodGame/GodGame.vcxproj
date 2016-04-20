@@ -118,7 +118,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dx11.lib;d3dx11d.lib;d3dcompiler.lib;d3dx9.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;dxgi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;d3d11.lib;d3dx11.lib;d3dx11d.lib;d3dcompiler.lib;d3dx9.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;dxgi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -154,7 +154,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d3d11.lib;d3dx11.lib;d3dx11d.lib;d3dcompiler.lib;d3dx9.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;dxgi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;d3d11.lib;d3dx11.lib;d3dx11d.lib;d3dcompiler.lib;d3dx9.lib;d3dx9d.lib;dxerr.lib;dxguid.lib;dxgi.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -166,6 +166,7 @@
     <ClInclude Include="AIWarrock.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
+    <ClInclude Include="ClinetMgr.h" />
     <ClInclude Include="CollisionMgr.h" />
     <ClInclude Include="EffectEntity.h" />
     <ClInclude Include="Evaluator.h" />
@@ -177,6 +178,7 @@
     <ClInclude Include="MapManager.h" />
     <ClInclude Include="MgrList.h" />
     <ClInclude Include="ObjectsList.h" />
+    <ClInclude Include="PacketMgr.h" />
     <ClInclude Include="ParentShader.h" />
     <ClInclude Include="SceneInGame.h" />
     <ClInclude Include="SceneTitle.h" />
@@ -208,6 +210,7 @@
     <ClCompile Include="AIWarrock.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Character.cpp" />
+    <ClCompile Include="ClinetMgr.cpp" />
     <ClCompile Include="CollisionMgr.cpp" />
     <ClCompile Include="EffectEntity.cpp" />
     <ClCompile Include="Evaluator.cpp" />
@@ -220,6 +223,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="MeshType.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="PacketMgr.cpp" />
     <ClCompile Include="ParentShader.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />

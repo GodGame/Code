@@ -173,6 +173,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+	
 	case WM_SIZE:
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -181,7 +182,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 	case WM_KEYDOWN:
 	case WM_KEYUP:
+	//case FD_WRITE:
 		gpFramework->OnProcessingWindowMessage(hWnd, message, wParam, lParam);
+		break;
+	case WM_SOCKET:
+		gpFramework->ProcessPacket(lParam);
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);

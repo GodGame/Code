@@ -108,13 +108,22 @@ void CCamera::SetPlayer(CPlayer *pPlayer)
 	m_pPlayer = pPlayer;
 
 	XMFLOAT3 xmfPlayerPos = pPlayer->GetPosition();
-	m_xv3Offset;
 
 	xmfPlayerPos.x += m_xv3Offset.x;
 	xmfPlayerPos.y += m_xv3Offset.y;
 	xmfPlayerPos.z += m_xv3Offset.z;
 
+	m_xv3Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_xv3Right    = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	m_xv3Up       = XMFLOAT3(0.0f, 1.0f, 0.0f);
+	m_xv3Look     = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	m_fPitch      = 0.0f;
+	m_fRoll       = 0.0f;
+	m_fYaw        = 0.0f;
+
 	SetPosition(xmfPlayerPos);
+	SetLookAt(m_pPlayer->GetPosition());
+	RegenerateViewMatrix();
 }
 
 void CCamera::SetOffset(XMFLOAT3 xv3Offset) {

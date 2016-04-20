@@ -3,7 +3,11 @@
 #ifndef __COMMON
 #define __COMMON
 
+#pragma comment(lib, "ws2_32")
+#include <winsock2.h>
 //#pragma warning(disable : 4244)
+#define	WM_SOCKET	 WM_USER + 1
+#define SERVER_PORT 9000
 
 #define NOT_PSUPDATE	0x01
 #define	RS_SHADOWMAP	0x02
@@ -21,9 +25,6 @@
 //#else
 //#define NUM_THREAD	(NUM_SHADER + 1)
 //#endif
-
-
-
 
 #define _THREAD
 
@@ -58,6 +59,7 @@ using namespace DirectX;
 #include <math.h>
 #include <process.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <map>
 #include <set>

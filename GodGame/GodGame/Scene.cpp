@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "MyInline.h"
 #include "Scene.h"
+#include "GameFramework.h"
 
 CScene::CScene()
 {
@@ -37,6 +38,18 @@ CScene::~CScene()
 	//if (m_hRenderingEndEvents) delete[] m_hRenderingEndEvents;
 }
 
+void CScene::ChangeGamePlayerID(int id)
+{
+	if (nullptr == m_pPlayerShader) return;
+
+	m_pPlayerShader->SetPlayerID(FRAMEWORK.GetDevice(), id);
+	
+	m_pCamera = (m_pPlayerShader->GetPlayer()->GetCamera());
+
+	//FRAMEWORK.SetCamera(m_pCamera);
+	//FRAMEWORK.SetPlayer(this, m_pPlayerShader->GetPlayer());
+}
+
 void CScene::ReleaseObjects()
 {
 	ReleaseShaderVariables();
@@ -61,6 +74,12 @@ void CScene::ReleaseObjects()
 	m_SceneResoucres.mgrMaterial.ReleaseObjects();
 	m_SceneResoucres.mgrMesh.ReleaseObjects();
 	m_SceneResoucres.mgrTexture.ReleaseObjects();
+}
+
+bool CScene::PacketProcess(LPARAM lParam)
+{
+	CLIENT.ReadPacket();
+	return true;
 }
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
