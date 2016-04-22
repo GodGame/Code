@@ -17,6 +17,8 @@
 class CShader;
 class CPlayer;
 //class CGameFramework;
+
+#define _USE_IFW1
 struct RenderingThreadInfo
 {
 	int		    m_nRenderingThreadID;
@@ -34,7 +36,6 @@ struct RenderingThreadInfo
 	UINT    * m_puRenderState;
 	bool    * m_pbInGame;
 };
-
 #endif
 
 //class CSceneShader;
@@ -58,15 +59,26 @@ private:
 	ID3D11DepthStencilView	* m_pd3dDepthStencilView;
 	ID3D11RenderTargetView  * m_pd3dBackRenderTargetView;
 
+#ifndef _USE_IFW1
+	ID3D11ShaderResourceView * m_pd3dFontResourceView;
 
+	ID2D1Factory			* m_pd2dFactory;
+	IDWriteFactory			* m_pdWriteFactory;
+	ID2D1HwndRenderTarget   * m_pd2dRenderTarget;
+	IDWriteTextFormat		* m_pdWriteTextFormat;
+	ID2D1SolidColorBrush	* m_pWhiteBrush;
+#else
+	ID3D11RenderTargetView   * m_pd3dFontRenderView;
+	ID3D11ShaderResourceView * m_pd3dFontResourceView;
+
+	IFW1Factory             * m_pFW1Factory;
+	IFW1FontWrapper         * m_pFontWrapper;
+	CMgr<IFW1FontWrapper>			 m_mgrFontWrapper;
+#endif
 private:
-	//ID3D11ShaderResourceView      * m_pd3dSSAOSRV;
-	//CSSAOShader                   * m_pSSAOShader;
 	CSceneShader                    * m_pSceneShader;
 
 	ID3D11RenderTargetView          * m_ppd3dRenderTargetView[NUM_MRT];
-	//ID3D11RenderTargetView        * m_pd3dSSAOTargetView;
-	//ID3D11RenderTargetView        * m_pd3dPostProcessing;
 	ID3D11ShaderResourceView        * m_pd3dMRTSRV[NUM_MRT];
 	ID3D11Texture2D                 * m_ppd3dMRTtx[NUM_MRT];
 
@@ -76,7 +88,6 @@ public:
 	HWND		              m_hWnd;			// 윈도우 핸들(Handle)
 
 private:
-	//bool	                          m_bInGame;
 	int		                          m_iDrawOption;
 	POINT	                          m_ptOldCursorPos;
 
@@ -86,8 +97,7 @@ private:
 
 	CPlayerShader                   * m_pPlayerShader;
 
-	CGameFramework();
-	~CGameFramework();
+
 public:
 	void SetCamera(CCamera * pCamera) { m_pCamera = pCamera; }
 	void SetPlayer(CScene * pScene, CPlayer * pPlayer); 
@@ -95,18 +105,6 @@ public:
 
 	bool OnCreate(HINSTANCE hInstance, HWND hMainWnd);
 	void OnDestroy();
-
-	void InitilizeThreads();
-	void ReleaseThreads();
-	void ReleaseThreadInfo();
-	static UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter);
-
-	//디바이스, 스왑 체인, 디바이스 컨텍스트, 디바이스와 관련된 뷰를 생성하는 함수이다. 
-	bool CreateRenderTargetDepthStencilView();;
-	bool CreateDirect3DDisplay();
-	//렌더링할 메쉬, 객체를 생성하고 소멸하는 함수이다. 
-	void BuildObjects(CScene * pScene);
-	void ReleaseObjects(CScene * pScene);
 
 	//프레임워크의 핵심(사용자 입력, 애니메이션, 렌더링)을 구성하는 함수이다. 
 	void FrameAdvance();
@@ -122,14 +120,17 @@ public:
 	void OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	void OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK OnProcessingWindowMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	static UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter);
 
 public:
 	void ChangeGameScene(CScene * pScene);
 	void PushGameScene(CScene * pScene);
 	void PopGameScene();
 
-	static CGameFramework & GetInstance();
+	bool SetFont(char * fontName);
+	void DrawFont(wchar_t * str, float fontSzie, const XMFLOAT2 & fontPos, UINT32 colorHex = 0xFFFFFFFF, FW1_TEXT_FLAG flag = FW1_CENTER );
 
+	static CGameFramework & GetInstance();
 
 private:
 	//다음은 게임 프레임워크에서 사용할 타이머이다.
@@ -140,6 +141,23 @@ private:
 	CPlayer *m_pPlayer;
 	//다음은 프레임 레이트를 주 윈도우의 캡션에 출력하기 위한 문자열이다.
 	_TCHAR m_pszBuffer[50];
+
+
+private:
+	CGameFramework();
+	~CGameFramework();
+
+	bool _CreateRenderTargetDepthStencilView();;
+	bool _CreateDirect3DDisplay();
+	bool _CreateFontSystem();
+
+	void _InitilizeThreads();
+	void _ReleaseThreads();
+	void _ReleaseThreadInfo();
+
+	//렌더링할 메쉬, 객체를 생성하고 소멸하는 함수이다. 
+	void _BuildObjects(CScene * pScene);
+	void _ReleaseObjects(CScene * pScene);
 };
 
 #define FRAMEWORK CGameFramework::GetInstance()

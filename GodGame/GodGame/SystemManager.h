@@ -50,8 +50,10 @@ private:
 	PLAYER_DATA_INFO mPlayerInfo[TOTAL_PLAYER];
 	float mPlayersDominateTryTime[TOTAL_PLAYER];
 	float mPlayersDominatingTime[TOTAL_PLAYER];
-	//UINT m_i;
+	
 	float m_fRoundTime;
+	UINT m_nRoundMinute : 8;
+	UINT m_nRoundSecond : 8;
 
 	float m_fEnterTime;
 	const float mfENTER_TIME = 5.f;
@@ -59,9 +61,6 @@ private:
 	const float mfEND_TIME = 5.f;
 
 //public:
-	const float mfLIMIT_ROUND_TIME = 3600.f;
-	const float mfDEATH_MATCH_TIME = 1800.f;
-
 	const float mfCAN_DOMINATE_LENGTH = 80.f;
 	const float mfDOMINATE_SPEND_TIME = 2.f;
 
@@ -85,12 +84,17 @@ public:
 
 	XMFLOAT3 & GetPortalZonePos(); 
 	float GetDominateSpendTime() { return mfDOMINATE_SPEND_TIME;}
-
+	float GetRoundTime()  { return m_fRoundTime; }
+	UINT GetRoundMinute() { return m_nRoundMinute; }
+	UINT GetRoundSecond() { return m_nRoundSecond; }
 private:
 	CSystemManager();
 	~CSystemManager();
 
 public:
+	const float mfLIMIT_ROUND_TIME = 30.f;
+	const float mfDEATH_MATCH_TIME = 1800.f;
+
 	static CSystemManager & GetInstance()
 	{
 		static CSystemManager instance;

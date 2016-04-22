@@ -219,9 +219,6 @@ float4 Lighting(float3 vPosition, float3 vNormal)
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
 /*방향성 조명의 효과를 계산하는 함수이다. 방향성 조명은 조명까지의 거리에 따라 조명의 양이 변하지 않는다.*/
 LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera, float4 vDiffuse, float4 vSpec)
 {

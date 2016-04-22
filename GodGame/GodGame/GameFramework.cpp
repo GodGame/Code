@@ -3,7 +3,6 @@
 #include "MyInline.h"
 #include "SceneInGame.h"
 #include "SceneTitle.h"
-//CRITICAL_SECTION m_cs;
 
 bool		    gbChangeScene = false;
 vector<CScene*> gSceneState;
@@ -20,13 +19,13 @@ void CGameFramework::PushGameScene(CScene * pScene)
 	if (pScene)
 	{
 		gpScene = pScene;
-		BuildObjects(gpScene);
+		_BuildObjects(gpScene);
 
 		m_nRenderThreads = gpScene->GetRenderThreadNumber();
 
 		if (m_nRenderThreads > 0)
 		{
-			InitilizeThreads();
+			_InitilizeThreads();
 			gbChangeScene = false;
 		}
 		gSceneState.push_back(pScene);
@@ -40,10 +39,10 @@ void CGameFramework::PopGameScene()
 #ifdef _DEBUG
 		system("cls");
 #endif
-		ReleaseThreads();
+		_ReleaseThreads();
 
 		CScene * pScene = *(gSceneState.end() - 1);
-		ReleaseObjects(gpScene);
+		_ReleaseObjects(gpScene);
 		delete gpScene;
 
 		m_pPlayer       = nullptr;
@@ -85,9 +84,18 @@ CGameFramework::CGameFramework()
 	m_iDrawOption              = MRT_SCENE;
 	m_pSceneShader             = nullptr;
 	_tcscpy_s(m_pszBuffer, _T("__GodGame__("));
-
-	//m_pd3dSSAOTargetView = nullptr;
-	//m_pSSAOShader = nullptr;
+#ifndef _USE_IFW1
+	m_pWhiteBrush			   = nullptr;	
+	m_pd2dFactory              = nullptr;
+	m_pd2dRenderTarget         = nullptr;
+	m_pdWriteFactory           = nullptr;
+	m_pdWriteTextFormat		   = nullptr;
+#else
+	m_pd3dFontRenderView       = nullptr;
+	m_pd3dFontResourceView     = nullptr;
+	m_pFW1Factory              = nullptr;
+	m_pFontWrapper             = nullptr;
+#endif
 	m_uRenderState = 0;
 }
 
@@ -118,12 +126,13 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 	m_hWnd = hMainWnd;
 
 	//Direct3D 디바이스, 디바이스 컨텍스트, 스왑 체인 등을 생성하는 함수를 호출한다.
-	if (!CreateDirect3DDisplay()) return(false);
-	if (!CreateRenderTargetDepthStencilView()) return(false);
-
+	if (!_CreateDirect3DDisplay()) return(false);
+	if (!_CreateRenderTargetDepthStencilView()) return(false);
+	if (!_CreateFontSystem()) return(false);
 	CManagers::BuildManagers(m_pd3dDevice, m_pd3dDeviceContext);
 	//PushGameScene(new CSceneInGame());
 	PushGameScene(new CSceneTitle());
+
 	//InitilizeThreads();
 	return(true);
 }
@@ -131,7 +140,7 @@ bool CGameFramework::OnCreate(HINSTANCE hInstance, HWND hMainWnd)
 void CGameFramework::OnDestroy()
 {
 	//게임 객체를 소멸한다.
-	ReleaseObjects(gpScene);
+	_ReleaseObjects(gpScene);
 	delete gpScene;
 	gSceneState.pop_back();
 
@@ -142,6 +151,19 @@ void CGameFramework::OnDestroy()
 	}
 
 	CManagers::ReleaseManagers();
+#ifndef _USE_IFW1
+	if (m_pd3dFontResourceView) m_pd3dFontResourceView->Release();
+	if (m_pWhiteBrush)       m_pWhiteBrush->Release();
+	if (m_pdWriteTextFormat) m_pdWriteTextFormat->Release();
+	if (m_pdWriteFactory)    m_pdWriteFactory->Release();
+	if (m_pd2dRenderTarget)  m_pd2dRenderTarget->Release();
+	if (m_pd2dFactory)       m_pd2dFactory->Release();
+#else
+	if (m_pd3dFontRenderView)   m_pd3dFontRenderView->Release();
+	if (m_pd3dFontResourceView) m_pd3dFontResourceView->Release();
+	if (m_pFW1Factory)          m_pFW1Factory->Release();
+	m_mgrFontWrapper.ReleaseObjects();
+#endif
 	//Direct3D와 관련된 객체를 소멸한다.
 	if (m_pd3dDeviceContext) m_pd3dDeviceContext->ClearState();
 	for (int i = 0; i < NUM_MRT; ++i)
@@ -152,21 +174,21 @@ void CGameFramework::OnDestroy()
 		//if (m_pd3dMRTUAV[i]) m_pd3dMRTUAV[i]->Release();
 	}
 	if (m_pd3dDepthStencilBuffer) m_pd3dDepthStencilBuffer->Release();
-	if (m_pd3dDepthStencilView) m_pd3dDepthStencilView->Release();
+	if (m_pd3dDepthStencilView)   m_pd3dDepthStencilView->Release();
 
-	if (m_pDXGISwapChain) cout << m_pDXGISwapChain->Release();
+	if (m_pDXGISwapChain)    m_pDXGISwapChain->Release();
 	if (m_pd3dDeviceContext) m_pd3dDeviceContext->Release();
-	if (m_pd3dDevice) m_pd3dDevice->Release();
+	if (m_pd3dDevice)        m_pd3dDevice->Release();
 
 #ifdef _THREAD
-	ReleaseThreads();//ReleaseThreadInfo();
+	_ReleaseThreads();//ReleaseThreadInfo();
 #endif
 	if (m_pd3dBackRenderTargetView) m_pd3dBackRenderTargetView->Release();
 
 	//if (m_pd3dSSAOTargetView) m_pd3dSSAOTargetView->Release();
 }
 
-bool CGameFramework::CreateRenderTargetDepthStencilView()
+bool CGameFramework::_CreateRenderTargetDepthStencilView()
 {
 	HRESULT hResult = S_OK;
 	//스왑 체인의 첫 번째 후면버퍼 인터페이스를 가져온다.
@@ -283,25 +305,25 @@ bool CGameFramework::CreateRenderTargetDepthStencilView()
 	}
 	d3d2DBufferDesc.Format = d3dSRVDesc.Format = d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	//	ID3D11Texture2D * pdTx2D = nullptr;
-	//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
-	//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dSSAOSRV)));
-	//	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dSSAOTargetView)));
+	ID3D11Texture2D * pdTx2D = nullptr;
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateTexture2D(&d3d2DBufferDesc, nullptr, &pdTx2D)));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateShaderResourceView(pdTx2D, &d3dSRVDesc, &m_pd3dFontResourceView)));
+	ASSERT(SUCCEEDED(hResult = m_pd3dDevice->CreateRenderTargetView(pdTx2D, &d3dRTVDesc, &m_pd3dFontRenderView)));
 
-	//	TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "sr_rtvSSAO", 0);
+	//TXMgr.InsertShaderResourceView(m_pd3dSSAOSRV, "sr_rtvfont", 0);
 
 	//	m_pd3dSSAOSRV->Release();
-	//	pdTx2D->Release();
+	pdTx2D->Release();
 
-		//m_pd3dSSAOSRV = ViewMgr.GetSRV("sr2d_SSAO"); m_pd3dSSAOSRV->AddRef();
-		//m_pd3dSSAOTargetView = ViewMgr.GetRTV("sr2d_SSAO"); m_pd3dSSAOTargetView->AddRef();
+	//m_pd3dSSAOSRV = ViewMgr.GetSRV("sr2d_SSAO"); m_pd3dSSAOSRV->AddRef();
+	//	m_pd3dSSAOTargetView = ViewMgr.GetRTV("sr2d_SSAO"); m_pd3dSSAOTargetView->AddRef();
 
-		//m_pd3dDeviceContext->OMSetRenderTargets(5, &m_pd3dRenderTargetView, m_pd3dDepthStencilView);
+	//	m_pd3dDeviceContext->OMSetRenderTargets(5, &m_pd3dRenderTargetView, m_pd3dDepthStencilView);
 
 	return(true);
 }
 
-bool CGameFramework::CreateDirect3DDisplay()
+bool CGameFramework::_CreateDirect3DDisplay()
 {
 	RECT rcClient;
 	::GetClientRect(m_hWnd, &rcClient);
@@ -363,6 +385,103 @@ bool CGameFramework::CreateDirect3DDisplay()
 	//렌더 타겟 뷰를 생성하는 함수를 호출한다.
 
 	return(true);
+}
+
+bool CGameFramework::_CreateFontSystem()
+{
+#ifndef _USE_IFW1
+	ASSERT_S(D2D1CreateFactory(
+		D2D1_FACTORY_TYPE_SINGLE_THREADED,
+		&m_pd2dFactory
+		));
+
+	ASSERT_S(DWriteCreateFactory(
+		DWRITE_FACTORY_TYPE_SHARED,
+		__uuidof(IDWriteFactory),
+		reinterpret_cast<IUnknown**>(&m_pdWriteFactory)
+		));
+	ASSERT_S(m_pdWriteFactory->CreateTextFormat(
+		L"Gabriola",                // Font family name.
+		NULL,                       // Font collection (NULL sets it to use the system font collection).
+		DWRITE_FONT_WEIGHT_REGULAR,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		72.0f,
+		L"en-us",
+		&m_pdWriteTextFormat
+		));
+
+	ASSERT_S(m_pdWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER));
+
+	ASSERT_S(m_pd2dFactory->CreateHwndRenderTarget(
+		D2D1::RenderTargetProperties(),
+		D2D1::HwndRenderTargetProperties(
+			m_hWnd,
+			D2D1::SizeU(FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT)),
+		&m_pd2dRenderTarget));
+
+	ASSERT_S(m_pd2dRenderTarget->CreateSolidColorBrush(
+		D2D1::ColorF(D2D1::ColorF::White),
+		&m_pWhiteBrush
+		));
+		
+	HANDLE ShareHandle = NULL;
+		m_pd3dDevice->OpenSharedResource(ShareHandle,
+			__uuidof(ID3D11Resource), (void**)&m_pd2dRenderTarget);
+		m_pd3dDevice->QueryInterface(__uuidof(ID3D11ShaderResourceView), (void**)&m_pd3dFontResourceView);
+
+#else
+	IFW1FontWrapper * pFont = nullptr;
+
+	FW1CreateFactory(FW1_VERSION, &m_pFW1Factory);
+	ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"Arial", &pFont));
+	m_mgrFontWrapper.InsertObject(pFont, "Arial");
+	pFont->Release();
+
+	ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"Gabriola", &pFont));
+	m_mgrFontWrapper.InsertObject(pFont, "Gabriola");
+	pFont->Release();
+#endif
+	return true;
+}
+
+bool CGameFramework::SetFont(char * fontName)
+{
+#ifndef _USE_IFW1
+	return true;
+#else
+	m_pFontWrapper = m_mgrFontWrapper.GetObjects(fontName);
+	return m_pFontWrapper != nullptr;
+#endif
+}
+
+void CGameFramework::DrawFont(wchar_t * str, float fontSzie, const XMFLOAT2 & fontPos, UINT32 colorHex, FW1_TEXT_FLAG flag)
+{
+#ifndef _USE_IFW1
+	m_pd2dRenderTarget->BeginDraw();
+
+	m_pd2dRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+	m_pd2dRenderTarget->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+
+	auto rectangle = D2D1::RectF(100.0f, 100.0f, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+	m_pd2dRenderTarget->DrawTextW(
+		str,
+		wcslen(str),
+		m_pdWriteTextFormat,
+		rectangle,
+		m_pWhiteBrush);
+	m_pd2dRenderTarget->EndDraw();
+
+	//m_pd3dDeviceContext->PSSetShaderResources(0, 1, (ID3D11ShaderResourceView* const*)&m_pd2dRenderTarget);
+#else
+	m_pFontWrapper->DrawString(m_pd3dDeviceContext,
+		str, fontSzie,
+		fontPos.x, fontPos.y,
+		colorHex, // Tx Color
+		flag//0	// Flags (for example FW1_RESTORESTATE to keep context states unchanges)
+		);
+	m_pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+#endif
 }
 
 void CGameFramework::ProcessPacket(LPARAM lParam)
@@ -552,7 +671,7 @@ LRESULT CALLBACK CGameFramework::OnProcessingWindowMessage(HWND hWnd, UINT nMess
 	return(0);
 }
 
-void CGameFramework::InitilizeThreads()
+void CGameFramework::_InitilizeThreads()
 {
 #ifdef _THREAD
 	//InitializeCriticalSection(&m_cs);
@@ -596,7 +715,7 @@ void CGameFramework::InitilizeThreads()
 #endif
 }
 
-void CGameFramework::ReleaseThreads()
+void CGameFramework::_ReleaseThreads()
 {
 	gbChangeScene = true;
 
@@ -604,12 +723,12 @@ void CGameFramework::ReleaseThreads()
 		::SetEvent(m_pRenderingThreadInfo[i].m_hRenderingBeginEvent);
 
 	::WaitForMultipleObjects(m_nRenderThreads, m_hRenderingEndEvents, TRUE, INFINITE);
-	ReleaseThreadInfo();
+	_ReleaseThreadInfo();
 
 	gbChangeScene = false;
 }
 
-void CGameFramework::ReleaseThreadInfo()
+void CGameFramework::_ReleaseThreadInfo()
 {
 	for (int i = 0; i < m_nRenderThreads; ++i)
 	{
@@ -634,7 +753,7 @@ void CGameFramework::ReleaseThreadInfo()
 	}
 }
 
-void CGameFramework::BuildObjects(CScene * pScene)
+void CGameFramework::_BuildObjects(CScene * pScene)
 {
 	CShader::CreateShaderVariables(m_pd3dDevice);
 	CIlluminatedShader::CreateShaderVariables(m_pd3dDevice);
@@ -658,7 +777,7 @@ void CGameFramework::BuildObjects(CScene * pScene)
 	m_pSceneShader = pScene->GetSceneShader();
 }
 
-void CGameFramework::ReleaseObjects(CScene * pScene)
+void CGameFramework::_ReleaseObjects(CScene * pScene)
 {
 	//CShader 클래스의 정적(static) 멤버 변수로 선언된 상수 버퍼를 반환한다.
 	CShader::ReleaseShaderVariables();
@@ -699,10 +818,10 @@ void CGameFramework::Render()
 	{
 		m_pd3dDeviceContext->OMSetRenderTargets(NUM_MRT - 1, &m_ppd3dRenderTargetView[1], m_pd3dDepthStencilView);
 		m_pd3dDeviceContext->ClearRenderTargetView(m_pd3dBackRenderTargetView, fClearColor);
-		//for (int i = 0; i < NUM_MRT; ++i)
-		//{
-		//	m_pd3dDeviceContext->ClearRenderTargetView(m_ppd3dRenderTargetView[i], fClearColor);
-		//}
+		for (int i = 0; i < NUM_MRT; ++i)
+		{
+			m_pd3dDeviceContext->ClearRenderTargetView(m_ppd3dRenderTargetView[i], fClearColor);
+		}
 		m_pd3dDeviceContext->ClearDepthStencilView(m_pd3dDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	}
 	else
@@ -774,6 +893,8 @@ void CGameFramework::PostProcess()
 		m_pSceneShader->PostProcessingRender(m_pd3dDeviceContext, 0, m_pCamera);
 	}
 	gpScene->UIRender(m_pd3dDeviceContext);
+
+	m_pd3dDeviceContext->PSSetShaderResources(0, 1, &m_pd3dFontResourceView);
 }
 
 void CGameFramework::FrameAdvance()
@@ -839,3 +960,4 @@ UINT WINAPI CGameFramework::RenderThread(LPVOID lpParameter)
 
 	return 0;
 }
+

@@ -370,6 +370,7 @@ public:
 
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 	void UIReadyWinLogo(bool Visible);
 	void UIReadyLoseLogo(bool Visible);

@@ -181,6 +181,9 @@
     <ClInclude Include="ClinetMgr.h">
       <Filter>Packet</Filter>
     </ClInclude>
+    <ClInclude Include="FW1FontWrapper_1_1\FW1FontWrapper.h">
+      <Filter>Global\1_Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">

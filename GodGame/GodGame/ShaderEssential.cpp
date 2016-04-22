@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "ShaderEssential.h"
 #include "MyInline.h"
+#include "GameFramework.h"
 //#include "ObjectsList.h"
 #include <D3Dcompiler.h>
 
@@ -1620,6 +1621,25 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	}
 
 	CUIShader::CreateUIResources(pd3dDevice);
+}
+
+void CInGameUIShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+{
+	CUIShader::Render(pd3dDeviceContext, uRenderState, pCamera);
+	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 30) };
+	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, 35) };
+	static char screenFont[52];
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wchar_t) * 26;
+
+//	sprintf(screenFont, "Time : %2d : %2d", SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
+//	swprintf_s(wscreenFont, wssize, L"%hs", screenFont);
+	swprintf_s(wscreenFont, wssize, L"RoundTime : %02d : %02d", SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
+	FRAMEWORK.SetFont("Gabriola");
+	FRAMEWORK.DrawFont(wscreenFont, 50, RoundTimeLocation, 0xff0099ff);
+
+	FRAMEWORK.SetFont("Gabriola");
+	FRAMEWORK.DrawFont(wscreenFont, 50, RoundTimeLocation2, 0x222222ff);
 }
 
 void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)

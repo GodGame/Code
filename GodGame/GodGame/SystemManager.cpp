@@ -12,6 +12,9 @@ CSystemManager::CSystemManager()
 	m_nPlayers             = 0;
 	m_iDominatingPlayerNum = -1;
 
+	m_nRoundMinute = 0;
+	m_nRoundSecond = 0;
+
 	ZeroMemory(&mPlayerInfo, sizeof(PLAYER_DATA_INFO)  * TOTAL_PLAYER);
 	ZeroMemory(&mPlayersDominateTryTime, sizeof(float) * TOTAL_PLAYER);
 	ZeroMemory(&mPlayersDominatingTime, sizeof(float)  * TOTAL_PLAYER);
@@ -71,6 +74,10 @@ void CSystemManager::Build(ID3D11Device * pd3dDevice)
 void CSystemManager::Update(float fFrameTime)
 {
 	m_fRoundTime += fFrameTime;
+
+	m_nRoundSecond = m_fRoundTime;
+	m_nRoundMinute = m_nRoundSecond / 60;
+	m_nRoundSecond = m_nRoundSecond % 60;
 }
 
 bool CSystemManager::CheckCanDominateRange(CInGamePlayer * pPlayer)

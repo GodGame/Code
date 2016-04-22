@@ -322,6 +322,8 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 	CreateShaderVariables(pd3dDevice);
 	BuildStaticShadowMap(pd3dDeviceContext);
+	EVENTMgr.InsertDelayMessage(SYSTEMMgr.mfLIMIT_ROUND_TIME, 
+		eMessage::MSG_ROUND_END, CGameEventMgr::MSG_TYPE_SCENE, this, nullptr, m_pCamera->GetPlayer());
 }
 
 void CSceneInGame::ReleaseObjects()
@@ -747,6 +749,9 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_ROUND_END:
+		EVENTMgr.InsertDelayMessage(10.f,
+			eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, this);
+
 		if (SYSTEMMgr.IsWinPlayer(pPlayer))
 			static_cast<CInGameUIShader*>(m_pUIShader)->UIReadyWinLogo(true);
 		else

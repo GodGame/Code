@@ -55,7 +55,13 @@ using namespace DirectX;
 
 //#include <d3d9types.h>
 
-#include <Mmsystem.h>
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <wincodec.h>
+using namespace D2D1;
+
+#include <Mmsystem.h>r
 #include <math.h>
 #include <process.h>
 #include <iostream>
@@ -65,6 +71,10 @@ using namespace DirectX;
 #include <set>
 #include <list>
 #include <time.h>
+//#include <atlconv.h>
+#include "FW1FontWrapper_1_1/FW1FontWrapper.h"
+//#ifdef _WIN64
+#pragma comment(lib, "FW1FontWrapper")
 //#include <ASSERT.h>
 
 #ifdef _DEBUG
