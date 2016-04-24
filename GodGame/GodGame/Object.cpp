@@ -766,6 +766,7 @@ CAbsorbMarble::~CAbsorbMarble()
 
 void CAbsorbMarble::Initialize()
 {
+	m_bObstacle = false;
 	SetCollide(true);
 
 	m_bAbsorb          = false;

@@ -611,10 +611,8 @@ void CInGamePlayer::ForcedByObj(CEntity * pObj)
 		XMFLOAT3 xmf3NewPos;
 		XMStoreFloat3(&xmf3NewPos, xmvOtherPos);
 		SetPosition(xmf3NewPos);
-
-		cout << "Forced!!\t";
-
-		if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌! : " << pObj->GetSize() << endl;; }
+		cout << "Forced, Size : " << pObj->GetSize() << endl;
+		//if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌! : " << pObj->GetSize() << endl;; }
 		//if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌!"; }
 	}
 }
@@ -673,6 +671,7 @@ void CInGamePlayer::Revive()
 
 void CInGamePlayer::Reset()
 {
+	ThrowItem();
 	m_Status.ResetStatus();
 	m_Status.SetHP(mMAX_HEALTH);
 	GetAniMesh()->ResetIndex();
@@ -788,7 +787,6 @@ void CInGamePlayer::ThrowItem()
 	if (m_pChild)
 	{
 		CStaff * pMyItem = static_cast<CStaff*>(m_pChild);
-		
 
 		XMFLOAT3 ThrowVelocity;
 		Chae::XMFloat3AddAndMulFloat(&ThrowVelocity, &GetCenterPosition(), 1.f, &GetLookVector(), 20.f);

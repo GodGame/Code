@@ -27,10 +27,12 @@ enum eMessage : BYTE
 	// Scene
 	MSG_SCENE_CHANGE,
 	// Round
+	MSG_GAME_START,
 	MSG_ROUND_ENTER,
 	MSG_ROUND_START,
 	MSG_ROUND_END,
 	MSG_ROUND_CLEAR,
+	MSG_GAME_END,
 	// Data-Pass
 	MSG_PASS_PLAYERPTR,
 	// Object

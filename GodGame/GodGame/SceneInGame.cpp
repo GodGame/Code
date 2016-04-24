@@ -30,6 +30,16 @@ void CSceneInGame::InitializeRecv()
 #endif
 }
 
+void CSceneInGame::Reset()
+{
+	cout << "Reset !! ";
+	for (auto & shaders : m_vcResetShaders)
+		shaders->Reset();
+
+	EVENTMgr.InsertDelayMessage(SYSTEMMgr.mfLIMIT_ROUND_TIME,
+		eMessage::MSG_ROUND_END, CGameEventMgr::MSG_TYPE_SCENE, this, nullptr, m_pCamera->GetPlayer());
+}
+
 void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 {
 	wstring baseDir{ _T("../Assets/Image/Objects/") };
@@ -39,12 +49,134 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	CTexture * pTexture = nullptr;
 	CMesh * pMesh = nullptr;
 	char file[128];
+	wchar_t result[128];
+
+	for (int i = 1; i < 5; ++i)
+	{
+		// 바위
+		pTexture = new CTexture(3, 1, 0, 0);
+		{
+			swprintf(result, _T("../Assets/Image/Objects/Rock/rock_0%d_diffuse.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Rock/rock_0%d_normals.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(1, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Rock/rock_0%d_specular.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(2, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		}
+		sprintf(file, "../Assets/Image/Objects/Rock/rock_0%d.fbxcjh", i);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 1.f, vcTxFileNames);
+		vcTxFileNames.clear();
+
+		sprintf(file, "scene_rock%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+	}
+	for (int i = 1; i < 4; ++i)
+	{
+		// stone
+		pTexture = new CTexture(3, 1, 0, 0);
+		{
+			swprintf(result, _T("../Assets/Image/Objects/Rock/stone_0%d_diffuse.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Rock/stone_0%d_normals.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(1, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Rock/stone_0%d_specular.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(2, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		}
+		sprintf(file, "../Assets/Image/Objects/Rock/stone_0%d.fbxcjh", i);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 1.f, vcTxFileNames);
+		vcTxFileNames.clear();
+
+		sprintf(file, "scene_stone%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+	}
+	for (int i = 1; i < 4; ++i)
+	{
+		// 기둥
+		pTexture = new CTexture(3, 1, 0, 0);
+		{
+			swprintf(result, _T("../Assets/Image/Objects/Colum/column_0%d_diffuse.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Colum/column_0%d_normals.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(1, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Colum/column_0%d_specular.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(2, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		}
+		sprintf(file, "../Assets/Image/Objects/Colum/column_0%d.fbxcjh", i);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.4f, vcTxFileNames);
+		vcTxFileNames.clear();
+
+		sprintf(file, "scene_colum%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+	}
+	for (int i = 1; i < 3; ++i)
+	{
+		// ruin
+		pTexture = new CTexture(3, 1, 0, 0);
+		{
+			swprintf(result, _T("../Assets/Image/Objects/Colum/ruin_0%d_diffuse.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(0, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Colum/ruin_0%d_normal.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(1, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			swprintf(result, _T("../Assets/Image/Objects/Colum/ruin_0%d_specular.jpg"), i);
+			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+			pTexture->SetTexture(2, pd3dsrvTexture);
+			pd3dsrvTexture->Release();
+
+			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
+		}
+		sprintf(file, "../Assets/Image/Objects/Colum/ruin_0%d.fbxcjh", i);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.4f, vcTxFileNames);
+		vcTxFileNames.clear();
+
+		sprintf(file, "scene_ruin%d", i);
+		m_SceneResoucres.mgrTexture.InsertObject(pTexture, file);
+		m_SceneResoucres.mgrMesh.InsertObject(pMesh, file);
+	}
+
 	for (int i = 0; i < 6; ++i)
 	{
 		// 스태프 1
 		pTexture = new CTexture(2, 1, 0, 0);
 		{
-			wchar_t result[128];
 			wsprintf(result, _T("../Assets/Image/Objects/staff/Staff0%d_Diff.png"), i);
 			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
 			pTexture->SetTexture(0, pd3dsrvTexture);
@@ -73,7 +205,6 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 
 		pTexture = new CTexture(3, 1, 0, 0);
 		{
-			wchar_t result[128];
 			wsprintf(result, _T("../Assets/Image/Objects/staff2/Staff2_0%d_Diff.png"), i);
 			ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
 			pTexture->SetTexture(0, pd3dsrvTexture);
@@ -261,28 +392,38 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 		//스카이박스와 터레인 셰이더
 		m_ppShaders[index] = new CEnviromentShader();
+		m_vcStaticShadowShaders.push_back(m_ppShaders[index]);
 		m_ppShaders[index++]->BuildObjects(pd3dDevice);
 
 		iCharacterShaderNum = index;
-		CCharacterShader *pStaticObjectsShader = new CCharacterShader();
-		pStaticObjectsShader->CreateShader(pd3dDevice);
-		pStaticObjectsShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
-		m_ppShaders[index++] = pStaticObjectsShader;
+		CCharacterShader *pCharShader = new CCharacterShader();
+		pCharShader->CreateShader(pd3dDevice);
+		pCharShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
+		m_ppShaders[index++] = pCharShader;
+		
+		m_vcResetShaders.push_back(pCharShader);
+		m_vcDynamicShadowShaders.push_back(pCharShader);
 
 		CStaticModelingShader *pStaticShader = new CStaticModelingShader();
 		pStaticShader->CreateShader(pd3dDevice);
 		pStaticShader->BuildObjects(pd3dDevice, pWhiteMaterial, m_SceneResoucres);
 		m_ppShaders[index++] = pStaticShader;
+		
+		m_vcStaticShadowShaders.push_back(pStaticShader);
+
+		CStaticInstancingParentShader * pStInst = new CStaticInstancingParentShader();
+		pStInst->CreateShader(pd3dDevice);
+		pStInst->BuildObjects(pd3dDevice, nullptr, m_SceneResoucres);
+		m_ppShaders[index++] = pStInst;
+		
+		m_vcStaticShadowShaders.push_back(pStInst);
 
 		CPointInstanceShader *pPointShader = new CPointInstanceShader();
 		pPointShader->CreateShader(pd3dDevice);
 		pPointShader->BuildObjects(pd3dDevice, pWhiteMaterial);
 		m_ppShaders[index++] = pPointShader;
-
-		CBillboardShader * pTrees = new CBillboardShader();
-		pTrees->CreateShader(pd3dDevice);
-		pTrees->BuildObjects(pd3dDevice);
-		m_ppShaders[index++] = pTrees;
+		
+		m_vcResetShaders.push_back(pPointShader);
 
 		m_nEffectShaderNum = index;
 		CEffectShader * pTxAni = new CEffectShader();
@@ -301,6 +442,9 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
 		m_pPlayerShader->BuildObjects(pd3dDevice, m_SceneResoucres);
+
+		m_vcResetShaders.push_back(m_pPlayerShader);
+		m_vcDynamicShadowShaders.push_back(m_pPlayerShader);
 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
 
@@ -322,15 +466,15 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 
 	CreateShaderVariables(pd3dDevice);
 	BuildStaticShadowMap(pd3dDeviceContext);
-	EVENTMgr.InsertDelayMessage(SYSTEMMgr.mfLIMIT_ROUND_TIME, 
-		eMessage::MSG_ROUND_END, CGameEventMgr::MSG_TYPE_SCENE, this, nullptr, m_pCamera->GetPlayer());
+
+	SYSTEMMgr.GameStart();
 }
 
 void CSceneInGame::ReleaseObjects()
 {
 	CScene::ReleaseObjects();
 	QUADMgr.ReleaseQuadTree();
-	SYSTEMMgr.SetScene(nullptr);
+	SYSTEMMgr.ReleaseScene();
 }
 
 void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
@@ -416,8 +560,8 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	UINT uRenderState = (RS_SHADOWMAP);
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 
-	m_ppShaders[0]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
-	m_ppShaders[4]->Render(pd3dDeviceContext, uRenderState, m_pCamera);
+	for(auto & shader : m_vcStaticShadowShaders)
+		shader->Render(pd3dDeviceContext, uRenderState, m_pCamera);
 
 	pSdwMgr->ResetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 	pSdwMgr->UpdateStaticShadowResource(pd3dDeviceContext);
@@ -468,11 +612,6 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		//case 'Z':
-		//	if (m_pLights->m_pLights[1].m_bEnable) m_pLights->m_pLights[1].m_bEnable = false;
-		//	else m_pLights->m_pLights[1].m_bEnable = true;
-		// break;
-
 		//case 'B':
 		//	bIsKeyDown = !bIsKeyDown;
 		//	break;
@@ -498,8 +637,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case '0':
 			pPlayer->Revive();
 			return false;
-		case 'Z':
-			SYSTEMMgr.RoundEnd();
+		//case 'Z':
+		//	this->GetGameMessage(nullptr, eMessage::MSG_ROUND_END);
+			//SYSTEMMgr.RoundEnd();
 			return false;
 
 		case 'D':
@@ -745,24 +885,28 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_ROUND_ENTER:
+		Reset();
+		return;
 	case eMessage::MSG_ROUND_START:
 		return;
 
 	case eMessage::MSG_ROUND_END:
-		EVENTMgr.InsertDelayMessage(10.f,
-			eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, this);
+		SYSTEMMgr.RoundEnd();
 
-		if (SYSTEMMgr.IsWinPlayer(pPlayer))
+		if (SYSTEMMgr.IsWinPlayer(static_cast<CInGamePlayer*>(m_pCamera->GetPlayer())))
 			static_cast<CInGameUIShader*>(m_pUIShader)->UIReadyWinLogo(true);
 		else
 			static_cast<CInGameUIShader*>(m_pUIShader)->UIReadyLoseLogo(true);
 		return;
 
 	case eMessage::MSG_ROUND_CLEAR:
+		static_cast<CInGameUIShader*>(m_pUIShader)->UIReadyLoseLogo(false);
 		SYSTEMMgr.RoundClear();
-		FRAMEWORK.ChangeGameScene(new CSceneTitle());
 		return;
 
+	case eMessage::MSG_GAME_END:
+		FRAMEWORK.ChangeGameScene(new CSceneTitle());
+		return;
 	}
 }
 

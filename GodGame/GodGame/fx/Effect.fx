@@ -31,43 +31,6 @@ float4 PSInstancedDiffusedColor(VS_INSTANCED_COLOR_OUTPUT input) : SV_Target
 	return input.color;
 }
 
-VS_DIFFUSED_COLOR_OUTPUT VSDiffusedColor(VS_DIFFUSED_COLOR_INPUT input)
-{
-	VS_DIFFUSED_COLOR_OUTPUT output = (VS_DIFFUSED_COLOR_OUTPUT)0;
-	output.position = mul(float4(input.position, 1.0f), mul(gmtxWorld, gmtxViewProjection));
-	output.color = input.color;
-
-	return(output);
-}
-
-float4 PSDiffusedColor(VS_DIFFUSED_COLOR_OUTPUT input) : SV_Target
-{
-	return(input.color);
-}
-
-VS_INSTANCED_DIFFUSED_COLOR_OUTPUT VSInstancedDiffusedColor(VS_INSTANCED_DIFFUSED_COLOR_INPUT input)
-{
-	VS_INSTANCED_DIFFUSED_COLOR_OUTPUT output = (VS_INSTANCED_DIFFUSED_COLOR_OUTPUT)0;
-	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform);
-	output.position = mul(output.positionW, gmtxViewProjection);
-	output.color = input.color;
-
-	return(output);
-}
-
-PS_MRT_OUT PSInstancedDiffusedColor(VS_INSTANCED_DIFFUSED_COLOR_OUTPUT input) : SV_Target
-{
-	//return(input.color);
-
-	PS_MRT_OUT output;
-	output.vNormal = float4(0, 0, 0, 0);
-	output.vPos = float4(input.positionW.xyz, 1.0f);
-	output.vDiffuse = float4(1, 1, 1, 0.0f/*fShadowFactor*/);
-	output.vSpec = float4(1, 1, 1, 0.0f/*fShadowFactor*/);
-	output.vTxColor = input.color;
-
-	return(output);
-}
 
 //조명의 영향을 계산하기 위한 정점의 법선 벡터와 정점의 위치를 계산하는 정점 쉐이더 함수이다.
 VS_LIGHTING_COLOR_OUTPUT VSLightingColor(VS_LIGHTING_COLOR_INPUT input)
@@ -773,5 +736,47 @@ PS_MRT_OUT PS_VNT(PS_WORLD_NORMALMAP input)
 	output.vDiffuse = color;//float4(gMaterial.m_cDiffuse.xyz, 1.0f);// +glow;
 	output.vSpec    = gMaterial.m_cSpecular;
 	output.vTxColor = color;
+	return output;
+}
+
+///////////////////////////////////////////////////////////// 
+// 인스턴싱
+//
+PS_WORLD_NORMALMAP VSNormStaticInstancing(VS_NORMALMAP_INST_STATIC input)
+{
+	PS_WORLD_NORMALMAP output;
+	output.pos      = float4(input.pos + input.instanceW.xyz, 1.f);
+	output.posW     = output.pos.xyz;
+	output.tangentW = input.tangent;
+	output.normalW  = input.normal;// +input.instanceW.xyz;
+	output.pos      = mul(output.pos, gmtxViewProjection);
+	output.tex      = input.tex;
+
+	return output;
+}
+
+PS_MRT_OUT PSNormStaticInstancing(PS_WORLD_NORMALMAP input)
+{
+	float4 displacementInfo = TxNormal.SampleLevel(gSamplerState, input.tex, 0);
+	float3 normal = input.normalW;
+
+	float3 N = normalize(normal);
+	float3 T = normalize(input.tangentW - dot(input.tangentW, N) * N);
+	float3x3 TBN = float3x3(T, cross(N, T), N);
+
+	normal = (2.0f * displacementInfo.rgb) - 1.0f; //.rgb;
+	normal = mul(normal, TBN);
+
+	input.posW -= normal * 4.0f;// (gBumpScale.y * 2) * (1.0 - displacementInfo.a);
+
+	float4 color = TxDiffuse.Sample(gSamplerState, input.tex);
+	//float4 glow = TxGlow.Sample(gSamplerState, input.tex) * 5;
+
+	PS_MRT_OUT output;
+	output.vNormal  = float4(normal, input.pos.w * gfDepthFar);
+	output.vPos     = float4(input.posW, 1.0);
+	output.vDiffuse = float4(gMaterial.m_cDiffuse.rgb, 1.0f);
+	output.vSpec    = float4(gMaterial.m_cSpecular.rgb, TxSpecluar.Sample(gSamplerState, input.tex).r);
+	output.vTxColor = TxDiffuse.Sample(gSamplerState, input.tex);
 	return output;
 }

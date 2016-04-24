@@ -49,6 +49,7 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	virtual void Reset();
 
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 };
@@ -78,6 +79,36 @@ private:
 public:
 	//인스턴싱 버퍼를 생성한다.
 	//ID3D11Buffer *CreateInstanceBuffer(ID3D11Device *pd3dDevice, int nObjects, UINT nBufferStride, void *pBufferData);
+};
+
+class CStaticInstaningShader : public CShader, public CInstanceShader
+{
+private:
+#define NUM_ROCK 4
+	ID3D11Buffer * m_pd3dRockInstanceBuffer[NUM_ROCK];
+	int m_nRocks[NUM_ROCK];
+	CGameObject ** m_ppRockObjects[NUM_ROCK];
+	CTexture *m_pRockTexture[NUM_ROCK];
+
+#define NUM_STONE 3
+	ID3D11Buffer * m_pd3dStoneInstanceBuffer[NUM_ROCK];
+	int m_nStones[NUM_ROCK];
+	CGameObject ** m_ppStoneObjects[NUM_ROCK];
+	CTexture *m_pStoneTexture[NUM_ROCK];
+
+public:
+	CStaticInstaningShader();
+	~CStaticInstaningShader();
+
+	virtual void CreateShader(ID3D11Device *pd3dDevice);
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	virtual void AnimateObjects(float fTimeElapsed);
+	void AllRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+
+private:
+	CMaterial * m_pMaterial;
 };
 
 class CBillboardShader : public CShader, public CInstanceShader

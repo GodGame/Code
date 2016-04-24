@@ -481,6 +481,7 @@ void CGameFramework::DrawFont(wchar_t * str, float fontSzie, const XMFLOAT2 & fo
 		flag//0	// Flags (for example FW1_RESTORESTATE to keep context states unchanges)
 		);
 	m_pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
+	m_pd3dDeviceContext->OMSetDepthStencilState(nullptr, 0);
 #endif
 }
 

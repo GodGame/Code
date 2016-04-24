@@ -230,8 +230,14 @@ void CCharacter::OnContextUpdated(float fTimeElapsed)
 		xv3PlayerVelocity.y = 0.0f;
 		SetVelocity(xv3PlayerVelocity);
 		xv3Position.y = fHeight;
-		SetPosition(xv3Position);
+		
 	}
+	float width = pTerrain->GetWidth() - 150.f;
+	float length = pTerrain->GetLength() - 150.f;
+	xv3Position.x = max(150.f, min(xv3Position.x, width));
+	xv3Position.z = max(150.f, min(xv3Position.z, length));
+
+	SetPosition(xv3Position);
 }
 
 void CCharacter::Attack(CCharacter * pToChar, short stDamage)

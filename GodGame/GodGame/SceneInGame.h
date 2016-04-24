@@ -12,11 +12,16 @@ class CSceneInGame : public CScene
 	POINT m_ptOldCursorPos;
 	UINT  m_uHeightMapIndex;
 
+	vector<CShader*> m_vcResetShaders;
+	vector<CShader*> m_vcStaticShadowShaders;
+	vector<CShader*> m_vcDynamicShadowShaders;
+
 public:
 	CSceneInGame();
 	virtual ~CSceneInGame();
 	
 	void InitializeRecv();
+	void Reset();
 
 	virtual bool PacketProcess(LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

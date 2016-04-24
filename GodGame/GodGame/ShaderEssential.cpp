@@ -864,6 +864,16 @@ void CPlayerShader::AnimateObjects(float fTimeElapsed)
 		m_ppObjects[i]->Animate(fTimeElapsed);
 	}
 }
+void CPlayerShader::Reset()
+{
+	float fHeight = 0;
+
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		static_cast<CInGamePlayer*>(m_ppObjects[i])->Reset();
+		static_cast<CInGamePlayer*>(m_ppObjects[i])->InitPosition(XMFLOAT3(MAPMgr.GetWidth()*0.5f, MAPMgr.GetPeakHeight() + 10.0f, 300));
+	}
+}
 void CPlayerShader::SetPlayerID(ID3D11Device * pd3dDevice, int id)
 {
 	if (id == m_iPlayerIndex) return;
@@ -1027,13 +1037,13 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
 	XMFLOAT3 xv3Scale(8.0f, 1.5f, 8.0f);
-	const int ImageWidth = 256;
-	const int ImageLength = 256;
+	const int ImageWidth = 257;
+	const int ImageLength = 257;
 
 	/*지형을 높이 맵 이미지 파일을 사용하여 생성한다. 높이 맵 이미지의 크기는 가로x세로(257x257)이고 격자 메쉬의 크기는 가로x세로(17x17)이다.
 	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
-
-	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth + 1, ImageLength + 1, ImageWidth + 1, ImageLength + 1, xv3Scale);
+	//HeightMap.raw
+	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth, ImageLength, ImageWidth , ImageLength, xv3Scale);
 	m_ppObjects[0]->AddRef();
 
 	XMFLOAT3 xv3Size = XMFLOAT3(ImageWidth * xv3Scale.x, 0, ImageWidth * xv3Scale.z);
@@ -1422,6 +1432,7 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 		m_pMousePoint->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 
+	FontRender(pd3dDeviceContext);
 }
 
 void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
@@ -1570,7 +1581,7 @@ CInGameUIShader::~CInGameUIShader()
 
 void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
-	m_nObjects = 1;
+	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	//m_pBackRTV->AddRef();
@@ -1581,8 +1592,11 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	CGameObject  * pObject = nullptr;
 	CTexture     * pTexture = nullptr;
 
-	XMFLOAT4 InstanceData[1] = { XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.3f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f) };
-	string   UIName[1] = { { "srv_lose.png", } };
+	XMFLOAT4 InstanceData[2] = { 
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.3f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f),
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT - 30, 140, 30)
+	};
+	string   UIName[1] = { { "srv_scroll_03.png" } };
 
 	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_lose.png"));
@@ -1591,20 +1605,24 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_win.png"));
 	mTextureList.InsertObject(pTexture, mWinLogo);
-
 	////m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
 	////m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
-	for (int i = 0; i < m_nObjects; i++)
+	for (int i = 0, index = 0; i < m_nObjects; i++)
 	{
-		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
-		//pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
-
 		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
 		pObject = new CGameObject(1);
 		pObject->SetMesh(pUIMesh);
 		pObject->SetVisible(true);
 		pObject->AddRef();
+		//pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
+		if (i == 1)
+		{
+			pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+			pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[index++]));
+		}
+		else
+			pObject->SetVisible(false);
 
 		pObject->SetTexture(pTexture);
 		m_ppObjects[i] = pObject;
@@ -1626,20 +1644,21 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 void CInGameUIShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
 	CUIShader::Render(pd3dDeviceContext, uRenderState, pCamera);
-	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 30) };
-	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, 35) };
+}
+
+void CInGameUIShader::FontRender(ID3D11DeviceContext *pd3dDeviceContext)
+{
+	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, -7) };
+	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, -2) };
 	static char screenFont[52];
 	static wchar_t wscreenFont[26];
 	static const int wssize = sizeof(wchar_t) * 26;
+	static const int roundmax = SYSTEMMgr.mfLIMIT_ROUND;
 
-//	sprintf(screenFont, "Time : %2d : %2d", SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
-//	swprintf_s(wscreenFont, wssize, L"%hs", screenFont);
-	swprintf_s(wscreenFont, wssize, L"RoundTime : %02d : %02d", SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
+	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
 	FRAMEWORK.SetFont("Gabriola");
-	FRAMEWORK.DrawFont(wscreenFont, 50, RoundTimeLocation, 0xff0099ff);
-
-	FRAMEWORK.SetFont("Gabriola");
-	FRAMEWORK.DrawFont(wscreenFont, 50, RoundTimeLocation2, 0x222222ff);
+	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation, 0xff0099ff);
+	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation2, 0x222222ff);
 }
 
 void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)

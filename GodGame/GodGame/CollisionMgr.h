@@ -89,8 +89,6 @@ public:
 	//CPartitionNode * GetChildNode(int index);
 };
 
-#define QAUD_MIN_UNIT 128
-
 enum Location{ LOC_NONE = -1, LOC_LB, LOC_RB, LOC_LT, LOC_RT, LOC_PARENT, LOC_ALL };
 
 class CCamera;
@@ -145,7 +143,9 @@ class CCamera;
 class CQuadTreeManager
 {
 public:
+#define QAUD_MIN_UNIT 128
 	typedef pair<QuadTree*, CEntity*> DynamicInfo;
+
 private:
 	CQuadTreeManager();
 	~CQuadTreeManager();

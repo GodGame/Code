@@ -175,6 +175,267 @@ void CInstancingShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRen
 
 #pragma endregion
 
+#pragma region StaticInstanceShader
+CStaticInstaningShader::CStaticInstaningShader() : CShader(), CInstanceShader()
+{
+	for (auto & bufferPtr : m_pd3dRockInstanceBuffer) bufferPtr = nullptr;
+	for (auto & nNum : m_nRocks) nNum = 0;
+	for (auto & tx : m_pRockTexture) tx = nullptr;
+
+	for (auto & bufferPtr : m_pd3dStoneInstanceBuffer) bufferPtr = nullptr;
+	for (auto & nNum : m_nStones) nNum = 0;
+	for (auto & tx : m_pStoneTexture) tx = nullptr;
+
+	m_pMaterial = nullptr;
+}
+
+CStaticInstaningShader::~CStaticInstaningShader()
+{
+	for (auto bufferPtr : m_pd3dRockInstanceBuffer) if (bufferPtr) bufferPtr->Release();
+	for (auto tx : m_pRockTexture) if (tx) tx->Release();
+
+	for (auto bufferPtr : m_pd3dStoneInstanceBuffer) if (bufferPtr) bufferPtr->Release();
+	for (auto tx : m_pStoneTexture) if (tx) tx->Release();
+
+	if (m_pMaterial) m_pMaterial->Release();
+}
+
+void CStaticInstaningShader::CreateShader(ID3D11Device *pd3dDevice)
+{
+	D3D11_INPUT_ELEMENT_DESC d3dInputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "INSTANCE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputLayout);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSNormStaticInstancing", "vs_5_0", &m_pd3dVertexShader, d3dInputLayout, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice,  L"fx/Effect.fx", "PSNormStaticInstancing", "ps_5_0", &m_pd3dPixelShader);
+}
+
+void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene)
+{
+	m_pMaterial = MaterialMgr.GetObjects("White");
+	m_pMaterial->AddRef();
+
+	m_nObjects = 0;
+	for (int & nRocks : m_nRocks){
+		nRocks = 80;
+		m_nObjects += nRocks;
+	}
+
+	for (int & nStones : m_nStones){
+		nStones = 20;
+		m_nObjects += nStones;
+	}
+
+	XMFLOAT3 xmf3Pos;
+	XMFLOAT2 xmf2Size = XMFLOAT2(80, 60);
+
+	m_nInstanceBufferStride = sizeof(XMFLOAT4);
+	m_nInstanceBufferOffset = 0;
+
+	CGameObject * pObj = nullptr;
+	CMapManager * pTerrain = &MAPMgr;
+	int cxTerrain = pTerrain->GetWidth() - 200;
+	int czTerrain = pTerrain->GetLength() - 200;
+
+	CMesh * pRockMesh[NUM_ROCK]; 
+	char name[24];
+	int in = 1;
+	for (auto & pMesh : pRockMesh)
+	{
+		sprintf(name, "scene_rock%d", in);
+		pMesh = mgrScene.mgrMesh.GetObjects(name);
+		m_pRockTexture[in - 1] = mgrScene.mgrTexture.GetObjects(name);
+		m_pRockTexture[in - 1]->AddRef();
+		++in;
+	}
+
+	in = 1;
+	CMesh * pStoneMesh[NUM_STONE];
+	for (auto & pMesh : pStoneMesh)
+	{
+		sprintf(name, "scene_stone%d", in);
+		pMesh = mgrScene.mgrMesh.GetObjects(name);
+		m_pStoneTexture[in - 1] = mgrScene.mgrTexture.GetObjects(name);
+		m_pStoneTexture[in - 1]->AddRef();
+		++in;
+	}
+
+
+	float fxTerrain = 0.f, fzTerrain = 0.f;
+	CQuadTreeManager & mgr = QUADMgr;
+	for (int i = 0; i < NUM_ROCK; ++i)
+	{
+		m_ppRockObjects[i] = new CGameObject*[m_nRocks[i]];
+
+		for (int j = 0; j < m_nRocks[i]; ++j)
+		{
+			fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
+			fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
+			xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
+			pObj = new CGameObject(1);
+			pObj->SetPosition(xmf3Pos);
+			pObj->SetMesh(pRockMesh[i]);
+			pObj->AddRef();
+			pObj->SetCollide(true);
+			pObj->SetObstacle(true);
+			pObj->UpdateBoundingBox();
+			mgr.InsertStaticEntity(pObj);
+
+			m_ppRockObjects[i][j] = pObj;
+		}
+		m_pd3dRockInstanceBuffer[i] = CreateInstanceBuffer(pd3dDevice, m_nRocks[i] * 0.8, m_nInstanceBufferStride, nullptr);
+		pRockMesh[i]->AssembleToVertexBuffer(1, &m_pd3dRockInstanceBuffer[i], &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
+ 	}
+
+	for (int i = 0; i < NUM_STONE; ++i)
+	{
+		m_ppStoneObjects[i] = new CGameObject*[m_nStones[i]];
+
+		for (int j = 0; j < m_nStones[i]; ++j)
+		{
+			fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
+			fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
+			xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
+			pObj = new CGameObject(1);
+			pObj->SetPosition(xmf3Pos);
+			pObj->SetMesh(pStoneMesh[i]);
+			pObj->AddRef();
+			pObj->SetCollide(true);
+			pObj->SetObstacle(true);
+			pObj->UpdateBoundingBox();
+			mgr.InsertStaticEntity(pObj);
+
+			m_ppStoneObjects[i][j] = pObj;
+		}
+		m_pd3dStoneInstanceBuffer[i] = CreateInstanceBuffer(pd3dDevice, m_nStones[i] * 0.9, m_nInstanceBufferStride, nullptr);
+		pStoneMesh[i]->AssembleToVertexBuffer(1, &m_pd3dStoneInstanceBuffer[i], &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
+	}
+	//EntityAllStaticObjects();
+}
+
+void CStaticInstaningShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+{
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+
+	for (int i = 0; i < NUM_ROCK; ++i)
+	{
+		m_pRockTexture[i]->UpdateShaderVariable(pd3dDeviceContext);
+
+		int nRockInstance = 0;
+		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+		pd3dDeviceContext->Map(m_pd3dRockInstanceBuffer[i], 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		XMFLOAT4 *pnRockInstances = (XMFLOAT4 *)d3dMappedResource.pData;
+
+		CGameObject * pObj = nullptr;
+		XMFLOAT3 pos;
+		for (int j = 0; j < m_nRocks[i]; ++j)
+		{
+			pObj = m_ppRockObjects[i][j];
+			if (pObj->IsVisible())
+			{
+				pos = pObj->GetPosition();
+				pnRockInstances[nRockInstance++] = move(XMFLOAT4(pos.x, pos.y, pos.z, 1.f));
+				pObj->SetVisible(false);
+			}
+		}
+		pd3dDeviceContext->Unmap(m_pd3dRockInstanceBuffer[i], 0);
+
+		pObj->GetMesh()->RenderInstanced(pd3dDeviceContext, uRenderState, nRockInstance, 0);
+	}
+
+	for (int i = 0; i < NUM_STONE; ++i)
+	{
+		m_pStoneTexture[i]->UpdateShaderVariable(pd3dDeviceContext);
+
+		int nStoneInstance = 0;
+		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+		pd3dDeviceContext->Map(m_pd3dStoneInstanceBuffer[i], 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		XMFLOAT4 *pnStoneInstances = (XMFLOAT4 *)d3dMappedResource.pData;
+
+		CGameObject * pObj = nullptr;
+		XMFLOAT3 pos;
+		for (int j = 0; j < m_nStones[i]; ++j)
+		{
+			pObj = m_ppStoneObjects[i][j];
+			if (pObj->IsVisible())
+			{
+				pos = pObj->GetPosition();
+				pnStoneInstances[nStoneInstance++] = move(XMFLOAT4(pos.x, pos.y, pos.z, 1.f));
+				pObj->SetVisible(false);
+			}
+		}
+		pd3dDeviceContext->Unmap(m_pd3dStoneInstanceBuffer[i], 0);
+
+		pObj->GetMesh()->RenderInstanced(pd3dDeviceContext, uRenderState, nStoneInstance, 0);
+	}
+}
+
+void CStaticInstaningShader::AnimateObjects(float fTimeElapsed)
+{
+}
+
+void CStaticInstaningShader::AllRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera )
+{
+	OnPrepareRender(pd3dDeviceContext, uRenderState);
+	if (m_pMaterial) CIlluminatedShader::UpdateShaderVariable(pd3dDeviceContext, &m_pMaterial->m_Material);
+
+	for (int i = 0; i < NUM_ROCK; ++i)
+	{
+		m_pRockTexture[i]->UpdateShaderVariable(pd3dDeviceContext);
+
+		int nRockInstance = 0;
+		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+		pd3dDeviceContext->Map(m_pd3dRockInstanceBuffer[i], 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		XMFLOAT4 *pnRockInstances = (XMFLOAT4 *)d3dMappedResource.pData;
+
+		CGameObject * pObj = nullptr;
+		XMFLOAT3 pos;
+		for (int j = 0; j < m_nRocks[i]; ++j)
+		{
+			pObj = m_ppRockObjects[i][j];
+			pos = pObj->GetPosition();
+			pnRockInstances[nRockInstance++] = move(XMFLOAT4(pos.x, pos.y, pos.z, 1.f));
+		}
+		pd3dDeviceContext->Unmap(m_pd3dRockInstanceBuffer[i], 0);
+
+		pObj->GetMesh()->RenderInstanced(pd3dDeviceContext, uRenderState, nRockInstance, 0);
+	}
+	for (int i = 0; i < NUM_STONE; ++i)
+	{
+		m_pStoneTexture[i]->UpdateShaderVariable(pd3dDeviceContext);
+
+		int nStoneInstance = 0;
+		D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+		pd3dDeviceContext->Map(m_pd3dStoneInstanceBuffer[i], 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+		XMFLOAT4 *pnStoneInstances = (XMFLOAT4 *)d3dMappedResource.pData;
+
+		CGameObject * pObj = nullptr;
+		XMFLOAT3 pos;
+		for (int j = 0; j < m_nStones[i]; ++j)
+		{
+			pObj = m_ppStoneObjects[i][j];
+			if (pObj->IsVisible())
+			{
+				pos = pObj->GetPosition();
+				pnStoneInstances[nStoneInstance++] = move(XMFLOAT4(pos.x, pos.y, pos.z, 1.f));
+				pObj->SetVisible(false);
+			}
+		}
+		pd3dDeviceContext->Unmap(m_pd3dStoneInstanceBuffer[i], 0);
+
+		pObj->GetMesh()->RenderInstanced(pd3dDeviceContext, uRenderState, nStoneInstance, 0);
+	}
+}
+
+#pragma endregion
+
+
 #pragma region BillboardShader
 CBillboardShader::CBillboardShader() : CShader(), CInstanceShader()
 {
@@ -206,10 +467,10 @@ void CBillboardShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 {
-	m_nObjects = m_nTrees = 100;
+	m_nObjects = m_nTrees = 200;
 
 	XMFLOAT3 xmf3Pos;
-	XMFLOAT2 xmf2Size = XMFLOAT2(40, 40);
+	XMFLOAT2 xmf2Size = XMFLOAT2(80, 60);
 
 	m_nInstanceBufferStride = sizeof(VS_VB_WORLD_POSITION);
 	m_nInstanceBufferOffset = 0;
@@ -221,20 +482,27 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 	int cxTerrain = pTerrain->GetWidth();
 	int czTerrain = pTerrain->GetLength();
 
+	float fxTerrain = 0.f, fzTerrain = 0.f;
+	const XMINT2 posRange[4] { { 50, czTerrain - 100 }, { cxTerrain - 100 , 50 },
+	{ 50 , czTerrain - 100 }, { cxTerrain - 100 , 50 } };
+	const XMINT2 rangePlus[4] { { 50, 50 }, { 50 , 50 },
+	{ cxTerrain - 100 , 50 }, { 50 , czTerrain - 100 } };
+
 	CBillBoardVertex * pTreeMesh = new CBillBoardVertex(pd3dDevice, xmf2Size.x, xmf2Size.y);
 	for (int i = 0; i < m_nTrees; ++i) 
 	{
-		float fxTerrain = xmf3Pos.x = rand() % cxTerrain;
-		float fzTerrain = xmf3Pos.z = rand() % czTerrain;
-		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2)) + 18;
-		pTree = new CBillboardObject(xmf3Pos, i, xmf2Size);
+		int index = i % 4;
+
+		fxTerrain = xmf3Pos.x = rand() % posRange[index].x + rangePlus[index].x;
+		fzTerrain = xmf3Pos.z = rand() % posRange[index].y + rangePlus[index].y;
+		xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2)) + 22;
+		pTree = new CBillboardObject(xmf3Pos, i * rand() % 4, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
 		pTree->SetSize(20.0f);
-		pTree->SetCollide(true);
+		//pTree->SetCollide(true);
 		pTree->AddRef();
 		m_ppObjects[i] = pTree;
 	}
-	m_ppObjects[0]->SetPosition(XMFLOAT3(1006, 200, 308));
 
 	m_pd3dTreeInstanceBuffer = CreateInstanceBuffer(pd3dDevice, m_nTrees, m_nInstanceBufferStride, nullptr);
 	pTreeMesh->AssembleToVertexBuffer(1, &m_pd3dTreeInstanceBuffer, &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
@@ -242,7 +510,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 	m_pTexture = new CTexture(1, 1, TX_SLOT_TEXTURE_ARRAY, 0, SET_SHADER_PS);
 	// 크기 동일'
 	//ID3D11ShaderResourceView * pd3dsrvArray = nullptr;
-	ID3D11ShaderResourceView * pd3dsrvArray = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/bill"), _T("png"), 4);
+	ID3D11ShaderResourceView * pd3dsrvArray = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Objects/trees/Bills"), _T("png"), 4);
 
 	m_pTexture->SetTexture(0, pd3dsrvArray);
 	m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
@@ -257,11 +525,11 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	if (m_pTexture) m_pTexture->UpdateShaderVariable(pd3dDeviceContext);
 
-	if (uRenderState & RS_SHADOWMAP)
-	{
-		AllRender(pd3dDeviceContext, uRenderState, pCamera);
-		return;
-	}
+	//if (uRenderState & RS_SHADOWMAP)
+	//{
+	//	AllRender(pd3dDeviceContext, uRenderState, pCamera);
+	//	return;
+	//}
 	//	pCamera->UpdateCameraPositionCBBuffer(pd3dDeviceContext);
 
 	int nTreeInstance = 0;
@@ -270,16 +538,12 @@ void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRend
 	XMFLOAT4 *pnTreeInstances = (XMFLOAT4 *)d3dMappedResource.pData;
 
 	CBillboardObject * pTree = nullptr;
-	//XMFLOAT4 xmfInstanceData;
 	for (int j = 0; j < m_nTrees; ++j)
 	{
 		pTree = (CBillboardObject*)m_ppObjects[j];
-
-		//pTree->SetActive(true);
 		if (pTree->IsVisible())
 		{
 			pnTreeInstances[nTreeInstance] = pTree->GetInstanceData();
-		//	printf("%0.2f %0.2f %0.2f \n", pnTreeInstances[nTreeInstance].m_xv3Position.x, pnTreeInstances[nTreeInstance].m_xv3Position.y, pnTreeInstances[nTreeInstance].m_xv3Position.z);
 			nTreeInstance++;
 		}
 	}
@@ -375,23 +639,27 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
 	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	m_nObjects = 1;
+	m_nObjects = 3;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	string names[] = { "scene_portal" };
+	string names[] = { "scene_portal", "scene_stone1", "scene_stone2" };
 
 	CMapManager * pHeightMapTerrain = &MAPMgr;
-	float fHeight = pHeightMapTerrain->GetHeight(1085, 480, false);
+	float fHeight = pHeightMapTerrain->GetHeight(1015, 1574, false);
 	m_ppObjects[0] = SYSTEMMgr.GetPortalGate();
-	m_ppObjects[0]->SetPosition(1085, fHeight, 480);
+	m_ppObjects[0]->SetPosition(1015, fHeight, 1574);
 	m_ppObjects[0]->AddRef();
 
 
-	//m_ppObjects[1] = pAnimatedObject;
-	//m_ppObjects[1]->SetPosition(1115, fHeight, 275);
-	//m_ppObjects[1]->Rotate(0, 90.f, 0);
-	//m_ppObjects[1]->AddRef();
+	m_ppObjects[1] = new CGameObject(1);
+	fHeight = pHeightMapTerrain->GetHeight(1345, 176, false);
+	m_ppObjects[1]->SetPosition(1345, fHeight, 176);
+	m_ppObjects[1]->AddRef();
 
+	m_ppObjects[2] = new CGameObject(1);
+	fHeight = pHeightMapTerrain->GetHeight(1445, 176, false);
+	m_ppObjects[2]->SetPosition(1445, fHeight, 176);
+	m_ppObjects[2]->AddRef();
 	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
 	//pAnimatedObject = new CAnimatedObject(1);
 	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
@@ -570,6 +838,21 @@ void CCharacterShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRen
 	}
 }
 
+void CCharacterShader::Reset()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		static_cast<CMonster*>(m_ppObjects[i])->Reset();
+	}
+
+	float fHeight = 0;
+	fHeight = MAPMgr.GetHeight(1085, 260, true);
+	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
+
+	fHeight = MAPMgr.GetHeight(1115, 275, false);
+	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
+}
+
 void CCharacterShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
 	if (eMSG == eMessage::MSG_PASS_PLAYERPTR)
@@ -630,7 +913,7 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 
 	for (int i = 0; i < 13; ++i)
 	{
-		m_vcItemList.push_back(ItemList());
+		m_vcItemList.emplace_back(ItemList());
 
 		auto it = m_vcItemList.end() - 1;
 		if (i < 12)
@@ -1375,7 +1658,7 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 		else
 		{
 			m_ppParticle[i]->Update(fTimeElapsed);
-			m_vcUsingParticleArray.push_back(ParticleInfo(i, m_ppParticle[i]));
+			m_vcUsingParticleArray.emplace_back(i, m_ppParticle[i]);
 		}
 	}
 

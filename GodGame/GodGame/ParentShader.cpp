@@ -178,3 +178,33 @@ void CStaticModelingShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * 
 	pBlackImageShader->BuildObjects(pd3dDevice, pMaterial, SceneMgr);
 	m_ppShader[2] = pBlackImageShader;
 }
+
+void CStaticInstancingParentShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr)
+{
+	m_nShaders = 2;
+	m_ppShader = new CShader*[m_nShaders];
+
+	CBillboardShader * pTrees = new CBillboardShader();
+	pTrees->CreateShader(pd3dDevice);
+	pTrees->BuildObjects(pd3dDevice);
+	m_ppShader[0] = pTrees;
+
+	CStaticInstaningShader * pStatic = new CStaticInstaningShader();
+	pStatic->CreateShader(pd3dDevice);
+	pStatic->BuildObjects(pd3dDevice, SceneMgr);
+	m_ppShader[1] = pStatic;
+}
+
+void CStaticInstancingParentShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+{
+	if (!(uRenderState & RS_SHADOWMAP))
+	{
+		for (int i = 0; i < m_nShaders; ++i)
+			m_ppShader[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+	}
+	else
+	{	
+		static_cast<CBillboardShader*>(m_ppShader[0])->AllRender(pd3dDeviceContext, uRenderState, pCamera);
+		static_cast<CStaticInstaningShader*>(m_ppShader[1])->AllRender(pd3dDeviceContext, uRenderState, pCamera);
+	}
+}

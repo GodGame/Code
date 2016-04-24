@@ -318,3 +318,13 @@ struct HCS_EDGE3_IN1
 	float fTessEdges[3]   : SV_TessFactor;
 	float fTessInsides[1] : SV_InsideTessFactor;
 };
+
+
+struct VS_NORMALMAP_INST_STATIC
+{
+	float3 pos            : POSITION;
+	float2 tex            : TEXCOORD;
+	float3 normal         : NORMAL;
+	float3 tangent        : TANGENT;
+	float4 instanceW      : INSTANCE;
+};

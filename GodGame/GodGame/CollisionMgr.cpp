@@ -635,7 +635,7 @@ QuadTree * CQuadTreeManager::InsertStaticEntity(CEntity * pObject)
 QuadTree * CQuadTreeManager::InsertDynamicEntity(CEntity * pObject)
 {
 	QuadTree * pTree = m_pRootTree->InsertEntity(pObject);
-	m_vcDynamicArray.push_back(DynamicInfo(pTree, pObject));
+	m_vcDynamicArray.emplace_back(pTree, pObject);
 	//cout << "Dynamic Insert !! : " << pTree->m_uTreeNum << endl;
 	return pTree;
 }

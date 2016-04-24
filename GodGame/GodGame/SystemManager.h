@@ -77,6 +77,7 @@ private:
 
 public:
 	void SetScene(CScene * pScene) { m_pNowScene = pScene; }
+	void ReleaseScene(void);
 
 	CPortalGate* GetPortalGate() { return m_pPortalGate; }
 	CGameObject* GetPortalZoneObject();
@@ -85,6 +86,7 @@ public:
 	XMFLOAT3 & GetPortalZonePos(); 
 	float GetDominateSpendTime() { return mfDOMINATE_SPEND_TIME;}
 	float GetRoundTime()  { return m_fRoundTime; }
+	UINT GetRoundNumber() { return m_iRoundNumber; }
 	UINT GetRoundMinute() { return m_nRoundMinute; }
 	UINT GetRoundSecond() { return m_nRoundSecond; }
 private:
@@ -94,6 +96,7 @@ private:
 public:
 	const float mfLIMIT_ROUND_TIME = 30.f;
 	const float mfDEATH_MATCH_TIME = 1800.f;
+	const int mfLIMIT_ROUND = 2;
 
 	static CSystemManager & GetInstance()
 	{
@@ -113,10 +116,12 @@ public:
 	void Build(ID3D11Device * pd3dDevice);
 	void Update(float fFrameTime);
 
+	void GameStart();
 	void RoundEnter();
 	void RoundStart();
 	void RoundEnd();
 	void RoundClear();
+	void GameEnd();
 };
 #define SYSTEMMgr CSystemManager::GetInstance()
 

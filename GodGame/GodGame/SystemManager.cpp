@@ -23,6 +23,7 @@ CSystemManager::CSystemManager()
 	m_pMinimMap   = nullptr;
 
 	m_fWaterHeight = 0.f;
+	m_iRoundNumber = 0;
 
 	m_vcPlayerColorMaterial.reserve(TOTAL_PLAYER);
 }
@@ -31,6 +32,12 @@ CSystemManager::~CSystemManager()
 {
 	if (m_pPortalGate) m_pPortalGate->Release();
 	if (m_pMinimMap) m_pMinimMap->Release();
+}
+
+void CSystemManager::ReleaseScene()
+{
+	m_pNowScene = nullptr;
+	m_pPortalGate->SetMesh(nullptr);
 }
 
 CGameObject * CSystemManager::GetPortalZoneObject()
@@ -45,8 +52,6 @@ XMFLOAT3 & CSystemManager::GetPortalZonePos()
 
 void CSystemManager::Build(ID3D11Device * pd3dDevice)
 {
-	cout << "Build Systewm" << endl;
-
 	m_vcPlayerColorMaterial.push_back(MaterialMgr.GetObjects(PLAYER_00_COLOR));
 	m_vcPlayerColorMaterial.push_back(MaterialMgr.GetObjects(PLAYER_01_COLOR));
 	m_vcPlayerColorMaterial.push_back(MaterialMgr.GetObjects(PLAYER_02_COLOR));
@@ -132,31 +137,51 @@ void CSystemManager::DominatePortalGate(int iPlayerNum)
 	testid = (testid + 1) % 4;
 }
 
+void CSystemManager::GameStart()
+{
+	m_iRoundNumber = 0;
+
+	RoundEnter();
+}
+
 void CSystemManager::RoundEnter()
 {
-	int iPlayerNum = m_iDominatingPlayerNum;
+	m_iRoundNumber++;
+	m_fRoundTime = 0.f;
+	int iPlayerNum = -1;;
 	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_ENTER);
 }
 
 void CSystemManager::RoundStart()
 {
-	int iPlayerNum = m_iDominatingPlayerNum;
 	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_START);
 }
 
 void CSystemManager::RoundEnd()
 {
 	m_fEndTime = mfEND_TIME;
-
-	int iPlayerNum = m_iDominatingPlayerNum;
-	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_END, &iPlayerNum);
-
+	//int iPlayerNum = m_iDominatingPlayerNum;
+	//m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_END, &iPlayerNum);
 	EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 
 void CSystemManager::RoundClear()
 {
-	cout << "RoundClear" << endl;
-	m_pPortalGate->SetMesh(nullptr);
-	//m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_CLEAR);
+	m_iDominatingPlayerNum = -1;
+	GetPortalZoneObject()->SetActive(false);// SSetMaterial(nullptr);
+
+	if (m_iRoundNumber + 1 > mfLIMIT_ROUND)
+	{
+		GameEnd();
+		EVENTMgr.InsertDelayMessage(0.f, eMessage::MSG_GAME_END, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
+	}
+	else
+	{
+		RoundEnter();
+		//EVENTMgr.InsertDelayMessage(1.f, eMessage::MSG_ROUND_ENTER, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
+	}
+}
+
+void CSystemManager::GameEnd()
+{
 }

@@ -42,6 +42,7 @@ public:
 	bool IsActive()  { return m_bActive; }
 
 	bool IsObstacle() { return m_bObstacle; }
+	void SetObstacle(bool bVal) { m_bObstacle = bVal; }
 
 	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
 	bool CanCollide(CEntity * pObj) const

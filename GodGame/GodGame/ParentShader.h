@@ -59,4 +59,14 @@ public:
 	//virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 };
 
+class CStaticInstancingParentShader : public CParentShader
+{
+public:
+	CStaticInstancingParentShader(){}
+	virtual ~CStaticInstancingParentShader(){}
+
+	virtual void BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial, BUILD_RESOURCES_MGR & SceneMgr);
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+};
+
 #endif

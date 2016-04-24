@@ -306,6 +306,18 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_win.png", 0);
 	pd3dsrvTexture->Release();
 
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/scroll01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_scroll_01.png", 0);
+	pd3dsrvTexture->Release();
+
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/scroll02.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_scroll_02.png", 0);
+	pd3dsrvTexture->Release();
+
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/scroll03.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_scroll_03.png", 0);
+	pd3dsrvTexture->Release();
+
 	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/skull"), _T("png"), 1);
 	InsertShaderResourceView(pd3dsrvTexture, "srv_skull_array", 0);
 	pd3dsrvTexture->Release();
