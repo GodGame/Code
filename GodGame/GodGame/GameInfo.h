@@ -134,6 +134,8 @@ public:
 	~StatusInfo();
 
 	void ResetStatus();
+	void RoundReady();
+	void RoundStart();
 
 	WORD GetGold()  { return m_uGold; }
 	WORD GetPoint() { return m_uGamePoint; }

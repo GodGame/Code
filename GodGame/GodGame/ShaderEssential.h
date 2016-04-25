@@ -273,6 +273,9 @@ public:
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Reset();
 
+	void RoundStart();
+	void RoundEnd();
+
 	void SetPlayerID(ID3D11Device * pd3dDevice, int id);
 	CPlayer *GetPlayer(int nIndex) { return static_cast<CPlayer *>(m_ppObjects[nIndex]); }
 	CPlayer *GetPlayer() { return static_cast<CPlayer *>(m_ppObjects[m_iPlayerIndex]); }

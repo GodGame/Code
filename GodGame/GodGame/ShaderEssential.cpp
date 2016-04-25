@@ -773,7 +773,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	char material[4][10] = { "White", "Red", "Blue", "Green" };
+	char material[4][12] = { "PlayerWhite", "Red", "Blue", "Green" };
 		//MaterialMgr.GetObjects("White"), 
 
 	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
@@ -801,8 +801,8 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	{
 		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
-		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture, 
-			MaterialMgr.GetObjects(material[j]));
+		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture,
+			MaterialMgr.GetObjects("PlayerWhite")); //material[j]));
 		pPlayer->SetCollide(true);
 		pPlayer->SetPlayerNum(j);
 		pPlayer->AddRef();
@@ -849,7 +849,7 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
 	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
-	m_ppObjects[0]->SetVisible(true);//m_ppObjects[1]->SetActive(true);
+	//m_ppObjects[0]->SetVisible(true);//m_ppObjects[1]->SetActive(true);
 
 	if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
@@ -860,7 +860,6 @@ void CPlayerShader::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		//m_ppObjects[i]->
 		m_ppObjects[i]->Animate(fTimeElapsed);
 	}
 }
@@ -871,9 +870,22 @@ void CPlayerShader::Reset()
 	for (int i = 0; i < m_nObjects; ++i)
 	{
 		static_cast<CInGamePlayer*>(m_ppObjects[i])->Reset();
-		static_cast<CInGamePlayer*>(m_ppObjects[i])->InitPosition(XMFLOAT3(MAPMgr.GetWidth()*0.5f, MAPMgr.GetPeakHeight() + 10.0f, 300));
+		static_cast<CInGamePlayer*>(m_ppObjects[i])->GetStatus().RoundReady();
 	}
 }
+
+void CPlayerShader::RoundStart()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+		static_cast<CInGamePlayer*>(m_ppObjects[i])->GetStatus().RoundStart();
+}
+
+void CPlayerShader::RoundEnd()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+		static_cast<CInGamePlayer*>(m_ppObjects[i])->GetStatus().RoundReady();
+}
+
 void CPlayerShader::SetPlayerID(ID3D11Device * pd3dDevice, int id)
 {
 	if (id == m_iPlayerIndex) return;
@@ -1653,12 +1665,14 @@ void CInGameUIShader::FontRender(ID3D11DeviceContext *pd3dDeviceContext)
 	static char screenFont[52];
 	static wchar_t wscreenFont[26];
 	static const int wssize = sizeof(wchar_t) * 26;
-	static const int roundmax = SYSTEMMgr.mfLIMIT_ROUND;
+	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
+
+	SYSTEMMgr.DrawSystemFont();
 
 	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
 	FRAMEWORK.SetFont("Gabriola");
 	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation, 0xff0099ff);
-	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation2, 0x222222ff);
+	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation2, 0x333333ff);
 }
 
 void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)

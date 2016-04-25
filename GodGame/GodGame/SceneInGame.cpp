@@ -32,7 +32,6 @@ void CSceneInGame::InitializeRecv()
 
 void CSceneInGame::Reset()
 {
-	cout << "Reset !! ";
 	for (auto & shaders : m_vcResetShaders)
 		shaders->Reset();
 
@@ -202,7 +201,6 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	// 스태프2
 	for (int i = 0; i < 7; ++i)
 	{
-
 		pTexture = new CTexture(3, 1, 0, 0);
 		{
 			wsprintf(result, _T("../Assets/Image/Objects/staff2/Staff2_0%d_Diff.png"), i);
@@ -449,7 +447,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
 
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
-		ChangeGamePlayerID(1);
+		//ChangeGamePlayerID(1);
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
 
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
@@ -499,34 +497,32 @@ void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	m_pLights->m_pLights[1].m_xcDiffuse      = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	m_pLights->m_pLights[1].m_xcSpecular     = XMFLOAT4(0.3f, 0.3f, 0.3f, 5.0f);
 	m_pLights->m_pLights[1].m_xv3Position    = XMFLOAT3(500.0f, 300.0f, 500.0f);
-	m_pLights->m_pLights[1].m_xv3Direction   = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	m_pLights->m_pLights[1].m_xv3Direction   = XMFLOAT3(0.0f, -1.f, 0.0f);
 	m_pLights->m_pLights[1].m_xv3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
 	m_pLights->m_pLights[1].m_fFalloff       = 8.0f;
 	m_pLights->m_pLights[1].m_fPhi           = (float)cos(XMConvertToRadians(40.0f));
 	m_pLights->m_pLights[1].m_fTheta         = (float)cos(XMConvertToRadians(20.0f));
 
-	m_pLights->m_pLights[2].m_bEnable        = 0.0f;//1.0f;
+	m_pLights->m_pLights[2].m_bEnable        = 1.0f;//1.0f;
 	m_pLights->m_pLights[2].m_nType          = POINT_LIGHT;
-	m_pLights->m_pLights[2].m_fRange         = 300.0f;
-	m_pLights->m_pLights[2].m_xcAmbient      = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
-	m_pLights->m_pLights[2].m_xcDiffuse      = XMFLOAT4(0.8f, 0.8f, 0.8f, 10.0f);
-	m_pLights->m_pLights[2].m_xcSpecular     = XMFLOAT4(0.5f, 0.5f, 0.5f, 10.0f);
+	m_pLights->m_pLights[2].m_fRange         = 50.0f;
+	m_pLights->m_pLights[2].m_xcAmbient      = XMFLOAT4(0.5f, 0.0f, 0.0f, 1.0f);
+	m_pLights->m_pLights[2].m_xcDiffuse      = XMFLOAT4(0.3f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[2].m_xcSpecular     = XMFLOAT4(0.1f, 0.0f, 0.0f, 0.1f);
 	m_pLights->m_pLights[2].m_xv3Position    = XMFLOAT3(1098, 210, 350);
-	m_pLights->m_pLights[2].m_xv3Direction   = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	m_pLights->m_pLights[2].m_xv3Direction   = XMFLOAT3(0.0f, -1.f, 0.0f);
 	m_pLights->m_pLights[2].m_xv3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
 
-	m_pLights->m_pLights[3].m_bEnable        = 1.0f;
-	m_pLights->m_pLights[3].m_nType          = SPOT_LIGHT;
-	m_pLights->m_pLights[3].m_fRange         = 60.0f;
-	m_pLights->m_pLights[3].m_xcAmbient      = XMFLOAT4(0.2f, 0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[3].m_xcDiffuse      = XMFLOAT4(0.5f, 0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[3].m_xcSpecular     = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	m_pLights->m_pLights[3].m_xv3Position    = XMFLOAT3(500.0f, 300.0f, 500.0f);
+
+	m_pLights->m_pLights[3].m_bEnable        = 1.0f;//1.0f;
+	m_pLights->m_pLights[3].m_nType          = POINT_LIGHT;
+	m_pLights->m_pLights[3].m_fRange         = 50.0f;
+	m_pLights->m_pLights[3].m_xcAmbient      = XMFLOAT4(0.0f, 0.4f, 0.0f, 1.0f);
+	m_pLights->m_pLights[3].m_xcDiffuse      = XMFLOAT4(0.1f, 0.2f, 0.1f, 1.0f);
+	m_pLights->m_pLights[3].m_xcSpecular     = XMFLOAT4(0.0f, 0.1f, 0.0f, 0.1f);
+	m_pLights->m_pLights[3].m_xv3Position    = XMFLOAT3(1098, 210, 350);
 	m_pLights->m_pLights[3].m_xv3Direction   = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	m_pLights->m_pLights[3].m_xv3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
-	m_pLights->m_pLights[3].m_fFalloff       = 20.0f;
-	m_pLights->m_pLights[3].m_fPhi           = (float)cos(XMConvertToRadians(40.0f));
-	m_pLights->m_pLights[3].m_fTheta         = (float)cos(XMConvertToRadians(15.0f));
+	m_pLights->m_pLights[3].m_xv3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(d3dBufferDesc));
@@ -746,27 +742,19 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 	{
 		//현재 카메라의 위치 벡터를 조명을 나타내는 상수 버퍼에 설정한다.
 		XMFLOAT3 xv3CameraPosition = m_pCamera->GetPosition();
-		m_pLights->m_xv4CameraPosition = XMFLOAT4(xv3CameraPosition.x, xv3CameraPosition.y, xv3CameraPosition.z, 1.0f);
-
-		//점 조명이 지형의 중앙을 중심으로 회전하도록 설정한다.
-		CMapManager *pTerrain = &MAPMgr;
-		static XMVECTOR	xvRotated = XMVectorSet(pTerrain->GetWidth()*0.3f, 0.0f, 0.0f, 0.0f);
-		//XMVECTOR	xvRotated = XMLoadFloat3(&xmf3Rotated);
-		XMMATRIX xmtxRotate = XMMatrixRotationRollPitchYaw((float)XMConvertToRadians(30.0f*fTimeElapsed), 0.0f, 0.0f);
-		//XMFLOAT4X4RotationYawPitchRoll(&xmtxRotate, (float)XMConvertToRadians(30.0f*fTimeElapsed), 0.0f, 0.0f);
-		xvRotated = XMVector3TransformCoord(xvRotated, xmtxRotate); // xv3ec3TransformCoord(&xvRotated, &xvRotated, &xmtxRotate);
-
-		XMVECTOR xvTerrainCenter = XMVectorSet(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 10.0f, pTerrain->GetLength()*0.5f, 0.0f);
-		//XMStoreFloat3(&m_pLights->m_pLights[0].m_xv3Position, XMVectorAdd(xvTerrainCenter, xvRotated));
-		m_pLights->m_pLights[0].m_fRange = pTerrain->GetPeakHeight();
+		m_pLights->m_xv4CameraPosition = XMFLOAT4(xv3CameraPosition.x, xv3CameraPosition.y, xv3CameraPosition.z, 1.0f);	
 
 		/*두 번째 조명은 플레이어가 가지고 있는 손전등(스팟 조명)이다. 그러므로 플레이어의 위치와 방향이 바뀌면 현재 플레이어의 위치와 z-축 방향 벡터를 스팟 조명의 위치와 방향으로 설정한다.*/
 		CPlayer *pPlayer = m_pCamera->GetPlayer();
 		m_pLights->m_pLights[1].m_xv3Position = pPlayer->GetPosition();
 		m_pLights->m_pLights[1].m_xv3Direction = pPlayer->GetLookVector();
 
-		//m_pLights->m_pLights[3].m_xv3Position = pPlayer->GetPosition();
-		//m_pLights->m_pLights[3].m_xv3Position.y += 40.0f; //+XMFLOAT3(0.0f, 40.0f, 0.0f);
+		XMFLOAT3 pos = m_pPlayerShader->GetPlayer(0)->GetPosition();
+		pos.y += 20.f;
+		m_pLights->m_pLights[2].m_xv3Position = pos;
+		pos = m_pPlayerShader->GetPlayer(1)->GetPosition();
+		pos.y += 20.f;
+		m_pLights->m_pLights[3].m_xv3Position = pos;
 	}
 	for (int i = 0; i < m_nShaders; i++)
 	{
@@ -887,10 +875,14 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_ROUND_ENTER:
 		Reset();
 		return;
+
 	case eMessage::MSG_ROUND_START:
+		SYSTEMMgr.RoundStart();
+		m_pPlayerShader->RoundStart();
 		return;
 
 	case eMessage::MSG_ROUND_END:
+		m_pPlayerShader->RoundEnd();
 		SYSTEMMgr.RoundEnd();
 
 		if (SYSTEMMgr.IsWinPlayer(static_cast<CInGamePlayer*>(m_pCamera->GetPlayer())))

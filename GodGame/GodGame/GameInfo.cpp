@@ -97,7 +97,7 @@ void StatusInfo::ResetStatus()
 	m_uAttackDamage = 0;
 	m_bRange        = false;
 	m_bUnbeatable   = false;
-	m_bCanJump      = false;
+	m_bCanJump      = true;
 	m_bCanMove      = true;
 	m_bAlive        = true;
 	m_sHP           = 0;
@@ -107,6 +107,20 @@ void StatusInfo::ResetStatus()
 
 	m_Buff.Reset();
 	m_Debuff.Reset();
+}
+
+void StatusInfo::RoundReady()
+{
+	m_bUnbeatable = true;
+	m_bCanMove = false;
+	m_bCanJump = false;
+}
+
+void StatusInfo::RoundStart()
+{
+	m_bUnbeatable = false;
+	m_bCanMove = true;
+	m_bCanJump = true;
 }
 
 ///////////////////////////////////////////

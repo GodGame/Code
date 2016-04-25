@@ -461,6 +461,13 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "White");
 
 	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.7f, 0.7f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerWhite");
+
+	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(3.0f, 3.0f, 3.0f, 0.8f);
 	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(2.0f, 2.0f, 2.0f, 1.0f);
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(2.0f, 2.0f, 2.0f, 4.0f);

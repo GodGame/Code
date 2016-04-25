@@ -441,6 +441,14 @@ bool CGameFramework::_CreateFontSystem()
 	ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"Gabriola", &pFont));
 	m_mgrFontWrapper.InsertObject(pFont, "Gabriola");
 	pFont->Release();
+
+	ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"HY°ß°íµñ", &pFont));
+	m_mgrFontWrapper.InsertObject(pFont, "HY°ß°íµñ");
+	pFont->Release();
+
+	//ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"HY¿±¼­M", &pFont));
+	//m_mgrFontWrapper.InsertObject(pFont, "HYÇìµå¶óÀÎ");
+	//pFont->Release();
 #endif
 	return true;
 }

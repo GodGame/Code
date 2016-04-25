@@ -12,6 +12,60 @@
 //#define PLAYER_04_COLOR "WhiteLight"
 //#define PLAYER_05_COLOR "WhiteLight"
 
+class CFontUIObject
+{
+public:
+	virtual void DrawFont() = 0;
+};
+
+class CGameStartFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CRoundEnterFontUI: public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CRoundStartFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CRoundDominateFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CRoundDeathMatchFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CRoundEndFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CRoundClearFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
+class CGameEndFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
 struct PLAYER_DATA_INFO
 {
 	UINT m_iPlayerNum   : 4;
@@ -27,18 +81,24 @@ class CInGamePlayer;
 class CMaterial;
 class CSystemManager
 {
-	enum ROUND_STATE : UCHAR
+public:
+	enum ROUND_STATE : CHAR
 	{
-		eROUND_NONE = 0,
+		eROUND_NONE = -1,
+		eGAME_START,
 		eROUND_ENTER,
 		eROUND_START,
 		eROUND_DOMINATE,
 		eROUND_DEATH_MATCH,
 		eROUND_END,
-		eROUND_CLEAR
+		eROUND_CLEAR,
+		eGAME_END,
+		eROUND_STATE_NUM
 	};
 
 private:
+	//void(*m_pFontFunc) ();
+	CFontUIObject * m_pFont[eROUND_STATE_NUM];
 	ROUND_STATE mRoundState;
 
 	UINT m_iMapInfo				: 4;
@@ -56,7 +116,7 @@ private:
 	UINT m_nRoundSecond : 8;
 
 	float m_fEnterTime;
-	const float mfENTER_TIME = 5.f;
+	const float mfENTER_TIME = 5.5f;
 	float m_fEndTime;
 	const float mfEND_TIME = 5.f;
 
@@ -75,7 +135,11 @@ private:
 
 	XMFLOAT3 m_xv3PortalZonePos;
 
+	void _CreateFontUiArray();
+
 public:
+	ROUND_STATE GetRoundState() { return mRoundState; }
+
 	void SetScene(CScene * pScene) { m_pNowScene = pScene; }
 	void ReleaseScene(void);
 
@@ -94,9 +158,9 @@ private:
 	~CSystemManager();
 
 public:
-	const float mfLIMIT_ROUND_TIME = 30.f;
+	const float mfLIMIT_ROUND_TIME = 40.f;
 	const float mfDEATH_MATCH_TIME = 1800.f;
-	const int mfLIMIT_ROUND = 2;
+	const int mfGOAL_ROUND = 2;
 
 	static CSystemManager & GetInstance()
 	{
@@ -113,6 +177,7 @@ public:
 	void DominatePortalGate(int iPlayerNum);
 
 public:
+	void DrawSystemFont() { m_pFont[mRoundState]->DrawFont(); /*m_pFontFunc(); */}
 	void Build(ID3D11Device * pd3dDevice);
 	void Update(float fFrameTime);
 

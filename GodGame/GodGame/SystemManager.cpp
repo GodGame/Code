@@ -1,10 +1,13 @@
 #include "stdafx.h"
 #include "SystemManager.h"
 #include "SystemObject.h"
-#include "SceneInGame.h"
+//#include "SceneInGame.h"
+#include "GameFramework.h"
 
 CSystemManager::CSystemManager()
 {
+	_CreateFontUiArray();
+
 	mRoundState			   = eROUND_NONE;
 	m_iMapInfo             = 0;
 	m_iRoundNumber         = 0;
@@ -32,6 +35,21 @@ CSystemManager::~CSystemManager()
 {
 	if (m_pPortalGate) m_pPortalGate->Release();
 	if (m_pMinimMap) m_pMinimMap->Release();
+
+	for (auto pFont : m_pFont)
+		delete pFont;
+}
+
+void CSystemManager::_CreateFontUiArray()
+{
+	m_pFont[ROUND_STATE::eGAME_START]        = new CGameStartFontUI();
+	m_pFont[ROUND_STATE::eROUND_ENTER]       = new CRoundEnterFontUI();
+	m_pFont[ROUND_STATE::eROUND_START]       = new CRoundStartFontUI();
+	m_pFont[ROUND_STATE::eROUND_DOMINATE]    = new CRoundDominateFontUI();
+	m_pFont[ROUND_STATE::eROUND_DEATH_MATCH] = new CRoundDeathMatchFontUI();
+	m_pFont[ROUND_STATE::eROUND_END]         = new CRoundEndFontUI();
+	m_pFont[ROUND_STATE::eROUND_CLEAR]       = new CRoundClearFontUI();
+	m_pFont[ROUND_STATE::eGAME_END]          = new CGameEndFontUI();
 }
 
 void CSystemManager::ReleaseScene()
@@ -124,6 +142,7 @@ bool CSystemManager::IsWinPlayer(CInGamePlayer * pPlayer)
 void CSystemManager::DominatePortalGate(int iPlayerNum)
 {
 	static int testid = 0;
+	mRoundState = ROUND_STATE::eROUND_DOMINATE;
 
 	m_iDominatingPlayerNum = iPlayerNum + testid;
 
@@ -139,49 +158,110 @@ void CSystemManager::DominatePortalGate(int iPlayerNum)
 
 void CSystemManager::GameStart()
 {
-	m_iRoundNumber = 0;
+	mRoundState = ROUND_STATE::eROUND_START;
 
+	m_iRoundNumber = 0;
 	RoundEnter();
 }
 
 void CSystemManager::RoundEnter()
 {
+	mRoundState = ROUND_STATE::eROUND_ENTER;
+
 	m_iRoundNumber++;
+	GetPortalZoneObject()->SetActive(false);
 	m_fRoundTime = 0.f;
-	int iPlayerNum = -1;;
+	m_iDominatingPlayerNum = -1;
+
 	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_ENTER);
+	EVENTMgr.InsertDelayMessage(mfENTER_TIME, eMessage::MSG_ROUND_START, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 
 void CSystemManager::RoundStart()
 {
-	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_START);
+	mRoundState = ROUND_STATE::eROUND_START;
 }
 
 void CSystemManager::RoundEnd()
 {
-	m_fEndTime = mfEND_TIME;
-	//int iPlayerNum = m_iDominatingPlayerNum;
-	//m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_END, &iPlayerNum);
+	mRoundState = ROUND_STATE::eROUND_END;
+
+	m_fEndTime = m_fRoundTime;
 	EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 
 void CSystemManager::RoundClear()
 {
-	m_iDominatingPlayerNum = -1;
-	GetPortalZoneObject()->SetActive(false);// SSetMaterial(nullptr);
+	mRoundState = ROUND_STATE::eROUND_CLEAR;
 
-	if (m_iRoundNumber + 1 > mfLIMIT_ROUND)
-	{
+	if (m_iRoundNumber + 1 > mfGOAL_ROUND)
 		GameEnd();
-		EVENTMgr.InsertDelayMessage(0.f, eMessage::MSG_GAME_END, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
-	}
 	else
-	{
 		RoundEnter();
-		//EVENTMgr.InsertDelayMessage(1.f, eMessage::MSG_ROUND_ENTER, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
-	}
 }
 
 void CSystemManager::GameEnd()
+{
+	mRoundState = ROUND_STATE::eGAME_END;
+	EVENTMgr.InsertDelayMessage(0.f, eMessage::MSG_GAME_END, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
+}
+///////////////////////////////////////////// font ////////////////////////////////////////////////////////
+void CGameStartFontUI::DrawFont()
+{
+}
+
+void CRoundEnterFontUI::DrawFont()
+{	
+	const static XMFLOAT2 StartInfoLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 60) };
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wchar_t) * 26;
+	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
+	const int second = SYSTEMMgr.GetRoundSecond();
+
+	if (second < 5)
+	{
+		swprintf_s(wscreenFont, wssize, L"준비 %d!", 5 - second);
+	}
+	else
+	{
+		swprintf_s(wscreenFont, wssize, L"게임 시작!!!");
+	}
+
+	FRAMEWORK.SetFont("HY견고딕");
+	FRAMEWORK.DrawFont(wscreenFont, 40, StartInfoLocation, 0xff23ff23);
+}
+
+void CRoundStartFontUI::DrawFont()
+{
+}
+
+void CRoundDominateFontUI::DrawFont()
+{
+}
+
+void CRoundDeathMatchFontUI::DrawFont()
+{
+}
+
+void CRoundEndFontUI::DrawFont()
+{
+	const static XMFLOAT2 StartInfoLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 60) };
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wchar_t) * 26;
+	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
+	const int second = SYSTEMMgr.GetRoundSecond();
+
+
+	swprintf_s(wscreenFont, wssize, L"라운드 종료");
+
+	FRAMEWORK.SetFont("HY견고딕");
+	FRAMEWORK.DrawFont(wscreenFont, 40, StartInfoLocation, 0xff23ff23);
+}
+
+void CRoundClearFontUI::DrawFont()
+{
+}
+
+void CGameEndFontUI::DrawFont()
 {
 }

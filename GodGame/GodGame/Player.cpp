@@ -41,9 +41,8 @@ void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 
 void CPlayer::InitPosition(XMFLOAT3 xv3Position)
 {
-	m_xv3Position.x = xv3Position.x;
-	m_xv3Position.y = xv3Position.y;
-	m_xv3Position.z = xv3Position.z;
+	m_xmf3InitPos = xv3Position;
+	m_xv3Position = m_xmf3InitPos;
 }
 
 void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
@@ -54,33 +53,29 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 	{
 		WORD wdNextState = 0;
 		XMVECTOR xv3Shift = XMVectorReplicate(0);
-		//화살표 키 ‘↑’를 누르면 로컬 z-축 방향으로 이동(전진)한다. ‘↓’를 누르면 반대 방향으로 이동한다.
-		if (dwDirection & DIR_FORWARD)
-		{
-			xv3Shift += XMLoadFloat3(&m_xv3Look) * fDistance * 1.2f;
-			wdNextState = eANI_RUN_FORWARD;
-		}
-		if (dwDirection & DIR_BACKWARD)
-		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance * 0.8f;
-			wdNextState = eANI_WALK_BACK;
-		}
 		//화살표 키 ‘→’를 누르면 로컬 x-축 방향으로 이동한다. ‘←’를 누르면 반대 방향으로 이동한다.
-		if (dwDirection & DIR_RIGHT)
-		{
-			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
-			wdNextState = eANI_WALK_RIGHT;
-		}
 		if (dwDirection & DIR_LEFT)
 		{
 			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
 			wdNextState = eANI_WALK_LEFT;
 		}
-		//‘Page Up’을 누르면 로컬 y-축 방향으로 이동한다. ‘Page Down’을 누르면 반대 방향으로 이동한다.
-		if (dwDirection & DIR_UP) xv3Shift += XMLoadFloat3(&m_xv3Up) * fDistance;
-		if (dwDirection & DIR_DOWN) xv3Shift -= XMLoadFloat3(&m_xv3Up) * fDistance;
-
-		XMFLOAT3 xmf3Shift;
+		if (dwDirection & DIR_RIGHT)
+		{
+			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
+			wdNextState = eANI_WALK_RIGHT;
+		}
+		//화살표 키 ‘↑’를 누르면 로컬 z-축 방향으로 이동(전진)한다. ‘↓’를 누르면 반대 방향으로 이동한다.
+		if (dwDirection & DIR_BACKWARD)
+		{
+			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance * 0.8f;
+			wdNextState = eANI_WALK_BACK;
+		}
+		if (dwDirection & DIR_FORWARD)
+		{
+			xv3Shift += XMLoadFloat3(&m_xv3Look) * fDistance * 1.2f;
+			wdNextState = eANI_RUN_FORWARD;
+		}
+		static XMFLOAT3 xmf3Shift;
 		XMStoreFloat3(&xmf3Shift, xv3Shift);
 
 		if (wdNextState != m_wdAnimateState)
@@ -395,11 +390,7 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 	switch (nNewCameraMode)
 	{
 	case FIRST_PERSON_CAMERA:
-		SetFriction(250.0f);
 		//1인칭 카메라일 때 플레이어에 y-축 방향으로 중력이 작용한다.
-		SetGravity(-20.0f);
-		SetMaxVelocityXZ(300.0f);
-		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, FIRST_PERSON_CAMERA, nCurrentCameraMode);
 		m_pCamera->SetTimeLag(0.0f);
 		m_pCamera->SetOffset(XMFLOAT3(0.0f, 20.0f, 0.0f));
@@ -419,9 +410,6 @@ void CTerrainPlayer::ChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode
 	case THIRD_PERSON_CAMERA:
 		SetFriction(250.0f);
 		//3인칭 카메라일 때 플레이어에 y-축 방향으로 중력이 작용한다.
-		SetGravity(-20.0f);
-		SetMaxVelocityXZ(300.0f);
-		SetMaxVelocityY(400.0f);
 		m_pCamera = OnChangeCamera(pd3dDevice, THIRD_PERSON_CAMERA, nCurrentCameraMode);
 		m_pCamera->SetTimeLag(0.55f);
 		m_pCamera->SetOffset(XMFLOAT3(0, 20.0f, -50.0)); //XMFLOAT3(0.0f, 30.0f, -30.0f));
@@ -505,6 +493,11 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 	CInGamePlayer::SetCameraUpdatedContext(pTerrain);
 	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
 	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 10.0f, 300));
+
+	SetFriction(250.0f);
+	SetGravity(-20.0f);
+	SetMaxVelocityXZ(300.0f);
+	SetMaxVelocityY(400.0f);
 
 	Reset();
 }
@@ -671,6 +664,7 @@ void CInGamePlayer::Revive()
 
 void CInGamePlayer::Reset()
 {
+	SetPosition(m_xmf3InitPos);
 	ThrowItem();
 	m_Status.ResetStatus();
 	m_Status.SetHP(mMAX_HEALTH);

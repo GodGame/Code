@@ -639,10 +639,10 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
 	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	m_nObjects = 3;
+	m_nObjects = 5;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	string names[] = { "scene_portal", "scene_stone1", "scene_stone2" };
+	string names[] = { "scene_portal", "scene_ruin1", "scene_ruin2", "scene_colum1", "scene_colum2" };
 
 	CMapManager * pHeightMapTerrain = &MAPMgr;
 	float fHeight = pHeightMapTerrain->GetHeight(1015, 1574, false);
@@ -652,28 +652,28 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 
 
 	m_ppObjects[1] = new CGameObject(1);
-	fHeight = pHeightMapTerrain->GetHeight(1345, 176, false);
-	m_ppObjects[1]->SetPosition(1345, fHeight, 176);
+	fHeight = pHeightMapTerrain->GetHeight(1065, 1544, false);
+	m_ppObjects[1]->SetPosition(1065, fHeight, 1544);
+	m_ppObjects[1]->SetSize(20);
 	m_ppObjects[1]->AddRef();
 
 	m_ppObjects[2] = new CGameObject(1);
-	fHeight = pHeightMapTerrain->GetHeight(1445, 176, false);
-	m_ppObjects[2]->SetPosition(1445, fHeight, 176);
+	fHeight = pHeightMapTerrain->GetHeight(955, 1596, false);
+	m_ppObjects[2]->SetPosition(955, fHeight, 1596);
+	m_ppObjects[2]->SetSize(20);
 	m_ppObjects[2]->AddRef();
-	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
-	//pAnimatedObject = new CAnimatedObject(1);
-	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	//m_ppObjects[3] = pAnimatedObject;
-	//m_ppObjects[3]->SetPosition(1140, fHeight + 5, 255);
-	//m_ppObjects[3]->AddRef();
-	////m_ppObjects[3]->SetPosition(1100, 170, 255);
-	//
-	//fHeight = pHeightMapTerrain->GetHeight(1180, 255, false);
-	//pAnimatedObject = new CAnimatedObject(1);
-	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	//m_ppObjects[4] = pAnimatedObject;
-	//m_ppObjects[4]->SetPosition(1180, fHeight, 255);
-	//m_ppObjects[4]->AddRef();
+
+	m_ppObjects[3] = new CGameObject(1);
+	fHeight = pHeightMapTerrain->GetHeight(955, 1506, false);
+	m_ppObjects[3]->SetPosition(955, fHeight, 1506);
+	m_ppObjects[3]->SetSize(15);
+	m_ppObjects[3]->AddRef();
+
+	m_ppObjects[4] = new CGameObject(1);
+	fHeight = pHeightMapTerrain->GetHeight(1065, 1506, false);
+	m_ppObjects[4]->SetPosition(1065, fHeight, 1506);
+	m_ppObjects[4]->SetSize(15);
+	m_ppObjects[4]->AddRef();
 
 
 	for (int i = 0; i < m_nObjects; ++i)
@@ -928,6 +928,7 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 			pItem->AddRef();
 			pItem->SetMesh(SceneMgr.mgrMesh.GetObjects(name));
 			pItem->SetCollide(true);
+			pItem->SetSize(10);
 			pItem->SetTexture(SceneMgr.mgrTexture.GetObjects(name));
 			pItem->SetMaterial(m_pMaterial);
 

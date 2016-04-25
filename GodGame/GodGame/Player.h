@@ -7,6 +7,8 @@
 class CPlayer : public CCharacter //public CAnimatedObject
 {
 protected:
+	XMFLOAT3 m_xmf3InitPos;
+
 	int m_iPlayerNum;
 	//플레이어가 로컬 x-축(Right), y-축(Up), z-축(Look)으로 얼마만큼 회전했는가를 나타낸다.
 	float    m_fPitch;
