@@ -294,6 +294,10 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
 	pd3dsrvTexture->Release();
 
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/staffImage/slot_staff.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_staff_slot.jpg", 0);
+	pd3dsrvTexture->Release();
+
 	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/loading.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	InsertShaderResourceView(pd3dsrvTexture, "srv_loading.png", 0);
 	pd3dsrvTexture->Release();
@@ -466,6 +470,27 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(1.0f, 1.0f, 1.0f, 3.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "PlayerWhite");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.8f, 0.3f, 0.3f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.4f, 0.1f, 0.1f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.9f, 0.3f, 0.3f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerRed");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.8f, 0.8f, 0.3f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.4f, 0.1f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.3f, 0.9f, 0.3f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerGreen");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.3f, 0.3f, 0.8f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.1f, 0.4f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.3f, 0.3f, 0.9f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerBlue");
 
 	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(3.0f, 3.0f, 3.0f, 0.8f);

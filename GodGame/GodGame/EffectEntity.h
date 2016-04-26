@@ -29,7 +29,7 @@ public:
 	bool IsAble() { return m_bEnable; }
 	bool IsSubordinative() { return m_bSubordinate; }
 
-	void MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos);
+	bool MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos);
 	void SetMoveVelocity(MoveVelocity & move, XMFLOAT3 * InitPos);
 
 protected:
@@ -195,8 +195,7 @@ public:
 	void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext);
 
 public:
-	// virtual void GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra = nullptr);
-	//virtual void SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra = nullptr);
+
 	virtual XMFLOAT3 GetPosition() const { return m_cbParticle.m_vParticleEmitPos; }
 	virtual void UpdateBoundingBox()
 	{

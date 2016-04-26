@@ -18,6 +18,12 @@ public:
 	virtual void DrawFont() = 0;
 };
 
+class CGlobalFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
 class CGameStartFontUI : public CFontUIObject
 {
 public:
@@ -98,6 +104,7 @@ public:
 
 private:
 	//void(*m_pFontFunc) ();
+	CFontUIObject * m_pGlobalFont;
 	CFontUIObject * m_pFont[eROUND_STATE_NUM];
 	ROUND_STATE mRoundState;
 
@@ -105,6 +112,7 @@ private:
 	UINT m_iRoundNumber         : 4;
 	UINT m_iTotalRound          : 4;
 	UINT m_nPlayers             : 4;
+	UINT m_iThisPlayer			: 4;
 	UINT m_iDominatingPlayerNum : 4;
 
 	PLAYER_DATA_INFO mPlayerInfo[TOTAL_PLAYER];
@@ -140,6 +148,12 @@ private:
 public:
 	ROUND_STATE GetRoundState() { return mRoundState; }
 
+	void SetInitialPlayerInfo(int nPlayers, int nPlayerNum) { m_nPlayers = nPlayers; m_iThisPlayer = nPlayerNum; }
+	void SetPlayerNum(int iPlayerNum) { m_iThisPlayer = iPlayerNum; }
+
+	int GetTotalPlayerNum() { return m_nPlayers; }
+	int GetPlayerNum() { return m_iThisPlayer; }
+
 	void SetScene(CScene * pScene) { m_pNowScene = pScene; }
 	void ReleaseScene(void);
 
@@ -153,6 +167,7 @@ public:
 	UINT GetRoundNumber() { return m_iRoundNumber; }
 	UINT GetRoundMinute() { return m_nRoundMinute; }
 	UINT GetRoundSecond() { return m_nRoundSecond; }
+
 private:
 	CSystemManager();
 	~CSystemManager();
@@ -171,13 +186,15 @@ public:
 	bool CheckCanDominateRange(CInGamePlayer * pPlayer);
 	bool CheckCanDomianteSuccess(CInGamePlayer * pPlayer);
 
-	bool IsWinPlayer(CInGamePlayer * pPlayer);
+	bool IsWinPlayer(CInGamePlayer * pPlayer = nullptr);
 
 	UINT GetDominatePlayerNum() {return m_iDominatingPlayerNum;}
 	void DominatePortalGate(int iPlayerNum);
 
 public:
-	void DrawSystemFont() { m_pFont[mRoundState]->DrawFont(); /*m_pFontFunc(); */}
+	PLAYER_DATA_INFO * GetPlayerInfo() { return mPlayerInfo; }
+
+	void DrawSystemFont() { m_pGlobalFont->DrawFont(); m_pFont[mRoundState]->DrawFont(); /*m_pFontFunc(); */ }
 	void Build(ID3D11Device * pd3dDevice);
 	void Update(float fFrameTime);
 

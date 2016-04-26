@@ -6,11 +6,13 @@
 
 #include "Object.h"
 #include "GameInfo.h"
+class CInGamePlayer;
 class CItem : public CStaticObject
 {
 protected:
-	CGameObject * m_pMaster;
+	CInGamePlayer * m_pMaster;
 	bool m_bThrowing : 1;
+	UINT m_iNumber;
 
 public:
 	CItem(int nMesh);
@@ -28,7 +30,7 @@ public:
 public:
 	void Collide(CEntity * byEntity);
 
-	void SetMaster(CGameObject * pObj);
+	void SetMaster(CInGamePlayer * pObj);
 	void ResetMaster();
 	void ResetMaster(XMFLOAT3 & ThrowVelocity);
 
@@ -37,7 +39,7 @@ public:
 	void AllocPositionAndEntityQuadTree(float fx, float fy, float fz);
 	void AllocPositionAndEntityQuadTree(XMFLOAT3 & xmfPos);
 
-	CGameObject * GetMaster() { return m_pMaster; }
+	CInGamePlayer * GetMaster() { return m_pMaster; }
 };
 
 class CEquipment : public CItem
@@ -69,7 +71,7 @@ class CStaff : public CWeapon
 {
 protected:
 	UINT mCost  : 8;
-	UINT mLevel : 3;
+	UINT mLevel : 2;
 
 	ELEMENT mElement;
 	CEffect * m_pHasEffect;
@@ -84,14 +86,12 @@ public:
 	CEffect * GetEffect()    { return m_pHasEffect; }
 
 	void SetEffect(CEffect * pEffect) { m_pHasEffect = pEffect; }
+	void SetLevel(int lv) { mLevel = lv; }
 
 public:
-
 	void BuildObject(ELEMENT element, DWORD cost, DWORD level);
 	void BuildObject(CStaff & staff);
 
 };
-
-
 
 #endif

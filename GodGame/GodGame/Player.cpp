@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "MyInline.h"
-//#include "Object.h"
-//#include "Character.h"
 #include "Weapon.h"
 #include "Player.h"
 #include "StatePlayer.h"
@@ -771,9 +769,16 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 	return true;
 }
 
-void CInGamePlayer::AcquireItem()
+void CInGamePlayer::AcquireItem(CItem * pItem)
 {
+	CStaff * pStaff = nullptr;
+	if (pStaff = dynamic_cast<CStaff*>(pItem))
+	{
+		SetChild(pStaff);
 
+		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
+			m_pScene, nullptr, m_pChild);
+	}
 }
 
 void CInGamePlayer::ThrowItem()
@@ -789,6 +794,9 @@ void CInGamePlayer::ThrowItem()
 
 		m_pChild->Release();
 		m_pChild = nullptr;
+
+		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
+			m_pScene, nullptr, m_pChild);
 	}
 }
 
@@ -829,14 +837,14 @@ void CInGamePlayer::CheckGameSystem(float fTimeElapsed)
 PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 {
 	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
-	mtx = XMMatrixTranslation(0, 9.0f, 25.0f) * mtx;
+	mtx = XMMatrixTranslation(0, 9.0f, 15.0f) * mtx;
 	XMFLOAT4X4 xmf44Change;
 	XMStoreFloat4x4(&xmf44Change, mtx);
 
 	PARTILCE_ON_INFO info;
-	info.m_pObject = this;
-	info.fColor = 0;
-	info.iNum = 4;
+	info.m_pObject      = this;
+	info.fColor         = 0;
+	info.iNum           = 4;
 	info.m_xmf3Pos      = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
 	info.m_xmf3Velocity = move(XMFLOAT3(xmf44Change._31, xmf44Change._32, xmf44Change._33));
 	info.m_xmfAccelate  = move(XMFLOAT3(-xmf44Change._31, -xmf44Change._32, -xmf44Change._33));

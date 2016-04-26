@@ -20,6 +20,10 @@ class CItemManager : public CMgrCase<ItemInfo>
 	CItemManager();
 	virtual ~CItemManager();
 
+	//CMgrCase<int> mItemNoManager;
+
+	const int WEAPON_START_INDEX = 10000;
+
 public:
 	string StaffNameArray[6][3];
 	//static string StaffName;
@@ -27,7 +31,10 @@ public:
 	static CItemManager& GetInstance();
 
 public:
-	void Build();
+	void Build(ID3D11Device * pd3dDevice);
+
+//	int GetItemNo(string name) { return mItemNoManager.GetObjects(name); }
+//	string& GetItemName(int itemNo) { return mItemNoManager.}
 
 };
 #define ITEMMgr CItemManager::GetInstance()

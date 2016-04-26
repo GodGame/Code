@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Character.h"
-//#include "Camera.h"
-//#include "GameInfo.h"
 
 class CPlayer : public CCharacter //public CAnimatedObject
 {
@@ -148,7 +146,7 @@ public:
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
 
 public:
-	void AcquireItem();
+	void AcquireItem(CItem * pItem);
 	void ThrowItem();
 
 	bool CanStartDominating() { return m_bDominating == false && (m_fDominateCoolTime < 0.f); }

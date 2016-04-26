@@ -911,24 +911,35 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 	int MapWidth = static_cast<int>(pTerrain->GetWidth() - 100) + 50;
 	int MapLength = static_cast<int>(pTerrain->GetLength() - 100) + 50;
 
+	int lv = -1;
+	int element = -1;
+
 	for (int i = 0; i < 13; ++i)
 	{
 		m_vcItemList.emplace_back(ItemList());
 
 		auto it = m_vcItemList.end() - 1;
 		if (i < 12)
-			name = ITEMMgr.StaffNameArray[(int)(i / 6)][i % 2]; 
+		{
+			lv = i % 2;
+			element = (i / 6);
+		}
 		else
-			name = ITEMMgr.StaffNameArray[0][2];
+		{
+			lv = 0;
+			element = 2;
+		}
+		name = ITEMMgr.StaffNameArray[element][lv];
 
 		XMFLOAT3 xmfPos;
 		for (int j = 0; j < 10; ++j)
 		{
 			CStaff * pItem = new CStaff(1);
 			pItem->AddRef();
+			pItem->BuildObject(element, 0, lv);
 			pItem->SetMesh(SceneMgr.mgrMesh.GetObjects(name));
 			pItem->SetCollide(true);
-			pItem->SetSize(10);
+			//pItem->SetSize(10);
 			pItem->SetTexture(SceneMgr.mgrTexture.GetObjects(name));
 			pItem->SetMaterial(m_pMaterial);
 

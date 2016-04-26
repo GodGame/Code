@@ -773,7 +773,9 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	char material[4][12] = { "PlayerWhite", "Red", "Blue", "Green" };
+	SYSTEMMgr.SetInitialPlayerInfo(m_nObjects, 0);
+
+	char material[4][12] = { "PlayerWhite", "PlayerRed", "PlayerBlue", "PlayerGreen" };
 		//MaterialMgr.GetObjects("White"), 
 
 	CMesh * pMesh[eANI_TOTAL_NUM] = { nullptr, };
@@ -802,7 +804,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 		CInGamePlayer *pPlayer = new CInGamePlayer(eANI_TOTAL_NUM);
 		CTexture * pTexture = mgrScene.mgrTexture.GetObjects("scene_aure");
 		pPlayer->BuildObject(pMesh, eANI_TOTAL_NUM, pTexture,
-			MaterialMgr.GetObjects("PlayerWhite")); //material[j]));
+			MaterialMgr.GetObjects(material[j]));
 		pPlayer->SetCollide(true);
 		pPlayer->SetPlayerNum(j);
 		pPlayer->AddRef();
@@ -1593,7 +1595,7 @@ CInGameUIShader::~CInGameUIShader()
 
 void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
-	m_nObjects = 2;
+	m_nObjects = 4;
 	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	//m_pBackRTV->AddRef();
@@ -1604,11 +1606,13 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	CGameObject  * pObject = nullptr;
 	CTexture     * pTexture = nullptr;
 
-	XMFLOAT4 InstanceData[2] = { 
+	XMFLOAT4 InstanceData[4] = { 
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT - 30, 140, 30),
+		XMFLOAT4(46, 190, 45, 180),
+		XMFLOAT4(45, 180, 35, 140),
 		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.3f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f),
-		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT - 30, 140, 30)
 	};
-	string   UIName[1] = { { "srv_scroll_03.png" } };
+	string   UIName[2] = { { "srv_scroll_03.png" }, {"srv_staff_slot.jpg"} };
 
 	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_lose.png"));
@@ -1628,7 +1632,7 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 		pObject->SetVisible(true);
 		pObject->AddRef();
 		//pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
-		if (i == 1)
+		if (i < 2)
 		{
 			pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 			pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[index++]));
@@ -1660,19 +1664,7 @@ void CInGameUIShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 
 void CInGameUIShader::FontRender(ID3D11DeviceContext *pd3dDeviceContext)
 {
-	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, -7) };
-	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, -2) };
-	static char screenFont[52];
-	static wchar_t wscreenFont[26];
-	static const int wssize = sizeof(wchar_t) * 26;
-	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
-
 	SYSTEMMgr.DrawSystemFont();
-
-	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
-	FRAMEWORK.SetFont("Gabriola");
-	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation, 0xff0099ff);
-	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation2, 0x333333ff);
 }
 
 void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
@@ -1693,12 +1685,29 @@ void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extr
 
 void CInGameUIShader::UIReadyWinLogo(bool Visible)
 {
-	m_ppObjects[miResultIndex]->SetVisible(Visible);
-	m_ppObjects[miResultIndex]->SetTexture(mTextureList.GetObjects(mWinLogo));
+	const int index = m_nObjects - miResultReverseIndex;
+	m_ppObjects[index]->SetVisible(Visible);
+	m_ppObjects[index]->SetTexture(mTextureList.GetObjects(mWinLogo));
 }
 
 void CInGameUIShader::UIReadyLoseLogo(bool Visible)
 {
-	m_ppObjects[miResultIndex]->SetVisible(Visible);
-	m_ppObjects[miResultIndex]->SetTexture(mTextureList.GetObjects(mLoseLogo));
+	const int index = m_nObjects - miResultReverseIndex;
+	m_ppObjects[index]->SetVisible(Visible);
+	m_ppObjects[index]->SetTexture(mTextureList.GetObjects(mLoseLogo));
+}
+
+void CInGameUIShader::ChangeItemUI(CStaff * pStaff)
+{
+	const int index = m_nObjects - miItemUIReverseIndex;
+	if (pStaff)
+	{
+		string & name = ITEMMgr.StaffNameArray[pStaff->GetElement()][pStaff->GetLevel()];
+		m_ppObjects[index]->SetTexture(TXMgr.GetObjects(name));
+		m_ppObjects[index]->SetVisible(true);
+	}
+	else
+	{
+		m_ppObjects[index]->SetVisible(false);
+	}
 }

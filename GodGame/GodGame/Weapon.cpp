@@ -5,6 +5,8 @@
 
 CItem::CItem(int nMesh) : CStaticObject(nMesh)
 {
+	m_iNumber = 0;
+
 	m_bObstacle = false;
 
 	m_pMaster = nullptr;
@@ -126,14 +128,16 @@ void CItem::Collide(CEntity * byEntity)
 	SetMaster(pObj);
 }
 
-void CItem::SetMaster(CGameObject * pObj)
+void CItem::SetMaster(CInGamePlayer * pObj)
 {
 	if (m_pMaster) m_pMaster->Release();
 
 	m_pMaster = pObj;
 	// 오류나면 빼자. 부모 객체는 AddRedf 없애는 것이 나을 수도..
 	//m_pMaster->AddRef();
-	m_pMaster->SetChild(this);
+//	CInGamePlayer
+//	m_pMaster->A
+	m_pMaster->AcquireItem(this);
 }
 
 void CItem::ResetMaster()

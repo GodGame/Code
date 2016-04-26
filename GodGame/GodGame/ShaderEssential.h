@@ -363,7 +363,8 @@ public:
 
 class CInGameUIShader : public CUIShader
 {
-	const int miResultIndex = 0;
+	const int miResultReverseIndex = 1;
+	const int miItemUIReverseIndex = 2;
 	const string mWinLogo = "win_logo";
 	const string mLoseLogo = "lose_logo";
 
@@ -380,6 +381,8 @@ public:
 
 	void UIReadyWinLogo(bool Visible);
 	void UIReadyLoseLogo(bool Visible);
+
+	void ChangeItemUI(CStaff * pStaff);
 };
 
 #endif

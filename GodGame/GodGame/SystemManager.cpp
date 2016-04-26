@@ -13,6 +13,7 @@ CSystemManager::CSystemManager()
 	m_iRoundNumber         = 0;
 	m_iTotalRound          = 0;
 	m_nPlayers             = 0;
+	m_iThisPlayer		   = 0;
 	m_iDominatingPlayerNum = -1;
 
 	m_nRoundMinute = 0;
@@ -42,6 +43,7 @@ CSystemManager::~CSystemManager()
 
 void CSystemManager::_CreateFontUiArray()
 {
+	m_pGlobalFont = new CGlobalFontUI();
 	m_pFont[ROUND_STATE::eGAME_START]        = new CGameStartFontUI();
 	m_pFont[ROUND_STATE::eROUND_ENTER]       = new CRoundEnterFontUI();
 	m_pFont[ROUND_STATE::eROUND_START]       = new CRoundStartFontUI();
@@ -136,7 +138,9 @@ bool CSystemManager::CheckCanDomianteSuccess(CInGamePlayer * pPlayer)
 
 bool CSystemManager::IsWinPlayer(CInGamePlayer * pPlayer)
 {
-	return pPlayer->GetPlayerNum() == m_iDominatingPlayerNum;
+	if (pPlayer)
+		return pPlayer->GetPlayerNum() == m_iDominatingPlayerNum;
+	return m_iThisPlayer == m_iDominatingPlayerNum;
 }
 
 void CSystemManager::DominatePortalGate(int iPlayerNum)
@@ -206,6 +210,33 @@ void CSystemManager::GameEnd()
 	EVENTMgr.InsertDelayMessage(0.f, eMessage::MSG_GAME_END, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 ///////////////////////////////////////////// font ////////////////////////////////////////////////////////
+void CGlobalFontUI::DrawFont()
+{
+	const static UINT playerColor[] = { 0xffffffff, 0xff0000ff, 0xffff0000, 0xff00ff00};
+
+	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, -7) };
+	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, -2) };
+	static char screenFont[52];
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wchar_t) * 26;
+	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
+
+	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
+	FRAMEWORK.SetFont("Gabriola");
+	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation, 0xff0099ff);
+	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation2, 0x333333ff);
+
+	const static XMFLOAT2 PlayerList{ XMFLOAT2(50, 100) };
+	const int allplayer = SYSTEMMgr.GetTotalPlayerNum();
+
+	PLAYER_DATA_INFO * info = SYSTEMMgr.GetPlayerInfo();
+	for (int i = 0; i < allplayer; ++i)
+	{
+		swprintf_s(wscreenFont, wssize, L"%d Player : %d pt", i, info->m_iPlayerPoint);
+		FRAMEWORK.DrawFont(wscreenFont, 30, XMFLOAT2(70, 100 + 20 * i), playerColor[i]);
+	}
+}
+
 void CGameStartFontUI::DrawFont()
 {
 }
@@ -217,6 +248,7 @@ void CRoundEnterFontUI::DrawFont()
 	static const int wssize = sizeof(wchar_t) * 26;
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
 	const int second = SYSTEMMgr.GetRoundSecond();
+	float percent = (second - SYSTEMMgr.GetRoundTime());
 
 	if (second < 5)
 	{
@@ -225,10 +257,11 @@ void CRoundEnterFontUI::DrawFont()
 	else
 	{
 		swprintf_s(wscreenFont, wssize, L"게임 시작!!!");
+		percent = 0.f;
 	}
 
 	FRAMEWORK.SetFont("HY견고딕");
-	FRAMEWORK.DrawFont(wscreenFont, 40, StartInfoLocation, 0xff23ff23);
+	FRAMEWORK.DrawFont(wscreenFont, 40 - 40 * percent, StartInfoLocation, 0xff23ff23);
 }
 
 void CRoundStartFontUI::DrawFont()
@@ -249,8 +282,7 @@ void CRoundEndFontUI::DrawFont()
 	static wchar_t wscreenFont[26];
 	static const int wssize = sizeof(wchar_t) * 26;
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
-	const int second = SYSTEMMgr.GetRoundSecond();
-
+	//const int second = SYSTEMMgr.GetRoundSecond();
 
 	swprintf_s(wscreenFont, wssize, L"라운드 종료");
 

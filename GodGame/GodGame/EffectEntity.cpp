@@ -78,7 +78,7 @@ void CEffect::Collide()
 	}
 }
 
-void CEffect::MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos)
+bool CEffect::MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos)
 {
 	XMVECTOR xmvVelocity;
 	XMVECTOR xmvPos;
@@ -95,6 +95,8 @@ void CEffect::MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XM
 		xmvPos = xmvVelocity + XMLoadFloat3(&xmf3Pos);
 	}
 	XMStoreFloat3(&xmf3Pos, xmvPos);
+
+	return (xmf3Pos.y < MAPMgr.GetHeight(xmf3Pos.x, xmf3Pos.z, !(int(xmf3Pos.z) % 2)));
 }
 void CEffect::SetMoveVelocity(MoveVelocity & move, XMFLOAT3 * InitPos)
 {
@@ -573,7 +575,8 @@ void CParticle::Update(float fTimeElapsed)
 		if (m_bMove && m_cbParticle.m_bEnable)
 		{
 			QUADMgr.CollisionCheck(this);
-			MoveUpdate(fGameTime, fTimeElapsed, m_cbParticle.m_vParticleEmitPos);
+			if (MoveUpdate(fGameTime, fTimeElapsed, m_cbParticle.m_vParticleEmitPos))
+				Collide();
 		}
 	}
 }

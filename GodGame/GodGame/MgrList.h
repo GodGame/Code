@@ -26,7 +26,7 @@ public:
 		UIMgr.BuildResources();
 		EVENTMgr.Initialize();
 		SYSTEMMgr.Build(pd3dDevice);
-		ITEMMgr.Build();
+		ITEMMgr.Build(pd3dDevice);
 		//MESHMgr.BuildResources(pd3dDevice);
 	}
 

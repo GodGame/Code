@@ -46,6 +46,7 @@ void CScene::ChangeGamePlayerID(int id)
 	
 	m_pCamera = (m_pPlayerShader->GetPlayer()->GetCamera());
 
+	SYSTEMMgr.SetPlayerNum(id);
 	//FRAMEWORK.SetCamera(m_pCamera);
 	//FRAMEWORK.SetPlayer(this, m_pPlayerShader->GetPlayer());
 }

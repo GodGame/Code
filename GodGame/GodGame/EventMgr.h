@@ -51,7 +51,9 @@ enum eMessage : BYTE
 	MSG_MAGIC_SHOT,
 	MSG_MAGIC_CAST,
 	MSG_MAGIC_AREA,
-	
+	// Item
+	MSG_ITEM_STAFF_CHANGE,
+	// Particle
 	MSG_PARTICLE_ON,
 
 	MSG_BUFF_ON,

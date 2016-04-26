@@ -447,7 +447,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
 
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
-		//ChangeGamePlayerID(1);
+		ChangeGamePlayerID(1);
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
 
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
@@ -749,12 +749,12 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 		m_pLights->m_pLights[1].m_xv3Position = pPlayer->GetPosition();
 		m_pLights->m_pLights[1].m_xv3Direction = pPlayer->GetLookVector();
 
-		XMFLOAT3 pos = m_pPlayerShader->GetPlayer(0)->GetPosition();
-		pos.y += 20.f;
-		m_pLights->m_pLights[2].m_xv3Position = pos;
-		pos = m_pPlayerShader->GetPlayer(1)->GetPosition();
-		pos.y += 20.f;
-		m_pLights->m_pLights[3].m_xv3Position = pos;
+		//XMFLOAT3 pos = m_pPlayerShader->GetPlayer(0)->GetPosition();
+		//pos.y += 20.f;
+		//m_pLights->m_pLights[2].m_xv3Position = pos;
+		//pos = m_pPlayerShader->GetPlayer(1)->GetPosition();
+		//pos.y += 20.f;
+		//m_pLights->m_pLights[3].m_xv3Position = pos;
 	}
 	for (int i = 0; i < m_nShaders; i++)
 	{
@@ -843,10 +843,14 @@ CHeightMapTerrain *CSceneInGame::GetTerrain()
 
 void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 {
-	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(extra);
+	//CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(extra);
 
 	switch (eMSG)
 	{
+	case eMessage::MSG_ITEM_STAFF_CHANGE:
+		static_cast<CInGameUIShader*>(m_pUIShader)->ChangeItemUI(static_cast<CStaff*>(extra));
+		return;
+	
 	case eMessage::MSG_PARTICLE_ON:
 	case eMessage::MSG_MAGIC_SHOT:
 	case eMessage::MSG_MAGIC_AREA:
