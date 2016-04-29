@@ -26,7 +26,12 @@ public:
 	XMFLOAT3 GetUpVectorInverse()    { return XMFLOAT3(-m_xv3Up.x, -m_xv3Up.y, -m_xv3Up.z); }
 	XMFLOAT3 GetRightVectorInverse() { return XMFLOAT3(-m_xv3Right.x, -m_xv3Right.y, -m_xv3Right.z); }
 
+	void SetDamagedEntity(CEntity * pEntity) { m_pDamagedEntity = pEntity; }
+	CEntity * GetDamagedEntity() { return m_pDamagedEntity; }
+
 protected:
+	CEntity * m_pDamagedEntity;
+
 	float m_fGravity;
 	XMFLOAT3 m_xv3ExternalPower;
 	//xz-평면에서 (한 프레임 동안) 플레이어의 이동 속력의 최대값을 나타낸다.
@@ -80,7 +85,7 @@ public:
 	virtual void Rotate(float x, float y, float z);
 	virtual void Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle);
 
-	void LookToTarget(CGameObject * pTarget);
+	void LookToTarget(const CEntity * pTarget);
 	//위치와 회전 정보를 경과 시간에 따라 갱신하는 함수이다.
 	void Update(float fTimeElapsed);
 
@@ -91,6 +96,11 @@ public:
 
 class CMonster : public CCharacter
 {
+private:
+	float m_fUpdateTargetTime;
+	bool m_bUpdateTaget;
+	const float mfONE_CYCLE_UPDATE_TIME = 0.5f;
+
 protected:
 	CCharacter * m_pTarget;
 
@@ -103,6 +113,7 @@ public:
 	void SetTarget(CCharacter * pTarget) { m_pTarget = pTarget; }
 	CCharacter* GetTarget() { return m_pTarget; }
 
+	void Update(float fTimeElapsed);
 	virtual void GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra = nullptr);
 	virtual void Collide(CEntity * pEntity);
 };
@@ -153,7 +164,7 @@ private:
 	CStateMachine<CWarrock>* m_pStateMachine;
 
 	CDistanceEvaluator mEvaluator;
-	CTargetDotEvaluator mDotEvaluator;
+	//CTargetDotEvaluator mDotEvaluator;
 
 public:
 	CWarrock(int nMeshes);

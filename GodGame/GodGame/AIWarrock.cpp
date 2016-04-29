@@ -14,7 +14,7 @@ void CWarrockIdleState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_IDLE, true, nullptr, 0);
 
-	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock, mfATTACK_RAGNE);
+	mEvaluator.SetEvaluate(mfATTACK_RAGNE);
 }
 
 void CWarrockIdleState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -23,9 +23,17 @@ void CWarrockIdleState::Execute(CWarrock * pWarrock, float fFrameTime)
 	CCharacter * pChar = pWarrock->GetTarget();
 	if (false == pChar->GetStatus().IsCanDamaged()) return;
 
-	mEvaluator.SetEvaluate(pWarrock->GetTarget());
+	const float fEvaluateValue = mEvaluator.Evaluate(pWarrock, pWarrock->GetTarget());
+	if (fEvaluateValue < 1.0f)
+	{
+		pWarrock->GetFSM()->ChangeState(&CWarrockChaseTargetState::GetInstance());
+	}
+	else if (fEvaluateValue < 1.5f)
+	{
+		pWarrock->GetFSM()->ChangeState(&CWarrockRoarState::GetInstance());
+	}
 
-	float fEvaluateValue = mEvaluator.Evaluate();
+#if 0
 	if (fEvaluateValue < 1.5f)
 	{
 		if (fEvaluateValue < 0.3f)
@@ -37,6 +45,7 @@ void CWarrockIdleState::Execute(CWarrock * pWarrock, float fFrameTime)
 		else
 			pWarrock->GetFSM()->ChangeState(&CWarrockRoarState::GetInstance());
 	}
+#endif
 }
 
 void CWarrockIdleState::Exit(CWarrock * pWarrock)
@@ -53,7 +62,7 @@ void CWarrockPunchState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_PUNCH, false, nullptr, 0);
 	pWarrock->LookToTarget(pWarrock->GetTarget());
-	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock, mfMAX_RAGNE);
+	mEvaluator.SetEvaluate(mfMAX_RAGNE);
 }
 
 void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -70,8 +79,7 @@ void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
 		float fIndexPercent = (static_cast<float>(pMesh->GetAnimIndex()) / static_cast<float>(pMesh->GetAnimationAllIndex()));
 		if (fIndexPercent < 0.3f || fIndexPercent > 0.8f) return;
 
-		mEvaluator.SetEvaluate(pWarrock->GetTarget());
-		float fResult = mEvaluator.Evaluate();
+		float fResult = mEvaluator.Evaluate(pWarrock, pWarrock->GetTarget());
 		// -70~70도 사이
 		if (fResult > COS_70)
 		{
@@ -95,8 +103,8 @@ CWarrockSwipingState & CWarrockSwipingState::GetInstance()
 void CWarrockSwipingState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_SWIPING, false, nullptr, 0);
-
-	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock, mfMAX_RAGNE);
+	pWarrock->LookToTarget(pWarrock->GetTarget());
+	mEvaluator.SetEvaluate(mfMAX_RAGNE);
 }
 
 void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -113,8 +121,7 @@ void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
 		float fIndexPercent = (static_cast<float>(pMesh->GetAnimIndex()) / static_cast<float>(pMesh->GetAnimationAllIndex()));
 		if (fIndexPercent < 0.5f || fIndexPercent > 0.8f) return;
 
-		mEvaluator.SetEvaluate(pWarrock->GetTarget());
-		float fResult = mEvaluator.Evaluate();
+		float fResult = mEvaluator.Evaluate(pWarrock, pWarrock->GetTarget());
 		// -70~70도 사이
 		if (fResult > COS_70)
 		{
@@ -162,7 +169,7 @@ void CWarrockChaseTargetState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_RUN, false, nullptr, 0);
 
-	mEvaluator.SetEvaluate(pWarrock->GetTarget(), pWarrock, mfCHASE_RAGNE);
+	mEvaluator.SetEvaluate(mfCHASE_RAGNE);
 }
 
 void CWarrockChaseTargetState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -170,11 +177,14 @@ void CWarrockChaseTargetState::Execute(CWarrock * pWarrock, float fFrameTime)
 	const XMVECTOR xmProjToXZ = XMVectorSet(1, 0, 1, 0);
 
 	CGameObject * pTarget = pWarrock->GetTarget();
-	mEvaluator.SetEvaluate(pTarget);
 
-	float fEvaluateValue = mEvaluator.Evaluate();
+	float fEvaluateValue = mEvaluator.Evaluate(pWarrock, pWarrock->GetTarget());
 
 	if (fEvaluateValue < 0.05f)
+	{
+		pWarrock->GetFSM()->ChangeState(&CWarrockPunchState::GetInstance());
+	}
+	if (fEvaluateValue < 0.15f)
 	{
 		pWarrock->GetFSM()->ChangeState(&CWarrockSwipingState::GetInstance());
 	}

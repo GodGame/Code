@@ -8,6 +8,8 @@ CSystemManager::CSystemManager()
 {
 	_CreateFontUiArray();
 
+	m_ppPlayerArray = nullptr;
+
 	mRoundState			   = eROUND_NONE;
 	m_iMapInfo             = 0;
 	m_iRoundNumber         = 0;
@@ -98,7 +100,7 @@ void CSystemManager::Build(ID3D11Device * pd3dDevice)
 
 void CSystemManager::Update(float fFrameTime)
 {
-	m_fRoundTime += fFrameTime;
+	m_fRoundTime -= fFrameTime;
 
 	m_nRoundSecond = m_fRoundTime;
 	m_nRoundMinute = m_nRoundSecond / 60;
@@ -116,7 +118,7 @@ bool CSystemManager::CheckCanDominateRange(CInGamePlayer * pPlayer)
 	//cout << "거리는 " << fLengthSq;
 	if (fLengthSq <= fGoalDistance)
 	{
-		mPlayersDominateTryTime[pPlayer->GetPlayerNum()] = m_fRoundTime - 0.1f;
+		mPlayersDominateTryTime[pPlayer->GetPlayerNum()] = m_fRoundTime + 0.1f;
 		return true;
 	}
 	return false;
@@ -126,7 +128,7 @@ bool CSystemManager::CheckCanDomianteSuccess(CInGamePlayer * pPlayer)
 {
 	const int iPlayerNum = pPlayer->GetPlayerNum();
 
-	bool bResult = (m_fRoundTime > 
+	bool bResult = (m_fRoundTime < 
 		(mPlayersDominateTryTime[iPlayerNum] + mfDOMINATE_SPEND_TIME));
 
 	if (bResult)
@@ -174,7 +176,7 @@ void CSystemManager::RoundEnter()
 
 	m_iRoundNumber++;
 	GetPortalZoneObject()->SetActive(false);
-	m_fRoundTime = 0.f;
+	m_fRoundTime = mfLIMIT_ROUND_TIME;
 	m_iDominatingPlayerNum = -1;
 
 	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_ENTER);
@@ -191,6 +193,7 @@ void CSystemManager::RoundEnd()
 	mRoundState = ROUND_STATE::eROUND_END;
 
 	m_fEndTime = m_fRoundTime;
+	m_fRoundTime = mfEND_TIME;
 	EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 
@@ -216,25 +219,36 @@ void CGlobalFontUI::DrawFont()
 
 	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, -7) };
 	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, -2) };
+	const static XMFLOAT2 ElementalPos{ XMFLOAT2(155, 40) };
 	static char screenFont[52];
-	static wchar_t wscreenFont[26];
-	static const int wssize = sizeof(wchar_t) * 26;
+	static wchar_t wscreenFont[30];
+	static const int wssize = sizeof(wchar_t) * 30;
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
 
 	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
 	FRAMEWORK.SetFont("Gabriola");
 	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation, 0xff0099ff);
 	FRAMEWORK.DrawFont(wscreenFont, 40, RoundTimeLocation2, 0x333333ff);
-
-	const static XMFLOAT2 PlayerList{ XMFLOAT2(50, 100) };
+	
+	FRAMEWORK.SetFont("Broadway");
+	const static XMFLOAT2 PlayerList{ XMFLOAT2(60, 100) };
 	const int allplayer = SYSTEMMgr.GetTotalPlayerNum();
 
 	PLAYER_DATA_INFO * info = SYSTEMMgr.GetPlayerInfo();
+	CGameObject ** ppPlayers = SYSTEMMgr.GetPlayerArray();
+	int iPlayerNum = SYSTEMMgr.GetPlayerNum();
 	for (int i = 0; i < allplayer; ++i)
 	{
-		swprintf_s(wscreenFont, wssize, L"%d Player : %d pt", i, info->m_iPlayerPoint);
-		FRAMEWORK.DrawFont(wscreenFont, 30, XMFLOAT2(70, 100 + 20 * i), playerColor[i]);
+		swprintf_s(wscreenFont, wssize, L"%dP : %d pt[HP : %d]", i, info[i].m_iPlayerPoint, 
+			static_cast<CInGamePlayer*>(ppPlayers[i])->GetStatus().GetHP());
+		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(130, 100 + 20 * i), playerColor[i]);
 	}
+	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(SYSTEMMgr.GetPlayer());
+	swprintf_s(wscreenFont, wssize, L"%3d   %3d   %3d   %3d   %3d   %3d", pPlayer->GetEnergyNum(0), pPlayer->GetEnergyNum(1),
+		pPlayer->GetEnergyNum(2), pPlayer->GetEnergyNum(3), pPlayer->GetEnergyNum(4), pPlayer->GetEnergyNum(5));
+	
+	FRAMEWORK.DrawFont(wscreenFont, 26, ElementalPos, 0xff483278);
+
 }
 
 void CGameStartFontUI::DrawFont()
@@ -247,12 +261,13 @@ void CRoundEnterFontUI::DrawFont()
 	static wchar_t wscreenFont[26];
 	static const int wssize = sizeof(wchar_t) * 26;
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
-	const int second = SYSTEMMgr.GetRoundSecond();
+	static const float start_time = SYSTEMMgr.mfLIMIT_ROUND_TIME;
+	const int second = SYSTEMMgr.GetRoundTime();
 	float percent = (second - SYSTEMMgr.GetRoundTime());
-
-	if (second < 5)
+	const int time_count = start_time - second;
+	if (time_count < 5)
 	{
-		swprintf_s(wscreenFont, wssize, L"준비 %d!", 5 - second);
+		swprintf_s(wscreenFont, wssize, L"준비 %d!", 5 - time_count);
 	}
 	else
 	{

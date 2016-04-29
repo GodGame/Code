@@ -294,6 +294,10 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
 	pd3dsrvTexture->Release();
 
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/elementList.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_element_list.png", 0);
+	pd3dsrvTexture->Release();
+
 	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/staffImage/slot_staff.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	InsertShaderResourceView(pd3dsrvTexture, "srv_staff_slot.jpg", 0);
 	pd3dsrvTexture->Release();

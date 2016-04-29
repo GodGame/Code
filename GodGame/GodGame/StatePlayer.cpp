@@ -11,6 +11,7 @@ CPlayerIdleState & CPlayerIdleState::GetInstance()
 void CPlayerIdleState::Enter(CInGamePlayer * pPlayer)
 {
 	pPlayer->ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+	pPlayer->SetCancled(false);
 }
 
 void CPlayerIdleState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
@@ -91,16 +92,19 @@ CPlayerKnockbackState & CPlayerKnockbackState::GetInstance()
 
 void CPlayerKnockbackState::Enter(CInGamePlayer * pPlayer)
 {
-	XMFLOAT3 xmf3LookInverse = pPlayer->GetLookVectorInverse();
-	xmf3LookInverse.y = 0.0f;
+	const CEntity * pEntity = pPlayer->GetDamagedEntity();
+	XMVECTOR xmvFromVector = XMLoadFloat3(&pPlayer->GetPosition()) - XMLoadFloat3(&pEntity->GetPosition());
+	xmvFromVector *= XMVectorSet(1, 0, 1, 1);
+	xmvFromVector = XMVector3Normalize(xmvFromVector);
+	xmvFromVector *= mfKnockBackLength;
 
-	XMVECTOR xmvLookInverse =  XMLoadFloat3(&xmf3LookInverse);
-	xmvLookInverse = XMVector3Normalize(xmvLookInverse) * mfKnockBackLength;
-	XMStoreFloat3(&xmf3LookInverse, xmvLookInverse);
-	pPlayer->SetExternalPower(xmf3LookInverse);
+	XMFLOAT3 xmf3Power;
+	XMStoreFloat3(&xmf3Power, xmvFromVector);
+	pPlayer->SetExternalPower(xmf3Power);
 
 	pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_02, false, nullptr, 0);
-	cout << "HP : " << pPlayer->GetStatus().GetHP() << endl;
+	pPlayer->LookToTarget(pEntity);
+	//cout << "HP : " << pPlayer->GetStatus().GetHP() << endl;
 
 	EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_RADIAL_ON, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
 	EVENTMgr.InsertDelayMessage(0.3f, eMessage::MSG_EFFECT_RADIAL_OFF, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());

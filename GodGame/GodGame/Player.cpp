@@ -462,6 +462,7 @@ CInGamePlayer::CInGamePlayer(int m_nMeshes) : CTerrainPlayer(m_nMeshes)
 	m_pStateMachine = nullptr;
 
 	m_bDominating = false;
+	m_bMagicCancled = false;
 
 	m_fDominateCoolTime = 0.f;
 }
@@ -517,7 +518,11 @@ void CInGamePlayer::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_COLLIDE:
 		return;
 	case eMessage::MSG_COLLIDED:
+	{
+		CEffect * pEffect = dynamic_cast<CEffect*>(byObj);
+		if (pEffect) Damaged(pEffect);
 		return;
+	}
 	case eMessage::MSG_NORMAL:
 		return;
 	case eMessage::MSG_COLLIDE_LOCATION:
@@ -617,14 +622,21 @@ void CInGamePlayer::AttackSuccess(CCharacter * pToChar, short stDamage)
 	pToChar->Damaged(this, stDamage);
 }
 
+void CInGamePlayer::Damaged(CEffect * pEffect)
+{
+	Damaged(static_cast<CCharacter*>(pEffect->GetMaster()), 10);
+	//pEffect->Get
+}
 void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 {
-	cout << "Damaged!! " << stDamage;
+	if (GetAnimationState() == eANI_1H_MAGIC_ATTACK) m_bMagicCancled = true;
+
 	m_Status.Damaged(stDamage);
 	m_Status.SetUnbeatable(true);
 
 	if (stDamage > 9)
 	{
+		m_pDamagedEntity = pByChar;
 		m_pStateMachine->ChangeState(&CPlayerKnockbackState::GetInstance());
 	}
 	else
@@ -632,7 +644,7 @@ void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 		m_pStateMachine->ChangeState(&CPlayerDamagedState::GetInstance());
 	}
 
-	if (m_Status.GetHP() < 0)
+	if (m_Status.GetHP() < 1)
 	{
 		m_pStateMachine->ChangeState(&CPlayerDeathState::GetInstance());
 	}

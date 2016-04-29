@@ -20,6 +20,9 @@ protected:
 	bool m_bUseAccel      : 1;
 
 public:
+	void SetMaster(CGameObject * pMaster) { m_pMaster = pMaster; }
+	CGameObject * GetMaster() { return m_pMaster; }
+
 	void SetDurabilityTime(float fTime) { m_fDurability = fTime; }
 	float GetDurabilityTime()	const { return m_fDurability; }
 

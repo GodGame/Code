@@ -773,7 +773,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	m_nObjects = 2;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	SYSTEMMgr.SetInitialPlayerInfo(m_nObjects, 0);
+	SYSTEMMgr.SetInitialPlayerInfo(m_nObjects, 0, m_ppObjects);
 
 	char material[4][12] = { "PlayerWhite", "PlayerRed", "PlayerBlue", "PlayerGreen" };
 		//MaterialMgr.GetObjects("White"), 
@@ -1595,7 +1595,7 @@ CInGameUIShader::~CInGameUIShader()
 
 void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
 {
-	m_nObjects = 4;
+	m_nObjects = 5;
 	m_ppObjects = new CGameObject*[m_nObjects];
 	m_pBackRTV = pBackRTV;
 	//m_pBackRTV->AddRef();
@@ -1606,13 +1606,15 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	CGameObject  * pObject = nullptr;
 	CTexture     * pTexture = nullptr;
 
-	XMFLOAT4 InstanceData[4] = { 
+	XMFLOAT4 InstanceData[5] = { 
 		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT - 30, 140, 30),
 		XMFLOAT4(46, 190, 45, 180),
+		XMFLOAT4(150, FRAME_BUFFER_HEIGHT - 30, 140, 30),
+
 		XMFLOAT4(45, 180, 35, 140),
 		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.3f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f),
 	};
-	string   UIName[2] = { { "srv_scroll_03.png" }, {"srv_staff_slot.jpg"} };
+	string   UIName[3] = { { "srv_scroll_03.png" }, {"srv_staff_slot.jpg"}, { "srv_element_list.png" } };
 
 	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_lose.png"));
@@ -1632,7 +1634,7 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 		pObject->SetVisible(true);
 		pObject->AddRef();
 		//pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
-		if (i < 2)
+		if (i < 3)
 		{
 			pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 			pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[index++]));

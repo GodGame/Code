@@ -165,10 +165,9 @@ void CCamera::RegenerateViewMatrix()
 	m_xmf44View._32 = m_xv3Up.z;
 	m_xmf44View._33 = m_xv3Look.z;
 
-	XMStoreFloat(&m_xmf44View._41, -XMVector3Dot(xmvPostion, xmvRight)); //m_xmf44View._41 = -xv3ec3Dot(&m_xv3Position, &m_xv3Right);
-	XMStoreFloat(&m_xmf44View._42, -XMVector3Dot(xmvPostion, xmvUp)); //m_xmf44View._42 = -xv3ec3Dot(&m_xv3Position, &m_xv3Up);
-	XMStoreFloat(&m_xmf44View._43, -XMVector3Dot(xmvPostion, xmvLook)); //m_xmf44View._43 = -xv3ec3Dot(&m_xv3Position, &m_xv3Look);
-
+	XMStoreFloat(&m_xmf44View._41, -XMVector3Dot(xmvPostion, xmvRight));
+	XMStoreFloat(&m_xmf44View._42, -XMVector3Dot(xmvPostion, xmvUp)); 
+	XMStoreFloat(&m_xmf44View._43, -XMVector3Dot(xmvPostion, xmvLook)); 
 	//카메라의 위치와 방향이 바뀌면(카메라 변환 행렬이 바뀌면) 절두체 평면을 다시 계산한다.
 	CalculateFrustumPlanes();
 

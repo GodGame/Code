@@ -82,6 +82,7 @@ struct PLAYER_DATA_INFO
 
 class CScene;
 class CGameObject;
+//class CPlayer;
 class CPortalGate;
 class CInGamePlayer;
 class CMaterial;
@@ -128,13 +129,13 @@ private:
 	float m_fEndTime;
 	const float mfEND_TIME = 5.f;
 
-//public:
 	const float mfCAN_DOMINATE_LENGTH = 80.f;
 	const float mfDOMINATE_SPEND_TIME = 2.f;
 
 	float m_fWaterHeight;
 
 private:
+	CGameObject ** m_ppPlayerArray;
 	CScene * m_pNowScene;
 	CPortalGate* m_pPortalGate;
 	CGameObject* m_pMinimMap;
@@ -148,11 +149,13 @@ private:
 public:
 	ROUND_STATE GetRoundState() { return mRoundState; }
 
-	void SetInitialPlayerInfo(int nPlayers, int nPlayerNum) { m_nPlayers = nPlayers; m_iThisPlayer = nPlayerNum; }
+	void SetInitialPlayerInfo(int nPlayers, int nPlayerNum, CGameObject ** ppPlayers) { m_nPlayers = nPlayers; m_iThisPlayer = nPlayerNum; m_ppPlayerArray = ppPlayers; }
 	void SetPlayerNum(int iPlayerNum) { m_iThisPlayer = iPlayerNum; }
 
 	int GetTotalPlayerNum() { return m_nPlayers; }
 	int GetPlayerNum() { return m_iThisPlayer; }
+	CGameObject* GetPlayer() { return m_ppPlayerArray[m_iThisPlayer]; }
+	CGameObject ** GetPlayerArray() { return m_ppPlayerArray; }
 
 	void SetScene(CScene * pScene) { m_pNowScene = pScene; }
 	void ReleaseScene(void);
@@ -173,7 +176,7 @@ private:
 	~CSystemManager();
 
 public:
-	const float mfLIMIT_ROUND_TIME = 40.f;
+	const float mfLIMIT_ROUND_TIME = 80.f;
 	const float mfDEATH_MATCH_TIME = 1800.f;
 	const int mfGOAL_ROUND = 2;
 

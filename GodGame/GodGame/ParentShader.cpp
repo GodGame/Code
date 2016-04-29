@@ -128,19 +128,21 @@ void CEffectShader::BuildObjects(ID3D11Device * pd3dDevice)
 
 void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
-	XMFLOAT4 xmf4Data;
 	CInGamePlayer * pPlayer = nullptr;
 
 	switch (eMSG)
 	{
 	case eMessage::MSG_PARTICLE_ON:
+	{
+		static XMFLOAT4 xmf4Data;
 		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
 		static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(nullptr, (XMFLOAT3*)&xmf4Data, xmf4Data.w);
 		return;
-
+	}
 	case eMessage::MSG_MAGIC_SHOT:
 		pPlayer = static_cast<CInGamePlayer*>(extra);
-		static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
+		if (false == pPlayer->IsCancled())
+			static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
 		return;
 
 	case eMessage::MSG_MAGIC_AREA:

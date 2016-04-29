@@ -102,6 +102,7 @@ private:
 	ElementEnergy	m_nElemental;
 
 	bool	m_bDominating : 1;
+	bool	m_bMagicCancled : 1;
 	
 	float m_fDominateCoolTime;
 
@@ -120,6 +121,7 @@ public:
 	void ForcedByObj(CEntity * pObj);
 
 public:
+	void Damaged(CEffect * pEffect);
 	virtual void Attack(CCharacter * pToChar, short stDamage);
 	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
@@ -132,6 +134,8 @@ public:
 	CStateMachine<CInGamePlayer>* GetFSM() { return m_pStateMachine; }
 
 public:
+	void SetCancled(bool bCancled) { m_bMagicCancled = bCancled; }
+	bool IsCancled() { return m_bMagicCancled; }
 	XMFLOAT3 GetCenterPosition() { return XMFLOAT3(m_xv3Position.x, m_xv3Position.y + 9.0f, m_xv3Position.z); }
 
 	BYTE & GetEnergyNum(UINT index) { return m_nElemental.m_nEnergies[index]; }

@@ -15,29 +15,10 @@ public:
 	CEvaluator();
 	virtual ~CEvaluator();
 
-	virtual float Evaluate() { return EVAL_NULL; }
+	float Evaluate(CGameObject * pThis, CGameObject * pTarget) { return EVAL_NULL; }
 };
 
-class CTargetEvaluator : public CEvaluator
-{
-protected:
-	CGameObject * m_pTarget;
-	CGameObject * m_pThis;
-
-public:
-	CTargetEvaluator();
-	virtual ~CTargetEvaluator();
-
-	virtual float Evaluate() { return EVAL_NULL; }
-
-public:
-	void SetEvaluate(CGameObject * pTarget) { m_pTarget = pTarget; }
-
-	CGameObject * GetTarget() { return m_pTarget; }
-	CGameObject * GetThis() { return m_pThis; }
-};
-
-class CDistanceEvaluator : public CTargetEvaluator
+class CDistanceEvaluator : public CEvaluator
 {
 	float m_fWantDistance;
 
@@ -45,15 +26,14 @@ public:
 	CDistanceEvaluator();
 	virtual ~CDistanceEvaluator();
 
-	virtual float Evaluate();
+	virtual float Evaluate(CGameObject * pThis, CGameObject * pTarget);
 
 public:
-	void SetEvaluate(CGameObject * pTarget) { m_pTarget = pTarget; }
-	void SetEvaluate(CGameObject * pTarget, CGameObject * pThis, float fWantDistance);
+	void SetEvaluate(float fWantDistance);
 	float GetWantDistance()   { return m_fWantDistance; }
 };
 
-class CTargetDotEvaluator : public CTargetEvaluator
+class CTargetDotEvaluator : public CEvaluator
 {
 	float m_fMinValue;
 	float m_fMaxValue;
@@ -62,12 +42,11 @@ public:
 	CTargetDotEvaluator();
 	virtual ~CTargetDotEvaluator(){}
 
-	void SetEvaluate(CGameObject * pTarget) { m_pTarget = pTarget; }
-	void SetEvaluate(CGameObject * pTarget, CGameObject * pThis, float fMin = 0.0f, float fMax = 0.0f);
-	virtual float Evaluate();
+	void SetEvaluate(float fMin = 0.0f, float fMax = 0.0f);
+	virtual float Evaluate(CGameObject * pThis, CGameObject * pTarget);
 };
 
-class CTargetDotAndDistEvaluator : public CTargetEvaluator
+class CTargetDotAndDistEvaluator : public CEvaluator
 {
 	float m_fMinValue;
 	float m_fMaxValue;
@@ -77,9 +56,8 @@ public:
 	CTargetDotAndDistEvaluator();
 	virtual ~CTargetDotAndDistEvaluator() {}
 
-	void SetEvaluate(CGameObject * pTarget) { m_pTarget = pTarget; }
-	void SetEvaluate(CGameObject * pTarget, CGameObject * pThis, float fDist, float fMin = 0.0f, float fMax = 0.0f);
-	virtual float Evaluate();
+	void SetEvaluate(float fDist, float fMin = 0.0f, float fMax = 0.0f);
+	virtual float Evaluate(CGameObject * pThis, CGameObject * pTarget);
 };
 
 #endif

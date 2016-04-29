@@ -60,6 +60,7 @@ CCharacter::CCharacter(int nMeshes) : CAnimatedObject(nMeshes)
 	m_fFriction       = 0.0f;
 
 	m_pUpdatedContext = nullptr;
+	m_pDamagedEntity  = nullptr;
 }
 
 CCharacter::~CCharacter()
@@ -174,9 +175,9 @@ void CCharacter::Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle)
 	m_xv3Look  = { m_xmf44World._31, m_xmf44World._32, m_xmf44World._33 };
 }
 
-void CCharacter::LookToTarget(CGameObject * pTarget)
+void CCharacter::LookToTarget(const CEntity * pTarget)
 {
-	float fLookY = m_xv3Look.y;
+	const float fLookY = m_xv3Look.y;
 
 	Chae::XMFloat3TargetToNormal(&m_xv3Look, &pTarget->GetPosition(), &GetPosition());
 	m_xv3Look.y = fLookY;
@@ -261,10 +262,47 @@ CMonster::CMonster(int nMeshes) : CCharacter(nMeshes)
 	SetGravity(-50);
 	SetMaxVelocityY(50.0f);
 	m_pTarget = nullptr;
+	m_fUpdateTargetTime = 0.f;
+	m_bUpdateTaget = true;
 }
 
 CMonster::~CMonster()
 {
+}
+
+void CMonster::Update(float fTimeElapsed)
+{
+	CCharacter::Update(fTimeElapsed);
+
+	if (m_bUpdateTaget)
+	{
+		CGameObject ** pObjectArray = SYSTEMMgr.GetPlayerArray();
+		XMVECTOR xmvPos = XMLoadFloat3(&GetPosition());
+		XMVECTOR xmvTarget;
+		const int num = SYSTEMMgr.GetTotalPlayerNum();
+		float fMin = FLT_MAX;
+		int index = -1;
+		for (int i = 0; i < num; ++i)
+		{
+			float fDist;
+			xmvTarget = XMLoadFloat3(&pObjectArray[i]->GetPosition());
+			XMStoreFloat(&fDist, XMVector3LengthSq(xmvTarget - xmvPos));
+			if (fDist < fMin)
+			{
+				index = i;
+				fMin = fDist;
+				cout << index << endl;
+			}
+		}
+
+		SetTarget(static_cast<CCharacter*>(pObjectArray[index]));
+		m_bUpdateTaget = false;
+	}
+	else
+	{
+		m_fUpdateTargetTime += fTimeElapsed;
+		m_bUpdateTaget = m_fUpdateTargetTime > mfONE_CYCLE_UPDATE_TIME;
+	}
 }
 
 void CMonster::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
@@ -335,8 +373,7 @@ void CWarrock::BuildObject(CCharacter * pTarget)
 
 	m_pTarget = pTarget;
 
-	mDotEvaluator.SetEvaluate(pTarget, this);
-
+	//mDotEvaluator.SetEvaluate(pTarget, this);
 	m_pStateMachine = new CStateMachine<CWarrock>(this);
 	m_pStateMachine->SetCurrentState(&CWarrockIdleState::GetInstance());
 }
@@ -357,7 +394,7 @@ void CWarrock::Animate(float fTimeElapsed)
 
 	CAnimatedObject::Animate(fTimeElapsed);
 	m_pStateMachine->Update(fTimeElapsed);
-	CCharacter::Update(fTimeElapsed);
+	CMonster::Update(fTimeElapsed);
 }
 
 void CWarrock::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
@@ -395,15 +432,14 @@ void CWarrock::Attack(CCharacter * pToChar, short stDamage)
 
 void CWarrock::AttackSuccess(CCharacter * pToChar, short stDamage)
 {
-	pToChar->Damaged(pToChar, stDamage);
+	pToChar->Damaged(this, stDamage);
 }
 
 void CWarrock::Damaged(CCharacter * pByChar, short stDamage)
 {
 	m_Status.Damaged(stDamage);
-	cout << m_Status.GetHP();
 
-	if (0 > m_Status.GetHP())
+	if (0 < m_Status.GetHP())
 	{
 		m_pStateMachine->ChangeState(&CWarrockDeathState::GetInstance());
 	}
