@@ -184,10 +184,13 @@ void CItem::AllocPositionAndEntityQuadTree()
 	Rotate(90, 0, 0);
 	CMapManager & mapMgr = MAPMgr;
 
+	int MapWidth = static_cast<int>(mapMgr.GetWidth() - 200);
+	int MapLength = static_cast<int>(mapMgr.GetLength() - 200);
+
 	XMFLOAT3 xmfPos;
-	xmfPos.x = rand() % int(mapMgr.GetWidth());
-	xmfPos.z = rand() % int(mapMgr.GetLength());
-	xmfPos.y = 200.f; // mapMgr.GetHeight(xmfPos.x, xmfPos.z, int(xmfPos.z) % 2);
+	xmfPos.x = rand() % MapWidth + 100;
+	xmfPos.z = rand() % MapLength + 100;
+	xmfPos.y = 250.f; // mapMgr.GetHeight(xmfPos.x, xmfPos.z, int(xmfPos.z) % 2);
 	SetPosition(xmfPos);
 }
 

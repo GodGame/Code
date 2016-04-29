@@ -291,12 +291,12 @@ void CMonster::Update(float fTimeElapsed)
 			{
 				index = i;
 				fMin = fDist;
-				cout << index << endl;
 			}
 		}
 
 		SetTarget(static_cast<CCharacter*>(pObjectArray[index]));
 		m_bUpdateTaget = false;
+		m_fUpdateTargetTime = 0.f;
 	}
 	else
 	{

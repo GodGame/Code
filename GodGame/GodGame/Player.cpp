@@ -728,7 +728,7 @@ void CInGamePlayer::AddEnergy(UINT index, UINT num)
 	}
 
 #ifdef _DEBUG
-	cout << m_nElemental << endl;
+	//cout << m_nElemental << endl;
 	//cout << "총 에너지 : " << (UINT)m_nElemental.m_nSum << "\t";
 	//cout << index << "번 에너지 : " <<  (UINT)m_nElemental.m_nEnergies[index] << endl;
 #endif
@@ -766,7 +766,7 @@ UINT CInGamePlayer::UseEnergy(UINT energyNum, bool bForced)
 			break;
 	}
 
-	cout << m_nElemental << endl;
+	//cout << m_nElemental << endl;
 	return num;
 }
 

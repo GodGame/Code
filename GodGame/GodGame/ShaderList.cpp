@@ -908,9 +908,6 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 	string name;//char name[48];
 	CMapManager * pTerrain = &MAPMgr;
 
-	int MapWidth = static_cast<int>(pTerrain->GetWidth() - 100) + 50;
-	int MapLength = static_cast<int>(pTerrain->GetLength() - 100) + 50;
-
 	int lv = -1;
 	int element = -1;
 
@@ -921,15 +918,16 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 		auto it = m_vcItemList.end() - 1;
 		if (i < 12)
 		{
-			lv = i % 2;
-			element = (i / 6);
+			lv = (i / 6);
+			element = (i % 6);
 		}
 		else
 		{
-			lv = 0;
-			element = 2;
+			lv = 2;
+			element = 0;
 		}
 		name = ITEMMgr.StaffNameArray[element][lv];
+		cout << "Staff " << element << ", " << lv << "::" << name << endl;
 
 		XMFLOAT3 xmfPos;
 		for (int j = 0; j < 10; ++j)
