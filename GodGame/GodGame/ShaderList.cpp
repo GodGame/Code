@@ -749,62 +749,36 @@ void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMate
 	TEXTURE_MGR & txmgr = SceneMgr.mgrTexture;
 	MESH_MGR & meshmgr = SceneMgr.mgrMesh;
 
-	m_nObjects = 2;
+	m_nObjects = 5;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	char ManagerNames[2][50] = { { "scene_skull" },{ "scene_warrok" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
+	//char ManagerNames[2][50] = { { "scene_skull" },{ "scene_warrok" } };//, { "scene_man_death" }, { "scene_player_0" }, { "scene_skull_0" }};
 																		//int Pos[5][2] = { {1085, 220}, {1085, 260}, {} };
 	CGameObject *pObject = nullptr;
+	CMonster * pAnimatedObject = nullptr;//new CSkeleton(1);
 
-	float fHeight = 0;
-	fHeight = MAPMgr.GetHeight(1085, 260, true);
-	CMonster * pAnimatedObject = new CSkeleton(1);
-	pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
-	cout << "Skeleton Size : " << pAnimatedObject->GetSize() << endl;
-	pAnimatedObject->SetSize(10);
-
-	m_ppObjects[0] = pAnimatedObject;
-	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
-	m_ppObjects[0]->AddRef();
-
+		//pAnimatedObject->SetMesh(meshmgr.GetObjects("scene_skull_0"));
+		//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
 	char AnimNames[6][50] = { "scene_warrok_idle", "scene_warrok_run", "scene_warrok_roar", "scene_warrok_punch", "scene_warrok_swiping", "scene_warrok_death" };
+	for (int j = 0; j < m_nObjects; ++j)
+	{
+		pAnimatedObject = new CWarrock(CWarrock::eANI_WARROCK_ANIM_NUM);
 
-	fHeight = MAPMgr.GetHeight(1115, 275, false);
-	pAnimatedObject = new CWarrock(CWarrock::eANI_WARROCK_ANIM_NUM);
+		for (int i = 0; i < CWarrock::eANI_WARROCK_ANIM_NUM; ++i)
+			pAnimatedObject->SetMesh(meshmgr.GetObjects(AnimNames[i]), i);
 
-	for (int i = 0; i < 6; ++i)
-		pAnimatedObject->SetMesh(meshmgr.GetObjects(AnimNames[i]), i);
+		pAnimatedObject->InitializeAnimCycleTime();
+		pAnimatedObject->SetSize(10);
 
-	cout << "Size : " << pAnimatedObject->GetSize() << endl;
-
-	pAnimatedObject->InitializeAnimCycleTime();
-	//static_cast<CWarrock*>(pAnimatedObject)->BuildObject(pAnimatedObject);
-
-	m_ppObjects[1] = pAnimatedObject;
-	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
-	m_ppObjects[1]->Rotate(0, 90.f, 0);
-	m_ppObjects[1]->AddRef();
-
-	//fHeight = pHeightMapTerrain->GetHeight(1140, 255, false);
-	//pAnimatedObject = new CAnimatedObject(1);
-	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	//m_ppObjects[3] = pAnimatedObject;
-	//m_ppObjects[3]->SetPosition(1140, fHeight + 5, 255);
-	//m_ppObjects[3]->AddRef();
-	////m_ppObjects[3]->SetPosition(1100, 170, 255);
-	//
-	//fHeight = pHeightMapTerrain->GetHeight(1180, 255, false);
-	//pAnimatedObject = new CAnimatedObject(1);
-	//pAnimatedObject->SetAnimationCycleTime(0, 2.0f);
-	//m_ppObjects[4] = pAnimatedObject;
-	//m_ppObjects[4]->SetPosition(1180, fHeight, 255);
-	//m_ppObjects[4]->AddRef();
+		m_ppObjects[j] = pAnimatedObject;
+		m_ppObjects[j]->SetPosition(MAPMgr.GetRandPos());
+		m_ppObjects[j]->AddRef();
+	}
 
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		m_ppObjects[i]->SetTexture(txmgr.GetObjects(ManagerNames[i]));
+		m_ppObjects[i]->SetTexture(txmgr.GetObjects("scene_warrok"));//ManagerNames[i]));
 
 		CCharacter * pAnimObject = nullptr;
 		if (pAnimObject = dynamic_cast<CCharacter*>(m_ppObjects[i]))
@@ -843,14 +817,34 @@ void CCharacterShader::Reset()
 	for (int i = 0; i < m_nObjects; ++i)
 	{
 		static_cast<CMonster*>(m_ppObjects[i])->Reset();
+		m_ppObjects[i]->SetPosition(MAPMgr.GetRandPos());
 	}
 
-	float fHeight = 0;
-	fHeight = MAPMgr.GetHeight(1085, 260, true);
-	m_ppObjects[0]->SetPosition(1085, fHeight, 260);
+	XMFLOAT3 pos = SYSTEMMgr.GetPortalGate()->GetPosition();
+	//pos.x += rand() % 100 - 50;
+	pos.z -= 50;
+	pos.y = MAPMgr.GetHeight(pos);
+	m_ppObjects[0]->SetPosition(pos.x, pos.y, pos.z);
 
-	fHeight = MAPMgr.GetHeight(1115, 275, false);
-	m_ppObjects[1]->SetPosition(1115, fHeight, 275);
+	float fHeight = 0;
+
+	fHeight = MAPMgr.GetHeight(1165, 275, false);
+	m_ppObjects[1]->SetPosition(1165, fHeight, 275);
+
+	fHeight = MAPMgr.GetHeight(715, 475, false);
+	m_ppObjects[2]->SetPosition(715, fHeight, 475);
+
+	fHeight = MAPMgr.GetHeight(1425, 1025, false);
+	m_ppObjects[3]->SetPosition(1425, fHeight, 1025);
+
+	fHeight = MAPMgr.GetHeight(605, 805, false);
+	m_ppObjects[4]->SetPosition(605, fHeight, 805);
+
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppObjects[i]->UpdateBoundingBox();
+	}
+
 }
 
 void CCharacterShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
@@ -927,8 +921,9 @@ void CItemShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial,
 			element = 0;
 		}
 		name = ITEMMgr.StaffNameArray[element][lv];
+#if _DEBUG
 		cout << "Staff " << element << ", " << lv << "::" << name << endl;
-
+#endif
 		XMFLOAT3 xmfPos;
 		for (int j = 0; j < 10; ++j)
 		{

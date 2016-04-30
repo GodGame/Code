@@ -37,6 +37,11 @@ private:
 	CMapManager();
 	~CMapManager();
 
+	const float mfDeltaWidthRange = 200.f;
+	const float mfDeltaLengthRange = 200.f;
+	const float mfWidthPlus = 100.f;
+	const float mfLengthPlus = 100.f;
+
 private:
 	//지형의 높이 맵으로 사용할 이미지이다.
 	CHeightMap *m_pHeightMap;
@@ -56,7 +61,8 @@ public:
 	void SetMinHeight(float fHeight) { m_fMinHeight = fHeight; }
 
 	//지형의 실제 높이를 반환한다. 높이 맵의 높이에 스케일을 곱한 값이다.
-	float GetHeight(float x, float z, bool bReverseQuad = false) { return(m_pHeightMap->GetHeight(x, z, bReverseQuad) * m_xv3Scale.y); }
+	float GetHeight(float x, float z, bool bReverseQuad = false) const { return(m_pHeightMap->GetHeight(x, z, bReverseQuad) * m_xv3Scale.y); }
+	float GetHeight(XMFLOAT3& pos) const { return GetHeight(pos.x, pos.z, !(int(pos.z) % 2)); }
 	XMFLOAT3& GetNormal(float x, float z) { return(m_pHeightMap->GetHeightMapNormal(int(x / m_xv3Scale.x), int(z / m_xv3Scale.z))); }
 
 	int GetHeightMapWidth() { return(m_pHeightMap->GetHeightMapWidth()); }
@@ -64,11 +70,13 @@ public:
 
 	XMFLOAT3& GetScale() { return(m_xv3Scale); }
 	//지형의 실제 크기(가로/세로)를 반환한다. 높이 맵의 크기에 스케일을 곱한 값이다.
-	float GetWidth() { return(m_nWidth * m_xv3Scale.x); }
-	float GetLength() { return(m_nLength * m_xv3Scale.z); }
+	float GetWidth() const { return(m_nWidth * m_xv3Scale.x); }
+	float GetLength() const { return(m_nLength * m_xv3Scale.z); }
 
 	float GetPeakHeight() { return(m_fMaxHeight); }
 	float GetLowHeight() { return m_fMinHeight; }
+
+	XMFLOAT3 GetRandPos();
 
 public:
 	static CMapManager& GetInstance();

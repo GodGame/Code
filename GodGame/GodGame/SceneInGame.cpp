@@ -608,26 +608,14 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		//case 'B':
-		//	bIsKeyDown = !bIsKeyDown;
-		//	break;
-
 		case 'B' :
 		case 'X':
 		case 'C':
 			((CEffectShader*)m_ppShaders[m_nEffectShaderNum])->ShaderKeyEventOn(m_pPlayerShader->GetPlayer(), wParam, nullptr);
 			return(false);
 
-		case 'I':
-			pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_01, true, nullptr, 0);
-			return false;
-
-		case 'O':
-			pPlayer->ChangeAnimationState(eANI_DAMAGED_FRONT_02, true, nullptr, 0);
-			return false;
-
 		case 'P':
-			pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, true, nullptr, 0);
+			//pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, true, nullptr, 0);
 			return false;
 
 		case '0':
@@ -638,9 +626,9 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			//SYSTEMMgr.RoundEnd();
 			return false;
 
-		case 'D':
+		case 'G':
 		case 'E':
-		case 'N':
+		//case 'N':
 		case 'M':
 			pPlayer->PlayerKeyEventOn(wParam, this);
 			return(false);
@@ -650,18 +638,36 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 	case WM_KEYUP:
 		switch (wParam)
 		{
+#if 0
 		case VK_UP:
 		case VK_DOWN:
 		case VK_LEFT:
 		case VK_RIGHT:
-			m_pCamera->GetPlayer()->ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
-			return(false);
-		case 'D':
+#endif
+
+		case 'W' :
+		case 'S' :
+		case 'A' :
+		case 'D' :
+		case 'G':
 			pPlayer->PlayerKeyEventOff(wParam, this);
 			return(false);
 		}
 	}
 	return(false);
+}
+
+bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
+{
+	if (CScene::OnProcessingMouseMessage(hWnd, nMessageID, wParam, lParam)) return true;
+
+	switch (nMessageID)
+	{
+	case WM_RBUTTONUP:
+		static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer())->MagicShot();
+		return true;
+	}
+	return false;
 }
 
 bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
@@ -691,18 +697,26 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 		/*키보드의 상태 정보를 반환한다. 화살표 키(‘→’, ‘←’, ‘↑’, ‘↓’)를 누르면 플레이어를 오른쪽/왼쪽(로컬 x-축), 앞/뒤(로컬 z-축)로 이동한다. ‘Page Up’과 ‘Page Down’ 키를 누르면 플레이어를 위/아래(로컬 y-축)로 이동한다.*/
 		if (GetKeyboardState(pKeyBuffer))
 		{
+#if 0
 			if (pKeyBuffer[VK_UP]    & 0xF0) dwDirection |= DIR_FORWARD;
 			if (pKeyBuffer[VK_DOWN]  & 0xF0) dwDirection |= DIR_BACKWARD;
 			if (pKeyBuffer[VK_LEFT]  & 0xF0) dwDirection |= DIR_LEFT;
 			if (pKeyBuffer[VK_RIGHT] & 0xF0) dwDirection |= DIR_RIGHT;
-			if (pKeyBuffer[VK_PRIOR] & 0xF0) dwDirection |= DIR_UP;
-			if (pKeyBuffer[VK_NEXT]  & 0xF0) dwDirection |= DIR_DOWN;
+			//if (pKeyBuffer['W'] & 0x0F) cout << "WF!!";
+			//if (pKeyBuffer['W'] & 0xF0) cout << "FW!!";
+#endif
+			if (pKeyBuffer['W'] & 0xF0) dwDirection |= DIR_FORWARD;
+			if (pKeyBuffer['S'] & 0xF0) dwDirection |= DIR_BACKWARD;
+			if (pKeyBuffer['A'] & 0xF0) dwDirection |= DIR_LEFT;
+			if (pKeyBuffer['D'] & 0xF0) dwDirection |= DIR_RIGHT;
 		}
 		//플레이어를 이동하거나(dwDirection) 회전한다(cxDelta 또는 cyDelta).
+		const float fToTalDelta = cxDelta + cyDelta;
 		if ( dwDirection || (cxDelta != 0.0f) || (cyDelta != 0.0f))
 		{
-			if (cxDelta || cyDelta)
+			if (fToTalDelta)
 			{
+#if 0
 				/*cxDelta는 y-축의 회전을 나타내고 cyDelta는 x-축의 회전을 나타낸다. 오른쪽 마우스 버튼이 눌려진 경우 cxDelta는 z-축의 회전을 나타낸다.*/
 				if (pKeyBuffer[VK_RBUTTON] & 0xF0)
 				{
@@ -711,7 +725,8 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 					else 
 						m_pCamera->Rotate(cyDelta, 0.0f, -cxDelta);
 				}
-				else
+#endif
+				if (!(pKeyBuffer[VK_RBUTTON] & 0xF0))
 				{
 					if (pPlayer->GetStatus().IsAlive())
 						pPlayer->Rotate(cyDelta, cxDelta, 0.0f);

@@ -10,7 +10,7 @@ class CWarrock;
 class CWarrockIdleState : public CAIState<CWarrock>
 {
 private:
-	const float mfATTACK_RAGNE = 50.0f;
+	const float mfATTACK_RAGNE = 60.0f;
 
 	CDistanceEvaluator mEvaluator;
 
@@ -31,7 +31,7 @@ class CWarrockPunchState : public CAIState<CWarrock>
 private:
 	const float m_fDelay = 0.8f;
 
-	const float mfMAX_RAGNE = 30.0f;
+	const float mfMAX_RAGNE = 35.0f;
 	CTargetDotEvaluator mEvaluator;
 
 

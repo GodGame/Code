@@ -154,6 +154,8 @@ protected:
 	AABB m_bcBoundingCube;
 
 public:
+	ID3D11RasterizerState* GetRasterizerState() {return m_pd3dRasterizerState;}
+
 	AABB & GetBoundingCube() { return(m_bcBoundingCube); }
 #ifdef PICKING
 	int CheckRayIntersection(XMFLOAT3 *pxv3RayPosition, XMFLOAT3 *pxv3RayDirection, MESHINTERSECTINFO *pd3dxIntersectInfo);
@@ -186,13 +188,16 @@ protected:
 
 public:
 	CAnimatedMesh(ID3D11Device * pd3dDevice); 
+	CAnimatedMesh(CAnimatedMesh & mesh);
 	virtual ~CAnimatedMesh();
+	void operator=(CAnimatedMesh & mesh);
 
 	virtual void Animate(float fFrameTime);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 public:
 	AABB & GetAABBMesh() { return m_pvcMeshBuffers[m_iIndex].bb; }
+	vector<MeshBuffer> & GetBuffers() { return m_pvcMeshBuffers; }
 
 	float SetOneCycleTime(float fCycleTime);
 	void SetFramePerTime(float fFramePerTime);

@@ -25,6 +25,7 @@ public:
 
 	virtual bool PacketProcess(LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
+	virtual bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	virtual bool ProcessInput(HWND hWnd, float fTime, POINT & pt);
 
 	virtual void BuildMeshes(ID3D11Device * pd3dDevice);

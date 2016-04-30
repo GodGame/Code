@@ -502,8 +502,17 @@ void CAnimatedObject::UpdateFramePerTime()
 
 void CAnimatedObject::SetMesh(CMesh * pMesh, int nIndex)
 {
-	CGameObject::SetMesh(pMesh, nIndex);
+	CLoadAnimatedMeshByADFile * pAnimMesh = dynamic_cast<CLoadAnimatedMeshByADFile*>(pMesh);
+	CMesh * pTempMesh = pMesh;
+	
+	if (pAnimMesh) 
+	{
+		CAnimatedMesh * pCopyMesh = new CAnimatedMesh(*pAnimMesh);
+		pTempMesh = pCopyMesh;
+	}
 
+	CGameObject::SetMesh(pTempMesh, nIndex);
+	
 	m_vcfFramePerTime[nIndex] =
 		static_cast<ANI_MESH*>(m_ppMeshes[nIndex])->SetOneCycleTime(m_vcfAnimationCycleTime[nIndex]);
 }

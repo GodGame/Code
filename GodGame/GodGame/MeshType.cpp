@@ -362,11 +362,52 @@ CAnimatedMesh::CAnimatedMesh(ID3D11Device * pd3dDevice) : CMesh(pd3dDevice)
 	m_pvcMeshBuffers.reserve(30);
 }
 
+CAnimatedMesh::CAnimatedMesh(CAnimatedMesh & mesh) : CMesh(nullptr)
+{
+	m_fFramePerTime = 30.0f;
+	m_fNowFrameTime = 0.0f;
+	m_iIndex = 0;
+	m_bTerminal = false;
+	m_bStop = false;
+	m_pvcMeshBuffers.reserve(30);
+
+	operator=(mesh);
+}
+
 CAnimatedMesh::~CAnimatedMesh()
 {
 	for (auto it = m_pvcMeshBuffers.begin(); it != m_pvcMeshBuffers.end(); ++it)
 	 	it->pd3dBuffer->Release();
 	m_pvcMeshBuffers.clear();
+}
+
+void CAnimatedMesh::operator=(CAnimatedMesh & mesh)
+{
+	auto buffers = mesh.GetBuffers();
+
+	for (auto & buffer : buffers)
+	{
+		buffer.pd3dBuffer->AddRef();
+		m_pvcMeshBuffers.push_back(buffer);
+	}
+
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	m_nVertices = 0;
+
+	//정점 개수
+	m_bcBoundingCube = mesh.m_bcBoundingCube;
+
+	m_pnVertexOffsets = new UINT[1];
+	m_pnVertexOffsets[0] = m_pvcMeshBuffers[0].nOffsets;
+
+	m_pnVertexStrides = new UINT[1];
+	m_pnVertexStrides[0] = m_pvcMeshBuffers[0].nStrides;
+
+	m_nBuffers = 1;
+	m_nVertices = m_pvcMeshBuffers[0].nVertexes;
+
+	m_pd3dRasterizerState = mesh.GetRasterizerState();
+	if (m_pd3dRasterizerState) m_pd3dRasterizerState->AddRef();
 }
 
 void CAnimatedMesh::Animate(float fFrameTime)

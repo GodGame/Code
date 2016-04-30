@@ -139,3 +139,17 @@ void CMapManager::Build(LPCTSTR pFileName, int nWidth, int nLength, int nBlockWi
 	m_nWidth = nWidth;
 	m_nLength = nLength;
 }
+
+XMFLOAT3 CMapManager::GetRandPos()
+{
+	const int width = GetWidth() - mfDeltaWidthRange;
+	const int length = GetLength() - mfDeltaLengthRange;
+
+	XMFLOAT3 pos;
+	pos.x = (rand() % width) + mfWidthPlus;
+	pos.z = (rand() % length) + mfLengthPlus;
+	pos.y = GetHeight(pos);
+	
+	//cout << "Rand : " << width << ", " << length << "-> " << pos << endl;
+	return pos;
+}

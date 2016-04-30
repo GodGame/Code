@@ -692,8 +692,6 @@ void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
 		return;
 
 	case 'N':
-		ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
-		EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, extra, nullptr, this);
 		return;
 
 	case 'M':
@@ -701,7 +699,7 @@ void CInGamePlayer::PlayerKeyEventOn(WORD key, void * extra)
 		EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE, extra, nullptr, this);
 		return;
 
-	case 'D':
+	case 'G':
 		StartDominate();
 		return;
 	}
@@ -711,7 +709,13 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 {
 	switch (key)
 	{
-	case 'D':
+	case 'W':
+	case 'S' :
+	case 'A' :
+	case 'D' :
+		ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+		return;
+	case 'G':
 		StopDominate();
 		return;
 	}
@@ -779,6 +783,12 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 		UseEnergy(i, energyNum, bForced);
 
 	return true;
+}
+
+void CInGamePlayer::MagicShot()
+{
+	ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
+	EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
 }
 
 void CInGamePlayer::AcquireItem(CItem * pItem)

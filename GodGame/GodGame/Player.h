@@ -150,6 +150,8 @@ public:
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
 
 public:
+	void MagicShot();
+
 	void AcquireItem(CItem * pItem);
 	void ThrowItem();
 

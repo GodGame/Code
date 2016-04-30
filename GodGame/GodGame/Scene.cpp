@@ -96,7 +96,7 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 	case WM_RBUTTONDOWN:
 		GetGameMessage(this, eMessage::MSG_MOUSE_DOWN, &pt);
 		if (m_pUIShader) m_pUIShader->MouseDown(hWnd, pt);
-		break;
+		return false;
 	case WM_LBUTTONUP:
 	case WM_RBUTTONUP:
 		GetGameMessage(this, eMessage::MSG_MOUSE_UP, &pt);
@@ -104,9 +104,9 @@ bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam,
 		//		m_pSelectedObject = PickObjectPointedByCursor(LOWORD(lParam), HIWORD(lParam));
 	case WM_MOUSEMOVE:
 		SendMouseOverMessage(hWnd, pt);
-		break;
+		return false;
 	}
-	return false;
+	return true;
 }
 
 void CScene::ReleaseShaderVariables()
