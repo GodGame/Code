@@ -760,6 +760,7 @@ bool CCollisionMgr::SphereCollisionOneToMul(CEntity * pTarget, list<CEntity*>& v
 		pObject = *it;
 		if (pObject->CanCollide(pTarget))
 		{
+			//BoundingBox bb;
 			m_bbSphereOther.Center = pObject->GetPosition();
 			m_bbSphereOther.Radius = pObject->GetSize();
 			if (m_bbSphereTarget.Intersects(m_bbSphereOther))

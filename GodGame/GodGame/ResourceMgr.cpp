@@ -476,25 +476,46 @@ void CMaterialMgr::BuildResources(ID3D11Device * pd3dDevice)
 	InsertObject(pMaterial, "PlayerWhite");
 
 	pMaterial = new CMaterial();
-	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.8f, 0.3f, 0.3f, 0.7f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.4f, 0.1f, 0.1f, 1.0f);
-	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.9f, 0.3f, 0.3f, 3.0f);
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.8f, 0.2f, 0.2f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.8f, 0.1f, 0.1f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.9f, 0.2f, 0.2f, 3.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "PlayerRed");
 
 	pMaterial = new CMaterial();
-	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.8f, 0.8f, 0.3f, 0.7f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.4f, 0.1f, 1.0f);
-	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.3f, 0.9f, 0.3f, 3.0f);
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.2f, 0.8f, 0.2f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.8f, 0.1f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.2f, 0.9f, 0.2f, 3.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "PlayerGreen");
 
 	pMaterial = new CMaterial();
-	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.3f, 0.3f, 0.8f, 0.7f);
-	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.1f, 0.4f, 1.0f);
-	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.3f, 0.3f, 0.9f, 3.0f);
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.2f, 0.2f, 0.8f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.1f, 0.8f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.2f, 0.2f, 0.3f, 3.0f);
 	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	InsertObject(pMaterial, "PlayerBlue");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.2f, 0.7f, 0.7f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.7f, 0.7f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.2f, 0.3f, 0.3f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerCyan");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.7f, 0.2f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.7f, 0.7f, 0.1f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.3f, 0.3f, 0.2f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerYellow");
+
+	pMaterial = new CMaterial();
+	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(0.7f, 0.2f, 0.7f, 0.7f);
+	pMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.7f, 0.1f, 0.7f, 1.0f);
+	pMaterial->m_Material.m_xcSpecular = XMFLOAT4(0.3f, 0.2f, 0.3f, 3.0f);
+	pMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	InsertObject(pMaterial, "PlayerMagenta");
 
 	pMaterial = new CMaterial();
 	pMaterial->m_Material.m_xcDiffuse = XMFLOAT4(3.0f, 3.0f, 3.0f, 0.8f);

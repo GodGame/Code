@@ -132,7 +132,7 @@ PS_MRT_OUT PSSkyBoxTexturedColor(VS_SKYBOX_CUBEMAP_OUTPUT input) : SV_Target
 	output.vPos     = vZero;
 	output.vDiffuse = vZero;// cColor;
 	output.vSpec    = gMaterial.m_cSpecular;
-	output.vTxColor = float4(FogColor(cColor, 0.7f).rgb, 1) * 3;//float4(cColor.xyz, 0);
+	output.vTxColor = float4(FogColor(cColor, 0.5f).rgb, 1) * 2;//float4(cColor.xyz, 0);
 	return(output);
 }
 

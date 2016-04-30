@@ -491,7 +491,7 @@ void CInGamePlayer::BuildObject(CMesh ** ppMeshList, int nMeshes, CTexture * pTe
 	//카메라의 위치가 변경될 때 지형의 정보에 따라 카메라의 위치를 변경할 수 있도록 설정한다.
 	CInGamePlayer::SetCameraUpdatedContext(pTerrain);
 	/*지형의 xz-평면의 가운데에 플레이어가 위치하도록 한다. 플레이어의 y-좌표가 지형의 높이 보다 크고 중력이 작용하도록 플레이어를 설정하였으므로 플레이어는 점차적으로 하강하게 된다.*/
-	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f, pTerrain->GetPeakHeight() + 10.0f, 300));
+	CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f + (rand() % 40 - 20), pTerrain->GetPeakHeight() + 10.0f, 300 + (rand () % 40 - 20)));
 
 	SetFriction(250.0f);
 	SetGravity(-20.0f);
@@ -630,6 +630,7 @@ void CInGamePlayer::Damaged(CEffect * pEffect)
 void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 {
 	if (GetAnimationState() == eANI_1H_MAGIC_ATTACK) m_bMagicCancled = true;
+	if (false == m_Status.IsAlive()) return;
 
 	m_Status.Damaged(stDamage);
 	m_Status.SetUnbeatable(true);

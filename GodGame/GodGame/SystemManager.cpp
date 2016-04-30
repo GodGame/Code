@@ -241,7 +241,7 @@ void CGlobalFontUI::DrawFont()
 	{
 		swprintf_s(wscreenFont, wssize, L"%dP : %d pt[HP : %d]", i, info[i].m_iPlayerPoint, 
 			static_cast<CInGamePlayer*>(ppPlayers[i])->GetStatus().GetHP());
-		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(130, 100 + 20 * i), playerColor[i]);
+		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(130, 100 + 25 * i), playerColor[i]);
 	}
 	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(SYSTEMMgr.GetPlayer());
 	swprintf_s(wscreenFont, wssize, L"%3d   %3d   %3d   %3d   %3d   %3d", pPlayer->GetEnergyNum(0), pPlayer->GetEnergyNum(1),

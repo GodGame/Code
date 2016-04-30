@@ -770,7 +770,7 @@ void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 
 void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene)
 {
-	m_nObjects = 2;
+	m_nObjects = 4;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	SYSTEMMgr.SetInitialPlayerInfo(m_nObjects, 0, m_ppObjects);
@@ -816,12 +816,12 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 			pPlayer->Rotate(0, 180, 0);
 			continue;
 		}
+#if 0
 		else
 		{
 			float fHeight = pTerrain->GetHeight(1180, 255, true);// +10.f;
 			pPlayer->SetPosition(XMFLOAT3(1180, fHeight, 255));
 		}
-#if 0
 		char name[56];
 		for (int i = 0; i < 7; ++i)
 		{

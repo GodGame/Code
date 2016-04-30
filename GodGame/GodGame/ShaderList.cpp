@@ -274,11 +274,11 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 
 		for (int j = 0; j < m_nRocks[i]; ++j)
 		{
-			fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
-			fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
-			xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
+			//fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
+			//fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
+			//xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
 			pObj = new CGameObject(1);
-			pObj->SetPosition(xmf3Pos);
+			pObj->SetPosition(MAPMgr.GetRandPos());// xmf3Pos);
 			pObj->SetMesh(pRockMesh[i]);
 			pObj->AddRef();
 			pObj->SetCollide(true);
@@ -298,11 +298,11 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 
 		for (int j = 0; j < m_nStones[i]; ++j)
 		{
-			fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
-			fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
-			xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
+			//fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
+			//fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
+			//xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
 			pObj = new CGameObject(1);
-			pObj->SetPosition(xmf3Pos);
+			pObj->SetPosition(MAPMgr.GetRandPos());//xmf3Pos);
 			pObj->SetMesh(pStoneMesh[i]);
 			pObj->AddRef();
 			pObj->SetCollide(true);
