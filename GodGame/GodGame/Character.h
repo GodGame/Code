@@ -10,6 +10,7 @@
 class CCharacter : public CAnimatedObject
 {
 protected:
+	XMFLOAT3 m_xv3BeforePos;
 	XMFLOAT3 m_xv3Position;
 	XMFLOAT3 m_xv3Right;
 	XMFLOAT3 m_xv3Up;

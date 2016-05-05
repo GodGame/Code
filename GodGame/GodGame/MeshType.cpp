@@ -1692,6 +1692,8 @@ CLoadMeshByFbxcjh::CLoadMeshByFbxcjh(ID3D11Device * pd3dDevice, char * tMeshName
 
 	delete[] pChaeInfo;
 
+	//Chae::XMFloat3Mul(&min, &min, fScale);
+	//Chae::XMFloat3Mul(&max, &max, fScale);
 	m_bcBoundingCube.m_xv3Minimum = min;
 	m_bcBoundingCube.m_xv3Maximum = max;
 

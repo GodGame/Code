@@ -47,6 +47,7 @@ void CCharacter::CalculateFriction(float fTimeElapsed)
 
 CCharacter::CCharacter(int nMeshes) : CAnimatedObject(nMeshes)
 {
+	m_xv3BeforePos    = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	m_xv3Position     = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 	m_xv3Right        = XMFLOAT3(1.0f, 0.0f, 0.0f);
@@ -119,7 +120,14 @@ void CCharacter::Move(XMFLOAT3 & xv3Shift, bool bUpdateVelocity)
 		Chae::XMFloat3Add(&m_xv3Velocity, &m_xv3Velocity, &xv3Shift);
 
 	else
-		Chae::XMFloat3Add(&m_xv3Position, &m_xv3Position, &xv3Shift);
+	{
+		//m_xv3BeforePos = m_xv3Position;
+		m_xv3Position.x += xv3Shift.x;
+		m_xv3Position.y += xv3Shift.y;
+		m_xv3Position.z += xv3Shift.z;
+
+//		Chae::XMFloat3Add(&m_xv3Position, &m_xv3Position, &xv3Shift);
+	}
 }
 
 void CCharacter::Move(float fxOffset, float fyOffset, float fzOffset)
@@ -186,6 +194,7 @@ void CCharacter::LookToTarget(const CEntity * pTarget)
 
 void CCharacter::Update(float fTimeElapsed)
 {
+	//m_xv3BeforePos = m_xv3Position;
 	/*플레이어의 속도 벡터를 중력 벡터와 더한다. 중력 벡터에 fTimeElapsed를 곱하는 것은 중력을 시간에 비례하도록 적용한다는 의미이다.*/
 	m_xv3Velocity.y += m_fGravity * fTimeElapsed;
 	/*플레이어의 속도 벡터의 XZ-성분의 크기를 구한다. 이것이 XZ-평면의 최대 속력보다 크면 속도 벡터의 x와 z-방향 성분을 조정한다.*/

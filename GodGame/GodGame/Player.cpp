@@ -208,52 +208,6 @@ void CPlayer::Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle)
 void CPlayer::Update(float fTimeElapsed)
 {
 	CCharacter::Update(fTimeElapsed);
-#if 0
-	/*플레이어의 속도 벡터를 중력 벡터와 더한다. 중력 벡터에 fTimeElapsed를 곱하는 것은 중력을 시간에 비례하도록 적용한다는 의미이다.*/
-	m_xv3Velocity.y += m_fGravity * fTimeElapsed;
-	/*플레이어의 속도 벡터의 XZ-성분의 크기를 구한다. 이것이 XZ-평면의 최대 속력보다 크면 속도 벡터의 x와 z-방향 성분을 조정한다.*/
-	float fLength = 0.0f; // = sqrtf(m_xv3Velocity.x * m_xv3Velocity.x + m_xv3Velocity.z * m_xv3Velocity.z);
-	XMStoreFloat(&fLength, XMVector2Length(XMLoadFloat3(&m_xv3Velocity)));
-
-	float fMaxVelocityXZ = m_fMaxVelocityXZ * fTimeElapsed;
-	if (fLength > fMaxVelocityXZ)
-	{
-		m_xv3Velocity.x *= (fMaxVelocityXZ / fLength);
-		m_xv3Velocity.z *= (fMaxVelocityXZ / fLength);
-	}
-	/*플레이어의 속도 벡터의 Y-성분의 크기를 구한다. 이것이 Y 축 방향의 최대 속력보다 크면 속도 벡터의 y-방향 성분을 조정한다.*/
-	fLength = m_xv3Velocity.y * m_xv3Velocity.y;
-	float fMaxVelocityY = m_fMaxVelocityY * fTimeElapsed;
-	if (fLength > fMaxVelocityY * fMaxVelocityY) m_xv3Velocity.y *= (fMaxVelocityY * fMaxVelocityY / fLength);
-
-	XMFLOAT3 xmfVelocity = m_xv3Velocity;
-	XMStoreFloat3(&m_xv3Velocity, XMLoadFloat3(&m_xv3Velocity) + XMLoadFloat3(&m_xv3ExternalPower) * fTimeElapsed);
-	//플레이어를 속도 벡터 만큼 실제로 이동한다(카메라도 이동될 것이다).
-	Move(m_xv3Velocity, false);
-	m_xv3Velocity = xmfVelocity;
-
-	if (m_pUpdatedContext) OnPlayerUpdated(fTimeElapsed);
-
-	if (m_pCamera)
-	{
-		//DWORD nCurrentCameraMode = m_pCamera->GetMode();
-		//플레이어의 위치가 변경되었으므로 카메라의 상태를 갱신한다.
-		m_pCamera->Update(m_xv3Position, fTimeElapsed);
-		//if (nCurrentCameraMode == THIRD_PERSON_CAMERA)
-		//{
-		//카메라의 위치가 변경될 때 추가로 수행할 작업을 수행한다.
-		//if (m_pCameraUpdatedContext) 
-		//	OnCameraUpdated(fTimeElapsed);
-		//카메라가 3인칭 카메라이면 카메라가 변경된 플레이어 위치를 바라보도록 한다.
-		//m_pCamera->SetLookAt(m_xv3Position);
-		//}
-		if (m_pCameraUpdatedContext) OnCameraUpdated(fTimeElapsed);
-		//카메라의 카메라 변환 행렬을 다시 생성한다.
-		m_pCamera->RegenerateViewMatrix();
-	}
-
-	CCharacter::CalculateFriction(fTimeElapsed);
-#endif
 }
 
 CCamera *CPlayer::OnChangeCamera(ID3D11Device *pd3dDevice, DWORD nNewCameraMode, DWORD nCurrentCameraMode)
@@ -597,19 +551,33 @@ void CInGamePlayer::ForcedByObj(CEntity * pObj)
 {
 	if (pObj->IsObstacle())
 	{
-		XMVECTOR xmvOtherPos = XMLoadFloat3(&pObj->GetPosition());
-		XMVECTOR toThisVector = XMLoadFloat3(&GetPosition()) - xmvOtherPos;
-		toThisVector = XMVector3Normalize(toThisVector);
-		
-		XMVECTOR xmvSize = XMVectorReplicate(GetSize() + pObj->GetSize() + 1);
-		xmvOtherPos = xmvOtherPos + (toThisVector * xmvSize);
+#if 0
+		if (pObj->IsDetailCollide())
+		{
+			pObj->UpdateBoundingBox();
+			if (AABB::CollisionAABB(m_bcMeshBoundingCube, pObj->m_bcMeshBoundingCube))
+			{
+				//m_xv3BeforePos.y = MAPMgr.GetHeight(m_xv3BeforePos);
+				SetPosition(m_xv3BeforePos);
+				//cout << "Before!!" << GetPosition() << "\n->>"<< pObj->m_bcMeshBoundingCube << endl;
+			}
+		}
+		else
+#endif
+		{
+			XMVECTOR xmvOtherPos = XMLoadFloat3(&pObj->GetPosition());
+			XMVECTOR toThisVector = XMLoadFloat3(&GetPosition()) - xmvOtherPos;
+			toThisVector = XMVector3Normalize(toThisVector);
 
-		XMFLOAT3 xmf3NewPos;
-		XMStoreFloat3(&xmf3NewPos, xmvOtherPos);
-		SetPosition(xmf3NewPos);
-		cout << "Forced, Size : " << pObj->GetSize() << endl;
-		//if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌! : " << pObj->GetSize() << endl;; }
-		//if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌!"; }
+			XMVECTOR xmvSize = XMVectorReplicate(GetSize() + pObj->GetSize() + 1);
+			xmvOtherPos = xmvOtherPos + (toThisVector * xmvSize);
+
+			XMFLOAT3 xmf3NewPos;
+			XMStoreFloat3(&xmf3NewPos, xmvOtherPos);
+			SetPosition(xmf3NewPos);
+			//cout << "Forced, Size : " << pObj->GetSize() << endl;
+			//if (dynamic_cast<CBillboardObject*>(pObj)) { cout << "Billboard 충돌! : " << pObj->GetSize() << endl;; }
+		}
 	}
 }
 

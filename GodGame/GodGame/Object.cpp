@@ -11,6 +11,7 @@ CEntity::CEntity()
 	m_bActive     = true;
 	m_bUseCollide = false;
 	m_bObstacle   = true;
+	m_bDetailCollide = false;
 
 	ZeroMemory(&m_bcMeshBoundingCube, sizeof(m_bcMeshBoundingCube));
 }
@@ -427,6 +428,8 @@ XMFLOAT3 CGameObject::GetPosition() const
 }
 
 #pragma endregion
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CStaticObject::CStaticObject(int nMeshes) : CGameObject(nMeshes)

@@ -64,8 +64,11 @@ public:
 	static void ReleaseShaderVariables();
 	static void UpdateShaderVariable(ID3D11DeviceContext *pd3dDeviceContext, XMFLOAT4X4 & xmtxWorld);
 
-	void EntityAllStaticObjects();
-	void EntityAllDynamicObjects();
+	void EntityAllStaticObjects(const char * FileName);
+	void EntityAllDynamicObjects(const char * FileName);
+
+	void SaveData(const char * fileName);
+	void LoadData(const char * fileName);
 
 	static ID3D11ShaderResourceView * CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice);
 

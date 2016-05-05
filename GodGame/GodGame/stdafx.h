@@ -27,6 +27,9 @@
 //#endif
 
 #define _THREAD
+//#define _SAVE_DATA
+#define _LOAD_DATA
+#define _RANDOM_POS
 
 #include "SlotList.h"
 #include "targetver.h"

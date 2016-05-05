@@ -163,7 +163,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 			pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 		}
 		sprintf(file, "../Assets/Image/Objects/Colum/ruin_0%d.fbxcjh", i);
-		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.4f, vcTxFileNames);
+		pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, 0.3f, vcTxFileNames);
 		vcTxFileNames.clear();
 
 		sprintf(file, "scene_ruin%d", i);

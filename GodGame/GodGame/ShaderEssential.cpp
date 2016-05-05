@@ -843,7 +843,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 		}
 #endif
 	}
-	EntityAllDynamicObjects();
+	EntityAllDynamicObjects("Player");
 }
 
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)

@@ -288,6 +288,81 @@ CGameObject * CShader::GetObj(int num) {
 	return nullptr;
 }
 
+
+void CShader::EntityAllStaticObjects(const char * name)
+{
+#ifdef _LOAD_DATA
+	if (name) LoadData(name);
+#endif
+
+	CQuadTreeManager & pMgr = QUADMgr;
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppObjects[i]->UpdateBoundingBox();
+		pMgr.InsertStaticEntity(m_ppObjects[i]);
+	}
+
+#ifdef _SAVE_DATA
+	if (name) SaveData(name);
+#endif
+}
+void CShader::EntityAllDynamicObjects(const char * name)
+{
+#ifdef _LOAD_DATA
+	if (name) LoadData(name);
+#endif
+
+	CQuadTreeManager & pMgr = QUADMgr;
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		m_ppObjects[i]->SetCollide(true);
+		m_ppObjects[i]->UpdateBoundingBox();
+		pMgr.InsertDynamicEntity(m_ppObjects[i]);
+	}
+
+#ifdef _SAVE_DATA
+	if (name) SaveData(name);
+#endif
+}
+
+void CShader::SaveData(const char * name)
+{
+	static char filename[128];
+
+	FILE * file;
+	sprintf(filename, "../Assets/Data/Map01/%s.data", name);
+	file = fopen(filename, "wb");
+
+	fwrite(&m_nObjects, sizeof(UINT), 1, file);
+	XMFLOAT3 pos;
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		pos = m_ppObjects[i]->GetPosition();
+		fwrite(&pos, sizeof(XMFLOAT3), 1, file);
+	}
+	fclose(file);
+}
+
+void CShader::LoadData(const char * name)
+{
+	static char filename[128];
+
+	FILE * file;
+	sprintf(filename, "../Assets/Data/Map01/%s.data", name);
+	file = fopen(filename, "rb");
+
+	UINT nObjects;
+	fread(&nObjects, sizeof(UINT), 1, file);
+	
+	XMFLOAT3 pos;
+	for (int i = 0; i < nObjects; ++i)
+	{
+		fread(&pos, sizeof(XMFLOAT3), 1, file);
+		m_ppObjects[i]->SetPosition(pos);
+	}
+	fclose(file);
+}
+#if 0
 void CShader::EntityAllStaticObjects()
 {
 	CQuadTreeManager & pMgr = QUADMgr;
@@ -297,7 +372,6 @@ void CShader::EntityAllStaticObjects()
 		pMgr.InsertStaticEntity(m_ppObjects[i]);
 	}
 }
-
 void CShader::EntityAllDynamicObjects()
 {
 	CQuadTreeManager & pMgr = QUADMgr;
@@ -308,6 +382,7 @@ void CShader::EntityAllDynamicObjects()
 		pMgr.InsertDynamicEntity(m_ppObjects[i]);
 	}
 }
+#endif
 
 ID3D11ShaderResourceView * CShader::CreateRandomTexture1DSRV(ID3D11Device * pd3dDevice)
 {

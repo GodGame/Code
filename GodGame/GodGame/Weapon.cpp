@@ -98,7 +98,7 @@ void CItem::Update(float fFrameTime)
 
 #endif
 	xmfPos.y -= fGravity * fFrameTime;
-	float fHeight = MAPMgr.GetHeight(xmfPos.x, xmfPos.z, (int(xmfPos.z) % 2)) + 1.f;
+	float fHeight = MAPMgr.GetHeight(xmfPos) + 2.f;
 	if (xmfPos.y < fHeight)
 	{
 		xmfPos.y = fHeight;
@@ -259,6 +259,7 @@ void CStaff::BuildObject(ELEMENT element, DWORD cost, DWORD level)
 	mElement = element;
 	mCost = cost;
 	mLevel = level;
+	SetDetailCollide(true);
 }
 
 void CStaff::BuildObject(CStaff & staff)

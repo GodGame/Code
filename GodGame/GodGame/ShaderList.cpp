@@ -221,6 +221,38 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 	m_pMaterial->AddRef();
 
 	m_nObjects = 0;
+#ifdef _LOAD_DATA
+	vector<UINT> mObjs;
+	mObjs.reserve(10);
+
+	vector<vector<XMFLOAT3>> mVertexes;
+	mVertexes.reserve(10);
+
+	FILE * file;
+	file = fopen("../Assets/Data/Map01/StaticRocks.data", "rb");
+	{
+		int index = 0;
+		while (true) {
+			UINT nobj;
+			int read = fread(&nobj, sizeof(UINT), 1, file);
+			if (read == 0) break;
+			mObjs.push_back(nobj);
+
+			XMFLOAT3 pos;
+			mVertexes.emplace_back();
+			mVertexes[index].reserve(nobj);
+			for (int i = 0; i < nobj; ++i)
+			{
+				fread(&pos, sizeof(XMFLOAT3), 1, file);
+				mVertexes[index].push_back(pos);
+			}
+			++index;
+		}
+	}
+	fclose(file);
+#endif
+
+#ifndef _LOAD_DATA
 	for (int & nRocks : m_nRocks){
 		nRocks = 80;
 		m_nObjects += nRocks;
@@ -230,6 +262,7 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 		nStones = 20;
 		m_nObjects += nStones;
 	}
+#endif
 
 	XMFLOAT3 xmf3Pos;
 	XMFLOAT2 xmf2Size = XMFLOAT2(80, 60);
@@ -241,6 +274,12 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 	CMapManager * pTerrain = &MAPMgr;
 	int cxTerrain = pTerrain->GetWidth() - 200;
 	int czTerrain = pTerrain->GetLength() - 200;
+#ifndef _LOAD_DATA
+#ifdef _SAVE_DATA
+	FILE * save;
+	save = fopen("../Assets/Data/Map01/StaticRocks.data", "wb");
+#endif
+#endif
 
 	CMesh * pRockMesh[NUM_ROCK]; 
 	char name[24];
@@ -265,20 +304,34 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 		++in;
 	}
 
+	XMFLOAT3 pos;
+	int index = -1;
 
 	float fxTerrain = 0.f, fzTerrain = 0.f;
 	CQuadTreeManager & mgr = QUADMgr;
 	for (int i = 0; i < NUM_ROCK; ++i)
 	{
+#ifdef _LOAD_DATA
+		m_nRocks[i] = mObjs[++index];
 		m_ppRockObjects[i] = new CGameObject*[m_nRocks[i]];
-
+#else
+		m_ppRockObjects[i] = new CGameObject*[m_nRocks[i]];
+#ifdef _SAVE_DATA
+		fwrite(&m_nRocks[i], sizeof(UINT), 1, save);
+#endif
+#endif
 		for (int j = 0; j < m_nRocks[i]; ++j)
 		{
-			//fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
-			//fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
-			//xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
 			pObj = new CGameObject(1);
+#ifdef _LOAD_DATA
+			pObj->SetPosition(mVertexes[index][j]);
+#else
 			pObj->SetPosition(MAPMgr.GetRandPos());// xmf3Pos);
+#ifdef _SAVE_DATA
+			pos = pObj->GetPosition();
+			fwrite(&pos, sizeof(XMFLOAT3), 1, save);
+#endif
+#endif
 			pObj->SetMesh(pRockMesh[i]);
 			pObj->AddRef();
 			pObj->SetCollide(true);
@@ -288,21 +341,33 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 
 			m_ppRockObjects[i][j] = pObj;
 		}
-		m_pd3dRockInstanceBuffer[i] = CreateInstanceBuffer(pd3dDevice, m_nRocks[i] * 0.8, m_nInstanceBufferStride, nullptr);
+		m_pd3dRockInstanceBuffer[i] = CreateInstanceBuffer(pd3dDevice, m_nRocks[i], m_nInstanceBufferStride, nullptr);
 		pRockMesh[i]->AssembleToVertexBuffer(1, &m_pd3dRockInstanceBuffer[i], &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
  	}
 
 	for (int i = 0; i < NUM_STONE; ++i)
 	{
+#ifdef _LOAD_DATA
+		m_nStones[i] = mObjs[++index];
 		m_ppStoneObjects[i] = new CGameObject*[m_nStones[i]];
-
+#else
+		m_ppStoneObjects[i] = new CGameObject*[m_nStones[i]];
+#ifdef _SAVE_DATA
+		fwrite(&m_nStones[i], sizeof(UINT), 1, save);
+#endif
+#endif
 		for (int j = 0; j < m_nStones[i]; ++j)
 		{
-			//fxTerrain = xmf3Pos.x = rand() % cxTerrain + 100.f;
-			//fzTerrain = xmf3Pos.z = rand() % czTerrain + 100.f;
-			//xmf3Pos.y = pTerrain->GetHeight(fxTerrain, fzTerrain, !(int(fzTerrain) % 2));
 			pObj = new CGameObject(1);
+#ifdef _LOAD_DATA
+			pObj->SetPosition(mVertexes[index][j]);
+#else
 			pObj->SetPosition(MAPMgr.GetRandPos());//xmf3Pos);
+#ifdef _SAVE_DATA
+			pos = pObj->GetPosition();
+			fwrite(&pos, sizeof(XMFLOAT3), 1, save);
+#endif
+#endif
 			pObj->SetMesh(pStoneMesh[i]);
 			pObj->AddRef();
 			pObj->SetCollide(true);
@@ -312,10 +377,17 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 
 			m_ppStoneObjects[i][j] = pObj;
 		}
-		m_pd3dStoneInstanceBuffer[i] = CreateInstanceBuffer(pd3dDevice, m_nStones[i] * 0.9, m_nInstanceBufferStride, nullptr);
+		m_pd3dStoneInstanceBuffer[i] = CreateInstanceBuffer(pd3dDevice, m_nStones[i], m_nInstanceBufferStride, nullptr);
 		pStoneMesh[i]->AssembleToVertexBuffer(1, &m_pd3dStoneInstanceBuffer[i], &m_nInstanceBufferStride, &m_nInstanceBufferOffset);
 	}
+
 	//EntityAllStaticObjects();
+
+#ifndef _LOAD_DATA
+#ifdef _SAVE_DATA
+	fclose(save);
+#endif
+#endif
 }
 
 void CStaticInstaningShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -517,7 +589,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 
 	pd3dsrvArray->Release();
 
-	EntityAllStaticObjects();
+	EntityAllStaticObjects(nullptr);
 }
 
 void CBillboardShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -654,37 +726,35 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 	m_ppObjects[1] = new CGameObject(1);
 	fHeight = pHeightMapTerrain->GetHeight(1065, 1544, false);
 	m_ppObjects[1]->SetPosition(1065, fHeight, 1544);
-	m_ppObjects[1]->SetSize(20);
 	m_ppObjects[1]->AddRef();
 
 	m_ppObjects[2] = new CGameObject(1);
 	fHeight = pHeightMapTerrain->GetHeight(955, 1596, false);
 	m_ppObjects[2]->SetPosition(955, fHeight, 1596);
-	m_ppObjects[2]->SetSize(20);
 	m_ppObjects[2]->AddRef();
 
 	m_ppObjects[3] = new CGameObject(1);
 	fHeight = pHeightMapTerrain->GetHeight(955, 1506, false);
 	m_ppObjects[3]->SetPosition(955, fHeight, 1506);
-	m_ppObjects[3]->SetSize(15);
 	m_ppObjects[3]->AddRef();
 
 	m_ppObjects[4] = new CGameObject(1);
 	fHeight = pHeightMapTerrain->GetHeight(1065, 1506, false);
 	m_ppObjects[4]->SetPosition(1065, fHeight, 1506);
-	m_ppObjects[4]->SetSize(15);
 	m_ppObjects[4]->AddRef();
 
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
 		m_ppObjects[i]->SetMesh(meshmgr.GetObjects(names[i]));
+		if ( 1 < i < 3) m_ppObjects[i]->SetSize(m_ppObjects[i]->GetSize() * 1.5);
 		m_ppObjects[i]->SetTexture(txmgr.GetObjects(names[i]));
 		m_ppObjects[i]->SetCollide(true);
+		m_ppObjects[i]->SetDetailCollide(true);
 		//m_ppObjects[i]->UpdateBoundingBox();
 	}
 
-	EntityAllStaticObjects();
+	EntityAllStaticObjects("Static");
 	/// ÀÌ»ó ½ºÅ×Æ½ °´Ã¼µé
 }
 
@@ -787,8 +857,7 @@ void CCharacterShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMate
 			pAnimObject->SetUpdatedContext(&MAPMgr);
 		}
 	}
-	/// ÀÌ»ó ½ºÅ×Æ½ °´Ã¼µé
-	EntityAllDynamicObjects();
+	EntityAllDynamicObjects("Monster");
 }
 
 
@@ -1087,7 +1156,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pM
 
 	pd3dsrvArray->Release();
 
-	EntityAllStaticObjects();
+	EntityAllStaticObjects(nullptr);
 }
 
 void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -1200,7 +1269,7 @@ void CBlackAlphaShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMat
 	pObject->UpdateBoundingBox();
 	m_ppObjects[0] = pObject;
 
-	EntityAllStaticObjects();
+	EntityAllStaticObjects(nullptr);
 }
 
 void CBlackAlphaShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)

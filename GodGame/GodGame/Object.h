@@ -22,6 +22,7 @@ protected:
 	bool	m_bVisible		: 1;
 	bool	m_bUseCollide	: 1;
 	bool    m_bObstacle		: 1;
+	bool	m_bDetailCollide : 1;
 
 protected:
 	void _ResetVisible(UINT uRenderState)
@@ -43,6 +44,8 @@ public:
 
 	bool IsObstacle() { return m_bObstacle; }
 	void SetObstacle(bool bVal) { m_bObstacle = bVal; }
+	bool IsDetailCollide() { return m_bDetailCollide; }
+	void SetDetailCollide(bool set) { m_bDetailCollide = set; }
 
 	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
 	bool CanCollide(CEntity * pObj) const
