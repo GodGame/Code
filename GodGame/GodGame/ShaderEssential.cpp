@@ -1586,6 +1586,7 @@ void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * e
 
 CInGameUIShader::CInGameUIShader() : CUIShader()
 {
+	mbNeedElement = false;
 }
 
 CInGameUIShader::~CInGameUIShader()
@@ -1611,8 +1612,8 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 		XMFLOAT4(46, 190, 45, 180),
 		XMFLOAT4(150, FRAME_BUFFER_HEIGHT - 30, 140, 30),
 
-		XMFLOAT4(45, 180, 35, 140),
-		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.3f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f),
+		XMFLOAT4(1, 1, 35, 140),
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.4f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f),
 	};
 	string   UIName[3] = { { "srv_scroll_03.png" }, {"srv_staff_slot.jpg"}, { "srv_element_list.png" } };
 
@@ -1667,8 +1668,31 @@ void CInGameUIShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 void CInGameUIShader::FontRender(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	SYSTEMMgr.DrawSystemFont();
+	
+	if (mbNeedElement)
+	{
+		const static XMFLOAT2 DrawNeedElemnt{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, FRAME_BUFFER_HEIGHT * 0.5) };
+		static wchar_t wscreenFont[26] = { L"원소가 부족합니다." };
+
+		FRAMEWORK.SetFont("HY견고딕");
+		FRAMEWORK.DrawFont(wscreenFont, 30, DrawNeedElemnt, 0xffaaaaff);
+	}
 }
 
+void CInGameUIShader::AnimateObjects(float fTimeElapsed)
+{
+	if (mbNeedElement)
+	{
+		static float NeedElementTime = 0.f;
+		NeedElementTime += fTimeElapsed;
+
+		if (NeedElementTime > mfNeedElementTime)
+		{
+			mbNeedElement = false;
+			NeedElementTime = 0.f;
+		}
+	}
+}
 void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 {
 	switch (eMSG)
@@ -1681,6 +1705,10 @@ void CInGameUIShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extr
 		m_pMousePoint->SetVisible(true);
 		return;
 	case eMessage::MSG_MOUSE_UP_OVER:
+		return;
+
+	case eMessage::MSG_UI_DRAW_NEED_ELEMENT:
+		mbNeedElement = true;
 		return;
 	}
 }

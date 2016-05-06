@@ -141,8 +141,9 @@ public:
 	BYTE & GetEnergyNum(UINT index) { return m_nElemental.m_nEnergies[index]; }
 	BYTE & GetEnergyNum() { return m_nElemental.m_nSum; }
 	
-	void AddEnergy(UINT index, UINT num = 0);
+	void AddEnergy(UINT index, UINT num = 1);
 
+	UINT UseMagic();
 	UINT UseEnergy(UINT index, BYTE energyNum, bool bForced = false);
 	UINT UseEnergy(UINT energyNum, bool bForced = false);
 	UINT UseAllEnergy(UINT energyNum, bool bForced = false);
@@ -162,7 +163,7 @@ public:
 	void CheckGameSystem(float fTimeElapsed);
 
 public:
-	PARTILCE_ON_INFO Get1HAnimShotParticleOnInfo();
+	EFFECT_ON_INFO Get1HAnimShotParticleOnInfo();
 
 private:
 	const short mMAX_HEALTH             = 50;

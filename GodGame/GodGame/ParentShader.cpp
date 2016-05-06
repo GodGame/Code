@@ -146,7 +146,6 @@ void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_MAGIC_AREA:
-		//cout << "Magic Area : " << (XMFLOAT3*)extra << endl;
 		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(0, pPlayer, static_cast<XMFLOAT3*>(extra), nullptr, nullptr, SYSTEMMgr.GetDominatePlayerNum());
 		return;
 	}

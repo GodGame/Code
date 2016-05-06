@@ -193,7 +193,6 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 		vcTxFileNames.clear();
 
 		string ObjName = ITEMMgr.StaffNameArray[i][0];
-		//sprintf(file, ITEMMgr.StaffNameArray[i][0] // "scene_staff0_%d", i);
 		m_SceneResoucres.mgrTexture.InsertObject(pTexture, ObjName);
 		m_SceneResoucres.mgrMesh.InsertObject(pMesh, ObjName);
 	}
@@ -618,9 +617,6 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 			//pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, true, nullptr, 0);
 			return false;
 
-		case '0':
-			pPlayer->Revive();
-			return false;
 		//case 'Z':
 		//	this->GetGameMessage(nullptr, eMessage::MSG_ROUND_END);
 			//SYSTEMMgr.RoundEnd();
@@ -645,6 +641,11 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case VK_RIGHT:
 #endif
 
+		case '0':
+		case '7':
+		case '8':
+		case '9':
+
 		case 'W' :
 		case 'S' :
 		case 'A' :
@@ -664,7 +665,15 @@ bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 	switch (nMessageID)
 	{
 	case WM_RBUTTONUP:
-		static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer())->MagicShot();
+		CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
+		if (0 < pPlayer->UseMagic())
+		{
+			pPlayer->MagicShot();
+		}
+		else
+		{
+			m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_UI_DRAW_NEED_ELEMENT);
+		}
 		return true;
 	}
 	return false;
@@ -776,6 +785,7 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 	}
 	m_pPlayerShader->AnimateObjects(fTimeElapsed);
+	m_pUIShader->AnimateObjects(fTimeElapsed);
 
 #ifdef _QUAD_TREE
 	QUADMgr.Update(m_pCamera);
@@ -869,10 +879,9 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_PARTICLE_ON:
 	case eMessage::MSG_MAGIC_SHOT:
 	case eMessage::MSG_MAGIC_AREA:
-	//case eMessage::MSG_EFFECT_DOMINATE_SUCCESS:
 		m_ppShaders[m_nEffectShaderNum]->GetGameMessage(nullptr, eMSG, extra);
 		return;
-
+	
 	case eMessage::MSG_MOUSE_DOWN:
 		m_ptOldCursorPos = *(POINT*)extra;
 	case eMessage::MSG_MOUSE_DOWN_OVER:

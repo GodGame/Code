@@ -874,7 +874,6 @@ void CCharacterShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRen
 		//m_ppObjects[j]->SetActive(true);
 		if (m_ppObjects[j]->IsVisible())
 		{
-			//cout << j << " BB : " << m_ppObjects[j]->m_bcMeshBoundingCube << endl;
 			pd3dDeviceContext->PSSetShaderResources(2, 2, pd3dNullSRV);
 			m_ppObjects[j]->Render(pd3dDeviceContext, uRenderState, pCamera);
 		}
@@ -1104,7 +1103,7 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pM
 
 	m_pMaterial = pMat;//pMaterial;
 	pMat->AddRef();//if (pMaterial) pMaterial->AddRef();
-	m_nObjects = m_nCubes = (ELEMENT_NUM * 100);
+	m_nObjects = m_nCubes = (ELEMENT_NUM * 180);
 
 //	XMFLOAT3 xmf3Pos;
 	XMFLOAT2 xmf2Size(6, 6);
@@ -1116,28 +1115,19 @@ void CPointInstanceShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pM
 	m_ppObjects = new CGameObject*[m_nObjects];
 
 	CMapManager * pTerrain = &MAPMgr;
-	int cxTerrain = pTerrain->GetWidth();
-	int czTerrain = pTerrain->GetLength();
-#ifdef DRAW_GS_SPHERE
-	CPointSphereMesh * pPointMesh = new CPointSphereMesh(pd3dDevice, 20, 5);
-#else
+	
 	CBillBoardVertex * pPointMesh = new CBillBoardVertex(pd3dDevice, 6, 6);
-#endif
 	CAbsorbMarble *pObject = nullptr;
+	XMFLOAT3 pos;
 	for (int i = 0; i < m_nObjects; i++)
 	{
-		float fx = rand() % cxTerrain;
-		float fz = rand() % czTerrain;
-		float fy = pTerrain->GetHeight(fx, fz) + 10;
-#ifdef DRAW_GS_SPHERE
-		pObject = new CGameObject(1);//CBillboardObject(XMFLOAT3(fx, fy, fz), 0, XMFLOAT2(5, 5) );
-#else
-		pObject = new CAbsorbMarble(XMFLOAT3(fx, fy, fz), (i % ELEMENT_NUM), xmf2Size);
-#endif
+		pos = pTerrain->GetRandPos();
+		pos.y += 10.f;
+
+		pObject = new CAbsorbMarble(pos, (i % ELEMENT_NUM), xmf2Size);
 		pObject->SetMesh(pPointMesh);
 		pObject->Initialize();
 		//pObject->SetMaterial(pMat);	
-		//pObject->SetPosition(fx, fy, fz);
 		pObject->AddRef();
 		m_ppObjects[i] = pObject;
 
@@ -1173,24 +1163,6 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 
 	XMFLOAT3 xmf3Pos;
 
-#ifdef DRAW_GS_SPHERE
-	CBillboardObject * pTree = nullptr;
-	for (int j = 0; j < m_nCubes; j++)
-	{
-#ifdef _QUAD_TREE
-		if (m_ppObjects[j]->IsVisible(nullptr))// if (m_ppObjects[j]->IsVisible(pCamera))//			{
-#else
-		if (m_ppObjects[j]->IsVisible(pCamera))
-#endif
-		{
-			pTree = (CBillboardObject*)m_ppObjects[j];
-			pnTreeInstance[nCubeInstance] = pTree->GetInstanceData();
-			//printf("%0.2f %0.2f %0.2f \n", xmf3Pos.x, xmf3Pos.y, xmf3Pos.z);
-			nCubeInstance++;
-		}
-		m_ppObjects[j]->SetActive(false);
-	}
-#else
 	CBillboardObject * pTree = nullptr;
 	for (int j = 0; j < m_nCubes; ++j)
 	{
@@ -1207,7 +1179,6 @@ void CPointInstanceShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT u
 		}
 		m_ppObjects[j]->SetVisible(false);
 	}
-#endif
 	pd3dDeviceContext->Unmap(m_pd3dCubeInstanceBuffer, 0);
 
 //	cout << nCubeInstance << "개 그렸습니다." << endl;

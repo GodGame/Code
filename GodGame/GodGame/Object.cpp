@@ -742,7 +742,7 @@ CBillboardObject::CBillboardObject(XMFLOAT3 pos, UINT fID, XMFLOAT2 xmf2Size) : 
 
 void CBillboardObject::UpdateInstanceData()
 {
-	XMFLOAT3 pos = GetPosition();
+	const XMFLOAT3 pos = GetPosition();
 	memcpy(&m_xv4InstanceData, &pos, sizeof(XMFLOAT3));
 }
 
@@ -794,24 +794,20 @@ void CAbsorbMarble::Initialize()
 void CAbsorbMarble::Revive()
 {
 	CMapManager * pTerrain = nullptr;
-	XMFLOAT3 xmf3Pos;
+	XMFLOAT3 xmf3Pos = MAPMgr.GetRandPos();
+	xmf3Pos.y += 10.f;
 
-	pTerrain = &MAPMgr;
-	xmf3Pos.x = rand() % static_cast<int>(pTerrain->GetWidth());
-	xmf3Pos.z = rand() % static_cast<int>(pTerrain->GetLength());
-	xmf3Pos.y = pTerrain->GetHeight(xmf3Pos.x, xmf3Pos.z, (static_cast<int>(xmf3Pos.z) % 2));
-	SetPosition(xmf3Pos);
 	Initialize();
+	SetPosition(xmf3Pos);
 
 	SetCollide(true);
 }
 
 void CAbsorbMarble::SetTarget(CGameObject * pGameObject)
 {
-	if (!m_bAbsorb)
+	if (false == m_bAbsorb)
 	{
 		SetSize(10);
-
 		SetCollide(false);
 
 		m_pTargetObject = pGameObject;

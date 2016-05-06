@@ -345,9 +345,10 @@ void CMonster::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 
 void CMonster::Collide(CEntity * pEntity)
 {
-	if (dynamic_cast<CEffect*>(pEntity))
+	auto effect = dynamic_cast<CEffect*>(pEntity);
+	if (effect)
 	{
-		Damaged(nullptr, 60);
+		Damaged(nullptr, effect->GetDamage());
 	}
 }
 
@@ -447,9 +448,17 @@ void CWarrock::AttackSuccess(CCharacter * pToChar, short stDamage)
 void CWarrock::Damaged(CCharacter * pByChar, short stDamage)
 {
 	m_Status.Damaged(stDamage);
+	cout << "Dmg : " << stDamage << " HP : " << m_Status.GetHP() << endl;
 
-	if (0 < m_Status.GetHP())
+	if (0 >= m_Status.GetHP())
 	{
 		m_pStateMachine->ChangeState(&CWarrockDeathState::GetInstance());
 	}
+}
+
+void CWarrock::Reset()
+{
+	m_Status.ResetStatus(); 
+	m_Status.ChangeHP(mfMAX_HEALTH);
+	m_pStateMachine->ChangeState(&CWarrockIdleState::GetInstance());
 }

@@ -221,11 +221,17 @@ public:
 	//	m_vcAbleParticleArray.pop_back();
 	//}
 
-	void EffectOn(int num, CGameObject * pObj, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
+	void EffectOn(int num, CGameObject * pObj, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fDamage = 0.f, float fColor = COLOR_NONE)
 	{
 		m_ppEffctsObjects[num]->Enable(pObj, pos, fColor);
+		m_ppEffctsObjects[num]->SetDamage(fDamage);
 		if (vel) m_ppEffctsObjects[num]->SetMoveVelocity(*vel);
 		if (acc) m_ppEffctsObjects[num]->SetMoveAccel(*acc);
+	}
+
+	void EffectOn(EFFECT_ON_INFO & info)
+	{
+		EffectOn(info.iNum, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
 	}
 };
 
@@ -298,15 +304,16 @@ public :
 		m_vcAbleParticleArray.pop_back();
 	}
 
-	void ParticleOn(int num, CGameObject * pObj = nullptr, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fColor = COLOR_NONE)
+	void ParticleOn(int num, CGameObject * pObj = nullptr, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fDamage = 0.f, float fColor = COLOR_NONE)
 	{
 		m_ppParticle[num]->Enable(pObj, pos, fColor);
+		m_ppParticle[num]->SetDamage(fDamage);
 		if (vel) m_ppParticle[num]->SetMoveVelocity(*vel);
 		if (acc) m_ppParticle[num]->SetMoveAccel(*acc);
 	}
 
-	void ParticleOn(PARTILCE_ON_INFO & info)
+	void ParticleOn(EFFECT_ON_INFO & info)
 	{
-		ParticleOn(info.iNum, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fColor);
+		ParticleOn(info.iNum, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
 	}
 };

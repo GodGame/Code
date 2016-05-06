@@ -11,6 +11,7 @@ protected:
 	MoveVelocity m_velocity;
 
 	float m_fDurability;
+	float m_fDamage;
 
 	bool m_bReserveDelete : 1;
 	bool m_bEnable        : 1;
@@ -20,6 +21,9 @@ protected:
 	bool m_bUseAccel      : 1;
 
 public:
+	float GetDamage() { return m_fDamage; }
+	void SetDamage(float dmg) { m_fDamage = dmg; }
+		
 	void SetMaster(CGameObject * pMaster) { m_pMaster = pMaster; }
 	CGameObject * GetMaster() { return m_pMaster; }
 
@@ -155,12 +159,13 @@ struct PARTICLE_INFO
 	float	 m_uType;
 };
 
-struct PARTILCE_ON_INFO
+struct EFFECT_ON_INFO
 {
 	CGameObject * m_pObject;
 	XMFLOAT3 m_xmf3Pos;
 	XMFLOAT3 m_xmf3Velocity;
 	XMFLOAT3 m_xmfAccelate;
+	float fDamage;
 	float fColor;
 	int iNum;
 };

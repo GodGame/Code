@@ -183,7 +183,7 @@ public:
 	virtual void Attack(CCharacter * pToChar, short stDamage);
 	virtual void AttackSuccess(CCharacter * pToChar, short stDamage);
 	virtual void Damaged(CCharacter * pByChar, short stDamage);
-	virtual void Reset() {m_Status.ResetStatus(); m_Status.ChangeHP(mfMAX_HEALTH); }
+	virtual void Reset();
 
 public:
 	CStateMachine<CWarrock>* GetFSM() { return m_pStateMachine; }

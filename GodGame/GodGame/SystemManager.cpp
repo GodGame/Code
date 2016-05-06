@@ -150,16 +150,15 @@ void CSystemManager::DominatePortalGate(int iPlayerNum)
 	static int testid = 0;
 	mRoundState = ROUND_STATE::eROUND_DOMINATE;
 
-	m_iDominatingPlayerNum = iPlayerNum + testid;
+	m_iDominatingPlayerNum = (iPlayerNum + testid) % 4;
 
-	cout << "점령 ID : " << m_iDominatingPlayerNum << endl;
-
+	//cout << "점령 ID : " << m_iDominatingPlayerNum << endl;
 	CGameObject* pPortal = GetPortalZoneObject();
 	pPortal->AddRef();
 	pPortal->SetMaterial(m_vcPlayerColorMaterial[m_iDominatingPlayerNum]);
 	pPortal->SetActive(true);
 
-	testid = (testid + 1) % 4;
+	testid++;
 }
 
 void CSystemManager::GameStart()
@@ -215,11 +214,11 @@ void CSystemManager::GameEnd()
 ///////////////////////////////////////////// font ////////////////////////////////////////////////////////
 void CGlobalFontUI::DrawFont()
 {
-	const static UINT playerColor[] = { 0xffffffff, 0xff0000ff, 0xffff0000, 0xff00ff00};
+	const static UINT playerColor[] = { 0xffffffff, 0xff0000ff, 0xff00ff00, 0xffff0000 };
 
 	const static XMFLOAT2 RoundTimeLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, -7) };
 	const static XMFLOAT2 RoundTimeLocation2{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5 + 5, -2) };
-	const static XMFLOAT2 ElementalPos{ XMFLOAT2(155, 40) };
+
 	static char screenFont[52];
 	static wchar_t wscreenFont[30];
 	static const int wssize = sizeof(wchar_t) * 30;
@@ -243,12 +242,15 @@ void CGlobalFontUI::DrawFont()
 			static_cast<CInGamePlayer*>(ppPlayers[i])->GetStatus().GetHP());
 		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(130, 100 + 25 * i), playerColor[i]);
 	}
-	CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(SYSTEMMgr.GetPlayer());
-	swprintf_s(wscreenFont, wssize, L"%3d   %3d   %3d   %3d   %3d   %3d", pPlayer->GetEnergyNum(0), pPlayer->GetEnergyNum(1),
-		pPlayer->GetEnergyNum(2), pPlayer->GetEnergyNum(3), pPlayer->GetEnergyNum(4), pPlayer->GetEnergyNum(5));
-	
-	FRAMEWORK.DrawFont(wscreenFont, 26, ElementalPos, 0xff483278);
 
+	{
+		CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(SYSTEMMgr.GetPlayer());
+		swprintf_s(wscreenFont, wssize, L"%02d  %02d  %02d  %02d  %02d  %02d", pPlayer->GetEnergyNum(0), pPlayer->GetEnergyNum(1),
+			pPlayer->GetEnergyNum(2), pPlayer->GetEnergyNum(3), pPlayer->GetEnergyNum(4), pPlayer->GetEnergyNum(5));
+
+		const static XMFLOAT2 ElementalPos{ XMFLOAT2(165, 40) };
+		FRAMEWORK.DrawFont(wscreenFont, 26, ElementalPos, 0xff3893a8);
+	}
 }
 
 void CGameStartFontUI::DrawFont()
@@ -285,6 +287,16 @@ void CRoundStartFontUI::DrawFont()
 
 void CRoundDominateFontUI::DrawFont()
 {
+	const static UINT playerColor[] = { 0xffffffff, 0xff0000ff, 0xff00ff00, 0xffff0000 };
+	const static XMFLOAT2 StartInfoLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 60) };
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wchar_t) * 26;
+	const int dominatedNum = SYSTEMMgr.GetDominatePlayerNum();
+
+	swprintf_s(wscreenFont, wssize, L"점령중인 플레이어 : %d", dominatedNum);
+
+	FRAMEWORK.SetFont("휴먼모음T");
+	FRAMEWORK.DrawFont(wscreenFont, 40, StartInfoLocation, playerColor[dominatedNum]);
 }
 
 void CRoundDeathMatchFontUI::DrawFont()

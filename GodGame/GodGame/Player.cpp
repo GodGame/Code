@@ -687,14 +687,28 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 	case 'G':
 		StopDominate();
 		return;
+
+	case '0':
+		Revive();
+		return;
+	case '7':
+		m_Status.GetBuffMgr().OnPlusDamage();
+		return;
+	case '8':
+		m_Status.GetBuffMgr().DownPlusDamage();
+		return;
+	case '9':
+		for (int i = 0; i < ELEMENT_NUM; ++i)
+			AddEnergy(i, 3);
+		return;
 	}
 }
 
 void CInGamePlayer::AddEnergy(UINT index, UINT num)
 {
-	++m_nElemental.m_nSum;
+	m_nElemental.m_nSum += num;
 
-	BYTE nNewNum = ++m_nElemental.m_nEnergies[index];
+	BYTE nNewNum = (m_nElemental.m_nEnergies[index] += num);
 	if (m_nElemental.m_nMinNum < nNewNum)
 	{
 		m_nElemental.m_nMinNum = nNewNum;
@@ -706,6 +720,19 @@ void CInGamePlayer::AddEnergy(UINT index, UINT num)
 	//cout << index << "번 에너지 : " <<  (UINT)m_nElemental.m_nEnergies[index] << endl;
 #endif
 
+}
+
+UINT CInGamePlayer::UseMagic()
+{
+	if (m_pChild)
+	{
+		CStaff * pMyItem = static_cast<CStaff*>(m_pChild);
+		const int element = pMyItem->GetElement();
+		const int lv = pMyItem->GetLevel() + 1;
+		
+		return UseEnergy(element, 3 * lv, false);
+	}
+	return UseAllEnergy(1);
 }
 
 UINT CInGamePlayer::UseEnergy(UINT index, BYTE energyNum, bool bForced)
@@ -728,7 +755,7 @@ UINT CInGamePlayer::UseEnergy(UINT index, BYTE energyNum, bool bForced)
 
 UINT CInGamePlayer::UseEnergy(UINT energyNum, bool bForced)
 {
-	if (!bForced || m_nElemental.m_nSum < energyNum)
+	if (false == bForced || m_nElemental.m_nSum < energyNum)
 		return false;
 	
 	BYTE num = energyNum;
@@ -738,19 +765,19 @@ UINT CInGamePlayer::UseEnergy(UINT energyNum, bool bForced)
 		if (0 == (num -= UseEnergy(i, num, bForced)))
 			break;
 	}
-
 	//cout << m_nElemental << endl;
 	return num;
 }
 
 UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 {
-	if (!bForced || m_nElemental.m_nMinNum < energyNum)
+	if (false == bForced && m_nElemental.m_nMinNum < energyNum)
 		return false;
 
 	for (int i = 0; i < ELEMENT_NUM; ++i)
+	{	
 		UseEnergy(i, energyNum, bForced);
-
+	}
 	return true;
 }
 
@@ -825,16 +852,29 @@ void CInGamePlayer::CheckGameSystem(float fTimeElapsed)
 
 }
 
-PARTILCE_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
+EFFECT_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 {
 	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
 	mtx = XMMatrixTranslation(0, 9.0f, 15.0f) * mtx;
 	XMFLOAT4X4 xmf44Change;
 	XMStoreFloat4x4(&xmf44Change, mtx);
 
-	PARTILCE_ON_INFO info;
+	float fColor = 0.f;
+	float fDamage = 10.f;
+
+	if (m_pChild)
+	{
+		auto staff = static_cast<CStaff*>(m_pChild);
+		fColor = staff->GetElement();
+		fDamage *= (staff->GetLevel() + 1);
+	}
+	fDamage += (m_Status.GetBuffMgr().IsPlusDamage() ? 20 : 0);
+	cout << "Player Dmg : " << fDamage;
+
+	EFFECT_ON_INFO info;
 	info.m_pObject      = this;
-	info.fColor         = 0;
+	info.fColor         = fColor;
+	info.fDamage		= fDamage;
 	info.iNum           = 4;
 	info.m_xmf3Pos      = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
 	info.m_xmf3Velocity = move(XMFLOAT3(xmf44Change._31, xmf44Change._32, xmf44Change._33));

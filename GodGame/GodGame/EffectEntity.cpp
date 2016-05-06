@@ -9,7 +9,8 @@ CEffect::CEffect() : CEntity()
 	m_nVertexOffsets       = 0;
 	m_nVertexStrides       = 0;
 
-	m_fDurability          = 0;
+	m_fDamage			   = 0.f;
+	m_fDurability          = 0.f;
 
 	m_bEnable              = false;
 	m_bMove                = false;
@@ -606,18 +607,17 @@ bool CParticle::Enable(CGameObject * pObj, XMFLOAT3 * pos, int nColorNum)
 	if (m_bMove)
 	{
 		UpdateBoundingBox();
-		cout << "BB : " << m_bcMeshBoundingCube << endl;
 		QUADMgr.InsertDynamicEntity(this);
 	}
 	//else QUADMgr.InsertStaticEntity(this);
-	m_pMaster = pObj;
+	m_pMaster                = pObj;
 
-	m_bReserveDelete = false;
-	m_bVisible = true;
-	m_bEnable = true;
-	m_bTerminal = false;
-	m_bInitilize = true;
-	m_cbParticle.m_bEnable = 1;
+	m_bReserveDelete         = false;
+	m_bVisible               = true;
+	m_bEnable                = true;
+	m_bTerminal              = false;
+	m_bInitilize             = true;
+	m_cbParticle.m_bEnable   = 1;
 	m_cbParticle.m_fGameTime = 0;
 
 	if (nColorNum != COLOR_NONE) m_cbParticle.m_nColorNum = nColorNum;
@@ -626,6 +626,8 @@ bool CParticle::Enable(CGameObject * pObj, XMFLOAT3 * pos, int nColorNum)
 
 bool CParticle::Disable()
 {
+	m_fDamage = 0.f;
+
 	if (m_bMove) QUADMgr.DeleteDynamicEntity(this);
 	//else QUADMgr.DeleteStaticEntity(this);
 

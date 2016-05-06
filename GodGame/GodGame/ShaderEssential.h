@@ -363,6 +363,10 @@ public:
 
 class CInGameUIShader : public CUIShader
 {
+	bool   mbNeedElement : 1;
+
+	static const int mfNeedElementTime = 3.f;
+
 	const int miResultReverseIndex = 1;
 	const int miItemUIReverseIndex = 2;
 	const string mWinLogo = "win_logo";
@@ -378,6 +382,7 @@ public:
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void FontRender(ID3D11DeviceContext *pd3dDeviceContext);
+	virtual void AnimateObjects(float fTimeElapsed);
 
 	void UIReadyWinLogo(bool Visible);
 	void UIReadyLoseLogo(bool Visible);

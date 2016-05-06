@@ -446,6 +446,10 @@ bool CGameFramework::_CreateFontSystem()
 	m_mgrFontWrapper.InsertObject(pFont, "HY°ß°íµñ");
 	pFont->Release();
 
+	ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"ÈÞ¸Õ¸ðÀ½T", &pFont));
+	m_mgrFontWrapper.InsertObject(pFont, "ÈÞ¸Õ¸ðÀ½T");
+	pFont->Release();
+
 	ASSERT_S(m_pFW1Factory->CreateFontWrapper(m_pd3dDevice, L"Broadway", &pFont));
 	m_mgrFontWrapper.InsertObject(pFont, "Broadway");
 	pFont->Release();
