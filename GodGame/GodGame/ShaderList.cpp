@@ -1470,7 +1470,7 @@ void CTextureAniShader::EffectOn(EFFECT_ON_INFO & info)
 	else if (info.eEffect == EFFECT_TYPE::EFFECT_CASTING)
 	{
 		CTxAnimationObject * effect = nullptr;
-		if (false == (effect = m_CastingEffectList.front())->IsAble())
+		if (false == (effect = m_CastingEffectList.front())->IsUsing())
 		{
 			pObj = effect;
 			m_CastingEffectList.pop_front();
@@ -1495,7 +1495,7 @@ void CTextureAniShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRe
 	//pd3dDeviceContext->PSSetSamplers(0, 1, &TXMgr.GetSamplerState("ss_linear_wrap"));
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (m_ppEffctsObjects[i]->IsAble())
+		if (m_ppEffctsObjects[i]->IsUsing())
 			m_ppEffctsObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 
@@ -1506,7 +1506,7 @@ void CTextureAniShader::AnimateObjects(float fTimeElapsed)
 {
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (m_ppEffctsObjects[i]->IsAble())
+		if (m_ppEffctsObjects[i]->IsUsing())
 			m_ppEffctsObjects[i]->Animate(fTimeElapsed);
 	}
 }
@@ -1641,17 +1641,17 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMateri
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
 
-	m_nObjects = 11;
+	m_nObjects = 24;
 	m_ppObjects = nullptr;
 	m_ppParticle = new CParticle*[m_nObjects];
 
-	for (int i = 0; i < 6; ++i) {
+	for (int i = 0; i < 20; ++i) {
 		m_ppParticle[i] = new CSmokeBoomParticle();
 		m_ppParticle[i]->Initialize(pd3dDevice);//(pd3dDevice, cbParticle, 20.0, 800);
 		m_AbsorbSmokeList.push_back(m_ppParticle[i]);
 	}
 
-	for (int i = 6; i < 11; ++i) {
+	for (int i = 20; i < 24; ++i) {
 		m_ppParticle[i] = new CFireBallParticle();
 		m_ppParticle[i]->Initialize(pd3dDevice);
 		m_FireBallList.push_back(m_ppParticle[i]);
@@ -1675,7 +1675,7 @@ void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
 	if (info.eEffect == EFFECT_TYPE::EFFECT_FIREBALL)
 	{
 		CParticle* fire = nullptr;
-		if (false == (fire = m_FireBallList.front())->IsAble())
+		if (false == (fire = m_FireBallList.front())->IsUsing())
 		{
 			pParticle = fire;
 			m_FireBallList.pop_front();
@@ -1685,7 +1685,7 @@ void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
 	else if (info.eEffect == EFFECT_TYPE::EFFECT_ABSORB)
 	{
 		CParticle* smoke = nullptr;
-		if (false == (smoke = m_AbsorbSmokeList.front())->IsAble())
+		if (false == (smoke = m_AbsorbSmokeList.front())->IsUsing())
 		{
 			pParticle = smoke;
 			m_AbsorbSmokeList.pop_front();
@@ -1714,7 +1714,7 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	{
 		it->second->StreamOut(pd3dDeviceContext);
 	}
-	if (m_pRainParticle && m_pRainParticle->IsAble())
+	if (m_pRainParticle && m_pRainParticle->IsUsing())
 	{
 		pd3dDeviceContext->GSSetShader(m_pd3dStreamRain, nullptr, 0);
 		m_pRainParticle->StreamOut(pd3dDeviceContext);
@@ -1736,7 +1736,7 @@ void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	}
 
 	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);
-	if (m_pRainParticle && m_pRainParticle->IsAble())
+	if (m_pRainParticle && m_pRainParticle->IsUsing())
 	{
 		RainDrawShader(pd3dDeviceContext);
 		m_pRainParticle->Render(pd3dDeviceContext, uRenderState, pCamera);
@@ -1750,7 +1750,7 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 
 	for (int i = 0; i < m_nObjects; ++i)
 	{
-		if (false == m_ppParticle[i]->IsAble())
+		if (false == m_ppParticle[i]->IsUsing())
 		{
 			if(i != 6)
 				m_vcAbleParticleArray.push_back(m_ppParticle[i]);
@@ -1762,7 +1762,7 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 		}
 	}
 
-	if (m_pRainParticle && m_pRainParticle->IsAble()) 
+	if (m_pRainParticle && m_pRainParticle->IsUsing())
 		m_pRainParticle->Update(fTimeElapsed);
 }
 

@@ -209,7 +209,7 @@ public:
 public:
 	bool SetEffect(int index, CGameObject * pObj, XMFLOAT3 * pos = nullptr)
 	{
-		if (m_ppEffctsObjects[index]->IsAble()) return false;
+		if (m_ppEffctsObjects[index]->IsUsing()) return false;
 		return m_ppEffctsObjects[index]->Enable(pObj, pos);
 	}
 	CTxAnimationObject * GetEffect(int index) { return m_ppEffctsObjects[index]; }
@@ -293,7 +293,7 @@ public :
 
 	bool SetParticle(int index, CGameObject * pObj, XMFLOAT3 * pos = nullptr)
 	{ 
-		if (m_ppParticle[index]->IsAble() ) return false;
+		if (m_ppParticle[index]->IsUsing() ) return false;
 		return m_ppParticle[index]->Enable(pObj);
 	}
 	CParticle * GetParticle(int index) { return m_ppParticle[index]; }

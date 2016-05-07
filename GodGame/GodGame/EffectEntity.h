@@ -45,7 +45,7 @@ public:
 	void SetMoveVelocity(const XMFLOAT3 & vel) { m_velocity.xmf3Velocity = vel; }
 	void SetMoveAccel(const XMFLOAT3 & acc) { m_velocity.xmf3Accelate = acc; }
 
-	bool IsAble() { return m_bEnable; }
+	bool IsUsing() { return m_bEnable; }
 	bool IsSubordinative() { return m_bSubordinate; }
 
 	bool MoveUpdate(const float & fGameTime, const float & fTimeElapsed, XMFLOAT3 & xmf3Pos);
