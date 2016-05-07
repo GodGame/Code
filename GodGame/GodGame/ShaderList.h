@@ -192,6 +192,8 @@ class CTextureAniShader : public CShader
 	ID3D11BlendState   *  m_pd3dBlendState;
 	ID3D11SamplerState *  m_pd3dSamplerState;
 
+	list<CTxAnimationObject *> m_CastingEffectList;
+
 public:
 	CTextureAniShader();
 	virtual ~CTextureAniShader();
@@ -221,18 +223,17 @@ public:
 	//	m_vcAbleParticleArray.pop_back();
 	//}
 
-	void EffectOn(int num, CGameObject * pObj, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fDamage = 0.f, float fColor = COLOR_NONE)
+	void EffectOn(CTxAnimationObject * pTxAni, CGameObject * pObj, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fDamage = 0.f, float fColor = COLOR_NONE)
 	{
-		m_ppEffctsObjects[num]->Enable(pObj, pos, fColor);
-		m_ppEffctsObjects[num]->SetDamage(fDamage);
-		if (vel) m_ppEffctsObjects[num]->SetMoveVelocity(*vel);
-		if (acc) m_ppEffctsObjects[num]->SetMoveAccel(*acc);
+		if (nullptr == pTxAni) return;
+
+		pTxAni->SetDamage(fDamage);
+		pTxAni->Enable(pObj, pos, fColor);
+		if (vel) pTxAni->SetMoveVelocity(*vel);
+		if (acc) pTxAni->SetMoveAccel(*acc);
 	}
 
-	void EffectOn(EFFECT_ON_INFO & info)
-	{
-		EffectOn(info.iNum, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
-	}
+	void EffectOn(EFFECT_ON_INFO & info);
 };
 
 class CParticleShader : public CShader
@@ -264,6 +265,8 @@ private:
 //	int m_nImages;
 
 private:
+	list<CParticle*> m_AbsorbSmokeList;
+	list<CParticle*> m_FireBallList;
 
 	CParticle    ** m_ppParticle;
 	ID3D11Buffer *  m_pd3dcbGameInfo;
@@ -304,16 +307,18 @@ public :
 		m_vcAbleParticleArray.pop_back();
 	}
 
-	void ParticleOn(int num, CGameObject * pObj = nullptr, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fDamage = 0.f, float fColor = COLOR_NONE)
+
+
+	void ParticleOn(CParticle* pParticle, CGameObject * pObj = nullptr, XMFLOAT3 * pos = nullptr, XMFLOAT3 * vel = nullptr, XMFLOAT3 * acc = nullptr, float fDamage = 0.f, float fColor = COLOR_NONE)
 	{
-		m_ppParticle[num]->Enable(pObj, pos, fColor);
-		m_ppParticle[num]->SetDamage(fDamage);
-		if (vel) m_ppParticle[num]->SetMoveVelocity(*vel);
-		if (acc) m_ppParticle[num]->SetMoveAccel(*acc);
+		if (nullptr == pParticle) return;
+
+		pParticle->SetDamage(fDamage);
+		pParticle->Enable(pObj, pos, fColor);
+		if (vel) pParticle->SetMoveVelocity(*vel);
+		if (acc) pParticle->SetMoveAccel(*acc);
 	}
 
-	void ParticleOn(EFFECT_ON_INFO & info)
-	{
-		ParticleOn(info.iNum, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
-	}
+	void ParticleOn(EFFECT_ON_INFO & info);
+
 };

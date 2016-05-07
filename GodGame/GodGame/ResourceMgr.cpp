@@ -338,6 +338,10 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_smoke_array", 0);
 	pd3dsrvTexture->Release();
 		
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/lightbomb1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_lightbomb.png", 0);
+	pd3dsrvTexture->Release();
+
 	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_wcircle_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_circle.png", 0);
 	pd3dsrvTexture->Release();

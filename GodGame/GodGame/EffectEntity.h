@@ -4,6 +4,18 @@
 
 #include "Object.h"
 
+enum EFFECT_TYPE
+{
+	EFFECT_NONE = 0,
+	EFFECT_ABSORB,
+	EFFECT_CASTING,
+	EFFECT_FIREBALL,
+
+	EFFECT_CIRCLE_AREA,
+	EFFECT_ICE_BOLT,
+	EFFECT_ETC
+};
+
 class CEffect : public CEntity
 {
 protected:
@@ -120,6 +132,12 @@ public:
 	void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld = nullptr);
 };
 
+class CLightBomb : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
 class CCircleMagic : public CTxAnimationObject
 {
 public:
@@ -149,7 +167,12 @@ class CElementSpike : public CTxAnimationObject
 public:
 	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 struct PARTICLE_INFO
 {
 	XMFLOAT3 m_xmf3Pos;
@@ -165,9 +188,10 @@ struct EFFECT_ON_INFO
 	XMFLOAT3 m_xmf3Pos;
 	XMFLOAT3 m_xmf3Velocity;
 	XMFLOAT3 m_xmfAccelate;
+	bool bUseUpdateVelocity;
 	float fDamage;
 	float fColor;
-	int iNum;
+	EFFECT_TYPE eEffect;
 };
 
 class CParticle : public CEffect

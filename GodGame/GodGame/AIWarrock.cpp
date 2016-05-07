@@ -19,7 +19,6 @@ void CWarrockIdleState::Enter(CWarrock * pWarrock)
 
 void CWarrockIdleState::Execute(CWarrock * pWarrock, float fFrameTime)
 {
-	//WORD wdAnimState = pWarrock->GetAnimationState();
 	CCharacter * pChar = pWarrock->GetTarget();
 	if (false == pChar->GetStatus().IsCanDamaged()) return;
 
@@ -159,6 +158,27 @@ void CWarrockRoarState::Exit(CWarrock * pWarrock)
 {
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CWarrockRotateState & CWarrockRotateState::GetInstance()
+{
+	static CWarrockRotateState instance;
+	return instance;
+}
+
+void CWarrockRotateState::Enter(CWarrock * pWarrock)
+{
+}
+
+void CWarrockRotateState::Execute(CWarrock * pWarrock, float fFrameTime)
+{
+}
+
+void CWarrockRotateState::Exit(CWarrock * pWarrock)
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
 CWarrockChaseTargetState & CWarrockChaseTargetState::GetInstance()
 {
 	static CWarrockChaseTargetState instance;

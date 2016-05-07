@@ -44,11 +44,11 @@ void GSTextureAnimate(point VS_IN_TX_ANI input[1], inout TriangleStream<PS_IN_TX
 	float3 vUp    = float3(0, 1, 0);
 
 	float fResult = dot(xv3Look, float3(1, 1, 1));
-	if (bMove > 0)
-	{
-		vUp = normalize(xv3Look);// normalize(gf3CameraPos.xyz - pos);
-	}
-	else if (fResult > 0)
+	//if (bMove > 0)
+	//{
+	//	vUp = normalize(xv3Look);// normalize(gf3CameraPos.xyz - pos);
+	//}
+	/*else */if (fResult > 0)
 	{
 		vLook = xv3Look;
 	}

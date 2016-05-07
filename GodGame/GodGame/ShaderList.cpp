@@ -1441,19 +1441,47 @@ void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
 
 void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial)
 {
-	m_nObjects = 3;
+	m_nObjects = 7;
 
 	m_ppEffctsObjects = new CTxAnimationObject*[m_nObjects];
 
 	m_ppEffctsObjects[0] = new CCircleMagic();
 	m_ppEffctsObjects[1] = new CElectricBolt();//CIceBolt();
-	m_ppEffctsObjects[2] = new CIceSpear();
+	
+	for (int i = 2; i < 7; ++i)
+	{
+		m_ppEffctsObjects[i] = new CLightBomb();
+		m_CastingEffectList.push_back(m_ppEffctsObjects[i]);
+	}
 	for (int i = 0; i < m_nObjects; ++i)
 	{
 		m_ppEffctsObjects[i]->Initialize(pd3dDevice);
 	}
 
 	CreateStates(pd3dDevice);
+}
+
+void CTextureAniShader::EffectOn(EFFECT_ON_INFO & info)
+{
+	CTxAnimationObject * pObj = nullptr;
+	if (info.eEffect == EFFECT_TYPE::EFFECT_CIRCLE_AREA) pObj = m_ppEffctsObjects[0];
+	else if (info.eEffect == EFFECT_TYPE::EFFECT_ICE_BOLT) pObj = m_ppEffctsObjects[1];
+
+	else if (info.eEffect == EFFECT_TYPE::EFFECT_CASTING)
+	{
+		CTxAnimationObject * effect = nullptr;
+		if (false == (effect = m_CastingEffectList.front())->IsAble())
+		{
+			pObj = effect;
+			m_CastingEffectList.pop_front();
+			m_CastingEffectList.push_back(effect);
+		}
+	}
+
+	if (info.bUseUpdateVelocity)
+		EffectOn(pObj, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
+	else
+		EffectOn(pObj, info.m_pObject, &info.m_xmf3Pos, nullptr, nullptr, info.fDamage, info.fColor);
 }
 
 void CTextureAniShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)
@@ -1613,24 +1641,21 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMateri
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
 
-	m_nObjects = 5;
+	m_nObjects = 11;
 	m_ppObjects = nullptr;
 	m_ppParticle = new CParticle*[m_nObjects];
 
-	m_ppParticle[0] = new CSmokeBoomParticle();
-	m_ppParticle[0]->Initialize(pd3dDevice);//(pd3dDevice, cbParticle, 20.0, 800);
+	for (int i = 0; i < 6; ++i) {
+		m_ppParticle[i] = new CSmokeBoomParticle();
+		m_ppParticle[i]->Initialize(pd3dDevice);//(pd3dDevice, cbParticle, 20.0, 800);
+		m_AbsorbSmokeList.push_back(m_ppParticle[i]);
+	}
 
-	m_ppParticle[1] = new CSmokeBoomParticle();
-	m_ppParticle[1]->Initialize(pd3dDevice);
-
-	m_ppParticle[2] = new CSmokeBoomParticle();
-	m_ppParticle[2]->Initialize(pd3dDevice);
-
-	m_ppParticle[3] = new CSmokeBoomParticle();
-	m_ppParticle[3]->Initialize(pd3dDevice);
-
-	m_ppParticle[4] = new CFireBallParticle();
-	m_ppParticle[4]->Initialize(pd3dDevice);
+	for (int i = 6; i < 11; ++i) {
+		m_ppParticle[i] = new CFireBallParticle();
+		m_ppParticle[i]->Initialize(pd3dDevice);
+		m_FireBallList.push_back(m_ppParticle[i]);
+	}
 
 	m_pRainParticle = new CRainParticle();
 	m_pRainParticle->Initialize(pd3dDevice);
@@ -1641,6 +1666,36 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMateri
 
 	m_vcAbleParticleArray.reserve(m_nObjects);
 	m_vcUsingParticleArray.reserve(m_nObjects);
+}
+
+
+void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
+{
+	CParticle * pParticle = nullptr;
+	if (info.eEffect == EFFECT_TYPE::EFFECT_FIREBALL)
+	{
+		CParticle* fire = nullptr;
+		if (false == (fire = m_FireBallList.front())->IsAble())
+		{
+			pParticle = fire;
+			m_FireBallList.pop_front();
+			m_FireBallList.push_back(fire);
+		}
+	}
+	else if (info.eEffect == EFFECT_TYPE::EFFECT_ABSORB)
+	{
+		CParticle* smoke = nullptr;
+		if (false == (smoke = m_AbsorbSmokeList.front())->IsAble())
+		{
+			pParticle = smoke;
+			m_AbsorbSmokeList.pop_front();
+			m_AbsorbSmokeList.push_back(smoke);
+		}
+	}
+	if (info.bUseUpdateVelocity)
+		ParticleOn(pParticle, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
+	else
+		ParticleOn(pParticle, info.m_pObject, &info.m_xmf3Pos, nullptr, nullptr, info.fDamage, info.fColor);
 }
 
 void CParticleShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
@@ -1697,7 +1752,7 @@ void CParticleShader::AnimateObjects(float fTimeElapsed)
 	{
 		if (false == m_ppParticle[i]->IsAble())
 		{
-			if(i != 4)
+			if(i != 6)
 				m_vcAbleParticleArray.push_back(m_ppParticle[i]);
 		}
 		else

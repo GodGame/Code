@@ -11,6 +11,7 @@
 #define ELEMENT_ELECTRIC		COLOR_YELLOW
 #define ELEMENT_NUM				6
 
+
 class CCharacter;
 class CDeBuff
 {

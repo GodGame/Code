@@ -84,6 +84,27 @@ public:
 	virtual void Exit(CWarrock * pWarrock);
 };
 
+
+class CWarrockRotateState : public CAIState<CWarrock>
+{
+private:
+	const float mfRotateUnitPerSecond = 20.f;
+	CTargetDotEvaluator mEvaluator;
+
+
+private:
+	CWarrockRotateState() : CAIState<CWarrock>() {}
+	virtual ~CWarrockRotateState() {}
+	CWarrockRotateState& operator=(const CWarrockPunchState&);
+
+public:
+	static CWarrockRotateState & GetInstance();
+	virtual void Enter(CWarrock * pWarrock);
+	virtual void Execute(CWarrock * pWarrock, float fFrameTime);
+	virtual void Exit(CWarrock * pWarrock);
+};
+
+
 class CWarrockChaseTargetState : public CAIState<CWarrock>
 {
 private:

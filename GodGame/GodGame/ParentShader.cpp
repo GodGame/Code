@@ -96,17 +96,25 @@ void CEffectShader::ShaderKeyEventOn(CPlayer * pPlayer, WORD key, void * extra)
 
 	switch (key)
 	{
-	case 'B':
-		((CParticleShader*)m_ppShader[mParticleEffectNum])->ParticleOn(4, pPlayer, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
-		return;
+	//case 'B':
+	//	((CParticleShader*)m_ppShader[mParticleEffectNum])->ParticleOn(4, pPlayer, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVectorInverse());
+	//	return;
 
 	case 'X':
-		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(1, pPlayer, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), &pPlayer->GetLookVector());
-		return;
+	{
+		XMFLOAT3 pos = pPlayer->GetPosition();
+		pos.y += 10.f;
 
-	case 'C':
-		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(2, pPlayer, &pPlayer->GetPosition(), &pPlayer->GetLookVector(), nullptr);
+		EFFECT_ON_INFO info;
+		ZeroMemory(&info, sizeof(info));
+		info.m_xmf3Pos = pos;
+		info.m_pObject = pPlayer;
+		info.m_xmfAccelate = info.m_xmf3Velocity = pPlayer->GetLookVector();
+		info.eEffect = EFFECT_ICE_BOLT;
+		info.bUseUpdateVelocity = true;
+		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(info);
 		return;
+	}
 	}
 }
 
@@ -134,9 +142,17 @@ void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 	{
 	case eMessage::MSG_PARTICLE_ON:
 	{
-		static XMFLOAT4 xmf4Data;
-		memcpy(&xmf4Data, extra, sizeof(XMFLOAT4));
-		static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(nullptr, (XMFLOAT3*)&xmf4Data, xmf4Data.w);
+		static EFFECT_ON_INFO info;
+		memcpy(&info.m_xmf3Pos, extra, sizeof(XMFLOAT3));// &xmf4Data, sizeof(XMFLOAT3));
+		info.eEffect = EFFECT_TYPE::EFFECT_ABSORB;
+		info.fColor = reinterpret_cast<XMFLOAT4*>(extra)->w; 
+		static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(info);
+		return;
+	}
+	case eMessage::MSG_MAGIC_CAST:
+	{
+		pPlayer = static_cast<CInGamePlayer*>(extra);
+		((CTextureAniShader*)m_ppShader[mTxAniEffectNum])->EffectOn(pPlayer->GetCastEffectOnInfo());
 		return;
 	}
 	case eMessage::MSG_MAGIC_SHOT:

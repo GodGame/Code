@@ -873,9 +873,8 @@ void CAbsorbMarble::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 		//EVENTMgr.InsertDelayMessage(1.0f, eMessage::MSG_OBJECT_RENEW, CGameEventMgr::MSG_TYPE_OBJECT, this);
 		return;
 	case eMessage::MSG_COLLIDED:
-//		cout << byObj->GetSize() << endl;
 		if (pPlayer = dynamic_cast<CInGamePlayer*>(byObj))
-			SetTarget(static_cast<CGameObject*>(pPlayer));
+			SetTarget(pPlayer);
 		return;
 
 	//case eMessage::MSG_QUAD_DELETE:

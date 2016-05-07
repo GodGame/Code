@@ -784,6 +784,7 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 void CInGamePlayer::MagicShot()
 {
 	ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
+	EVENTMgr.InsertDelayMessage(0.25f, eMessage::MSG_MAGIC_CAST, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
 	EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
 }
 
@@ -852,6 +853,35 @@ void CInGamePlayer::CheckGameSystem(float fTimeElapsed)
 
 }
 
+EFFECT_ON_INFO CInGamePlayer::GetCastEffectOnInfo()
+{
+	float fColor = 0.f;
+	//if (m_pChild)
+	//{
+	//	auto staff = static_cast<CStaff*>(m_pChild);
+	//	fColor = staff->GetElement();
+	//}
+
+	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
+	mtx = XMMatrixTranslation(-4.f, 10.0f, 15.0f) * mtx;
+	XMFLOAT4X4 xmf44Change;
+	XMStoreFloat4x4(&xmf44Change, mtx);
+
+	XMFLOAT3 up = XMFLOAT3(xmf44Change._21, xmf44Change._22, xmf44Change._23);
+
+	static EFFECT_ON_INFO info;
+	info.m_pObject      = this;
+	info.fColor         = fColor;
+	info.fDamage        = 0.f;
+	info.eEffect        = EFFECT_CASTING;
+	info.m_xmf3Pos      = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
+	//info.m_xmf3Velocity = up;
+	//info.m_xmfAccelate  = up;
+	//info.bUseUpdateVelocity = true;
+
+	return info;
+}
+
 EFFECT_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 {
 	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
@@ -869,16 +899,16 @@ EFFECT_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 		fDamage *= (staff->GetLevel() + 1);
 	}
 	fDamage += (m_Status.GetBuffMgr().IsPlusDamage() ? 20 : 0);
-	cout << "Player Dmg : " << fDamage;
 
-	EFFECT_ON_INFO info;
+	static EFFECT_ON_INFO info;
 	info.m_pObject      = this;
 	info.fColor         = fColor;
 	info.fDamage		= fDamage;
-	info.iNum           = 4;
+	info.eEffect        = EFFECT_FIREBALL;
 	info.m_xmf3Pos      = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
 	info.m_xmf3Velocity = move(XMFLOAT3(xmf44Change._31, xmf44Change._32, xmf44Change._33));
 	info.m_xmfAccelate  = move(XMFLOAT3(-xmf44Change._31, -xmf44Change._32, -xmf44Change._33));
+	info.bUseUpdateVelocity = true;
 
 	return info;
 }

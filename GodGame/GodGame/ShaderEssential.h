@@ -268,7 +268,7 @@ public:
 	virtual ~CPlayerShader();
 
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
-	virtual void BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene, CScene* pScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void Reset();

@@ -438,7 +438,7 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	{
 		m_pPlayerShader = new CPlayerShader();
 		m_pPlayerShader->CreateShader(pd3dDevice);
-		m_pPlayerShader->BuildObjects(pd3dDevice, m_SceneResoucres);
+		m_pPlayerShader->BuildObjects(pd3dDevice, m_SceneResoucres, this);
 
 		m_vcResetShaders.push_back(m_pPlayerShader);
 		m_vcDynamicShadowShaders.push_back(m_pPlayerShader);
@@ -552,7 +552,7 @@ void CSceneInGame::BuildStaticShadowMap(ID3D11DeviceContext * pd3dDeviceContext)
 	CShadowMgr * pSdwMgr = &ShadowMgr;
 	pSdwMgr->BuildShadowMap(pd3dDeviceContext, XMFLOAT3(fHalf, 0.0f, fHalf), XMFLOAT3(fHalf + 80.f, 80.f, fHalf), fHalf);
 
-	UINT uRenderState = (RS_SHADOWMAP);
+	const UINT uRenderState = (RS_SHADOWMAP);
 	pSdwMgr->SetStaticShadowMap(pd3dDeviceContext, m_pCamera);
 
 	for(auto & shader : m_vcStaticShadowShaders)
@@ -876,6 +876,7 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		static_cast<CInGameUIShader*>(m_pUIShader)->ChangeItemUI(static_cast<CStaff*>(extra));
 		return;
 	
+	case eMessage::MSG_MAGIC_CAST:
 	case eMessage::MSG_PARTICLE_ON:
 	case eMessage::MSG_MAGIC_SHOT:
 	case eMessage::MSG_MAGIC_AREA:

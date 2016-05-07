@@ -768,7 +768,7 @@ void CPlayerShader::CreateShader(ID3D11Device *pd3dDevice)
 	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSNormalAndSF", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene)
+void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOURCES_MGR & mgrScene, CScene* pScene)
 {
 	m_nObjects = 4;
 	m_ppObjects = new CGameObject*[m_nObjects];
@@ -807,6 +807,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 			MaterialMgr.GetObjects(material[j]));
 		pPlayer->SetCollide(true);
 		pPlayer->SetPlayerNum(j);
+		pPlayer->SetScene(pScene);
 		pPlayer->AddRef();
 		m_ppObjects[j] = pPlayer;
 
@@ -1612,7 +1613,7 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 		XMFLOAT4(46, 190, 45, 180),
 		XMFLOAT4(150, FRAME_BUFFER_HEIGHT - 30, 140, 30),
 
-		XMFLOAT4(1, 1, 35, 140),
+		XMFLOAT4(45, 170, 35, 140),
 		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.4f, FRAME_BUFFER_WIDTH * 0.3f, FRAME_BUFFER_HEIGHT * 0.2f),
 	};
 	string   UIName[3] = { { "srv_scroll_03.png" }, {"srv_staff_slot.jpg"}, { "srv_element_list.png" } };

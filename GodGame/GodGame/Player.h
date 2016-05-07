@@ -163,6 +163,7 @@ public:
 	void CheckGameSystem(float fTimeElapsed);
 
 public:
+	EFFECT_ON_INFO GetCastEffectOnInfo();
 	EFFECT_ON_INFO Get1HAnimShotParticleOnInfo();
 
 private:
