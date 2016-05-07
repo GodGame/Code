@@ -168,7 +168,7 @@ CPlayerDeathState & CPlayerDeathState::GetInstance()
 
 void CPlayerDeathState::Enter(CInGamePlayer * pPlayer)
 {
-
+	pPlayer->GetStatus().SetHP(0);
 	pPlayer->GetStatus().SetCanMove(false);
 	pPlayer->GetStatus().SetAlive(false);
 	pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, false, nullptr, 0);

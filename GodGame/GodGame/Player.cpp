@@ -617,14 +617,7 @@ void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 
 	if (m_Status.GetHP() < 1)
 	{
-		auto info = SYSTEMMgr.GetPlayerInfo();
-		info[m_iPlayerNum].m_nDeathCount++;
-
-		auto enemy = dynamic_cast<CInGamePlayer*>(pByChar);
-		if (enemy)
-			info[enemy->GetPlayerNum()].m_nKillCount++;
-
-		m_pStateMachine->ChangeState(&CPlayerDeathState::GetInstance());
+		Death(pByChar);
 	}
 }
 
@@ -788,6 +781,24 @@ UINT CInGamePlayer::UseAllEnergy(UINT energyNum, bool bForced)
 		UseEnergy(i, energyNum, bForced);
 	}
 	return true;
+}
+
+void CInGamePlayer::Kill(CCharacter * pChar)
+{
+	auto info = SYSTEMMgr.GetPlayerInfo();
+	info[m_iPlayerNum].m_nKillCount++;
+	info[m_iPlayerNum].m_iPlayerPoint += 10;
+}
+
+void CInGamePlayer::Death(CCharacter * pChar)
+{
+	auto info = SYSTEMMgr.GetPlayerInfo();
+	info[m_iPlayerNum].m_nDeathCount++;
+	m_pStateMachine->ChangeState(&CPlayerDeathState::GetInstance());
+
+	auto enemy = dynamic_cast<CInGamePlayer*>(pChar);
+	if (enemy) 
+		enemy->Kill(nullptr);
 }
 
 void CInGamePlayer::MagicShot()

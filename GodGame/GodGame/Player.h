@@ -150,6 +150,9 @@ public:
 
 	void InitEnergy() { ZeroMemory(&m_nElemental, sizeof(m_nElemental)); }
 
+	void Kill(CCharacter * pChar);
+	void Death(CCharacter * pChar);
+
 public:
 	void MagicShot();
 

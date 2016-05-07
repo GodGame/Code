@@ -198,9 +198,10 @@ void CSystemManager::RoundEnd()
 {
 	mRoundState = ROUND_STATE::eROUND_END;
 
-	if (m_iDominatingPlayerNum > -1)
+	if (0 <= m_iDominatingPlayerNum)
+	{
 		mPlayerInfo[m_iDominatingPlayerNum].m_iPlayerPoint += mROUND_WIN_POINT;
-
+	}
 	m_fEndTime = m_fRoundTime;
 	m_fRoundTime = mfEND_TIME;
 	EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
@@ -232,7 +233,7 @@ void CGlobalFontUI::DrawFont()
 	static char screenFont[52];
 	static wchar_t wscreenFont[30];
 	static const int wssize = sizeof(wscreenFont);
-	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
+	const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
 
 	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
 	FRAMEWORK.SetFont("Gabriola");
@@ -250,7 +251,7 @@ void CGlobalFontUI::DrawFont()
 	{
 		swprintf_s(wscreenFont, wssize, L"%dP : %d pt [K:%d / D:%d]", i, info[i].m_iPlayerPoint,
 			info[i].m_nKillCount, info[i].m_nDeathCount);
-		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(150, 100 + 25 * i), playerColor[i]);
+		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(10, 100 + 25 * i), playerColor[i], FW1_TEXT_FLAG::FW1_LEFT);
 	}
 
 	{
