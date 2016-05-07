@@ -285,7 +285,8 @@ void CMonster::Update(float fTimeElapsed)
 
 	if (m_bUpdateTaget)
 	{
-		CGameObject ** pObjectArray = SYSTEMMgr.GetPlayerArray();
+		CCharacter ** ppObjectArray = reinterpret_cast<CCharacter**>(SYSTEMMgr.GetPlayerArray());
+
 		XMVECTOR xmvPos = XMLoadFloat3(&GetPosition());
 		XMVECTOR xmvTarget;
 		const int num = SYSTEMMgr.GetTotalPlayerNum();
@@ -293,8 +294,10 @@ void CMonster::Update(float fTimeElapsed)
 		int index = -1;
 		for (int i = 0; i < num; ++i)
 		{
+			if (false == ppObjectArray[i]->GetStatus().IsAlive()) continue;
+
 			float fDist;
-			xmvTarget = XMLoadFloat3(&pObjectArray[i]->GetPosition());
+			xmvTarget = XMLoadFloat3(&ppObjectArray[i]->GetPosition());
 			XMStoreFloat(&fDist, XMVector3LengthSq(xmvTarget - xmvPos));
 			if (fDist < fMin)
 			{
@@ -303,7 +306,7 @@ void CMonster::Update(float fTimeElapsed)
 			}
 		}
 
-		SetTarget(static_cast<CCharacter*>(pObjectArray[index]));
+		SetTarget(ppObjectArray[index]);
 		m_bUpdateTaget = false;
 		m_fUpdateTargetTime = 0.f;
 	}

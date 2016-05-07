@@ -103,6 +103,8 @@ public:
 		eROUND_STATE_NUM
 	};
 
+	const DWORD mROUND_WIN_POINT = 100;
+
 private:
 	//void(*m_pFontFunc) ();
 	CFontUIObject * m_pGlobalFont;

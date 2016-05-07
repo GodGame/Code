@@ -1693,7 +1693,9 @@ void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
 		}
 	}
 	if (info.bUseUpdateVelocity)
+	{
 		ParticleOn(pParticle, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
+	}
 	else
 		ParticleOn(pParticle, info.m_pObject, &info.m_xmf3Pos, nullptr, nullptr, info.fDamage, info.fColor);
 }

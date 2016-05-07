@@ -1,10 +1,7 @@
 //#define LUMCOLOR
-
-
 static float  MIDDLE_GRAY = 1.0f;//0.72f;
 static float  LUM_WHITE = 2.2f;
 static const float  BRIGHT_THRESHOLD = 0.3f;
-
 
 float3 ColorToLum(float3 fColor)
 {
@@ -24,8 +21,6 @@ float3 ColorToLum(float3 fColor)
 
 	float3 Yxy;
 	Yxy.r = XYZ.g;
-	//x = X / (X + Y + Z)
-	//y = X / (X + Y + Z)
 
 	float temp = dot(float3(1.0f, 1.0f, 1.0f), XYZ.rgb);
 	Yxy.gb = XYZ.rg / temp;
@@ -65,14 +60,11 @@ float3 ToneMappingByLum(float3 fLum)
 	return Yxy;
 }
 
-
-
 float4 FilmicToneMapping(float4 LinearColor)
 {
 	float3 color = max(0, LinearColor - 0.004f);
 	return float4((color * (6.2 * color + 0.5)) / (color * (6.2 * color + 1.7) + 0.06), 1);
 }
-
 
 float3 ColorScaled(float3 fColor, float fLum, float middle_gray)
 {

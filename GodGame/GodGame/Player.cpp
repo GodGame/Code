@@ -310,7 +310,9 @@ void CPlayer::OnPrepareRender()
 void CPlayer::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
 	//if (pCamera->GetPlayer() == this SetVisible(true);
+	//const UINT uRender = (uRenderState | DRAW_AND_ACTIVE);
 	CAnimatedObject::Render(pd3dDeviceContext, uRenderState, pCamera);
+	//SetVisible(false);
 }
 
 void CPlayer::Animate(float fTimeElapsed)
@@ -592,7 +594,7 @@ void CInGamePlayer::AttackSuccess(CCharacter * pToChar, short stDamage)
 
 void CInGamePlayer::Damaged(CEffect * pEffect)
 {
-	Damaged(static_cast<CCharacter*>(pEffect->GetMaster()), 10);
+	Damaged(static_cast<CCharacter*>(pEffect->GetMaster()), pEffect->GetDamage());
 	//pEffect->Get
 }
 void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
@@ -615,6 +617,13 @@ void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 
 	if (m_Status.GetHP() < 1)
 	{
+		auto info = SYSTEMMgr.GetPlayerInfo();
+		info[m_iPlayerNum].m_nDeathCount++;
+
+		auto enemy = dynamic_cast<CInGamePlayer*>(pByChar);
+		if (enemy)
+			info[enemy->GetPlayerNum()].m_nKillCount++;
+
 		m_pStateMachine->ChangeState(&CPlayerDeathState::GetInstance());
 	}
 }

@@ -341,7 +341,7 @@ public:
 	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	virtual void FontRender(ID3D11DeviceContext *pd3dDeviceContext){}
+	virtual void FontRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr){}
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 
 	void CreateUIResources(ID3D11Device * pd3dDevice);
@@ -381,8 +381,10 @@ public:
 	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
-	virtual void FontRender(ID3D11DeviceContext *pd3dDeviceContext);
+	virtual void FontRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 	virtual void AnimateObjects(float fTimeElapsed);
+
+	void DrawUserNames(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 
 	void UIReadyWinLogo(bool Visible);
 	void UIReadyLoseLogo(bool Visible);

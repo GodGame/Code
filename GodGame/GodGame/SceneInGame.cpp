@@ -825,7 +825,7 @@ void CSceneInGame::Render(ID3D11DeviceContext*pd3dDeviceContext, RENDER_INFO * p
 
 void CSceneInGame::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
 {
-	m_pUIShader->Render(pd3dDeviceContext, DRAW_AND_ACTIVE, nullptr);
+	m_pUIShader->Render(pd3dDeviceContext, DRAW_AND_ACTIVE, m_pCamera);
 }
 
 #ifdef PICKING

@@ -165,6 +165,13 @@ void CSystemManager::GameStart()
 {
 	mRoundState = ROUND_STATE::eROUND_START;
 
+	for (auto & info : mPlayerInfo)
+	{
+		info.m_iPlayerPoint = 0;
+		info.m_nDeathCount  = 0;
+		info.m_nKillCount   = 0;
+	}
+
 	m_iRoundNumber = 0;
 	RoundEnter();
 }
@@ -190,6 +197,9 @@ void CSystemManager::RoundStart()
 void CSystemManager::RoundEnd()
 {
 	mRoundState = ROUND_STATE::eROUND_END;
+
+	if (m_iDominatingPlayerNum > -1)
+		mPlayerInfo[m_iDominatingPlayerNum].m_iPlayerPoint += mROUND_WIN_POINT;
 
 	m_fEndTime = m_fRoundTime;
 	m_fRoundTime = mfEND_TIME;
@@ -221,7 +231,7 @@ void CGlobalFontUI::DrawFont()
 
 	static char screenFont[52];
 	static wchar_t wscreenFont[30];
-	static const int wssize = sizeof(wchar_t) * 30;
+	static const int wssize = sizeof(wscreenFont);
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
 
 	swprintf_s(wscreenFont, wssize, L"Round(%d / %d)  %02d:%02d", SYSTEMMgr.GetRoundNumber(), roundmax, SYSTEMMgr.GetRoundMinute(), SYSTEMMgr.GetRoundSecond());
@@ -238,9 +248,9 @@ void CGlobalFontUI::DrawFont()
 	int iPlayerNum = SYSTEMMgr.GetPlayerNum();
 	for (int i = 0; i < allplayer; ++i)
 	{
-		swprintf_s(wscreenFont, wssize, L"%dP : %d pt[HP : %d]", i, info[i].m_iPlayerPoint, 
-			static_cast<CInGamePlayer*>(ppPlayers[i])->GetStatus().GetHP());
-		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(130, 100 + 25 * i), playerColor[i]);
+		swprintf_s(wscreenFont, wssize, L"%dP : %d pt [K:%d / D:%d]", i, info[i].m_iPlayerPoint,
+			info[i].m_nKillCount, info[i].m_nDeathCount);
+		FRAMEWORK.DrawFont(wscreenFont, 25, XMFLOAT2(150, 100 + 25 * i), playerColor[i]);
 	}
 
 	{

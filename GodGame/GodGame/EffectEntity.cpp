@@ -288,8 +288,8 @@ void CLightBomb::Initialize(ID3D11Device * pd3dDevice)
 	m_cbInfo.m_xmf3Pos = { 0, 0, 0 };
 
 	MoveVelocity move;
-	move.xmf3Velocity = { 0, 1.5f, 0 };
-	move.xmf3Accelate = { 0, -0.75f, 0 };
+	move.xmf3Velocity = { 0, 2.f, 0 };
+	move.xmf3Accelate = { 0, -1.2f, 0 };
 	move.fWeightSpeed = 20.0f;
 	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
 
@@ -714,7 +714,7 @@ void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
 	cbParticle.m_fMaxSize = 16.0f;
 	cbParticle.m_nColorNum = COLOR_WHITE;
 
-	m_uSize = 15;
+	m_uSize = 12;
 
 	MoveVelocity mov;
 	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "StatePlayer.h"
 #include "Player.h"
+//#include "SystemManager.h"
 
 CPlayerIdleState & CPlayerIdleState::GetInstance()
 {
@@ -106,8 +107,11 @@ void CPlayerKnockbackState::Enter(CInGamePlayer * pPlayer)
 	pPlayer->LookToTarget(pEntity);
 	//cout << "HP : " << pPlayer->GetStatus().GetHP() << endl;
 
-	EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_RADIAL_ON, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
-	EVENTMgr.InsertDelayMessage(0.3f, eMessage::MSG_EFFECT_RADIAL_OFF, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+	if (SYSTEMMgr.GetPlayerNum() == pPlayer->GetPlayerNum())
+	{
+		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_RADIAL_ON, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+		EVENTMgr.InsertDelayMessage(0.3f, eMessage::MSG_EFFECT_RADIAL_OFF, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+	}
 }
 
 void CPlayerKnockbackState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
@@ -164,6 +168,7 @@ CPlayerDeathState & CPlayerDeathState::GetInstance()
 
 void CPlayerDeathState::Enter(CInGamePlayer * pPlayer)
 {
+
 	pPlayer->GetStatus().SetCanMove(false);
 	pPlayer->GetStatus().SetAlive(false);
 	pPlayer->ChangeAnimationState(eANI_DEATH_FRONT, false, nullptr, 0);

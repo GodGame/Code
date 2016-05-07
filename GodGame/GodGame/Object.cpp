@@ -549,6 +549,7 @@ void CAnimatedObject::Animate(float fTimeElapsed)
 void CAnimatedObject::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera, XMFLOAT4X4 * pmtxParentWorld)
 {
 	if (false == m_bActive) return;
+
 	if (m_ppMeshes && m_bVisible)
 	{
 		CGameObject::UpdateSubResources(pd3dDeviceContext, uRenderState, pCamera, pmtxParentWorld);

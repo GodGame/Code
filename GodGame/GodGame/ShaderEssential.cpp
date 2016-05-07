@@ -849,12 +849,12 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 
 void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	OnPrepareRender(pd3dDeviceContext, uRenderState);
+	//OnPrepareRender(pd3dDeviceContext, uRenderState);
 	//printf("%0.2f %0.2f %0.2f \n", pos.x, pos.y, pos.z);
-	DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
+	//DWORD nCameraMode = (pCamera) ? pCamera->GetMode() : 0x00;
 	//m_ppObjects[0]->SetVisible(true);//m_ppObjects[1]->SetActive(true);
 
-	if (nCameraMode == THIRD_PERSON_CAMERA)
+	//if (nCameraMode == THIRD_PERSON_CAMERA)
 	{
 		CShader::Render(pd3dDeviceContext, uRenderState);
 	}
@@ -1447,7 +1447,7 @@ void CUIShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderStat
 		m_pMousePoint->Render(pd3dDeviceContext, uRenderState, pCamera);
 	}
 
-	FontRender(pd3dDeviceContext);
+	FontRender(pd3dDeviceContext, uRenderState, pCamera);
 }
 
 void CUIShader::CreateShader(ID3D11Device * pd3dDevice)
@@ -1666,17 +1666,68 @@ void CInGameUIShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRende
 	CUIShader::Render(pd3dDeviceContext, uRenderState, pCamera);
 }
 
-void CInGameUIShader::FontRender(ID3D11DeviceContext *pd3dDeviceContext)
+void CInGameUIShader::DrawUserNames(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
-	SYSTEMMgr.DrawSystemFont();
-	
+	CSystemManager& system = SYSTEMMgr;
+	CGameFramework& framework = FRAMEWORK;
+
+	static const XMVECTOR xmvViewRate  = XMVectorSet(FRAME_BUFFER_WIDTH * 0.5, -FRAME_BUFFER_HEIGHT * 0.5, 1.f, 1.f);
+	static const XMVECTOR xmvViewOff   = XMVectorSet(FRAME_BUFFER_WIDTH * 0.5, FRAME_BUFFER_HEIGHT * 0.5, 0, 0);
+	static const XMVECTOR xmvPosOffset = XMVectorSet(0, 20.f, 0, 0);
+
+	static wchar_t PlayerNames[20];
+	const static UINT playerColor[] = { 0xffffffff, 0xff0000ff, 0xff00ff00, 0xffff0000 };
+
+	const int allPlayers        = system.GetTotalPlayerNum();
+	CInGamePlayer** playerArray = reinterpret_cast<CInGamePlayer**>(system.GetPlayerArray());
+	XMMATRIX viewProj           = XMLoadFloat4x4(&pCamera->GetViewProjectionMatrix());
+
+	const XMFLOAT3 myPos        = system.GetPlayer()->GetPosition();
+	const int myNumber          = system.GetPlayerNum();
+
+	for (int i = 0; i < allPlayers; ++i)
+	{
+		XMVECTOR xmvPos = XMLoadFloat3(&playerArray[i]->GetPosition());
+		if (myNumber != i)
+		{
+			static float fLength;
+			XMVECTOR length = XMVector3LengthSq(XMLoadFloat3(&myPos) - xmvPos);
+			XMStoreFloat(&fLength, length);
+			if (fLength > 10000.f) continue;
+		}
+		xmvPos += xmvPosOffset;
+		xmvPos  = XMVector3TransformCoord(xmvPos, viewProj);
+		xmvPos *= xmvViewRate;
+		xmvPos += xmvViewOff;
+
+		XMFLOAT4 pos;
+		XMStoreFloat4(&pos, xmvPos);
+		//if ((pos.z / pos.w) < 0.f) continue;
+		swprintf_s(PlayerNames, sizeof(PlayerNames), L"Player%d (HP:%d)", i, playerArray[i]->GetStatus().GetHP());
+
+		framework.SetFont("Broadway");
+		framework.DrawFont(PlayerNames, 20, XMFLOAT2(pos.x, pos.y), playerColor[i]);
+		playerArray[i]->SetVisible(false);
+
+	}
+}
+
+void CInGameUIShader::FontRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
+{
+	CSystemManager& system = SYSTEMMgr;
+	CGameFramework& framework = FRAMEWORK;
+
+	system.DrawSystemFont();
+
+	DrawUserNames(pd3dDeviceContext, uRenderState, pCamera);
+
 	if (mbNeedElement)
 	{
 		const static XMFLOAT2 DrawNeedElemnt{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, FRAME_BUFFER_HEIGHT * 0.5) };
 		static wchar_t wscreenFont[26] = { L"원소가 부족합니다." };
 
-		FRAMEWORK.SetFont("HY견고딕");
-		FRAMEWORK.DrawFont(wscreenFont, 30, DrawNeedElemnt, 0xffaaaaff);
+		framework.SetFont("HY견고딕");
+		framework.DrawFont(wscreenFont, 30, DrawNeedElemnt, 0xffaaaaff);
 	}
 }
 
