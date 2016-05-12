@@ -504,7 +504,7 @@ void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	m_pLights->m_pLights[0].m_fTheta         = (float)cos(XMConvertToRadians(20.0f));
 
 	XMFLOAT3 pos = XMFLOAT3(1024, 0, 320);
-	pos.y = MAPMgr.GetHeight(pos) + 5;
+	pos.y = MAPMgr.GetHeight(pos) + 10;
 
 	m_pLights->m_pLights[1].m_bEnable        = 1.0f;//1.0f;
 	m_pLights->m_pLights[1].m_nType          = POINT_LIGHT;
@@ -516,15 +516,18 @@ void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	m_pLights->m_pLights[1].m_xv3Direction   = XMFLOAT3(0.0f, -1.f, 0.0f);
 	m_pLights->m_pLights[1].m_xv3Attenuation = XMFLOAT3(1.0f, 0.05f, 0.001f);
 
+	pos = XMFLOAT3(1074, 0, 320);
+	pos.y = MAPMgr.GetHeight(pos) + 10;
+
 	m_pLights->m_pLights[2].m_bEnable        = 1.0f;//1.0f;
 	m_pLights->m_pLights[2].m_nType          = POINT_LIGHT;
-	m_pLights->m_pLights[2].m_fRange         = 50.0f;
-	m_pLights->m_pLights[2].m_xcAmbient      = XMFLOAT4(0.0f, 0.4f, 0.0f, 1.0f);
-	m_pLights->m_pLights[2].m_xcDiffuse      = XMFLOAT4(0.1f, 0.2f, 0.1f, 1.0f);
-	m_pLights->m_pLights[2].m_xcSpecular     = XMFLOAT4(0.0f, 0.1f, 0.0f, 0.1f);
-	m_pLights->m_pLights[2].m_xv3Position    = XMFLOAT3(1098, 210, 350);
+	m_pLights->m_pLights[2].m_fRange         = 20.0f;
+	m_pLights->m_pLights[2].m_xcAmbient      = XMFLOAT4(0.0f, 0.0f, 0.4f, 1.0f);
+	m_pLights->m_pLights[2].m_xcDiffuse      = XMFLOAT4(0.1f, 0.1f, 0.2f, 1.0f);
+	m_pLights->m_pLights[2].m_xcSpecular     = XMFLOAT4(0.0f, 0.0f, 0.1f, 0.1f);
+	m_pLights->m_pLights[2].m_xv3Position    = pos;
 	m_pLights->m_pLights[2].m_xv3Direction   = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	m_pLights->m_pLights[2].m_xv3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
+	m_pLights->m_pLights[2].m_xv3Attenuation = XMFLOAT3(1.0f, 0.05f, 0.001f);
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(d3dBufferDesc));
@@ -671,11 +674,12 @@ bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 	{
 	case WM_RBUTTONUP:
 		CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
-		if (0 < pPlayer->UseMagic())
+		int result = pPlayer->UseMagic();
+		if (0 < result)
 		{
 			pPlayer->MagicShot();
 		}
-		else
+		else if (0 == result)
 		{
 			m_pUIShader->GetGameMessage(nullptr, eMessage::MSG_UI_DRAW_NEED_ELEMENT);
 		}

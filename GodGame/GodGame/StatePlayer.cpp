@@ -171,6 +171,7 @@ CPlayerDeathState & CPlayerDeathState::GetInstance()
 
 void CPlayerDeathState::Enter(CInGamePlayer * pPlayer)
 {
+	m_bCanChangeState = false;
 	pPlayer->GetStatus().SetHP(0);
 	pPlayer->GetStatus().SetCanMove(false);
 	pPlayer->GetStatus().SetAlive(false);
@@ -187,6 +188,7 @@ void CPlayerDeathState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
 
 void CPlayerDeathState::Exit(CInGamePlayer * pPlayer)
 {
+	m_bCanChangeState = true;
 	pPlayer->GetStatus().SetCanMove(true);
 	pPlayer->GetStatus().SetAlive(true);
 }

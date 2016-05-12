@@ -110,6 +110,7 @@ private:
 	bool	m_bMagicCancled : 1;
 	
 	float m_fDominateCoolTime;
+	float m_fMagicCoolTime;
 
 public:
 	CInGamePlayer(int m_nMeshes);
@@ -148,7 +149,7 @@ public:
 	
 	void AddEnergy(UINT index, UINT num = 1);
 
-	UINT UseMagic();
+	int UseMagic();
 	UINT UseEnergy(UINT index, BYTE energyNum, bool bForced = false);
 	UINT UseEnergy(UINT energyNum, bool bForced = false);
 	UINT UseAllEnergy(UINT energyNum, bool bForced = false);

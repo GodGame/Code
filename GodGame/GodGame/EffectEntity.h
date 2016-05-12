@@ -175,6 +175,12 @@ public:
 	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
 
+class CStaticFlame2 : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 

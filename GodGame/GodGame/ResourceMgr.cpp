@@ -362,8 +362,12 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_spike.png", 0);
 	pd3dsrvTexture->Release();
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/flame.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/flame0.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
 	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_flame0.png", 0);
+	pd3dsrvTexture->Release();
+
+	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/flame2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_flame2.png", 0);
 	pd3dsrvTexture->Release();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

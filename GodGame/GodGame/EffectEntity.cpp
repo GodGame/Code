@@ -51,7 +51,7 @@ void CEffect::GetGameMessage(CEntity * byEntity, eMessage eMSG, void * extra)
 
 void CEffect::SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra)
 {
-	if (toEntity == m_pMaster || dynamic_cast<CAbsorbMarble*>(toEntity)) return;
+	if (toEntity == m_pMaster) return;// || dynamic_cast<CAbsorbMarble*>(toEntity)) return;
 
 	switch (eMSG)
 	{
@@ -59,6 +59,7 @@ void CEffect::SendGameMessage(CEntity * toEntity, eMessage eMSG, void * extra)
 		return;
 		// 반대로 메세지 전송하도록 하자
 	case eMessage::MSG_COLLIDE:
+		if (false == toEntity->IsObstacle()) return;
 		toEntity->GetGameMessage(this, MSG_COLLIDED);
 		Collide();
 		//cout << "충돌!! At : " << toEntity->GetPosition() << endl;
@@ -438,9 +439,29 @@ void CStaticFlame::Initialize(ID3D11Device * pd3dDevice)
 
 	m_bUseLoop = true;
 	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_flame0.png"));
+}
 
-//	m_pNextEffect = new CElementSpike();
-//	m_pNextEffect->Initialize(pd3dDevice);
+void CStaticFlame2::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity = { 0, 0, 0 };
+	move.xmf3Accelate = { 0, 0, 0 };
+	move.fWeightSpeed = 1.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	float fSize = m_uSize = 8;
+	XMFLOAT2 xmf2Size{ fSize, fSize };
+	//XMFLOAT2 xmf2ImageSize{ 512, 1024 };
+	XMFLOAT2 xmf2ImageSize{ 1024, 1024 };
+	XMFLOAT2 xmf2FrameSize{ 128, 128 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 64, 0.033f);
+	m_cbInfo.m_bMove = false;
+
+	m_bUseLoop = true;
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_flame2.png"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -814,3 +835,4 @@ void CRainParticle::Initialize(ID3D11Device * pd3dDevice)
 
 	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
 }
+

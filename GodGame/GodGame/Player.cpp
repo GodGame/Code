@@ -546,6 +546,8 @@ void CInGamePlayer::InitializeAnimCycleTime()
 void CInGamePlayer::Update(float fTimeElapsed)
 {
 	m_fDominateCoolTime -= fTimeElapsed;
+	m_fMagicCoolTime    -= fTimeElapsed;
+
 	m_pStateMachine->Update(fTimeElapsed);
 	CPlayer::Update(fTimeElapsed);
 }
@@ -615,7 +617,7 @@ void CInGamePlayer::Damaged(CEffect * pEffect)
 }
 void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 {
-	if (GetAnimationState() == eANI_1H_MAGIC_ATTACK) m_bMagicCancled = true;
+	if (GetAnimationState() == eANI_1H_MAGIC_ATTACK || GetAnimationState() == eANI_1H_CAST) m_bMagicCancled = true;
 	if (false == m_Status.IsAlive()) return;
 
 	m_Status.Damaged(stDamage);
@@ -700,7 +702,8 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 	case 'S' :
 	case 'A' :
 	case 'D' :
-		ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+		if (m_pStateMachine->CanChangeState() && m_Status.IsCanMove()) 
+			ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
 		return;
 	case 'G':
 		StopDominate();
@@ -750,8 +753,10 @@ void CInGamePlayer::AddEnergy(UINT index, UINT num)
 
 }
 
-UINT CInGamePlayer::UseMagic()
+int CInGamePlayer::UseMagic()
 {
+	if (m_fMagicCoolTime > 0.f) return -1;
+
 	if (m_pChild)
 	{
 		CStaff * pMyItem = static_cast<CStaff*>(m_pChild);
@@ -829,6 +834,8 @@ void CInGamePlayer::Death(CCharacter * pChar)
 
 void CInGamePlayer::MagicShot()
 {
+	m_fMagicCoolTime = 1.8f;
+	m_Status.SetCanMove(false);
 	ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
 	EVENTMgr.InsertDelayMessage(0.25f, eMessage::MSG_MAGIC_CAST, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
 	EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
@@ -842,7 +849,7 @@ void CInGamePlayer::AcquireItem(CItem * pItem)
 		SetChild(pStaff);
 
 		if(SYSTEMMgr.GetPlayerNum() == m_iPlayerNum)
-			EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
+			EVENTMgr.InsertDelayMessage(0.02f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
 				m_pScene, nullptr, m_pChild);
 	}
 }
@@ -861,7 +868,7 @@ void CInGamePlayer::ThrowItem()
 		m_pChild->Release();
 		m_pChild = nullptr;
 
-		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
+		EVENTMgr.InsertDelayMessage(0.01f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
 			m_pScene, nullptr, m_pChild);
 	}
 }

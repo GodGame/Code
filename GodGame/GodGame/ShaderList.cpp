@@ -571,6 +571,7 @@ void CBillboardShader::BuildObjects(ID3D11Device *pd3dDevice)
 		pTree = new CBillboardObject(xmf3Pos, i * rand() % 4, xmf2Size);
 		pTree->SetMesh(pTreeMesh);
 		pTree->SetSize(20.0f);
+		//pTree->SetObstacle(true);
 		//pTree->SetCollide(true);
 		pTree->AddRef();
 		m_ppObjects[i] = pTree;
@@ -890,7 +891,7 @@ void CCharacterShader::Reset()
 
 	XMFLOAT3 pos = SYSTEMMgr.GetPortalGate()->GetPosition();
 	//pos.x += rand() % 100 - 50;
-	pos.z -= 50;
+	pos.z -= 150;
 	pos.y = MAPMgr.GetHeight(pos);
 	m_ppObjects[0]->SetPosition(pos.x, pos.y, pos.z);
 
@@ -1441,15 +1442,16 @@ void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
 
 void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial)
 {
-	m_nObjects = 8;
+	m_nObjects = 9;
 
 	m_ppEffctsObjects = new CTxAnimationObject*[m_nObjects];
 
 	m_ppEffctsObjects[0] = new CCircleMagic();
 	m_ppEffctsObjects[1] = new CElectricBolt();//CIceBolt();
 	m_ppEffctsObjects[2] = new CStaticFlame();
+	m_ppEffctsObjects[3] = new CStaticFlame2();
 
-	for (int i = 3; i < 8; ++i)
+	for (int i = 4; i < m_nObjects; ++i)
 	{
 		m_ppEffctsObjects[i] = new CLightBomb();
 		m_CastingEffectList.push_back(m_ppEffctsObjects[i]);
@@ -1463,6 +1465,9 @@ void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMat
 	pos.y = MAPMgr.GetHeight(pos) + 4;
 	m_ppEffctsObjects[2]->Enable(nullptr, &pos);
 
+	pos = XMFLOAT3(1074, 0, 320);
+	pos.y = MAPMgr.GetHeight(pos) + 3;
+	m_ppEffctsObjects[3]->Enable(nullptr, &pos);
 	CreateStates(pd3dDevice);
 }
 

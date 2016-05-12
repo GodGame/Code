@@ -159,6 +159,8 @@ void CEffectShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
 		pPlayer = static_cast<CInGamePlayer*>(extra);
 		if (false == pPlayer->IsCancled())
 			static_cast<CParticleShader*>(m_ppShader[mParticleEffectNum])->ParticleOn(pPlayer->Get1HAnimShotParticleOnInfo());
+		pPlayer->GetStatus().SetCanMove(true);
+		pPlayer->SetCancled(false);
 		return;
 
 	case eMessage::MSG_MAGIC_AREA:
