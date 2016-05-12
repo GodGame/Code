@@ -15,6 +15,10 @@ void CWarrockIdleState::Enter(CWarrock * pWarrock)
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_IDLE, true, nullptr, 0);
 
 	mEvaluator.SetEvaluate(mfATTACK_RAGNE);
+
+#ifdef _DEBUG
+	cout << "Idle";
+#endif
 }
 
 void CWarrockIdleState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -59,9 +63,14 @@ CWarrockPunchState & CWarrockPunchState::GetInstance()
 
 void CWarrockPunchState::Enter(CWarrock * pWarrock)
 {
+	m_bCanChangeState = false;
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_PUNCH, false, nullptr, 0);
 	pWarrock->LookToTarget(pWarrock->GetTarget());
 	mEvaluator.SetEvaluate(mfMAX_RAGNE);
+
+#ifdef _DEBUG
+	cout << "Punch";
+#endif
 }
 
 void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -89,6 +98,7 @@ void CWarrockPunchState::Execute(CWarrock * pWarrock, float fFrameTime)
 
 void CWarrockPunchState::Exit(CWarrock * pWarrock)
 {
+	m_bCanChangeState = true;
 	EVENTMgr.InsertDelayMessage(m_fDelay, eMessage::MSG_OBJECT_STATE_CHANGE,
 		CGameEventMgr::MSG_TYPE_ENTITY, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
 }
@@ -101,9 +111,13 @@ CWarrockSwipingState & CWarrockSwipingState::GetInstance()
 
 void CWarrockSwipingState::Enter(CWarrock * pWarrock)
 {
+	m_bCanChangeState = false;
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_SWIPING, false, nullptr, 0);
 	pWarrock->LookToTarget(pWarrock->GetTarget());
 	mEvaluator.SetEvaluate(mfMAX_RAGNE);
+#ifdef _DEBUG
+	cout << "Swiping";
+#endif
 }
 
 void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -131,6 +145,7 @@ void CWarrockSwipingState::Execute(CWarrock * pWarrock, float fFrameTime)
 
 void CWarrockSwipingState::Exit(CWarrock * pWarrock)
 {
+	m_bCanChangeState = true;
 	EVENTMgr.InsertDelayMessage(m_fDelay, eMessage::MSG_OBJECT_STATE_CHANGE,
 		CGameEventMgr::MSG_TYPE_ENTITY, pWarrock, nullptr, &CWarrockIdleState::GetInstance());
 }
@@ -144,6 +159,10 @@ CWarrockRoarState & CWarrockRoarState::GetInstance()
 void CWarrockRoarState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_ROAR, false, nullptr, 0);
+
+#ifdef _DEBUG
+	cout << "Roar";
+#endif
 }
 
 void CWarrockRoarState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -190,6 +209,10 @@ void CWarrockChaseTargetState::Enter(CWarrock * pWarrock)
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_RUN, false, nullptr, 0);
 
 	mEvaluator.SetEvaluate(mfCHASE_RAGNE);
+
+#ifdef _DEBUG
+	cout << "Chase";
+#endif
 }
 
 void CWarrockChaseTargetState::Execute(CWarrock * pWarrock, float fFrameTime)
@@ -238,6 +261,10 @@ CWarrockDelayState & CWarrockDelayState::GetInstance()
 void CWarrockDelayState::Enter(CWarrock * pWarrock)
 {
 	pWarrock->ChangeAnimationState(CWarrock::eANI_WARROCK_IDLE, false, nullptr, 0);
+
+#ifdef _DEBUG
+	cout << "Delay";
+#endif
 }
 
 void CWarrockDelayState::Execute(CWarrock * pWarrock, float fFrameTime)

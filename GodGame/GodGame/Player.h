@@ -81,6 +81,9 @@ public:
 
 class CTerrainPlayer : public CPlayer
 {
+protected :
+	bool m_bVibrationEffect;
+
 public:
 	CTerrainPlayer(int nMeshes = 1);
 	virtual ~CTerrainPlayer();
@@ -89,6 +92,8 @@ public:
 
 	virtual void OnPlayerUpdated(float fTimeElapsed);
 	virtual void OnCameraUpdated(float fTimeElapsed);
+
+	void SetVibrateCamera(bool bEffect) { m_bVibrationEffect = bEffect; }
 };
 
 class CInGamePlayer : public CTerrainPlayer

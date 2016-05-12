@@ -645,6 +645,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 #endif
 
 		case '0':
+		case '5':
 		case '6':
 		case '7':
 		case '8':

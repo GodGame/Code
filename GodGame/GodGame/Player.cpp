@@ -331,6 +331,7 @@ void CPlayer::Animate(float fTimeElapsed)
 
 CTerrainPlayer::CTerrainPlayer(int nMeshes) : CPlayer(nMeshes)
 {
+	m_bVibrationEffect = false;
 }
 
 CTerrainPlayer::~CTerrainPlayer()
@@ -405,7 +406,14 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	}
 
 	XMFLOAT3 look = GetPosition();
-	look.y += 5.0f;
+	if (m_bVibrationEffect)
+	{
+		look.x += rand() % 6 - 3;
+		look.y += rand() % 6 - 3;
+		look.z += rand() % 6 - 3;
+	}
+	else
+		look.y += 10.0f;
 	pCamera->SetLookAt(look);
 
 	m_pCamera->RegenerateViewMatrix();
@@ -479,13 +487,19 @@ void CInGamePlayer::GetGameMessage(CEntity * byObj, eMessage eMSG, void * extra)
 		if (pEffect) Damaged(pEffect);
 		return;
 	}
-	case eMessage::MSG_NORMAL:
+	case eMessage::MSG_EFFECT_VIBRATE_ON:
+		m_bVibrationEffect = true;
 		return;
+	case eMessage::MSG_EFFECT_VIBRATE_OFF:
+		m_bVibrationEffect = false;
+		return;
+	//case eMessage::MSG_NORMAL:
+	//	return;
 	case eMessage::MSG_COLLIDE_LOCATION:
 		//toObj->GetGameMessage(this, MSG_COLLIDE);
 		return;
-	case eMessage::MSG_MAGIC_SHOT:
-		return;
+	//case eMessage::MSG_MAGIC_SHOT:
+	//	return;
 	case eMessage::MSG_PLAYER_DOMIATE_END:
 		StopDominate();
 		return;
@@ -560,7 +574,9 @@ void CInGamePlayer::ForcedByObj(CEntity * pObj)
 			if (AABB::CollisionAABB(m_bcMeshBoundingCube, pObj->m_bcMeshBoundingCube))
 			{
 				//m_xv3BeforePos.y = MAPMgr.GetHeight(m_xv3BeforePos);
+				XMFLOAT3 nowPos = GetPosition();
 				SetPosition(m_xv3BeforePos);
+				m_xv3BeforePos = nowPos;
 				//cout << "Before!!" << GetPosition() << "\n->>"<< pObj->m_bcMeshBoundingCube << endl;
 			}
 		}
@@ -693,6 +709,12 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 	case '0':
 		Revive();
 		return;
+
+	case '5':
+		m_bVibrationEffect = true;
+		EVENTMgr.InsertDelayMessage(0.5f, eMessage::MSG_EFFECT_VIBRATE_OFF, CGameEventMgr::MSG_TYPE_ENTITY, this);
+		return;
+
 	case '6':
 		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_GLARE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
 		EVENTMgr.InsertDelayMessage(1.2f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);

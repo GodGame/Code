@@ -110,7 +110,10 @@ void CPlayerKnockbackState::Enter(CInGamePlayer * pPlayer)
 	if (SYSTEMMgr.GetPlayerNum() == pPlayer->GetPlayerNum())
 	{
 		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_RADIAL_ON, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+		//GetGameMessage(nullptr, MSG_EFFECT_VIBRATE_ON, nullptr);
 		EVENTMgr.InsertDelayMessage(0.3f, eMessage::MSG_EFFECT_RADIAL_OFF, CGameEventMgr::MSG_TYPE_SCENE, pPlayer->GetScene());
+		EVENTMgr.InsertDelayMessage(0.1f, eMessage::MSG_EFFECT_VIBRATE_ON, CGameEventMgr::MSG_TYPE_ENTITY, pPlayer);
+		EVENTMgr.InsertDelayMessage(0.4f, eMessage::MSG_EFFECT_VIBRATE_OFF, CGameEventMgr::MSG_TYPE_ENTITY, pPlayer);
 	}
 }
 
