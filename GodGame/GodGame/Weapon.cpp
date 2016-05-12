@@ -98,7 +98,7 @@ void CItem::Update(float fFrameTime)
 
 #endif
 	xmfPos.y -= fGravity * fFrameTime;
-	float fHeight = MAPMgr.GetHeight(xmfPos) + 2.f;
+	float fHeight = MAPMgr.GetHeight(xmfPos) + 2.5f;
 	if (xmfPos.y < fHeight)
 	{
 		xmfPos.y = fHeight;

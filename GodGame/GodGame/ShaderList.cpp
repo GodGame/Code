@@ -1441,14 +1441,15 @@ void CTextureAniShader::CreateStates(ID3D11Device * pd3dDevice)
 
 void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMaterial)
 {
-	m_nObjects = 7;
+	m_nObjects = 8;
 
 	m_ppEffctsObjects = new CTxAnimationObject*[m_nObjects];
 
 	m_ppEffctsObjects[0] = new CCircleMagic();
 	m_ppEffctsObjects[1] = new CElectricBolt();//CIceBolt();
-	
-	for (int i = 2; i < 7; ++i)
+	m_ppEffctsObjects[2] = new CStaticFlame();
+
+	for (int i = 3; i < 8; ++i)
 	{
 		m_ppEffctsObjects[i] = new CLightBomb();
 		m_CastingEffectList.push_back(m_ppEffctsObjects[i]);
@@ -1457,6 +1458,10 @@ void CTextureAniShader::BuildObjects(ID3D11Device * pd3dDevice, CMaterial * pMat
 	{
 		m_ppEffctsObjects[i]->Initialize(pd3dDevice);
 	}
+
+	XMFLOAT3 pos = XMFLOAT3(1024, 0, 320); 
+	pos.y = MAPMgr.GetHeight(pos) + 4;
+	m_ppEffctsObjects[2]->Enable(nullptr, &pos);
 
 	CreateStates(pd3dDevice);
 }
@@ -1496,7 +1501,12 @@ void CTextureAniShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRe
 	for (int i = 0; i < m_nObjects; ++i)
 	{
 		if (m_ppEffctsObjects[i]->IsUsing())
+		{
 			m_ppEffctsObjects[i]->Render(pd3dDeviceContext, uRenderState, pCamera);
+////#ifdef _DEBUG
+//			if (i == 2) cout << "Fire : " << m_ppEffctsObjects[i]->GetPosition() << endl;
+//#endif
+		}
 	}
 
 	pd3dDeviceContext->OMSetBlendState(nullptr, nullptr, 0xffffffff);

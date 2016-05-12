@@ -479,49 +479,52 @@ void CSceneInGame::CreateShaderVariables(ID3D11Device *pd3dDevice)
 	m_pLights = new LIGHTS;
 	::ZeroMemory(m_pLights, sizeof(LIGHTS));
 	//게임 월드 전체를 비추는 주변조명을 설정한다.
-	m_pLights->m_xcGlobalAmbient             = XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
+	m_pLights->m_xcGlobalAmbient             = XMFLOAT4(0.3f, 0.3f, 0.3f, 0.0f);
 
 	//3개의 조명(점 광원, 스팟 광원, 방향성 광원)을 설정한다.
+#if 0
 	m_pLights->m_pLights[0].m_bEnable        = 1.0f;
 	m_pLights->m_pLights[0].m_nType          = DIRECTIONAL_LIGHT;
 	m_pLights->m_pLights[0].m_xcAmbient      = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	m_pLights->m_pLights[0].m_xcDiffuse      = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
 	m_pLights->m_pLights[0].m_xcSpecular     = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
 	m_pLights->m_pLights[0].m_xv3Direction   = XMFLOAT3(-0.707f, -0.707f, 0.0f);
+#endif
+	m_pLights->m_pLights[0].m_bEnable        = 1.0f;
+	m_pLights->m_pLights[0].m_nType          = SPOT_LIGHT;
+	m_pLights->m_pLights[0].m_fRange         = 100.0f;
+	m_pLights->m_pLights[0].m_xcAmbient      = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[0].m_xcDiffuse      = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	m_pLights->m_pLights[0].m_xcSpecular     = XMFLOAT4(0.3f, 0.3f, 0.3f, 5.0f);
+	m_pLights->m_pLights[0].m_xv3Position    = XMFLOAT3(500.0f, 300.0f, 500.0f);
+	m_pLights->m_pLights[0].m_xv3Direction   = XMFLOAT3(0.0f, -1.f, 0.0f);
+	m_pLights->m_pLights[0].m_xv3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
+	m_pLights->m_pLights[0].m_fFalloff       = 8.0f;
+	m_pLights->m_pLights[0].m_fPhi           = (float)cos(XMConvertToRadians(40.0f));
+	m_pLights->m_pLights[0].m_fTheta         = (float)cos(XMConvertToRadians(20.0f));
 
-	m_pLights->m_pLights[1].m_bEnable        = 1.0f;
-	m_pLights->m_pLights[1].m_nType          = SPOT_LIGHT;
-	m_pLights->m_pLights[1].m_fRange         = 100.0f;
-	m_pLights->m_pLights[1].m_xcAmbient      = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	m_pLights->m_pLights[1].m_xcDiffuse      = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	m_pLights->m_pLights[1].m_xcSpecular     = XMFLOAT4(0.3f, 0.3f, 0.3f, 5.0f);
-	m_pLights->m_pLights[1].m_xv3Position    = XMFLOAT3(500.0f, 300.0f, 500.0f);
+	XMFLOAT3 pos = XMFLOAT3(1024, 0, 320);
+	pos.y = MAPMgr.GetHeight(pos) + 5;
+
+	m_pLights->m_pLights[1].m_bEnable        = 1.0f;//1.0f;
+	m_pLights->m_pLights[1].m_nType          = POINT_LIGHT;
+	m_pLights->m_pLights[1].m_fRange         = 20.0f;
+	m_pLights->m_pLights[1].m_xcAmbient      = XMFLOAT4(0.5f, 0.0f, 0.0f, 1.0f);
+	m_pLights->m_pLights[1].m_xcDiffuse      = XMFLOAT4(0.7f, 0.1f, 0.1f, 1.0f);
+	m_pLights->m_pLights[1].m_xcSpecular     = XMFLOAT4(0.3f, 0.0f, 0.0f, 0.1f);
+	m_pLights->m_pLights[1].m_xv3Position    = pos;
 	m_pLights->m_pLights[1].m_xv3Direction   = XMFLOAT3(0.0f, -1.f, 0.0f);
-	m_pLights->m_pLights[1].m_xv3Attenuation = XMFLOAT3(1.0f, 0.01f, 0.0001f);
-	m_pLights->m_pLights[1].m_fFalloff       = 8.0f;
-	m_pLights->m_pLights[1].m_fPhi           = (float)cos(XMConvertToRadians(40.0f));
-	m_pLights->m_pLights[1].m_fTheta         = (float)cos(XMConvertToRadians(20.0f));
+	m_pLights->m_pLights[1].m_xv3Attenuation = XMFLOAT3(1.0f, 0.05f, 0.001f);
 
 	m_pLights->m_pLights[2].m_bEnable        = 1.0f;//1.0f;
 	m_pLights->m_pLights[2].m_nType          = POINT_LIGHT;
 	m_pLights->m_pLights[2].m_fRange         = 50.0f;
-	m_pLights->m_pLights[2].m_xcAmbient      = XMFLOAT4(0.5f, 0.0f, 0.0f, 1.0f);
-	m_pLights->m_pLights[2].m_xcDiffuse      = XMFLOAT4(0.3f, 0.1f, 0.1f, 1.0f);
-	m_pLights->m_pLights[2].m_xcSpecular     = XMFLOAT4(0.1f, 0.0f, 0.0f, 0.1f);
+	m_pLights->m_pLights[2].m_xcAmbient      = XMFLOAT4(0.0f, 0.4f, 0.0f, 1.0f);
+	m_pLights->m_pLights[2].m_xcDiffuse      = XMFLOAT4(0.1f, 0.2f, 0.1f, 1.0f);
+	m_pLights->m_pLights[2].m_xcSpecular     = XMFLOAT4(0.0f, 0.1f, 0.0f, 0.1f);
 	m_pLights->m_pLights[2].m_xv3Position    = XMFLOAT3(1098, 210, 350);
-	m_pLights->m_pLights[2].m_xv3Direction   = XMFLOAT3(0.0f, -1.f, 0.0f);
+	m_pLights->m_pLights[2].m_xv3Direction   = XMFLOAT3(0.0f, -1.0f, 0.0f);
 	m_pLights->m_pLights[2].m_xv3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
-
-
-	m_pLights->m_pLights[3].m_bEnable        = 1.0f;//1.0f;
-	m_pLights->m_pLights[3].m_nType          = POINT_LIGHT;
-	m_pLights->m_pLights[3].m_fRange         = 50.0f;
-	m_pLights->m_pLights[3].m_xcAmbient      = XMFLOAT4(0.0f, 0.4f, 0.0f, 1.0f);
-	m_pLights->m_pLights[3].m_xcDiffuse      = XMFLOAT4(0.1f, 0.2f, 0.1f, 1.0f);
-	m_pLights->m_pLights[3].m_xcSpecular     = XMFLOAT4(0.0f, 0.1f, 0.0f, 0.1f);
-	m_pLights->m_pLights[3].m_xv3Position    = XMFLOAT3(1098, 210, 350);
-	m_pLights->m_pLights[3].m_xv3Direction   = XMFLOAT3(0.0f, -1.0f, 0.0f);
-	m_pLights->m_pLights[3].m_xv3Attenuation = XMFLOAT3(1.0f, 0.001f, 0.0001f);
 
 	D3D11_BUFFER_DESC d3dBufferDesc;
 	ZeroMemory(&d3dBufferDesc, sizeof(d3dBufferDesc));
@@ -642,6 +645,7 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 #endif
 
 		case '0':
+		case '6':
 		case '7':
 		case '8':
 		case '9':
@@ -760,18 +764,18 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 	return false;
 }
 
-void CSceneInGame::AnimateObjects(float fTimeElapsed)
+void CSceneInGame::LightUpdate(float fTimeElapsed)
 {
 	if (m_pLights && m_pd3dcbLights)
 	{
 		//현재 카메라의 위치 벡터를 조명을 나타내는 상수 버퍼에 설정한다.
 		XMFLOAT3 xv3CameraPosition = m_pCamera->GetPosition();
-		m_pLights->m_xv4CameraPosition = XMFLOAT4(xv3CameraPosition.x, xv3CameraPosition.y, xv3CameraPosition.z, 1.0f);	
+		m_pLights->m_xv4CameraPosition = XMFLOAT4(xv3CameraPosition.x, xv3CameraPosition.y, xv3CameraPosition.z, 1.0f);
 
 		/*두 번째 조명은 플레이어가 가지고 있는 손전등(스팟 조명)이다. 그러므로 플레이어의 위치와 방향이 바뀌면 현재 플레이어의 위치와 z-축 방향 벡터를 스팟 조명의 위치와 방향으로 설정한다.*/
 		CPlayer *pPlayer = m_pCamera->GetPlayer();
-		m_pLights->m_pLights[1].m_xv3Position = pPlayer->GetPosition();
-		m_pLights->m_pLights[1].m_xv3Direction = pPlayer->GetLookVector();
+		m_pLights->m_pLights[0].m_xv3Position = pPlayer->GetPosition();
+		m_pLights->m_pLights[0].m_xv3Direction = pPlayer->GetLookVector();
 
 		//XMFLOAT3 pos = m_pPlayerShader->GetPlayer(0)->GetPosition();
 		//pos.y += 20.f;
@@ -780,6 +784,13 @@ void CSceneInGame::AnimateObjects(float fTimeElapsed)
 		//pos.y += 20.f;
 		//m_pLights->m_pLights[3].m_xv3Position = pos;
 	}
+
+}
+
+void CSceneInGame::AnimateObjects(float fTimeElapsed)
+{
+	LightUpdate(fTimeElapsed);
+
 	for (int i = 0; i < m_nShaders; i++)
 	{
 		m_ppShaders[i]->AnimateObjects(fTimeElapsed);

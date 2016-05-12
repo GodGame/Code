@@ -1,4 +1,4 @@
-#define MAX_LIGHTS		4 
+#define MAX_LIGHTS		3 
 #define POINT_LIGHT		1.0f
 #define SPOT_LIGHT		2.0f
 #define DIRECTIONAL_LIGHT	3.0f
@@ -35,6 +35,14 @@ struct LIGHT
 	float padding;
 };
 
+cbuffer directWorldLight
+{
+	static const float4 directWolrdAmbient = float4(0.1f, 0.1f, 0.1f, 1.0f);
+	static const float4 directWorldDiffsue = float4(0.3f, 0.3f, 0.3f, 1.0f);
+	static const float4 directWorldSpecular = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	static const float3 directWorldDirection = float3(-0.707f, -0.707f, 0.0f);
+};
+
 //조명을 위한 상수버퍼를 선언한다. 
 cbuffer cbLight : register(b0)
 {
@@ -60,6 +68,7 @@ struct LIGHTEDCOLOR
 	float4 m_cSpecular;
 };
 
+#if 0
 /*방향성 조명의 효과를 계산하는 함수이다. 방향성 조명은 조명까지의 거리에 따라 조명의 양이 변하지 않는다.*/
 LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera)
 {
@@ -217,6 +226,7 @@ float4 Lighting(float3 vPosition, float3 vNormal)
 	cColor.a = gMaterial.m_cDiffuse.a;
 	return(cColor);
 }
+#endif
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*방향성 조명의 효과를 계산하는 함수이다. 방향성 조명은 조명까지의 거리에 따라 조명의 양이 변하지 않는다.*/
@@ -243,11 +253,11 @@ LIGHTEDCOLOR DirectionalLight(int i, float3 vNormal, float3 vToCamera, float4 vD
 #endif
 			float fSpecularFactor = pow(max(dot(vHalf, vNormal), 0.0f), vSpec.a);
 #endif
-			output.m_cSpecular = vSpec * (gLights[i].m_cSpecular * fSpecularFactor);
+			output.m_cSpecular = vSpec * (directWorldSpecular * fSpecularFactor);
 		}
-		output.m_cDiffuse = float4(vDiffuse.rgb, 1) * (gLights[i].m_cDiffuse * fDiffuseFactor);
+		output.m_cDiffuse = float4(vDiffuse.rgb, 1) * (directWorldDiffsue * fDiffuseFactor);
 	}
-	output.m_cAmbient = gLights[i].m_cAmbient; // gAmbient *
+	output.m_cAmbient = directWolrdAmbient; // gAmbient *
 	return(output);
 }
 
@@ -398,12 +408,12 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 			//vSpec.w = 1.0f;
 
 			//조명의 유형에 따라 조명의 영향을 계산한다.
-			if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
-			{
-				LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
-				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
-			}
-			else if (gLights[i].m_nType == POINT_LIGHT)
+			//if (gLights[i].m_nType == DIRECTIONAL_LIGHT)
+			//{
+			//	LightedColor = DirectionalLight(i, vNormal, vToCamera, vDiffuse, vSpec);
+			//	cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
+			//}
+			if (gLights[i].m_nType == POINT_LIGHT)
 			{
 				LightedColor = PointLight(i, vToLight, vNormal, vToCamera, vDiffuse, vSpec);
 				cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
@@ -415,6 +425,9 @@ float4 Lighting(float3 vPos, float3 vNormal, float4 vDiff, float4 vSpecular)
 			}
 		}
 	}
+
+	LightedColor = DirectionalLight(0, vNormal, vToCamera, vDiffuse, vSpec);
+	cColor += (LightedColor.m_cAmbient + LightedColor.m_cDiffuse * fShadowFactor + LightedColor.m_cSpecular * fShadowFactor);
 	//글로벌 주변 조명의 영향을 최종 색상에 더한다.
 	cColor += (gcLightGlobalAmbient * vDiffuse * fShadowFactor/** HemisphericLight( vNormal, vPos)*//*gAmbient*/ );
 	//cColor *= HemisphericLight(vNormal, vPos);

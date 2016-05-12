@@ -117,6 +117,7 @@ CTxAnimationObject::CTxAnimationObject()
 	m_pd3dCSBuffer = nullptr;
 
 	m_bUseAnimation = false;
+	m_bUseLoop = false;
 }
 
 CTxAnimationObject::~CTxAnimationObject()
@@ -221,8 +222,12 @@ bool CTxAnimationObject::Enable(CGameObject * pObj, XMFLOAT3 * pos, int nColorNu
 bool CTxAnimationObject::Disable()
 {
 	if (m_fDamage > 0.f) QUADMgr.DeleteDynamicEntity(this);
-
-	return (m_bEnable = false);
+	
+	if (m_bUseLoop)
+		Enable(m_pMaster, &m_velocity.xmf3InitPos);
+	else
+		m_bEnable = false;
+	return m_bEnable;
 }
 
 void CTxAnimationObject::NextEffectOn()
@@ -244,7 +249,9 @@ void CTxAnimationObject::Animate(float fTimeElapsed)
 	{
 		m_pNextEffect->Animate(fTimeElapsed);
 		if (m_pNextEffect->IsTermainal())
+		{
 			Disable();
+		}
 	}
 	else if (m_bUseAnimation)
 	{
@@ -409,6 +416,31 @@ void CElectricBolt::Initialize(ID3D11Device * pd3dDevice)
 
 	m_pNextEffect = new CElementSpike();
 	m_pNextEffect->Initialize(pd3dDevice);
+}
+
+void CStaticFlame::Initialize(ID3D11Device * pd3dDevice)
+{
+	m_cbInfo.m_nColorNum = COLOR_WHITE;
+	m_cbInfo.m_xmf3Pos = { 0, 0, 0 };
+
+	MoveVelocity move;
+	move.xmf3Velocity = { 0, 0, 0 };
+	move.xmf3Accelate = { 0, 0, 0 };
+	move.fWeightSpeed = 1.0f;
+	SetMoveVelocity(move, &m_cbInfo.m_xmf3Pos);
+
+	float fSize = m_uSize = 10;
+	XMFLOAT2 xmf2Size{ fSize, fSize };
+	XMFLOAT2 xmf2ImageSize{ 1024, 512 };
+	XMFLOAT2 xmf2FrameSize{ 128, 128 };
+	CTxAnimationObject::CreateBuffers(pd3dDevice, xmf2Size, xmf2ImageSize, xmf2FrameSize, 32, 0.033f);
+	m_cbInfo.m_bMove = false;
+
+	m_bUseLoop = true;
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_sprite_flame0.png"));
+
+//	m_pNextEffect = new CElementSpike();
+//	m_pNextEffect->Initialize(pd3dDevice);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////

@@ -47,7 +47,7 @@ VS_LIGHTING_COLOR_OUTPUT VSLightingColor(VS_LIGHTING_COLOR_INPUT input)
 float4 PSLightingColor(VS_LIGHTING_COLOR_OUTPUT input) : SV_Target
 {
 	input.normalW = normalize(input.normalW);
-	float4 cIllumination = Lighting(input.positionW, input.normalW);
+float4 cIllumination = float4(1, 1, 1, 1);//Lighting(input.positionW, input.normalW);
 
 	return(cIllumination);
 }
@@ -65,7 +65,7 @@ VS_INSTANCED_LIGHTING_COLOR_OUTPUT VSInstancedLightingColor(VS_INSTANCED_LIGHTIN
 float4 PSInstancedLightingColor(VS_INSTANCED_LIGHTING_COLOR_OUTPUT input) : SV_Target
 {
 	input.normalW = normalize(input.normalW);
-	float4 cIllumination = Lighting(input.positionW, input.normalW);
+	float4 cIllumination = float4(1, 1, 1, 1);//Lighting(input.positionW, input.normalW);
 
 	return(cIllumination);
 }
@@ -206,29 +206,6 @@ PS_MRT_OUT PSTexturedLightingColor(VS_TEXTURED_LIGHTING_COLOR_OUTPUT input)
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-VS_DETAIL_TEXTURED_LIGHTING_COLOR_OUTPUT VSDetailTexturedLightingColor(VS_DETAIL_TEXTURED_LIGHTING_COLOR_INPUT input)
-{
-	VS_DETAIL_TEXTURED_LIGHTING_COLOR_OUTPUT output = (VS_DETAIL_TEXTURED_LIGHTING_COLOR_OUTPUT)0;
-	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
-	output.positionW = mul(float4(input.position, 1.0f), gmtxWorld).xyz;
-	output.position = mul(float4(output.positionW, 1.0f), gmtxViewProjection);
-	output.texCoordBase = input.texCoordBase;
-	output.texCoordDetail = input.texCoordDetail;
-
-	return(output);
-}
-
-float4 PSDetailTexturedLightingColor(VS_DETAIL_TEXTURED_LIGHTING_COLOR_OUTPUT input) : SV_Target
-{
-	input.normalW = normalize(input.normalW);
-	float4 cIllumination = Lighting(input.positionW, input.normalW);
-	float4 cBaseTexColor = gtxtTexture.Sample(gSamplerState, input.texCoordBase);
-	float4 cDetailTexColor = gtxtDetailTexture.Sample(gDetailSamplerState, input.texCoordDetail);
-	float4 cColor = saturate((cBaseTexColor * 0.5f) + (cDetailTexColor * 0.5f));
-
-	return(cColor*cIllumination);
-}
-
 // ½ºÇÃ·§¿ë
 VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT VSSplatTexturedLightingColor(VS_SPLAT_TEXTURED_LIGHTING_COLOR_INPUT input)
 {
@@ -271,25 +248,6 @@ return output;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-VS_INSTANCED_TEXTURED_LIGHTING_COLOR_OUTPUT VSInstancedTexturedLightingColor(VS_INSTANCED_TEXTURED_LIGHTING_COLOR_INPUT input)
-{
-	VS_INSTANCED_TEXTURED_LIGHTING_COLOR_OUTPUT output = (VS_INSTANCED_TEXTURED_LIGHTING_COLOR_OUTPUT)0;
-	output.normalW = mul(input.normal, (float3x3)input.mtxTransform);
-	output.positionW = mul(float4(input.position, 1.0f), input.mtxTransform).xyz;
-	output.position = mul(float4(output.positionW, 1.0f), gmtxViewProjection);
-	output.texCoord = input.texCoord;
-
-	return(output);
-}
-
-float4 PSInstancedTexturedLightingColor(VS_INSTANCED_TEXTURED_LIGHTING_COLOR_OUTPUT input) : SV_Target
-{
-	input.normalW = normalize(input.normalW);
-	float4 cIllumination = Lighting(input.positionW, input.normalW);
-	float4 cColor = gtxtTexture.Sample(gSamplerState, input.texCoord) * cIllumination;
-
-	return(cColor);
-}
 
 
 FLOAT3_POS_FLOAT2_TEX VSBezier(FLOAT3_POS_FLOAT2_TEX input)

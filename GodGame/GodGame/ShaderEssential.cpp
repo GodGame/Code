@@ -1693,7 +1693,7 @@ void CInGameUIShader::DrawUserNames(ID3D11DeviceContext *pd3dDeviceContext, UINT
 			static float fLength;
 			XMVECTOR length = XMVector3LengthSq(XMLoadFloat3(&myPos) - xmvPos);
 			XMStoreFloat(&fLength, length);
-			if (fLength > 10000.f) continue;
+			if (fLength > 8000.f) continue;
 		}
 		xmvPos += xmvPosOffset;
 		xmvPos  = XMVector3TransformCoord(xmvPos, viewProj);
@@ -1701,8 +1701,10 @@ void CInGameUIShader::DrawUserNames(ID3D11DeviceContext *pd3dDeviceContext, UINT
 		xmvPos += xmvViewOff;
 
 		XMFLOAT4 pos;
+		//XMStoreFloat4(&pos, xmvPos);
+		//if ((pos.z / pos.w) > 0.f) continue;
 		XMStoreFloat4(&pos, xmvPos);
-		//if ((pos.z / pos.w) < 0.f) continue;
+		
 		swprintf_s(PlayerNames, sizeof(PlayerNames), L"Player%d (HP:%d)", i, playerArray[i]->GetStatus().GetHP());
 
 		framework.SetFont("Broadway");

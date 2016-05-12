@@ -22,6 +22,7 @@ public:
 	
 	void InitializeRecv();
 	void Reset();
+	void LightUpdate(float fTimeElapsed);
 
 	virtual bool PacketProcess(LPARAM lParam);
 	virtual bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);

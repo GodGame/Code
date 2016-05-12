@@ -396,11 +396,11 @@ void CTerrainPlayer::OnCameraUpdated(float fTimeElapsed)
 	이렇게 되면 <그림 4>의 왼쪽과 같이 지형이 그려지지 않는 경우가 발생한다(카메라가 지형 안에 있으므로 와인딩 순서가 바뀐다).
 	이러한 경우가 발생하지 않도록 카메라의 위치의 최소값은 (지형의 높이 + 5)로 설정한다.
 	카메라의 위치의 최소값은 지형의 모든 위치에서 카메라가 지형 아래에 위치하지 않도록 설정한다.*/
-	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 4.0f;
+	float fHeight = pTerrain->GetHeight(xv3CameraPosition.x, xv3CameraPosition.z, bReverseQuad) + 6;
 
 	if (xv3CameraPosition.y < fHeight)
 	{
-		xv3CameraPosition.y = fHeight;
+		xv3CameraPosition.y = fHeight;// +6;
 		pCamera->SetPosition(xv3CameraPosition);
 	}
 
@@ -693,6 +693,10 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 	case '0':
 		Revive();
 		return;
+	case '6':
+		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_EFFECT_GLARE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+		EVENTMgr.InsertDelayMessage(1.2f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+		return;
 	case '7':
 		m_Status.GetBuffMgr().OnPlusDamage();
 		return;
@@ -815,8 +819,9 @@ void CInGamePlayer::AcquireItem(CItem * pItem)
 	{
 		SetChild(pStaff);
 
-		EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
-			m_pScene, nullptr, m_pChild);
+		if(SYSTEMMgr.GetPlayerNum() == m_iPlayerNum)
+			EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_ITEM_STAFF_CHANGE, CGameEventMgr::MSG_TYPE_SCENE,
+				m_pScene, nullptr, m_pChild);
 	}
 }
 
@@ -863,14 +868,13 @@ void CInGamePlayer::StopDominate()
 			EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE,
 				m_pScene, nullptr, &SYSTEMMgr.GetPortalZonePos());
 			EVENTMgr.InsertDelayMessage(0.8f, eMessage::MSG_EFFECT_GLARE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
-			EVENTMgr.InsertDelayMessage(2.0f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+			EVENTMgr.InsertDelayMessage(2.2f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
 		}
 	}
 }
 
 void CInGamePlayer::CheckGameSystem(float fTimeElapsed)
 {
-
 }
 
 EFFECT_ON_INFO CInGamePlayer::GetCastEffectOnInfo()

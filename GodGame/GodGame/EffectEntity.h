@@ -100,7 +100,8 @@ protected:
 	CB_TX_ANIMATION_INFO m_cbInfo;
 	CTxAnimationObject * m_pNextEffect;
 	ID3D11Buffer * m_pd3dCSBuffer;
-	bool	 m_bUseAnimation;
+	bool	 m_bUseAnimation : 1;
+	bool     m_bUseLoop : 1;
 	//	float	 m_fTimeStartUseAnimation;
 
 public:
@@ -168,6 +169,11 @@ public:
 	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
 
+class CStaticFlame : public CTxAnimationObject
+{
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 

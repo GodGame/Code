@@ -201,7 +201,7 @@ PS_MRT_OUT PSBillboardColor(GS_BILLBOARD_COLOR_OUTPUT input) : SV_Target
 	output.vPos     = float4(input.posW, 1.0f);
 	output.vDiffuse = vZero;
 	output.vSpec    = vZero;
-	output.vTxColor = cColor * input.color * 10;
+	output.vTxColor = cColor * input.color * 4;
 
 	return output;
 }
