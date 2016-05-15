@@ -50,9 +50,13 @@ public:
 	void SetCollide(const bool bCollide) { m_bUseCollide = bCollide; }
 	bool CanCollide(CEntity * pObj) const
 	{
+		return m_bActive && m_bUseCollide && this != pObj;
+#if 0
+		if (false == m_bActive) return false;
 		if (false == m_bUseCollide) return false;
 		if (this == pObj) return false;
 		return true;
+#endif
 	}
 
 	UINT GetSize() const { return m_uSize; }

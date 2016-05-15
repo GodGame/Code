@@ -794,11 +794,11 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 						rotate_packet.cxDelta = cxDelta;
 						rotate_packet.cyDelta = cyDelta;
 						rotate_packet.LookVector = pPlayer->GetLookVector();
+
 						CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
 						CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_rotate);
-						memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&rotate_packet), sizeof(cs_packet_rotate));
-						DWORD ioBytes;
-						int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+						memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&rotate_packet), sizeof(cs_packet_move_test));
+						int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &iobyte, 0, NULL, NULL);
 						if (ret)
 						{
 							int error_code = WSAGetLastError();
@@ -836,7 +836,6 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 			movetest.Position = pPlayer->GetPosition();
 			movetest.LookVector = pPlayer->GetLookVector();
 
-			//cout << movetest.Position << endl;
 			movetest.animation = pPlayer->GetAnimationState();//wdNextState;
 		//	CLIENT.SendPacket(reinterpret_cast<UCHAR*>(&movetest));
 			CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
@@ -855,7 +854,6 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 			//int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &iobyte, 0, NULL, NULL);
 		}
 		pPlayer->SetDirection(dwDirection);
-//		cout << "°»½Å : " << dwDirection;
 	}
 	if (pKeyBuffer[VK_SPACE] & 0xF0)
 	{
@@ -1123,8 +1121,6 @@ bool CSceneInGame::PacketProcess(LPARAM lParam)
 			//		pPlayer->SetPosition(my_packet->Position);
 			}
 		}
-
-		cout << "Packet Pos : " << my_packet->Position << endl;
 
 		break;
 	}

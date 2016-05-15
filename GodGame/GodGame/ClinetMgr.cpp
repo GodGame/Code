@@ -344,7 +344,6 @@ void ClientMgr::SendPacket(unsigned char * packet)
 	WSABUF buf;
 	buf.buf = reinterpret_cast<CHAR*>(packet);
 	buf.len = packet[0];
-//	_wsetlocale(LC_ALL, L"korean");
 	int res = WSASend(mSock, &buf, 1, NULL, 0, NULL, NULL);
 	if (0 != res) // WSA_IO_PENDING은 IOCP에서 미처 다 보내지 못했을때 나오는 에러
 	{
@@ -352,40 +351,9 @@ void ClientMgr::SendPacket(unsigned char * packet)
 		if (WSA_IO_PENDING != error_no)
 		{
 			error_display(__FUNCTION__ "SendPacket:WSASend", error_no);
-			//	cout << __FUNCTION__ "SendPacket:WSASend" << endl;;
 		}
-		//	error_display("SendPacket:WSASend", error_no);
-		//while (true);
 	}
-	//ZeroMemory(&buf, sizeof(buf));
 }
-//
-//void ClientMgr::SendPacket(unsigned char * packet)
-//{
-//	//WSABUF buf;
-//	//buf.buf = reinterpret_cast<CHAR*>(mSendBuffer);
-//	//buf.len = packet[0];
-//	//memcpy(mSendBuffer, packet, packet[0]);
-//	ZeroMemory(umSendBuffer, sizeof(umSendBuffer));
-//	WSABUF buf;
-//	buf.buf = reinterpret_cast<CHAR*>(&umSendBuffer);
-//	buf.len = packet[0];
-//	memcpy(umSendBuffer, reinterpret_cast<UCHAR*>(packet), packet[0]);
-//	//_wsetlocale(LC_ALL, L"korean");
-//	int res = WSASend(mSock, &buf, 1, NULL, 0, NULL, NULL);
-//	if (0 != res) // WSA_IO_PENDING은 IOCP에서 미처 다 보내지 못했을때 나오는 에러
-//	{
-//		int error_no = WSAGetLastError();
-//		if (WSA_IO_PENDING != error_no)
-//		{
-//			error_display(__FUNCTION__ "SendPacket:WSASend", error_no);
-//			//	cout << __FUNCTION__ "SendPacket:WSASend" << endl;;
-//		}
-//		//	error_display("SendPacket:WSASend", error_no);
-//		//while (true);
-//	}
-////	ZeroMemory(&buf, sizeof(buf));
-//}
 void ClientMgr::SendPacket( unsigned char * packet, ULONG len)
 {
 	ZeroMemory(umSendBuffer, sizeof(umSendBuffer));

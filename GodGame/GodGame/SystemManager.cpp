@@ -105,7 +105,6 @@ void CSystemManager::Update(float fFrameTime)
 	if (mRoundState == eGAME_READY) return;
 
 	m_fRoundTime -= fFrameTime;
-
 	//m_nRoundSecond = m_fRoundTime;
 	m_nRoundSecond = CLIENT.GetRoundTime();
 	m_nRoundMinute = m_nRoundSecond / 60;
@@ -203,7 +202,6 @@ void CSystemManager::GameStart()
 		info.m_nDeathCount  = 0;
 		info.m_nKillCount   = 0;
 	}
-
 //	m_iRoundNumber = 0;
 	m_iRoundNumber = CLIENT.GetRoundNum();
 	RoundEnter();
@@ -338,7 +336,7 @@ void CRoundEnterFontUI::DrawFont()
 	}
 
 	FRAMEWORK.SetFont("HY°ß°íµñ");
-	FRAMEWORK.DrawFont(wscreenFont, 40 - 40 * percent, StartInfoLocation, 0xff23ff23);
+	FRAMEWORK.DrawFont(wscreenFont, 40 + 30 * percent, StartInfoLocation, 0xff23ff23);
 }
 
 void CRoundStartFontUI::DrawFont()

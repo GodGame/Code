@@ -5,7 +5,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////
 #pragma region InstancingShader
 CInstancingShader::CInstancingShader() : CInstanceShader(), CTexturedShader()
 {
@@ -748,10 +747,15 @@ void CStaticShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMaterial
 	for (int i = 0; i < m_nObjects; ++i)
 	{
 		m_ppObjects[i]->SetMesh(meshmgr.GetObjects(names[i]));
-		if ( 1 < i < 3) m_ppObjects[i]->SetSize(m_ppObjects[i]->GetSize() * 1.5);
-		if ( 0 < i ) m_ppObjects[i]->SetActive(false);
+		//if ( 1 < i < 3) m_ppObjects[i]->SetSize(m_ppObjects[i]->GetSize() * 1.5);
+		if (0 < i)
+		{
+			m_ppObjects[i]->SetActive(false);
+			m_ppObjects[i]->SetCollide(false);
+		}
+		else m_ppObjects[i]->SetCollide(true);
+
 		m_ppObjects[i]->SetTexture(txmgr.GetObjects(names[i]));
-		m_ppObjects[i]->SetCollide(true);
 		m_ppObjects[i]->SetDetailCollide(true);
 		//m_ppObjects[i]->UpdateBoundingBox();
 	}

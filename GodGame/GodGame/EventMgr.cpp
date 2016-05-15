@@ -31,7 +31,6 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 	{
 
 	case MSGType::MSG_TYPE_ENTITY:
-		//cout << "now : " << m_fCurrentTime << ", goal : " << fGoalTime << endl;
 		m_mpMessageList.insert(new cMessageSystem<CEntity>
 			(fGoalTime, eMsg, (CEntity*)pToObj, (CEntity*)pByObj, extra));
 		return;
@@ -79,7 +78,7 @@ void CGameEventMgr::Update(float fFrameTime)
 
 		if ((*it)->IsTerminal(m_fCurrentTime))
 		{
-   			cout << "Event Terminal : " << m_fCurrentTime <<" , Goal : " << (*it)->GetLastTime() << endl;
+   			//cout << "Event Terminal : " << m_fCurrentTime <<" , Goal : " << (*it)->GetLastTime() << endl;
 			cMessage * pMsg = *it;
 			m_mpMessageList.erase(it);
 			pMsg->MessageExecute();
