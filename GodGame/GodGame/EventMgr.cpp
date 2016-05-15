@@ -31,7 +31,7 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 	{
 
 	case MSGType::MSG_TYPE_ENTITY:
-		cout << "now : " << m_fCurrentTime << ", goal : " << fGoalTime << endl;
+		//cout << "now : " << m_fCurrentTime << ", goal : " << fGoalTime << endl;
 		m_mpMessageList.insert(new cMessageSystem<CEntity>
 			(fGoalTime, eMsg, (CEntity*)pToObj, (CEntity*)pByObj, extra));
 		return;

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "GameInfo.h"
 #include "ObjectsList.h"
-
+#include "Protocol.h"
 CDeBuff::CDeBuff()
 {
 	Reset();
@@ -121,6 +121,30 @@ void StatusInfo::RoundStart()
 	m_bUnbeatable = false;
 	m_bCanMove = true;
 	m_bCanJump = true;
+}
+
+void StatusInfo::SendHP()
+{
+	
+	cs_packet_damage my_packet;
+	my_packet.id = CLIENT.GetClientID();
+	my_packet.size = sizeof(cs_packet_damage);
+	my_packet.type = CS_CHAR_DAMAGE;
+	my_packet.damage = m_sHP;
+
+	CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+	CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_damage);
+	memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&my_packet), sizeof(cs_packet_damage));
+	DWORD ioBytes;
+	int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+	if (ret)
+	{
+		int error_code = WSAGetLastError();
+		if (WSA_IO_PENDING != error_code)
+		{
+			CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+		}
+	}
 }
 
 ///////////////////////////////////////////

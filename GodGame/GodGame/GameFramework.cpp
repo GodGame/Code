@@ -573,18 +573,18 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 			if (m_pSceneShader)
 				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 2));
 			break;
-		case '3':
-			if (m_pSceneShader)
-				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 3));
-			break;
-		case '4':
-			if (m_pSceneShader)
-				static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 4));
-			break;
+		//case '3':
+		//	if (m_pSceneShader)
+		//		static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 3));
+		//	break;
+		//case '4':
+		//	if (m_pSceneShader)
+		//		static_cast<CSceneShader*>(m_pSceneShader)->SetDrawOption((m_iDrawOption = 4));
+		//	break;
 			//		case 'Z':
 			//			m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
 			//			m_pSceneShader->SetTexture(0, m_pd3dSSAOSRV/*TXMgr.GetShaderResourceView("srv_rtvSSAO")*/);
-			break;
+		//	break;
 			//case 'P':
 			//	m_pSceneShader->SetDrawOption((m_iDrawOption = -1));
 			//	m_pSceneShader->SetTexture(0, m_pd3dsrvShadowMap);

@@ -855,6 +855,8 @@ void CPlayerShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderS
 	//m_ppObjects[0]->SetVisible(true);//m_ppObjects[1]->SetActive(true);
 
 	//if (nCameraMode == THIRD_PERSON_CAMERA)
+	int id = (SYSTEMMgr.GetPlayerNum() + 1) % 2;
+//	cout << "Visible ? " << m_ppObjects[id]->IsVisible() << " Active? " << m_ppObjects[id]->IsActive() << endl;
 	{
 		CShader::Render(pd3dDeviceContext, uRenderState);
 	}

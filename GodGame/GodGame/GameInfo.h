@@ -144,8 +144,8 @@ public:
 	short GetHP()	{ return m_sHP; }
 	void SetHP(short hp) { m_sHP = hp; }
 	void ChangeHP(short hpValue) { m_sHP += hpValue; }
-	void Damaged(short damage) { ChangeHP(-damage); m_bCanMove = false; }
-
+	void Damaged(short damage) { ChangeHP(-damage); m_bCanMove = false;  SendHP(); }
+	void SendHP();
 	float GetAttackSpeed()          { return m_fAttackSpeed; }
 	void SetAttackSpeed(float fVal) { m_fAttackSpeed = fVal; }
 	float GetAttackRange()          { return m_fAttackRange; }

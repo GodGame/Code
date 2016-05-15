@@ -43,7 +43,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		std::ios::sync_with_stdio();
 	}
 #endif
-
+	if (AllocConsole())
+	{
+		freopen("CONIN$", "rb", stdin);
+		freopen("CONOUT$", "wb", stdout);
+		freopen("CONOUT$", "wb", stderr);
+		std::ios::sync_with_stdio();
+	}
 	// 응용 프로그램 초기화를 수행합니다.
 	if (!InitInstance(hInstance, nCmdShow))
 	{

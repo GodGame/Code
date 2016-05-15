@@ -1497,7 +1497,7 @@ CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, 
 		nReadBytes = ::fread(temp, sizeof(wchar_t), fileNameSize, pFile);
 		temp[fileNameSize] = '\0';
 		file = temp;
-		wcout << temp << endl;
+		//wcout << temp << endl;
 
 		vcFileName.push_back(file);
 	}

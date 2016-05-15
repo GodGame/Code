@@ -3,9 +3,10 @@
 #include "Weapon.h"
 #include "Player.h"
 #include "StatePlayer.h"
-
+#include "Protocol.h"
 CPlayer::CPlayer(int nMeshes) : CCharacter(nMeshes)
 {
+	mDirection = 0x0;
 	m_iPlayerNum			= -1;
 	m_pCamera               = nullptr;
 
@@ -51,26 +52,42 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 	{
 		WORD wdNextState = 0;
 		XMVECTOR xv3Shift = XMVectorReplicate(0);
+		// 바꾼 부분
+		
+	/*	cs_packet_up* my_packet = reinterpret_cast<cs_packet_up*>(CLIENT.GetSendBuffer());
+		my_packet->size = sizeof(my_packet);
+		CLIENT.GetWSASendBuffer().len = sizeof(my_packet);*/
+	/*	cs_packet_up* my_packet = reinterpret_cast<cs_packet_up*>(CLIENT.GetSendBuffer());
+		my_packet->size = sizeof(my_packet);
+		CLIENT.GetWSASendBuffer().len = sizeof(my_packet);*/
 		//화살표 키 ‘→’를 누르면 로컬 x-축 방향으로 이동한다. ‘←’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_LEFT)
 		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
+			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance;// *0.8f;
+			/*cs_packet_state my_packet2;
+			my_packet2.id = CLIENT.GetClientID();
+			my_packet2.size = sizeof(cs_packet_state);
+			my_packet2.type = CS_INPUT;
+			my_packet2.LookVector = m_xv3Look;
+			my_packet2.RightVector = m_xv3Right;
+			my_packet2.Position = m_xv3Position;
+			CLIENT.SendPacket(reinterpret_cast<unsigned  char*>(&my_packet2));*/
 			wdNextState = eANI_WALK_LEFT;
 		}
 		if (dwDirection & DIR_RIGHT)
 		{
-			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance* 0.8f;
+			xv3Shift += XMLoadFloat3(&m_xv3Right) * fDistance;// *0.8f;
 			wdNextState = eANI_WALK_RIGHT;
 		}
 		//화살표 키 ‘↑’를 누르면 로컬 z-축 방향으로 이동(전진)한다. ‘↓’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_BACKWARD)
 		{
-			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance * 0.8f;
+			xv3Shift -= XMLoadFloat3(&m_xv3Look) * fDistance;// *0.8f;
 			wdNextState = eANI_WALK_BACK;
 		}
 		if (dwDirection & DIR_FORWARD)
 		{
-			xv3Shift += XMLoadFloat3(&m_xv3Look) * fDistance * 1.2f;
+			xv3Shift += XMLoadFloat3(&m_xv3Look) * fDistance;// *1.2f;
 			wdNextState = eANI_RUN_FORWARD;
 		}
 		static XMFLOAT3 xmf3Shift;
@@ -207,6 +224,12 @@ void CPlayer::Rotate(XMFLOAT3 & xmf3RotAxis, float fAngle)
 
 void CPlayer::Update(float fTimeElapsed)
 {
+	if (mDirection) Move(mDirection, 50.f * fTimeElapsed, false);
+//	else
+//	{
+//		if(GetAnimationState() != eANI_IDLE)
+//			ChangeAnimationState(eANI_IDLE, true, nullptr, 0);
+//	}
 	CCharacter::Update(fTimeElapsed);
 }
 
@@ -601,6 +624,23 @@ void CInGamePlayer::ForcedByObj(CEntity * pObj)
 	}
 }
 
+void CInGamePlayer::RenewPacket(sc_packet_pos & packet)
+{
+	SetDirection(packet.dwDirection);
+	SetPosition(packet.Position);
+
+	m_xv3Look = packet.LookVector;
+	Chae::XMFloat3Cross(&m_xv3Right, &m_xv3Up, &m_xv3Look);
+	Chae::XMFloat3Normalize(&m_xv3Right, &m_xv3Right);
+}
+void CInGamePlayer::RenewPacket(sc_packet_rotate & packet)
+{
+
+	m_xv3Look = packet.LookVector;
+	Chae::XMFloat3Cross(&m_xv3Right, &m_xv3Up, &m_xv3Look);
+	Chae::XMFloat3Normalize(&m_xv3Right, &m_xv3Right);
+}
+
 void CInGamePlayer::Attack(CCharacter * pToChar, short stDamage)
 {
 }
@@ -614,6 +654,13 @@ void CInGamePlayer::Damaged(CEffect * pEffect)
 {
 	Damaged(static_cast<CCharacter*>(pEffect->GetMaster()), pEffect->GetDamage());
 	//pEffect->Get
+	// 바꾼 부분
+	/*cs_packet_damage my_packet;
+	my_packet.id = CLIENT.GetClientID();
+	my_packet.size = sizeof(cs_packet_state);
+	my_packet.type = CS_CHAR_DAMAGE;
+	my_packet.damage = pEffect->GetDamage();
+	CLIENT.SendPacket(reinterpret_cast<unsigned  char*>(&my_packet));*/
 }
 void CInGamePlayer::Damaged(CCharacter * pByChar, short stDamage)
 {
@@ -702,9 +749,82 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 	case 'S' :
 	case 'A' :
 	case 'D' :
-		if (m_pStateMachine->CanChangeState() && m_Status.IsCanMove()) 
+	{
+		DWORD iobyte;
+		/*cs_packet_animation* my_packet = reinterpret_cast<cs_packet_animation*>(CLIENT.GetSendBuffer());
+		my_packet->size = sizeof(my_packet);
+
+		my_packet->type = CS_ANI_IDLE;
+		my_packet->animation_Type = eANI_IDLE;
+		CLIENT.GetWSASendBuffer().len = sizeof(my_packet);
+		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &iobyte, 0, NULL, NULL);*/
+		if (m_pStateMachine->CanChangeState() && m_Status.IsCanMove())
+		{
+			//// 쏜 상태를 전송
+			//cs_packet_Behavior behavior_packet;
+			//behavior_packet.size = sizeof(cs_packet_Behavior);
+			//behavior_packet.type = CS_ANI_IDLE;
+			//CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+			//CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_Behavior);
+			//memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&behavior_packet), sizeof(cs_packet_Behavior));
+			//DWORD ioBytes;
+			//int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+			//if (ret)
+			//{
+			//	int error_code = WSAGetLastError();
+			//	if (WSA_IO_PENDING != error_code)
+			//	{
+			//		CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+			//	}
+			//}
 			ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+		}
 		return;
+	}
+	case 'J':
+	{
+		cout << "PLUS" << endl;
+		cs_packet_serverCheat cheat_packet;
+		cheat_packet.size = sizeof(cs_packet_serverCheat);
+		cheat_packet.type = SERVER_CHEAT;
+		cheat_packet.mode = 0;
+		CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+		CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_serverCheat);
+		memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&cheat_packet), sizeof(cs_packet_serverCheat));
+		DWORD ioBytes;
+		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+		if (ret)
+		{
+			int error_code = WSAGetLastError();
+			if (WSA_IO_PENDING != error_code)
+			{
+				CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+			}
+		}
+		return;
+	}
+	case 'K':
+	{
+		cout << "MINUS" << endl;
+		cs_packet_serverCheat cheat_packet;
+		cheat_packet.size = sizeof(cs_packet_serverCheat);
+		cheat_packet.type = SERVER_CHEAT;
+		cheat_packet.mode = 1;
+		CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+		CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_serverCheat);
+		memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&cheat_packet), sizeof(cs_packet_serverCheat));
+		DWORD ioBytes;
+		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+		if (ret)
+		{
+			int error_code = WSAGetLastError();
+			if (WSA_IO_PENDING != error_code)
+			{
+				CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+			}
+		}
+		return;
+	}
 	case 'G':
 		StopDominate();
 		return;
@@ -839,6 +959,24 @@ void CInGamePlayer::MagicShot()
 	ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
 	EVENTMgr.InsertDelayMessage(0.25f, eMessage::MSG_MAGIC_CAST, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
 	EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
+	//// 쏜 상태를 전송
+	//cs_packet_Behavior behavior_packet;
+	//behavior_packet.size = sizeof(cs_packet_Behavior);
+	//behavior_packet.type = CS_MAGIC_CASTING;
+	//CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+	//CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_Behavior);
+	//memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&behavior_packet), sizeof(cs_packet_Behavior));
+	//DWORD ioBytes;
+	//int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+	//if (ret)
+	//{
+	//	int error_code = WSAGetLastError();
+	//	if (WSA_IO_PENDING != error_code)
+	//	{
+	//		CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+	//	}
+	//}
+	//CLIENT.SendPacket(reinterpret_cast<unsigned char*>(&behavior_packet));
 }
 
 void CInGamePlayer::AcquireItem(CItem * pItem)
@@ -894,12 +1032,17 @@ void CInGamePlayer::StopDominate()
 
 		if (SYSTEMMgr.CheckCanDomianteSuccess(this))
 		{
-			EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE,
-				m_pScene, nullptr, &SYSTEMMgr.GetPortalZonePos());
-			EVENTMgr.InsertDelayMessage(0.8f, eMessage::MSG_EFFECT_GLARE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
-			EVENTMgr.InsertDelayMessage(2.2f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+			SucceessDominate();
 		}
 	}
+}
+
+void CInGamePlayer::SucceessDominate()
+{
+	EVENTMgr.InsertDelayMessage(0.0f, eMessage::MSG_MAGIC_AREA, CGameEventMgr::MSG_TYPE_SCENE,
+		m_pScene, nullptr, &SYSTEMMgr.GetPortalZonePos());
+	EVENTMgr.InsertDelayMessage(0.8f, eMessage::MSG_EFFECT_GLARE_ON, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+	EVENTMgr.InsertDelayMessage(2.2f, eMessage::MSG_EFFECT_GLARE_OFF, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
 }
 
 void CInGamePlayer::CheckGameSystem(float fTimeElapsed)

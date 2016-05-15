@@ -3,6 +3,7 @@
 #include "SystemObject.h"
 //#include "SceneInGame.h"
 #include "GameFramework.h"
+#include "Protocol.h"
 
 CSystemManager::CSystemManager()
 {
@@ -46,6 +47,7 @@ CSystemManager::~CSystemManager()
 void CSystemManager::_CreateFontUiArray()
 {
 	m_pGlobalFont = new CGlobalFontUI();
+	m_pFont[ROUND_STATE::eGAME_READY]        = new CGameReadyFontUI();
 	m_pFont[ROUND_STATE::eGAME_START]        = new CGameStartFontUI();
 	m_pFont[ROUND_STATE::eROUND_ENTER]       = new CRoundEnterFontUI();
 	m_pFont[ROUND_STATE::eROUND_START]       = new CRoundStartFontUI();
@@ -100,9 +102,12 @@ void CSystemManager::Build(ID3D11Device * pd3dDevice)
 
 void CSystemManager::Update(float fFrameTime)
 {
+	if (mRoundState == eGAME_READY) return;
+
 	m_fRoundTime -= fFrameTime;
 
-	m_nRoundSecond = m_fRoundTime;
+	//m_nRoundSecond = m_fRoundTime;
+	m_nRoundSecond = CLIENT.GetRoundTime();
 	m_nRoundMinute = m_nRoundSecond / 60;
 	m_nRoundSecond = m_nRoundSecond % 60;
 }
@@ -133,6 +138,23 @@ bool CSystemManager::CheckCanDomianteSuccess(CInGamePlayer * pPlayer)
 
 	if (bResult)
 	{
+		cs_packet_dominate dominate_packet;
+		dominate_packet.size = sizeof(cs_packet_dominate);
+		dominate_packet.type = CS_DOMINATE;
+		CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+		CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_dominate);
+		memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&dominate_packet), sizeof(cs_packet_dominate));
+		DWORD ioBytes;
+		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+		if (ret)
+		{
+			int error_code = WSAGetLastError();
+			if (WSA_IO_PENDING != error_code)
+			{
+				CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+			}
+		}
+		//CLIENT.SendPacket(reinterpret_cast<unsigned char*>(&dominate_packet));
 		DominatePortalGate(iPlayerNum);
 	}
 	return bResult;
@@ -147,10 +169,10 @@ bool CSystemManager::IsWinPlayer(CInGamePlayer * pPlayer)
 
 void CSystemManager::DominatePortalGate(int iPlayerNum)
 {
-	static int testid = 0;
+	//static int testid = 0;
 	mRoundState = ROUND_STATE::eROUND_DOMINATE;
 
-	m_iDominatingPlayerNum = (iPlayerNum + testid) % 4;
+	m_iDominatingPlayerNum = (iPlayerNum);// +testid) % 4;
 
 	//cout << "점령 ID : " << m_iDominatingPlayerNum << endl;
 	CGameObject* pPortal = GetPortalZoneObject();
@@ -158,12 +180,22 @@ void CSystemManager::DominatePortalGate(int iPlayerNum)
 	pPortal->SetMaterial(m_vcPlayerColorMaterial[m_iDominatingPlayerNum]);
 	pPortal->SetActive(true);
 
-	testid++;
+	if (iPlayerNum != m_iThisPlayer)
+	{
+		static_cast<CInGamePlayer*>(m_ppPlayerArray[iPlayerNum])->SucceessDominate();
+	}
+	//testid++;
+}
+
+void CSystemManager::GameReady()
+{
+	mRoundState = ROUND_STATE::eGAME_READY;
+	m_iRoundNumber = CLIENT.GetRoundNum();
 }
 
 void CSystemManager::GameStart()
 {
-	mRoundState = ROUND_STATE::eROUND_START;
+	mRoundState = ROUND_STATE::eGAME_START;
 
 	for (auto & info : mPlayerInfo)
 	{
@@ -172,7 +204,8 @@ void CSystemManager::GameStart()
 		info.m_nKillCount   = 0;
 	}
 
-	m_iRoundNumber = 0;
+//	m_iRoundNumber = 0;
+	m_iRoundNumber = CLIENT.GetRoundNum();
 	RoundEnter();
 }
 
@@ -180,13 +213,14 @@ void CSystemManager::RoundEnter()
 {
 	mRoundState = ROUND_STATE::eROUND_ENTER;
 
-	m_iRoundNumber++;
+	m_iRoundNumber = CLIENT.GetRoundNum();
+
 	GetPortalZoneObject()->SetActive(false);
-	m_fRoundTime = mfLIMIT_ROUND_TIME;
+	m_fRoundTime = 6.f;// mfLIMIT_ROUND_TIME;
 	m_iDominatingPlayerNum = -1;
 
-	m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_ENTER);
-	EVENTMgr.InsertDelayMessage(mfENTER_TIME, eMessage::MSG_ROUND_START, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
+	//m_pNowScene->GetGameMessage(nullptr, eMessage::MSG_ROUND_ENTER);
+	//EVENTMgr.InsertDelayMessage(mfENTER_TIME, eMessage::MSG_ROUND_START, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 
 void CSystemManager::RoundStart()
@@ -204,7 +238,7 @@ void CSystemManager::RoundEnd()
 	}
 	m_fEndTime = m_fRoundTime;
 	m_fRoundTime = mfEND_TIME;
-	EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
+	//EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 
 void CSystemManager::RoundClear()
@@ -220,7 +254,7 @@ void CSystemManager::RoundClear()
 void CSystemManager::GameEnd()
 {
 	mRoundState = ROUND_STATE::eGAME_END;
-	EVENTMgr.InsertDelayMessage(0.f, eMessage::MSG_GAME_END, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
+	//EVENTMgr.InsertDelayMessage(0.f, eMessage::MSG_GAME_END, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 ///////////////////////////////////////////// font ////////////////////////////////////////////////////////
 void CGlobalFontUI::DrawFont()
@@ -264,6 +298,18 @@ void CGlobalFontUI::DrawFont()
 	}
 }
 
+void CGameReadyFontUI::DrawFont()
+{
+	const static XMFLOAT2 StartInfoLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 60) };
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wscreenFont);
+	
+	swprintf_s(wscreenFont, wssize, L"다른 플레이어 입장 대기중");
+	
+	FRAMEWORK.SetFont("HY견고딕");
+	FRAMEWORK.DrawFont(wscreenFont, 40, StartInfoLocation, 0xff23ff23);
+}
+
 void CGameStartFontUI::DrawFont()
 {
 }
@@ -274,13 +320,16 @@ void CRoundEnterFontUI::DrawFont()
 	static wchar_t wscreenFont[26];
 	static const int wssize = sizeof(wchar_t) * 26;
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
-	static const float start_time = SYSTEMMgr.mfLIMIT_ROUND_TIME;
-	const int second = SYSTEMMgr.GetRoundTime();
+	static const float start_time = LIMIT_ROUND_TIME;//SYSTEMMgr.mfLIMIT_ROUND_TIME;
+	const int second = SYSTEMMgr.GetRoundTime() + 1;
 	float percent = (second - SYSTEMMgr.GetRoundTime());
 	const int time_count = start_time - second;
-	if (time_count < 5)
+
+//	cout << "Round Enter : " << second << " , " << time_count << endl;
+	if (second > 0)
 	{
-		swprintf_s(wscreenFont, wssize, L"준비 %d!", 5 - time_count);
+		if(second <6)
+			swprintf_s(wscreenFont, wssize, L"준비 %d!",second);
 	}
 	else
 	{

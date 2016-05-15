@@ -3,13 +3,15 @@
 #include "SceneInGame.h"
 #include "SceneTitle.h"
 #include "GameFramework.h"
-
+#include "Protocol.h"
 bool bIsKeyDown = false;
 //bool bIsMouseDown = false;
 
 CSceneInGame::CSceneInGame() : CScene()
 {
 	m_nEffectShaderNum = 0;
+	ZeroMemory(m_recvBuffer, sizeof(m_recvBuffer));
+	ZeroMemory(&m_fHeight, sizeof(m_fHeight));
 }
 
 CSceneInGame::~CSceneInGame()
@@ -28,15 +30,23 @@ void CSceneInGame::InitializeRecv()
 	// 플레이어 고유번호 설정, 맵 배치 등을 먼저 받고나서 빌드시킴
 	CLIENT.SetAsyncSelect(); // Async Select를 시작한다.
 #endif
+	if (false == CLIENT.Setting(FRAMEWORK.m_hWnd, SERVER_PORT))
+	{
+		cout << "Server와 접속이 되지 않았습니다." << endl;
+	}
+	CLIENT.SetPlayerShader(m_pPlayerShader);
+	CLIENT.ReadPacket();
+	// 플레이어 고유번호 설정, 맵 배치 등을 먼저 받고나서 빌드시킴
+	CLIENT.SetAsyncSelect(); // Async Select를 시작한다.
 }
 
 void CSceneInGame::Reset()
 {
 	for (auto & shaders : m_vcResetShaders)
 		shaders->Reset();
-
-	EVENTMgr.InsertDelayMessage(SYSTEMMgr.mfLIMIT_ROUND_TIME,
-		eMessage::MSG_ROUND_END, CGameEventMgr::MSG_TYPE_SCENE, this, nullptr, m_pCamera->GetPlayer());
+	cout << "Reset" << endl;
+//	EVENTMgr.InsertDelayMessage(SYSTEMMgr.mfLIMIT_ROUND_TIME,
+//		eMessage::MSG_ROUND_END, CGameEventMgr::MSG_TYPE_SCENE, this, nullptr, m_pCamera->GetPlayer());
 }
 
 void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
@@ -380,7 +390,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	int iCharacterShaderNum = -1;
 	//메시 빌드
 	BuildMeshes(pd3dDevice);
-	InitializeRecv();
 	{
 		UINT index = 0;
 		m_nShaders = NUM_SHADER;
@@ -444,9 +453,17 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_vcDynamicShadowShaders.push_back(m_pPlayerShader);
 
 		SetCamera(m_pPlayerShader->GetPlayer()->GetCamera());
-
+		CLIENT.SetPlayerShader(m_pPlayerShader);
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
-		ChangeGamePlayerID(1);
+		InitializeRecv();
+	/*	cs_packet_vector my_packet2;
+		my_packet2.size = sizeof(cs_packet_vector);
+		my_packet2.type = CS_INPUT;
+		my_packet2.LookVector = m_pPlayerShader->GetPlayer(CLIENT.GetClientID())->GetLookVector();
+		my_packet2.RightVector = m_pPlayerShader->GetPlayer(CLIENT.GetClientID())->GetRightVector();
+		CLIENT.SendPacket(reinterpret_cast<unsigned  char*>(&my_packet2));*/
+		cout << "Current Client ID : " << CLIENT.GetClientID() << endl;
+		ChangeGamePlayerID(CLIENT.GetClientID());
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
 
 		m_pCamera->SetViewport(pd3dDeviceContext, 0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
@@ -464,7 +481,9 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 	CreateShaderVariables(pd3dDevice);
 	BuildStaticShadowMap(pd3dDeviceContext);
 
-	SYSTEMMgr.GameStart();
+	SYSTEMMgr.GameReady();
+	Reset();
+	//SYSTEMMgr.GameStart();
 }
 
 void CSceneInGame::ReleaseObjects()
@@ -659,6 +678,8 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case 'A' :
 		case 'D' :
 		case 'G':
+		case 'J':
+		case 'K':
 			pPlayer->PlayerKeyEventOff(wParam, this);
 			return(false);
 		}
@@ -677,7 +698,24 @@ bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 		int result = pPlayer->UseMagic();
 		if (0 < result)
 		{
-			pPlayer->MagicShot();
+			// 쏜 상태를 전송
+			cs_packet_Behavior behavior_packet;
+			behavior_packet.size = sizeof(cs_packet_Behavior);
+			behavior_packet.type = CS_MAGIC_CASTING;
+			CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+			CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_Behavior);
+			memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&behavior_packet), sizeof(cs_packet_Behavior));
+			DWORD ioBytes;
+			int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+			if (ret)
+			{
+				int error_code = WSAGetLastError();
+				if (WSA_IO_PENDING != error_code)
+				{
+					CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+				}
+			}
+		//	pPlayer->MagicShot();
 		}
 		else if (0 == result)
 		{
@@ -747,17 +785,77 @@ bool CSceneInGame::ProcessInput(HWND hWnd, float fFrameTime, POINT & pt)
 				if (!(pKeyBuffer[VK_RBUTTON] & 0xF0))
 				{
 					if (pPlayer->GetStatus().IsAlive())
+					{
 						pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
+						DWORD iobyte;
+						cs_packet_rotate rotate_packet;
+						rotate_packet.size = sizeof(cs_packet_rotate);
+						rotate_packet.type = CS_ROTATION;
+						rotate_packet.cxDelta = cxDelta;
+						rotate_packet.cyDelta = cyDelta;
+						rotate_packet.LookVector = pPlayer->GetLookVector();
+						CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+						CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_rotate);
+						memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&rotate_packet), sizeof(cs_packet_rotate));
+						DWORD ioBytes;
+						int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+						if (ret)
+						{
+							int error_code = WSAGetLastError();
+							if (WSA_IO_PENDING != error_code)
+							{
+								CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+							}
+						}
+						//CLIENT.SendPacket(reinterpret_cast<UCHAR*>(&rotate_packet));
+					}
 					else 
 						m_pCamera->Rotate(cyDelta, cxDelta, 0.0f);
 				}
 			}
 			/*플레이어를 dwDirection 방향으로 이동한다(실제로는 속도 벡터를 변경한다). 이동 거리는 시간에 비례하도록 한다. 플레이어의 이동 속력은 (50/초)로 가정한다. 만약 플레이어의 이동 속력이 있다면 그 값을 사용한다.*/
-			if (dwDirection)
-				pPlayer->Move(dwDirection, 50.0f * fFrameTime, true);
+#if 0
+			if (dwDirection != pPlayer->GetDirection())
+			{
+				pPlayer->SetDirection(dwDirection);//pPlayer->Move(dwDirection, 50.0f * fFrameTime, true);
+				cs_packet_move_test packet;
+				packet.direction = pPlayer->GetDirection();
+				packet.pos = pPlayer->GetPosition();
+			}
+#endif
 		}
 		//플레이어를 실제로 이동하고 카메라를 갱신한다. 중력과 마찰력의 영향을 속도 벡터에 적용한다.
 		//pPlayer->Update(fFrameTime);
+		if (dwDirection != pPlayer->GetDirection())
+		{
+			DWORD iobyte;
+			cs_packet_move_test movetest;
+			movetest.size = sizeof(cs_packet_move_test);
+			movetest.type = CS_MOVE;
+			movetest.direction = dwDirection;
+			movetest.Position = pPlayer->GetPosition();
+			movetest.LookVector = pPlayer->GetLookVector();
+
+			//cout << movetest.Position << endl;
+			movetest.animation = pPlayer->GetAnimationState();//wdNextState;
+		//	CLIENT.SendPacket(reinterpret_cast<UCHAR*>(&movetest));
+			CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
+			CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_move_test);
+			memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&movetest), sizeof(cs_packet_move_test));
+			DWORD ioBytes;
+			int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
+			if (ret)
+			{
+				int error_code = WSAGetLastError();
+				if (WSA_IO_PENDING != error_code)
+				{
+					CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
+				}
+			}
+			//int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &iobyte, 0, NULL, NULL);
+		}
+		pPlayer->SetDirection(dwDirection);
+//		cout << "갱신 : " << dwDirection;
 	}
 	if (pKeyBuffer[VK_SPACE] & 0xF0)
 	{
@@ -918,6 +1016,7 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_ROUND_ENTER:
+		SYSTEMMgr.RoundEnter();
 		Reset();
 		return;
 
@@ -954,34 +1053,131 @@ void CSceneInGame::SendGameMessage(CScene * toObj, eMessage eMSG, void * extra)
 bool CSceneInGame::PacketProcess(LPARAM lParam)
 {
 	CLIENT.ReadPacket();
-	static const int SC_PUT_PLAYER = 1;
+	//static const int SC_PUT_PLAYER = 1;
 	static bool bFirstTime = true;
-	static int mId = -1;
+//	static int mId = -1;
 	char * buffer = CLIENT.GetRecvBuffer();
 	CInGamePlayer * pPlayer = nullptr;
 	switch (buffer[1])
 	{
 	case SC_PUT_PLAYER:
 	{	//sc_packet_put_player * my_packet = reinterpret_cast<sc_packet_put_player *>(ptr);
-		int id = 0;//my_packet->id;
+		sc_packet_put_player * my_packet = reinterpret_cast<sc_packet_put_player *>(buffer);
+		int id = my_packet->id;
 
 		if (bFirstTime)
 		{
 			bFirstTime = false;
-			mId = id;
-			m_pPlayerShader->SetPlayerID(FRAMEWORK.GetDevice() , mId);
-			m_pPlayerShader->GetPlayer(mId);
-
-			pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
-			pPlayer->SetPlayerNum(mId);
-			//pPlayer->SetPosition(XMFLOAT3(my_packet->x, my_packet->y));
 		}
-		if (id != mId)
+		if (id != CLIENT.GetClientID())
 		{
+			//m_pPlayerShader->SetPlayerID(FRAMEWORK.GetDevice(), id);
+			//	m_pPlayerShader->GetPlayer(id);
 			pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(id));
+			//pPlayer->SetPlayerNum(id);
+			pPlayer->InitPosition(XMFLOAT3(my_packet->x, my_packet->y, my_packet->z));
+			pPlayer->SetVisible(true);
+
+			//pPlayer->SetPosition(XMFLOAT3(my_packet->x, my_packet->y, my_packet->z));
 			//pPlayer->SetPosition();
+			//pPlayer->SetActive(true);
 		}
-		pPlayer->SetActive(true);
+		//pPlayer->SetActive(true);
+		break;
+	}
+	case SC_POS:
+	{
+		/*sc_packet_pos *my_packet = reinterpret_cast<sc_packet_pos *>(buffer);*/
+		sc_packet_pos *my_packet = reinterpret_cast<sc_packet_pos *>(buffer);
+		
+		int other_id = my_packet->id;
+		
+		
+		if (other_id == CLIENT.GetClientID()) {
+			pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(CLIENT.GetClientID()));
+			if (pPlayer != NULL)
+			{
+
+				//pPlayer->ChangeAnimationState(my_packet->animationType, false, nullptr, 0);
+				//pPlayer->Move(my_packet->Shift, true);
+					pPlayer->SetPosition(my_packet->Position);
+					
+			}
+
+		}
+		if (other_id != CLIENT.GetClientID())
+		{
+			pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(other_id));
+			if (pPlayer != NULL)
+			{
+				pPlayer->RenewPacket(*my_packet);
+				if (my_packet->animationType == eANI_IDLE)
+					pPlayer->ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
+				//pPlayer->SetDirection(my_packet->dwDirection);
+				//pPlayer->SetPosition(my_packet->Position);
+				//pPlayer->SetLo
+			
+				//	pPlayer->ChangeAnimationState(my_packet->animationType, false, nullptr, 0);
+				//pPlayer->Move(my_packet->Shift, true);
+			//		pPlayer->SetPosition(my_packet->Position);
+			}
+		}
+
+		cout << "Packet Pos : " << my_packet->Position << endl;
+
+		break;
+	}
+	case SC_ROUND_TIME:
+	{
+		/*sc_packet_RoundTime *my_packet = reinterpret_cast<sc_packet_RoundTime *>(buffer);
+		cout << "count: " << my_packet->time << endl;*/
+
+		break;
+	}
+	case SC_GAME_STATE:
+	{
+		sc_packet_GameState* my_packet = reinterpret_cast<sc_packet_GameState*>(buffer);
+		my_packet->gamestate;
+
+
+
+		break;
+	}
+	case SC_PLAYER_INFO:
+	{
+		sc_packet_playerInfo* my_packet = reinterpret_cast<sc_packet_playerInfo*>(buffer);
+		pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(my_packet->id));
+		pPlayer->GetStatus().SetHP(my_packet->HP);
+		break;
+	}
+	case  SC_ROTATION:
+	{
+
+		sc_packet_rotate* my_packet = reinterpret_cast<sc_packet_rotate*>(buffer);
+		pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(my_packet->id));
+		pPlayer->RenewPacket(*my_packet);
+		//pPlayer->Rotate(my_packet->cyDelta, my_packet->cxDelta, 0.0f);
+		break;
+	}
+	case SC_DOMINATE:
+	{
+		sc_packet_dominate* my_packet = reinterpret_cast<sc_packet_dominate*>(buffer);
+		SYSTEMMgr.DominatePortalGate(my_packet->id);
+
+
+		break;
+	}
+	case SC_MAGIC_CASTING:
+	{
+		sc_packet_Behavior* my_packet = reinterpret_cast<sc_packet_Behavior*>(buffer);
+		pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(my_packet->id));
+		pPlayer->MagicShot();
+		break;
+	}
+	case SC_ANI_IDLE:
+	{
+		sc_packet_Behavior* my_packet = reinterpret_cast<sc_packet_Behavior*>(buffer);
+		pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(my_packet->id));
 		break;
 	}
 	default:

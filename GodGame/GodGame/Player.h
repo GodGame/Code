@@ -20,7 +20,11 @@ protected:
 
 	CScene * m_pScene;
 
+	ULONG  mDirection;
 public:
+	void SetDirection(ULONG dir) { mDirection = dir; }
+	ULONG GetDirection() { return mDirection; }
+
 	CPlayer(int nMeshes = 1);
 	virtual ~CPlayer();
 	virtual void BuildObject() {}
@@ -96,6 +100,8 @@ public:
 	void SetVibrateCamera(bool bEffect) { m_bVibrationEffect = bEffect; }
 };
 
+struct sc_packet_pos;
+struct sc_packet_rotate;
 class CInGamePlayer : public CTerrainPlayer
 {
 public:
@@ -126,6 +132,8 @@ public:
 	virtual void CollisionProcess(float fTimeElapsed);
 	void ForcedByObj(CEntity * pObj);
 
+	void RenewPacket(sc_packet_pos & pos);
+	void RenewPacket(sc_packet_rotate & packet);
 public:
 	void Damaged(CEffect * pEffect);
 	virtual void Attack(CCharacter * pToChar, short stDamage);
@@ -169,6 +177,7 @@ public:
 	
 	void StartDominate();
 	void StopDominate();
+	void SucceessDominate();
 	void CheckGameSystem(float fTimeElapsed);
 
 public:

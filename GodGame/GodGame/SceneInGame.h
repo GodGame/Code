@@ -15,7 +15,10 @@ class CSceneInGame : public CScene
 	vector<CShader*> m_vcResetShaders;
 	vector<CShader*> m_vcStaticShadowShaders;
 	vector<CShader*> m_vcDynamicShadowShaders;
-
+	char		m_recvBuffer[1024];
+	float m_fHeight[1000];
+	int m_iMapWidth;
+	int m_iMapHeight;
 public:
 	CSceneInGame();
 	virtual ~CSceneInGame();

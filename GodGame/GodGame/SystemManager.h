@@ -24,6 +24,12 @@ public:
 	virtual void DrawFont();
 };
 
+class CGameReadyFontUI : public CFontUIObject
+{
+public:
+	virtual void DrawFont();
+};
+
 class CGameStartFontUI : public CFontUIObject
 {
 public:
@@ -92,6 +98,7 @@ public:
 	enum ROUND_STATE : CHAR
 	{
 		eROUND_NONE = -1,
+		eGAME_READY,
 		eGAME_START,
 		eROUND_ENTER,
 		eROUND_START,
@@ -151,6 +158,8 @@ private:
 public:
 	ROUND_STATE GetRoundState() { return mRoundState; }
 
+	void SetRoundTime(float time) { m_fRoundTime = time; }
+	void SetRoundNUm(int round) { m_iRoundNumber = round; }
 	void SetInitialPlayerInfo(int nPlayers, int nPlayerNum, CGameObject ** ppPlayers) { m_nPlayers = nPlayers; m_iThisPlayer = nPlayerNum; m_ppPlayerArray = ppPlayers; }
 	void SetPlayerNum(int iPlayerNum) { m_iThisPlayer = iPlayerNum; }
 
@@ -173,12 +182,14 @@ public:
 	UINT GetRoundMinute() { return m_nRoundMinute; }
 	UINT GetRoundSecond() { return m_nRoundSecond; }
 
+public:
+	CScene * GetNowScene() { return m_pNowScene; }
 private:
 	CSystemManager();
 	~CSystemManager();
 
 public:
-	const float mfLIMIT_ROUND_TIME = 80.f;
+	//const float mfLIMIT_ROUND_TIME = LIMIT_ROUND_TIME;
 	const float mfDEATH_MATCH_TIME = 1800.f;
 	const int mfGOAL_ROUND = 2;
 
@@ -203,6 +214,7 @@ public:
 	void Build(ID3D11Device * pd3dDevice);
 	void Update(float fFrameTime);
 
+	void GameReady();
 	void GameStart();
 	void RoundEnter();
 	void RoundStart();
