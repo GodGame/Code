@@ -1041,6 +1041,7 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 		return;
 
 	case eMessage::MSG_GAME_END:
+		CLIENT.CloseConnect();
 		FRAMEWORK.ChangeGameScene(new CSceneTitle());
 		return;
 	}
