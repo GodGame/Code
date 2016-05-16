@@ -104,9 +104,9 @@ void CSystemManager::Update(float fFrameTime)
 {
 	if (mRoundState == eGAME_READY) return;
 
-	m_fRoundTime -= fFrameTime;
-	//m_nRoundSecond = m_fRoundTime;
-	m_nRoundSecond = CLIENT.GetRoundTime();
+	m_fRoundTime = CLIENT.GetRoundTime();//fFrameTime;
+	m_nRoundSecond = m_fRoundTime;
+	//m_nRoundSecond = CLIENT.GetRoundTime();
 	m_nRoundMinute = m_nRoundSecond / 60;
 	m_nRoundSecond = m_nRoundSecond % 60;
 }
@@ -122,7 +122,7 @@ bool CSystemManager::CheckCanDominateRange(CInGamePlayer * pPlayer)
 	//cout << "거리는 " << fLengthSq;
 	if (fLengthSq <= fGoalDistance)
 	{
-		mPlayersDominateTryTime[pPlayer->GetPlayerNum()] = m_fRoundTime + 0.1f;
+		mPlayersDominateTryTime[pPlayer->GetPlayerNum()] = m_fRoundTime + 0.05f;
 		return true;
 	}
 	return false;
@@ -133,7 +133,7 @@ bool CSystemManager::CheckCanDomianteSuccess(CInGamePlayer * pPlayer)
 	const int iPlayerNum = pPlayer->GetPlayerNum();
 
 	bool bResult = (m_fRoundTime < 
-		(mPlayersDominateTryTime[iPlayerNum] + mfDOMINATE_SPEND_TIME));
+		(mPlayersDominateTryTime[iPlayerNum] - mfDOMINATE_SPEND_TIME));
 
 	if (bResult)
 	{
@@ -319,15 +319,15 @@ void CRoundEnterFontUI::DrawFont()
 	static const int wssize = sizeof(wchar_t) * 26;
 	static const int roundmax = SYSTEMMgr.mfGOAL_ROUND;
 	static const float start_time = LIMIT_ROUND_TIME;//SYSTEMMgr.mfLIMIT_ROUND_TIME;
-	const int second = SYSTEMMgr.GetRoundTime() + 1;
+	const int second = SYSTEMMgr.GetRoundTime();// +1;
 	float percent = (second - SYSTEMMgr.GetRoundTime());
 	const int time_count = start_time - second;
 
 //	cout << "Round Enter : " << second << " , " << time_count << endl;
 	if (second > 0)
 	{
-		if(second <6)
-			swprintf_s(wscreenFont, wssize, L"준비 %d!",second);
+		if(second < 6)
+			swprintf_s(wscreenFont, wssize, L"준비 %d!", second);
 	}
 	else
 	{
