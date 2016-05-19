@@ -29,26 +29,21 @@ void CGameEventMgr::InsertDelayMessage(float fDelayeTime, eMessage eMsg, MSGType
 	const float fGoalTime = m_fCurrentTime + fDelayeTime;
 	switch (eType)
 	{
-
+#
 	case MSGType::MSG_TYPE_ENTITY:
-		m_mpMessageList.insert(new cMessageSystem<CEntity>
+		m_mpMessageQueue.push(new cMessageSystem<CEntity>
 			(fGoalTime, eMsg, (CEntity*)pToObj, (CEntity*)pByObj, extra));
 		return;
 
 	case MSGType::MSG_TYPE_SHADER:
-		m_mpMessageList.insert(new cMessageSystem<CShader>
+		m_mpMessageQueue.push(new cMessageSystem<CShader>
 			(fGoalTime, eMsg, (CShader*)pToObj, (CShader*)pByObj, extra));
 		return;
 
 	case MSGType::MSG_TYPE_SCENE:
-		m_mpMessageList.insert(new cMessageSystem<CScene>
+		m_mpMessageQueue.push(new cMessageSystem<CScene>
 			(fGoalTime, eMsg, (CScene*)pToObj, (CScene*)pByObj, extra));
 		return;
-
-	//case MSGType::MSG_TYPE_FSM:
-	//	m_mpMessageList.insert(new cMessageSystem<CAIState<CWarrock>>
-	//		(m_fCurrentTime + fDelayeTime, eMsg, (CAIState<CWarrock>*)pToObj, (CAIState<CWarrock>*)pByObj, extra));
-	//	return;
 
 	case MSGType::MSG_TYPE_NONE:
 		return;
@@ -62,16 +57,36 @@ void CGameEventMgr::Initialize()
 {
 	m_fCurrentTime = 0.0f;
 
-	for (auto it = m_mpMessageList.begin(); it != m_mpMessageList.end(); ++it)
-		delete (*it);
+	for (int i = 0; i < m_mpMessageQueue.size(); ++i)
+	{
+		auto msg = m_mpMessageQueue.top();
+		m_mpMessageQueue.pop();
+		delete msg;
+	}
+#ifdef _NOT_USE_PRIORTY
+		for (auto it = m_mpMessageQueue.begin(); it != m_mpMessageQueue.end(); ++it)
+			delete (*it);
 
-	m_mpMessageList.clear();
+		m_mpMessageList.clear();
+#endif
 }
 
 void CGameEventMgr::Update(float fFrameTime)
 {
 	m_fCurrentTime += fFrameTime;
-	
+
+	if (!m_mpMessageQueue.empty())
+	{
+		auto msg = m_mpMessageQueue.top();
+
+		if (msg->IsTerminal(m_fCurrentTime))
+		{
+			m_mpMessageQueue.pop();
+			msg->MessageExecute();
+			delete msg;
+		}
+	}
+#ifdef _NOT_USE_PRIORTY
 	if (!m_mpMessageList.empty())
 	{
 		auto it = m_mpMessageList.begin();
@@ -86,6 +101,7 @@ void CGameEventMgr::Update(float fFrameTime)
 		}
 			//m_mpMessageList.dequeue();
 	}
+#endif
 }
 
 UIRectMgr::UIRectMgr()

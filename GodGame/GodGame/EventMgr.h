@@ -5,7 +5,7 @@
 
 #include "stdafx.h"
 #include "MgrType.h"
-
+#include <queue>
 enum eMessage : BYTE
 {
 //	MSG_NONE = -1,
@@ -160,8 +160,8 @@ class CGameEventMgr
 {
 private:
 	float	m_fCurrentTime;
-	set<cMessage*, cMessageLessTime>	   m_mpMessageList;
-	//MyPriorityPointerQueue<cMessage>	   m_mpMessageList;
+	//set<cMessage*, cMessageLessTime>	   m_mpMessageList;
+	priority_queue<cMessage*, vector<cMessage*>, cMessageGreaterTime> m_mpMessageQueue;
 
 private:
 	CGameEventMgr();

@@ -136,9 +136,9 @@ void ClientMgr::ProcessPacket(char * ptr)
 	case SC_PUT_PLAYER:
 	{
 		sc_packet_put_player * my_packet = reinterpret_cast<sc_packet_put_player *>(ptr);
-		//	int id = 0;//my_packet->id;
 		int id = my_packet->id;
-		if (bFirstTime) {
+		if (bFirstTime) 
+		{
 			bFirstTime = false;
 			mId = id;
 		}
@@ -151,71 +151,21 @@ void ClientMgr::ProcessPacket(char * ptr)
 			pPlayer->InitPosition(XMFLOAT3(my_packet->x, my_packet->y, my_packet->z));
 			pPlayer->UpdateBoundingBox();
 			cout << "Player " << mId << pPlayer->GetPosition() << endl;
-			//
-			 //CInGamePlayer::InitPosition(XMFLOAT3(pTerrain->GetWidth()*0.5f + (rand() % 40 - 20), pTerrain->GetPeakHeight() + 10.0f, 300 + (rand() % 40 - 20)));
-			 //pPlayer->SetPosition(XMFLOAT3(my_packet->x, my_packet->y, my_packet->z));
-			 //pPlayer->SetPosition();
+
 			pPlayer->SetActive(true);
 			pPlayer->SetVisible(true);
-			//pPlayer->GetStatus().ChangeHP(my_packet->HP);
 			pPlayer->GetStatus().SetHP(my_packet->HP);
 
-		/*	cs_packet_state* info_packet = reinterpret_cast<cs_packet_state*>(umSendBuffer);
-			info_packet->size = sizeof(info_packet);
-			mSendWsaBuffer.buf = reinterpret_cast<CHAR*>(umSendBuffer);
-			mSendWsaBuffer.len = sizeof(info_packet);
-			memcpy(umSendBuffer, reinterpret_cast<UCHAR*>(info_packet), sizeof(info_packet));
-			DWORD ioBytes;
-			int ret = WSASend(mSock, &mSendWsaBuffer, 1, &ioBytes, 0, NULL, NULL);
-			if (ret)
-			{
-				int error_code = WSAGetLastError();
-				error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-			}*/
-			
-			cs_packet_state info_packet;
-			info_packet.id = mId;
-			info_packet.size = sizeof(cs_packet_state);
-			info_packet.type = CS_INPUT;
-			info_packet.LookVector = pPlayer->GetLookVector();
-			info_packet.RightVector = pPlayer->GetRightVector();
-			//SendPacket(reinterpret_cast<unsigned  char*>(&info_packet),sizeof(cs_packet_state));
-			mSendWsaBuffer.buf = reinterpret_cast<CHAR*>(&umSendBuffer);
-			mSendWsaBuffer.len = sizeof(cs_packet_state);
-			memcpy(umSendBuffer, reinterpret_cast<UCHAR*>(&info_packet), sizeof(cs_packet_state));
-			DWORD ioBytes;
-			int ret = WSASend(mSock, &mSendWsaBuffer, 1, &ioBytes, 0, NULL, NULL);
-			if (ret)
-			{
-				int error_code = WSAGetLastError();
-				if (WSA_IO_PENDING != error_code)
-				{
-					error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-				}
-			}
-			//CLIENT.SendPacket(reinterpret_cast<unsigned  char*>(&info_packet));
+			PACKET_MGR.SendInputPacket(pPlayer, mId);
 		}
 		else if (id != mId)
 		{
-			//	m_pPlayerShader->SetPlayerID(FRAMEWORK.GetDevice(), id);
-			//	m_pPlayerShader->GetPlayer(mId);
-			//pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(id));
-			//	pPlayer->SetPlayerNum(id);
-		//pPlayer->InitPosition(XMFLOAT3(my_packet->x, my_packet->y, my_packet->z));
-			//m_pPlayerShader->SetPlayerID(FRAMEWORK.GetDevice(), id);
-			//m_pPlayerShader->GetPlayer(id);
-			//pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer(id));
-			//pPlayer->SetPlayerNum(id);
-			//pPlayer->SetPosition(XMFLOAT3(my_packet->x, my_packet->y, my_packet->z));
-			////pPlayer->SetPosition();
-			//pPlayer->SetActive(true);
-			//pPlayer->SetActive(true);
+
 		}
 		break;
 	}
 	case SC_OBJECT_INIT:
 	{
-		//	cout << __FUNCTION__"case: SC_OBJECT_INIT" << endl;
 		sc_packet_Init_player * my_packet = reinterpret_cast<sc_packet_Init_player *>(ptr);
 		int id = 0;
 		id = my_packet->id;
@@ -339,47 +289,12 @@ void ClientMgr::ReadPacket()
 	}
 }
 
-void ClientMgr::SendPacket(unsigned char * packet)
+void ClientMgr::SendPacket(char * packet)
 {
-	WSABUF buf;
-	buf.buf = reinterpret_cast<CHAR*>(packet);
-	buf.len = packet[0];
-	int res = WSASend(mSock, &buf, 1, NULL, 0, NULL, NULL);
-	if (0 != res) // WSA_IO_PENDING은 IOCP에서 미처 다 보내지 못했을때 나오는 에러
-	{
-		int error_no = WSAGetLastError();
-		if (WSA_IO_PENDING != error_no)
-		{
-			error_display(__FUNCTION__ "SendPacket:WSASend", error_no);
-		}
-	}
+	PACKET_MGR.Send(mSock, packet, packet[0]);
 }
-void ClientMgr::SendPacket( unsigned char * packet, ULONG len)
+
+void ClientMgr::SendPacket(char * packet, ULONG len)
 {
-	ZeroMemory(umSendBuffer, sizeof(umSendBuffer));
-	//WSABUF buf;
-	mSendWsaBuffer.buf = reinterpret_cast<CHAR*>(&umSendBuffer);
-	mSendWsaBuffer.len = len;
-	memcpy(umSendBuffer,&packet, len);
-	int res = WSASend(mSock, &mSendWsaBuffer, 1, NULL, 0, NULL, NULL);
-	if (0 != res) // WSA_IO_PENDING은 IOCP에서 미처 다 보내지 못했을때 나오는 에러
-	{
-		int error_no = WSAGetLastError();
-		if (WSA_IO_PENDING != error_no)
-		{
-			error_display(__FUNCTION__ "SendPacket:WSASend", error_no);
-		}
-	}
-}
-void ClientMgr::error_display(char * msg, int err_no)
-{
-	WCHAR *lpMsgBuf;
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL, err_no,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&lpMsgBuf, 0, NULL);
-	printf("%s", msg);
-	wprintf(L"에러 : %ws\n", lpMsgBuf);
-	LocalFree(lpMsgBuf);
+	PACKET_MGR.Send(mSock, packet, len);
 }

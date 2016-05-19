@@ -137,23 +137,7 @@ bool CSystemManager::CheckCanDomianteSuccess(CInGamePlayer * pPlayer)
 
 	if (bResult)
 	{
-		cs_packet_dominate dominate_packet;
-		dominate_packet.size = sizeof(cs_packet_dominate);
-		dominate_packet.type = CS_DOMINATE;
-		CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
-		CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_dominate);
-		memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&dominate_packet), sizeof(cs_packet_dominate));
-		DWORD ioBytes;
-		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
-		if (ret)
-		{
-			int error_code = WSAGetLastError();
-			if (WSA_IO_PENDING != error_code)
-			{
-				CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-			}
-		}
-		//CLIENT.SendPacket(reinterpret_cast<unsigned char*>(&dominate_packet));
+		CPacketMgr::SendDominatePacket();
 		DominatePortalGate(iPlayerNum);
 	}
 	return bResult;

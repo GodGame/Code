@@ -635,7 +635,6 @@ void CInGamePlayer::RenewPacket(sc_packet_pos & packet)
 }
 void CInGamePlayer::RenewPacket(sc_packet_rotate & packet)
 {
-
 	m_xv3Look = packet.LookVector;
 	Chae::XMFloat3Cross(&m_xv3Right, &m_xv3Up, &m_xv3Look);
 	Chae::XMFloat3Normalize(&m_xv3Right, &m_xv3Right);
@@ -750,78 +749,9 @@ void CInGamePlayer::PlayerKeyEventOff(WORD key, void * extra)
 	case 'A' :
 	case 'D' :
 	{
-		DWORD iobyte;
-		/*cs_packet_animation* my_packet = reinterpret_cast<cs_packet_animation*>(CLIENT.GetSendBuffer());
-		my_packet->size = sizeof(my_packet);
-
-		my_packet->type = CS_ANI_IDLE;
-		my_packet->animation_Type = eANI_IDLE;
-		CLIENT.GetWSASendBuffer().len = sizeof(my_packet);
-		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &iobyte, 0, NULL, NULL);*/
 		if (m_pStateMachine->CanChangeState() && m_Status.IsCanMove())
 		{
-			//// 쏜 상태를 전송
-			//cs_packet_Behavior behavior_packet;
-			//behavior_packet.size = sizeof(cs_packet_Behavior);
-			//behavior_packet.type = CS_ANI_IDLE;
-			//CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
-			//CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_Behavior);
-			//memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&behavior_packet), sizeof(cs_packet_Behavior));
-			//DWORD ioBytes;
-			//int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
-			//if (ret)
-			//{
-			//	int error_code = WSAGetLastError();
-			//	if (WSA_IO_PENDING != error_code)
-			//	{
-			//		CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-			//	}
-			//}
 			ChangeAnimationState(eANI_IDLE, false, nullptr, 0);
-		}
-		return;
-	}
-	case 'J':
-	{
-		cout << "PLUS" << endl;
-		cs_packet_serverCheat cheat_packet;
-		cheat_packet.size = sizeof(cs_packet_serverCheat);
-		cheat_packet.type = SERVER_CHEAT;
-		cheat_packet.mode = 0;
-		CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
-		CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_serverCheat);
-		memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&cheat_packet), sizeof(cs_packet_serverCheat));
-		DWORD ioBytes;
-		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
-		if (ret)
-		{
-			int error_code = WSAGetLastError();
-			if (WSA_IO_PENDING != error_code)
-			{
-				CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-			}
-		}
-		return;
-	}
-	case 'K':
-	{
-		cout << "MINUS" << endl;
-		cs_packet_serverCheat cheat_packet;
-		cheat_packet.size = sizeof(cs_packet_serverCheat);
-		cheat_packet.type = SERVER_CHEAT;
-		cheat_packet.mode = 1;
-		CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
-		CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_serverCheat);
-		memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&cheat_packet), sizeof(cs_packet_serverCheat));
-		DWORD ioBytes;
-		int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
-		if (ret)
-		{
-			int error_code = WSAGetLastError();
-			if (WSA_IO_PENDING != error_code)
-			{
-				CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-			}
 		}
 		return;
 	}
@@ -959,24 +889,6 @@ void CInGamePlayer::MagicShot()
 	ChangeAnimationState(eANI_1H_CAST, true, &mwd1HMagicShot[1], 1);
 	EVENTMgr.InsertDelayMessage(0.25f, eMessage::MSG_MAGIC_CAST, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
 	EVENTMgr.InsertDelayMessage(mf1HCastAnimTime + 0.6f, eMessage::MSG_MAGIC_SHOT, CGameEventMgr::MSG_TYPE_SCENE, m_pScene, nullptr, this);
-	//// 쏜 상태를 전송
-	//cs_packet_Behavior behavior_packet;
-	//behavior_packet.size = sizeof(cs_packet_Behavior);
-	//behavior_packet.type = CS_MAGIC_CASTING;
-	//CLIENT.GetWSASendBuffer().buf = reinterpret_cast<CHAR*>(CLIENT.GetUSendBuffer());
-	//CLIENT.GetWSASendBuffer().len = sizeof(cs_packet_Behavior);
-	//memcpy(CLIENT.GetUSendBuffer(), reinterpret_cast<UCHAR*>(&behavior_packet), sizeof(cs_packet_Behavior));
-	//DWORD ioBytes;
-	//int ret = WSASend(CLIENT.GetClientSocket(), &CLIENT.GetWSASendBuffer(), 1, &ioBytes, 0, NULL, NULL);
-	//if (ret)
-	//{
-	//	int error_code = WSAGetLastError();
-	//	if (WSA_IO_PENDING != error_code)
-	//	{
-	//		CLIENT.error_display(__FUNCTION__ " SC_PUT_PLAYER:WSASend", error_code);
-	//	}
-	//}
-	//CLIENT.SendPacket(reinterpret_cast<unsigned char*>(&behavior_packet));
 }
 
 void CInGamePlayer::AcquireItem(CItem * pItem)

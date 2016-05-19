@@ -4,8 +4,9 @@
 #define _PACKET_MGR
 
 #include "stdafx.h"
-//#include "../protocol.h"
+#include "Protocol.h"
 
+class CPlayer;
 class CPacketMgr
 {
 private:
@@ -27,6 +28,12 @@ public:
 	static void err_quit(wchar_t * msg);
 	static void err_display(char * msg);
 	static void error_display(char *msg, int err_no);
+
+	static void SendInputPacket(CPlayer * pPlayer, int id);
+	static void SendRotatePacket(CPlayer * pPlayer);
+	static void SendPositionPacket(CPlayer * pPlayer, const DWORD & direction);
+	static void SendBehaviorPacket();
+	static void SendDominatePacket();
 
 public:
 	void SetSendFlag(DWORD dwFlag) { m_dwSendFlags = dwFlag; }

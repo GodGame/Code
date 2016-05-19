@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "PacketMgr.h"
+#include "Player.h"
 
 CPacketMgr::CPacketMgr()
 {
@@ -60,6 +61,61 @@ void CPacketMgr::error_display(char * msg, int err_no)
 	LocalFree(lpMsgBuf);
 }
 
+void CPacketMgr::SendInputPacket(CPlayer * pPlayer, int id)
+{
+	static cs_packet_state info_packet;
+	info_packet.id = id;
+	info_packet.size = sizeof(cs_packet_state);
+	info_packet.type = CS_INPUT;
+	info_packet.LookVector = pPlayer->GetLookVector();
+	info_packet.RightVector = pPlayer->GetRightVector();
+
+	PACKET_MGR.Send(CLIENT.GetClientSocket(), reinterpret_cast<CHAR*>(&info_packet), info_packet.size);
+}
+
+void CPacketMgr::SendRotatePacket(CPlayer * pPlayer)
+{
+	static cs_packet_rotate rotate_packet;
+	rotate_packet.size = sizeof(cs_packet_rotate);
+	rotate_packet.type = CS_ROTATION;
+	rotate_packet.cxDelta = 0;
+	rotate_packet.cyDelta = 0;
+	rotate_packet.LookVector = pPlayer->GetLookVector();
+
+	PACKET_MGR.Send(CLIENT.GetClientSocket(), reinterpret_cast<CHAR*>(&rotate_packet), rotate_packet.size);
+}
+
+void CPacketMgr::SendPositionPacket(CPlayer * pPlayer, const DWORD & direction)
+{
+	static cs_packet_move_test movePacket;
+	movePacket.size = sizeof(cs_packet_move_test);
+	movePacket.type = CS_MOVE;
+	movePacket.direction = direction;
+	movePacket.Position = pPlayer->GetPosition();
+	movePacket.LookVector = pPlayer->GetLookVector();
+	movePacket.animation = pPlayer->GetAnimationState();
+
+	PACKET_MGR.Send(CLIENT.GetClientSocket(), reinterpret_cast<CHAR*>(&movePacket), movePacket.size);
+}
+
+void CPacketMgr::SendBehaviorPacket()
+{
+	static cs_packet_Behavior behavior_packet;
+	behavior_packet.size = sizeof(cs_packet_Behavior);
+	behavior_packet.type = CS_MAGIC_CASTING;
+
+	PACKET_MGR.Send(CLIENT.GetClientSocket(), reinterpret_cast<CHAR*>(&behavior_packet), behavior_packet.size);
+}
+
+void CPacketMgr::SendDominatePacket()
+{
+	static cs_packet_dominate dominate_packet;
+	dominate_packet.size = sizeof(cs_packet_dominate);
+	dominate_packet.type = CS_DOMINATE;
+
+	PACKET_MGR.Send(CLIENT.GetClientSocket(), reinterpret_cast<CHAR*>(&dominate_packet), dominate_packet.size);
+}
+
 void CPacketMgr::PushSendDataPtr(char * pData, ULONG len)
 {
 	WSABUF tempBuf;
@@ -90,10 +146,14 @@ DWORD CPacketMgr::Send(SOCKET sock, char * data, ULONG len)
 	buf.len = len;
 
 	m_retval = WSASend(sock, &buf, 1, &m_dwBytes, m_dwSendFlags, nullptr, nullptr);
-	if (m_retval == SOCKET_ERROR)
+	if (0 != m_retval)
 	{
-		err_display("WSASend()");
-		return 0;
+		static int error_no = 0;
+		error_no = WSAGetLastError();
+		if (WSA_IO_PENDING != error_no)
+		{
+			error_display(__FUNCTION__ "SendPacket:WSASend", error_no);
+		}
 	}
 	return m_dwBytes;
 }

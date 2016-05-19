@@ -13,7 +13,7 @@ private:
 	char mSendBuffer[BUFF_SIZE];
 	char mRecvBuffer[BUFF_SIZE];
 	char mPacketBuffer[BUFF_SIZE];
-	UCHAR umSendBuffer[BUFF_SIZE];
+
 	WSABUF mSendWsaBuffer;
 	WSABUF mRecvWsaBuffer;
 
@@ -49,8 +49,8 @@ public:
 	void InsertKey(WPARAM wParam);
 	void ProcessPacket(char * ptr);
 	void ReadPacket();
-	void SendPacket(unsigned char* packet);
-	void SendPacket(unsigned char * packet, ULONG len);
+	void SendPacket(char* packet);
+	void SendPacket(char * packet, ULONG len);
 public:
 	void SetScene(CScene * pScene) { m_pScene = pScene; }
 	void SetPlayerShader(CPlayerShader * pShader) { m_pPlayerShader = pShader; }
@@ -59,10 +59,9 @@ public:
 	WSABUF& GetWSARecvBuffer() { return mRecvWsaBuffer; }
 	WSABUF& GetWSASendBuffer() { return mSendWsaBuffer; }
 	SOCKET GetClientSocket() { return mSock; }
-	UCHAR* GetUSendBuffer() { return umSendBuffer; }
+
 	int GetClientID() { return mId; }
-public:
-	void error_display(char * msg, int err_no);
+
 };
 #define CLIENT ClientMgr::GetInstance()
 
