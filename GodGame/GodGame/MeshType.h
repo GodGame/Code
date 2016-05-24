@@ -387,7 +387,7 @@ public:
 class CLoadAnimatedMeshByADFile : public CAnimatedMesh
 {
 public:
-	CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, vector<wstring> & vcFileName, int iStartIndex = 0, int iCutLastIndex = 0);
+	CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, const char * fileName, float fScale, vector<wstring> & vcFileName, int iStartIndex = 0, int iCutLastIndex = 0);
 	virtual ~CLoadAnimatedMeshByADFile();
 	virtual void CreateRasterizerState(ID3D11Device *pd3dDevice);
 };

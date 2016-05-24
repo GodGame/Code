@@ -1471,7 +1471,7 @@ CLoadMeshByChae::~CLoadMeshByChae()
 {
 }
 
-CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, char * fileName, float fScale, 
+CLoadAnimatedMeshByADFile::CLoadAnimatedMeshByADFile(ID3D11Device * pd3dDevice, const char * fileName, float fScale, 
 	vector<wstring> & vcFileName, int iStartIndex, int iCutLastIndex) : CAnimatedMesh(pd3dDevice)
 {
 	int nReadBytes;

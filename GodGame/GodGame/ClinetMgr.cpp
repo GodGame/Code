@@ -62,8 +62,6 @@ bool ClientMgr::Connect(HWND hWnd, int iServerPort)
 		return false;
 	}
 	mhWnd = hWnd;
-	//SendInitialPacket();
-	//RecvInitialPacket();
 
 	PACKET_MGR.PushSendDataPtr(reinterpret_cast<char*>(mSendBuffer), sizeof(mSendBuffer));
 	PACKET_MGR.PushRecvDataPtr(reinterpret_cast<char*>(mRecvBuffer), sizeof(mRecvBuffer));

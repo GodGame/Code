@@ -73,7 +73,7 @@ public:
 	bool IsSampler()                             { return m_nSamplers > 0; }
 	bool IsSRV()                                 { return m_nTextures > 0; }
 
-	static ID3D11ShaderResourceView * CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, wchar_t *ppstrFilePaths, wchar_t * ppstrFormat, UINT nTextures);
+	static ID3D11ShaderResourceView * CreateTexture2DArraySRV(ID3D11Device *pd3dDevice, const wchar_t *ppstrFilePaths, const wchar_t * ppstrFormat, UINT nTextures);
 };
 
 typedef CMgr<CTexture> TEXTURE_MGR;
@@ -261,5 +261,18 @@ public:
 
 void MapConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, void * data, size_t size, ID3D11Buffer * pBuffer);
 void MapMatrixConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT4X4 & matrix, ID3D11Buffer * pBuffer);
+
+class CFileLoadManager
+{
+	CFileLoadManager(){}
+	~CFileLoadManager(){}
+	CFileLoadManager& operator=(const CFileLoadManager&);
+public:
+	static CFileLoadManager& GetInstance();
+
+	void LoadSceneResources(ID3D11Device * pd3dDevice, void * resourceMgr, const char * fileName);
+	void LoadSceneAnimationObjects(ID3D11Device * pd3dDevice, void * resourceMgr, const char * fileName);
+};
+#define FILE_LOAD_Mgr CFileLoadManager::GetInstance()
 
 #endif

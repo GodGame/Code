@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "MyInline.h"
 #include "ResourceMgr.h"
-
+#include "Shader.h"
 //#include "Mesh.h"
 
 CTexture::CTexture(int nTextures, int nSamplers, int nTextureStartSlot, int nSamplerStartSlot, SETSHADER nSetInfo)
@@ -101,7 +101,7 @@ void CTexture::UpdateSamplerShaderVariable(ID3D11DeviceContext *pd3dDeviceContex
 	if (m_uTextureSet & SET_SHADER_CS) pd3dDeviceContext->CSSetSamplers(m_nSamplerStartSlot, m_nSamplers, m_ppd3dSamplerStates);
 }
 
-ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device * pd3dDevice, wchar_t * ppstrFilePaths, wchar_t * ppstrFormat, UINT nTextures)
+ID3D11ShaderResourceView *CTexture::CreateTexture2DArraySRV(ID3D11Device * pd3dDevice, const wchar_t * ppstrFilePaths, const wchar_t * ppstrFormat, UINT nTextures)
 {
 	D3DX11_IMAGE_LOAD_INFO d3dxImageLoadInfo;
 	d3dxImageLoadInfo.Width          = D3DX11_FROM_FILE;
@@ -200,11 +200,6 @@ void CTextureMgr::BuildResources(ID3D11Device * pd3dDevice)
 {
 	BuildSamplers(pd3dDevice);
 	BuildTextures(pd3dDevice);
-
-	//ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	//pd3dsrvTexture = CTextureMgr::CreateRandomTexture1DSRV(pd3dDevice);
-	//InsertShaderResourceView(pd3dsrvTexture, "srv_random1d", TX_SLOT_RANDOM1D, SET_SHADER_GS | SET_SHADER_PS);
-	//pd3dsrvTexture->Release();
 }
 
 void CTextureMgr::BuildSamplers(ID3D11Device * pd3dDevice)
@@ -282,93 +277,38 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 	HRESULT hr = 0;
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
 	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/PortalZone01.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_portal_zone_01", 0);
-	pd3dsrvTexture->Release();
-	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/title.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_title_jpg", 0);
-	pd3dsrvTexture->Release();
-	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/cursor1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_mouse1.png", 0);
-	pd3dsrvTexture->Release();
+	string name;
+	string directory;
+	wstring wsdir;
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/elementList.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_element_list.png", 0);
-	pd3dsrvTexture->Release();
+	ifstream in;
+	in.open("../Assets/Data/Resource/SRV.txt", ios::in);
+//	wchar_t wsdirName[128];
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/staffImage/slot_staff.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_staff_slot.jpg", 0);
-	pd3dsrvTexture->Release();
+	while (in >> name >> directory)
+	{
+		wsdir.assign(directory.begin(), directory.end());
+		ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, wsdir.c_str(), nullptr, nullptr, &pd3dsrvTexture, nullptr));
+		InsertShaderResourceView(pd3dsrvTexture, name, 0);
+		pd3dsrvTexture->Release();
+	}
+	in.close();
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/loading.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_loading.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/youlose.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_lose.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/youwin.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_win.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/scroll01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_scroll_01.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/scroll02.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_scroll_02.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/UI/scroll03.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_scroll_03.png", 0);
-	pd3dsrvTexture->Release();
-
-	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/skull"), _T("png"), 1);
-	InsertShaderResourceView(pd3dsrvTexture, "srv_skull_array", 0);
-	pd3dsrvTexture->Release();
-
-	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_fire"), _T("png"), 2);
-	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_fire_array", 0);
-	pd3dsrvTexture->Release();
-	
-	pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, _T("../Assets/Image/Resource/pt_smoke"), _T("png"), 2);
-	InsertShaderResourceView(pd3dsrvTexture, "srv_particle_smoke_array", 0);
-	pd3dsrvTexture->Release();
+	wstring extensionName;
+	int level;
+	in.open("../Assets/Data/Resource/2DSRVArray.txt", ios::in);
+	while (in >> name >> directory)
+	{
+		wsdir.assign(directory.begin(), directory.end());
 		
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/lightbomb1.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_lightbomb.png", 0);
-	pd3dsrvTexture->Release();
+		in >> directory >> level;
+		extensionName.assign(directory.begin(), directory.end());
 
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_wcircle_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_circle.png", 0);
-	pd3dsrvTexture->Release();
-	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/Ani_Ice_01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_ice01.png", 0);
-	pd3dsrvTexture->Release();
-	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/ice_spike02.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_ice_bolt.png", 0);
-	pd3dsrvTexture->Release();
-	
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/lightsphere2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_electric_bolt.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/ice_sprite02.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_spike.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/flame0.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_flame0.png", 0);
-	pd3dsrvTexture->Release();
-
-	ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Resource/flame2.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr));
-	InsertShaderResourceView(pd3dsrvTexture, "srv_sprite_flame2.png", 0);
-	pd3dsrvTexture->Release();
+		pd3dsrvTexture = CTexture::CreateTexture2DArraySRV(pd3dDevice, wsdir.c_str(), extensionName.c_str(), level);
+		InsertShaderResourceView(pd3dsrvTexture, name, 0);
+		pd3dsrvTexture->Release();
+	}
+	in.close();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -978,4 +918,141 @@ void MapMatrixConstantBuffer(ID3D11DeviceContext * pd3dDeviceContext, XMFLOAT4X4
 	XMFLOAT4X4 *pcbWorldMatrix = (XMFLOAT4X4*)d3dMappedResource.pData;
 	Chae::XMFloat4x4Transpose(pcbWorldMatrix, &matrix); //XMFLOAT4X4Transpose(&pcbWorldMatrix->m_d3dxTransform, pxmtxWorld);
 	pd3dDeviceContext->Unmap(pBuffer, 0);
+}
+
+CFileLoadManager& CFileLoadManager::GetInstance()
+{
+	static CFileLoadManager instance;
+	return instance;
+}
+
+void CFileLoadManager::LoadSceneResources(ID3D11Device * pd3dDevice, void * resourceMgr, const char * fileName)
+{
+	CShader::BUILD_RESOURCES_MGR * sceneResoucres = static_cast<CShader::BUILD_RESOURCES_MGR *>(resourceMgr);
+	static CTexture * pTexture = nullptr;
+	static CMesh * pMesh = nullptr;
+
+	//wstring baseDir{ _T("../Assets/Image/Objects/") };
+	vector<wstring> vcTxFileNames;
+	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
+
+	ifstream in;
+	in.open(fileName, ios::in);
+
+	string objName, instruction;
+	while (in >> objName)
+	{
+		if (0 == objName.compare("name"))
+			in >> objName;
+
+		int st = 0, end = 1;
+		float scale = 1.f;
+		vector<wstring> txNameArray;
+		string meshName;
+
+		while (true)
+		{
+			in >> instruction;
+			if (0 == instruction.compare("for"))
+			{
+				in >> st >> end;
+			}
+			if (0 == instruction.compare("tx"))
+			{
+				int txNum;
+				in >> txNum;
+
+				string txName;
+				for (int i = 0; i < txNum; ++i)
+				{
+					in >> txName;
+					txNameArray.emplace_back();
+					(txNameArray.end() - 1)->assign(txName.begin(), txName.end());
+				}
+			}
+			if (0 == instruction.compare("fbxcjh"))
+			{
+				in >> scale;
+				string mesh;
+				in >> meshName;
+			}
+
+			if (0 == instruction.compare("end"))
+			{
+				static char file[128];
+				static wchar_t result[128];
+
+				for (int i = st; i < end; ++i)
+				{
+					pTexture = new CTexture(txNameArray.size(), 1, 0, 0);
+					for (int j = 0; j < txNameArray.size(); ++j)
+					{
+						swprintf(result, txNameArray[j].c_str(), i);
+						ASSERT_S(D3DX11CreateShaderResourceViewFromFile(pd3dDevice, result, nullptr, nullptr, &pd3dsrvTexture, nullptr));
+						pTexture->SetTexture(j, pd3dsrvTexture);
+						pd3dsrvTexture->Release();
+					}
+					sprintf(file, meshName.c_str(), i);
+					pMesh = new CLoadMeshByFbxcjh(pd3dDevice, file, scale, vcTxFileNames);
+					vcTxFileNames.clear();
+
+					sprintf(file, objName.c_str(), i);
+					sceneResoucres->mgrTexture.InsertObject(pTexture, file);
+					sceneResoucres->mgrMesh.InsertObject(pMesh, file);
+				}
+				break;
+			}
+		}
+
+	}
+	in.close();
+}
+
+void CFileLoadManager::LoadSceneAnimationObjects(ID3D11Device * pd3dDevice, void * resourceMgr, const char * fileName)
+{
+	CShader::BUILD_RESOURCES_MGR * sceneResoucres = static_cast<CShader::BUILD_RESOURCES_MGR *>(resourceMgr);
+	static CTexture * pTexture = nullptr;
+	static CMesh * pMesh = nullptr;
+
+	const static wstring baseDir{ _T("../Assets/Image/Objects/") };
+	vector<wstring> vcTxFileNames;
+
+	ifstream in;
+	in.open(fileName, ios::in);
+
+	wstring wsdir;
+	string objName, instruction;
+	while (in >> instruction)
+	{
+		in >> objName;	// "name"
+		in >> instruction >> instruction; // "dir"
+		wsdir.assign(instruction.begin(), instruction.end());
+
+		string animName;
+		string adDir;
+		float scale = 1.0f;
+		int st = 0, end = 0;
+		int index = 0;
+
+		while(true)
+		{
+			in >> animName;
+			if (0 == animName.compare("end")) break;
+
+			in >> adDir >> scale >> st >> end;
+
+			pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, adDir.c_str(), scale, vcTxFileNames, st, end);
+			sceneResoucres->mgrMesh.InsertObject(pMesh, animName);
+			if (0 == index) 
+			{
+				pTexture = CTextureMgr::MakeFbxcjhTextures(pd3dDevice, baseDir + wsdir, vcTxFileNames, 0);
+				vcTxFileNames.clear();
+				sceneResoucres->mgrTexture.InsertObject(pTexture, objName);
+			}
+			++index;
+		}
+		vcTxFileNames.clear();
+
+	}
+	in.close();
 }

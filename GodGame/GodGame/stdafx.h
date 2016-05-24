@@ -69,6 +69,7 @@ using namespace D2D1;
 #include <process.h>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <vector>
 #include <map>
 #include <set>
