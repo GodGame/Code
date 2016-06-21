@@ -204,7 +204,6 @@ CWaterGridMesh::CWaterGridMesh(ID3D11Device * pd3dDevice, int xStart, int zStart
 	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 
 	m_pxv3Positions = new XMFLOAT3[m_nVertices];
-	XMFLOAT3 *pxv3Normals = new XMFLOAT3[m_nVertices];
 	XMFLOAT2 *pxv2TexCoords = new XMFLOAT2[m_nVertices];
 	XMFLOAT2 *pxv2AlphaTexCoords = new XMFLOAT2[m_nVertices];
 
@@ -218,7 +217,6 @@ CWaterGridMesh::CWaterGridMesh(ID3D11Device * pd3dDevice, int xStart, int zStart
 		for (int x = xStart; x < (xStart + nWidth); x++, i++)
 		{
 			m_pxv3Positions[i] = XMFLOAT3((x*xv3Scale.x), fHeight, (z*xv3Scale.z));
-			pxv3Normals[i] = pHeightMap->GetHeightMapNormal(x, z);
 			pxv2TexCoords[i] = XMFLOAT2(float(x) / float(xv3Scale.x * 0.5f), float(z) / float(xv3Scale.z * 0.5f));
 			pxv2AlphaTexCoords[i] = XMFLOAT2(float(x) / float(cxHeightMap - 1), float(czHeightMap - 1 - z) / float(czHeightMap - 1));
 
@@ -238,10 +236,7 @@ CWaterGridMesh::CWaterGridMesh(ID3D11Device * pd3dDevice, int xStart, int zStart
 	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 	d3dBufferData.pSysMem = m_pxv3Positions;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
-	//법선벡터
-	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
-	d3dBufferData.pSysMem = pxv3Normals;
-	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
+
 	//텍스쳐
 	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
 	d3dBufferData.pSysMem = pxv2TexCoords;
@@ -250,12 +245,11 @@ CWaterGridMesh::CWaterGridMesh(ID3D11Device * pd3dDevice, int xStart, int zStart
 	d3dBufferData.pSysMem = pxv2AlphaTexCoords;
 	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dAlphaTexCoordBuffer);
 
-	ID3D11Buffer *pd3dBuffers[4] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer, m_pd3dAlphaTexCoordBuffer };
-	UINT pnBufferStrides[4] = { sizeof(XMFLOAT3), sizeof(XMFLOAT3), sizeof(XMFLOAT2), sizeof(XMFLOAT2) };
-	UINT pnBufferOffsets[4] = { 0, 0, 0, 0 };
-	AssembleToVertexBuffer(4, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+	ID3D11Buffer *pd3dBuffers[3] = { m_pd3dPositionBuffer, m_pd3dTexCoordBuffer, m_pd3dAlphaTexCoordBuffer };
+	UINT pnBufferStrides[3] = { sizeof(XMFLOAT3), sizeof(XMFLOAT2), sizeof(XMFLOAT2) };
+	UINT pnBufferOffsets[3] = { 0, 0, 0 };
+	AssembleToVertexBuffer(3, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
 
-	if (pxv3Normals) delete[] pxv3Normals;
 	if (pxv2TexCoords) delete[] pxv2TexCoords;
 	if (pxv2AlphaTexCoords) delete[] pxv2AlphaTexCoords;
 	if (m_pxv3Positions) delete[] m_pxv3Positions;

@@ -246,22 +246,30 @@ return output;
 
 //---------------------------------------------------------------------------------------------------------------------
 // ¹° ÁöÇü
-VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT VSWaterGrid(VS_SPLAT_TEXTURED_LIGHTING_COLOR_INPUT input)
+cbuffer cbWaterBuffer : register(b3)
 {
-	VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT output = (VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT)0;
-	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
+	float  gTime;
+	float  gTimePerMoveUnit;
+	float  gEmpty;
+	float  gWaterDepth;
+};
+
+VS_DETAIL_NOT_NORMAL_OUTPUT VSWaterGrid(VS_DETAIL_NOT_NORMAL_INPUT input)
+{
+	VS_DETAIL_NOT_NORMAL_OUTPUT output = (VS_DETAIL_NOT_NORMAL_OUTPUT)0;
 	output.positionW = input.position;// mul(float4(input.position, 1.0f), gmtxWorld).xyz;
+	output.positionW.y += gWaterDepth;
 	output.position = mul(float4(output.positionW, 1.0f), gmtxViewProjection);
-	output.texCoordBase = input.texCoordBase;
-	output.texCoordAlpha = input.texCoordAlpha;
+
+	float fDeltaUV = (gTime * gTimePerMoveUnit);
+	output.texCoordBase = input.texCoordBase + fDeltaUV;
+	output.texCoordAlpha = input.texCoordAlpha + fDeltaUV;
 
 	return(output);
 }
 
-PS_MRT_OUT PSWaterGrid(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT input) : SV_Target
+PS_MRT_OUT PSWaterGrid(VS_DETAIL_NOT_NORMAL_OUTPUT input) : SV_Target
 {
-	input.normalW = normalize(input.normalW);
-
 	float4 baseColor = gtxtTexture.Sample(gDetailSamplerState, input.texCoordAlpha);
 	float4 detailColor = gtxtDetailTexture.Sample(gSamplerState, input.texCoordBase);
 	float3 normal = gtxtGridNormalMap.Sample(gSamplerState, input.texCoordBase).rgb;
@@ -272,9 +280,9 @@ PS_MRT_OUT PSWaterGrid(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT input) : SV_Targe
 	float3 T = float3(1, 0, 0);
 	float3x3 TBN = float3x3(T, cross(N, T), N);
 
-	normal = (2.0f * displace.rrr) - 1.0f; //.rgb;
+	//normal = (10.0f * displace.rrr) - 5.0f; //.rgb;
 	normal = (mul(normal, TBN));
-	float3 pos = input.positionW + (normal * displace.rrr * 10.0f - 5.0f);
+	float3 pos = input.positionW + (normal * (displace.rrr * 10.0f - 5.0f));
 
 	PS_MRT_OUT output;
 	output.vNormal  = float4(normal, input.position.w * gfDepthFar);
@@ -637,9 +645,6 @@ PS_WORLD_NORMALMAP DSBump(HCS_EDGE4_IN2 input, float2 uv : SV_DomainLocation, Ou
 	output.normalW = lerp(lerp(quad[0].normalW, quad[1].normalW, uv.x), lerp(quad[2].normalW, quad[3].normalW, uv.x), uv.y);
 	output.tangentW = lerp(lerp(quad[0].tangentW, quad[1].tangentW, uv.x), lerp(quad[2].tangentW, quad[3].tangentW, uv.x), uv.y);
 	output.normalW = normalize(output.normalW);
-
-	//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
-	//output.shadowPos = mul(float4(output.posW, 1.0f), shadowProj);
 
 	float fHeight = gtxtTexture.SampleLevel(gSamplerState, output.tex, 0).a;
 	output.posW += (gBumpScale.y * (fHeight - 1.0f)) * output.normalW;

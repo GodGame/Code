@@ -42,8 +42,12 @@ struct CB_WEIGHT
 };
 #define SLOT_CS_CB_WEIGHT 1
 
-struct CB_CS_INOUT
+struct CB_WATER
 {
+	float  fTime;
+	float  fTimePerMoveUnit;
+	float  fEmpty;
+	float  fWaterDepth;
 };
 
 struct POST_CS
@@ -284,6 +288,9 @@ public:
 class CWaterShader : public CTexturedShader
 {
 	ID3D11BlendState * m_pd3dWaterBlendState;
+	ID3D11Buffer * m_pd3dcbWaterBuffer;
+	CB_WATER mCBWaterData;
+#define CB_WATER_SLOT 0x03
 
 public:
 	CWaterShader();
@@ -292,9 +299,11 @@ public:
 	virtual void CreateShader(ID3D11Device *pd3dDevice);
 	virtual void BuildObjects(ID3D11Device *pd3dDevice);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
+	virtual void AnimateObjects(float fTimeElapsed);
 
 private:
-	void	SetBlendState(ID3D11Device *pd3dDevice);
+	void	_SetBlendState(ID3D11Device *pd3dDevice);
+	void	_SetWaterCB(ID3D11DeviceContext *pd3dDeviceContext);
 };
 
 class CTerrainShader : public CSplatLightingShader

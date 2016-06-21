@@ -1089,11 +1089,14 @@ void CTerrainShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 CWaterShader::CWaterShader() : CTexturedShader()
 {
 	m_pd3dWaterBlendState = nullptr;
+	m_pd3dcbWaterBuffer = nullptr;
+	ZeroMemory(&mCBWaterData, sizeof(mCBWaterData));
 }
 
 CWaterShader::~CWaterShader()
 {
 	if (m_pd3dWaterBlendState) m_pd3dWaterBlendState->Release();
+	if (m_pd3dcbWaterBuffer) m_pd3dcbWaterBuffer->Release();
 }
 
 void CWaterShader::CreateShader(ID3D11Device *pd3dDevice)
@@ -1101,9 +1104,8 @@ void CWaterShader::CreateShader(ID3D11Device *pd3dDevice)
 	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 	UINT nElements = ARRAYSIZE(d3dInputElements);
 	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSWaterGrid", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
@@ -1147,10 +1149,13 @@ void CWaterShader::BuildObjects(ID3D11Device *pd3dDevice)
 	m_ppObjects[0]->SetTexture(pWaterTexture);
 	//m_ppObjects[0]->SetPosition(1024, 0, 1024);
 
-	SetBlendState(pd3dDevice);
+	_SetBlendState(pd3dDevice);
+
+	mCBWaterData.fTimePerMoveUnit = 0.1f;
+	mCBWaterData.fWaterDepth = 0.f;
 }
 
-void CWaterShader::SetBlendState(ID3D11Device *pd3dDevice)
+void CWaterShader::_SetBlendState(ID3D11Device *pd3dDevice)
 {
 	D3D11_BLEND_DESC	d3dBlendDesc;
 	ZeroMemory(&d3dBlendDesc, sizeof(D3D11_BLEND_DESC));
@@ -1168,11 +1173,23 @@ void CWaterShader::SetBlendState(ID3D11Device *pd3dDevice)
 	d3dBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_BLUE;// D3D11_COLOR_WRITE_ENABLE_ALL;	// 파란색 위주로 한다.
 
 	pd3dDevice->CreateBlendState(&d3dBlendDesc, &m_pd3dWaterBlendState);
+
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DYNAMIC;
+	bd.ByteWidth = sizeof(CB_WATER);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	HRESULT hr = pd3dDevice->CreateBuffer(&bd, nullptr, &m_pd3dcbWaterBuffer);
+	if (FAILED(hr))
+		printf("오류입니다!!");
 }
 
 void CWaterShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
 	if (false == m_ppObjects[0]->IsActive()) return;
+
+	_SetWaterCB(pd3dDeviceContext);
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
 	static float pBlendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -1184,6 +1201,21 @@ void CWaterShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderSt
 
 	static ID3D11ShaderResourceView * const srvNullArray[] = { nullptr, nullptr, nullptr, nullptr };
 	pd3dDeviceContext->PSSetShaderResources(0, 4, srvNullArray);
+}
+void CWaterShader::AnimateObjects(float fTimeElapsed)
+{
+	mCBWaterData.fTime += fTimeElapsed;
+	if (mCBWaterData.fTime > 10.0f) mCBWaterData.fTime -= 10.0f;
+}
+void CWaterShader::_SetWaterCB(ID3D11DeviceContext * pd3dDeviceContext)
+{
+	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
+	pd3dDeviceContext->Map(m_pd3dcbWaterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
+	CB_WATER *pcbSSAO = (CB_WATER *)d3dMappedResource.pData;
+	memcpy(pcbSSAO, &mCBWaterData, sizeof(CB_WATER));
+	pd3dDeviceContext->Unmap(m_pd3dcbWaterBuffer, 0);
+
+	pd3dDeviceContext->VSSetConstantBuffers(CB_WATER_SLOT, 1, &m_pd3dcbWaterBuffer);
 }
 #pragma endregion
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
