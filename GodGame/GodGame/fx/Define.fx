@@ -205,6 +205,21 @@ struct VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT
 	float2 texCoordAlpha               : TEXCOORD1;
 };
 
+struct VS_DETAIL_NOT_NORMAL_INPUT
+{
+	float3 position                    : POSITION;
+	float2 texCoordBase                : TEXCOORD0;
+	float2 texCoordAlpha               : TEXCOORD1;
+};
+
+struct VS_DETAIL_NOT_NORMAL_OUTPUT
+{
+	float4 position                    : SV_POSITION;
+	float3 positionW                   : POSITION;
+	float2 texCoordBase                : TEXCOORD0;
+	float2 texCoordAlpha               : TEXCOORD1;
+};
+
 //--------------------------------------------------------------------------------------------------------------------
 //인스턴싱, 텍스쳐와 조명을 같이 사용하는 경우 정점 쉐이더의 입력을 위한 구조체이다.
 struct VS_INSTANCED_TEXTURED_LIGHTING_COLOR_INPUT
