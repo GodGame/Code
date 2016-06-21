@@ -53,6 +53,8 @@ public:
 	void SetMaxVelocityY(float fMaxVelocity)    { m_fMaxVelocityY = fMaxVelocity; }
 	void SetExternalPower(XMFLOAT3 & xmf3Power);
 
+	XMFLOAT3& GetExternalPower() { return m_xv3ExternalPower; }
+
 	StatusInfo& GetStatus() {return m_Status;}
 	void CalculateFriction(float fTimeElapsed);
 

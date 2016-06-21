@@ -797,6 +797,7 @@ void CPlayerShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUILD_RESOUR
 	pMesh[eANI_DAMAGED_FRONT_01] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f01");
 	pMesh[eANI_DAMAGED_FRONT_02] = mgrScene.mgrMesh.GetObjects("scene_aure_damaged_f02");
 	pMesh[eANI_DEATH_FRONT]      = mgrScene.mgrMesh.GetObjects("scene_aure_death_f");
+	pMesh[eANI_JUMP]			 = mgrScene.mgrMesh.GetObjects("scene_aure_jump");
 
 	CMapManager * pTerrain = &MAPMgr;
 	for (int j = 0; j < m_nObjects; ++j)

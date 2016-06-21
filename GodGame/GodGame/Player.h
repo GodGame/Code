@@ -166,6 +166,7 @@ public:
 
 	void Kill(CCharacter * pChar);
 	void Death(CCharacter * pChar);
+	void Jump();
 
 public:
 	void MagicShot();
@@ -201,6 +202,7 @@ private:
 	const float mfDamagedAnimTime01     = 0.8f;
 	const float mfDamagedAnimTime02     = 1.3f;
 	const float mfDeathAnimTime         = 3.0f;
+	const float mfJumpTime				= 2.0f;
 
 private:
 	const float mfDominateCoolTime		= 1.0f;

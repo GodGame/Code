@@ -52,26 +52,10 @@ void CPlayer::Move(DWORD dwDirection, float fDistance, bool bUpdateVelocity)
 	{
 		WORD wdNextState = 0;
 		XMVECTOR xv3Shift = XMVectorReplicate(0);
-		// 바꾼 부분
-		
-	/*	cs_packet_up* my_packet = reinterpret_cast<cs_packet_up*>(CLIENT.GetSendBuffer());
-		my_packet->size = sizeof(my_packet);
-		CLIENT.GetWSASendBuffer().len = sizeof(my_packet);*/
-	/*	cs_packet_up* my_packet = reinterpret_cast<cs_packet_up*>(CLIENT.GetSendBuffer());
-		my_packet->size = sizeof(my_packet);
-		CLIENT.GetWSASendBuffer().len = sizeof(my_packet);*/
 		//화살표 키 ‘→’를 누르면 로컬 x-축 방향으로 이동한다. ‘←’를 누르면 반대 방향으로 이동한다.
 		if (dwDirection & DIR_LEFT)
 		{
 			xv3Shift -= XMLoadFloat3(&m_xv3Right) * fDistance;// *0.8f;
-			/*cs_packet_state my_packet2;
-			my_packet2.id = CLIENT.GetClientID();
-			my_packet2.size = sizeof(cs_packet_state);
-			my_packet2.type = CS_INPUT;
-			my_packet2.LookVector = m_xv3Look;
-			my_packet2.RightVector = m_xv3Right;
-			my_packet2.Position = m_xv3Position;
-			CLIENT.SendPacket(reinterpret_cast<unsigned  char*>(&my_packet2));*/
 			wdNextState = eANI_WALK_LEFT;
 		}
 		if (dwDirection & DIR_RIGHT)
@@ -564,6 +548,7 @@ void CInGamePlayer::InitializeAnimCycleTime()
 	SetAnimationCycleTime(eANI_DAMAGED_FRONT_01, mfDamagedAnimTime01);
 	SetAnimationCycleTime(eANI_DAMAGED_FRONT_02, mfDamagedAnimTime02);
 	SetAnimationCycleTime(eANI_DEATH_FRONT,      mfDeathAnimTime);
+	SetAnimationCycleTime(eANI_JUMP,			 mfJumpTime);
 }
 
 void CInGamePlayer::Update(float fTimeElapsed)
@@ -880,6 +865,11 @@ void CInGamePlayer::Death(CCharacter * pChar)
 	auto enemy = dynamic_cast<CInGamePlayer*>(pChar);
 	if (enemy) 
 		enemy->Kill(nullptr);
+}
+
+void CInGamePlayer::Jump()
+{
+	GetFSM()->ChangeState(&CPlayerJumpState::GetInstance());
 }
 
 void CInGamePlayer::MagicShot()

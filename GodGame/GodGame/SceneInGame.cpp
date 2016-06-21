@@ -115,7 +115,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	}
 	
 	FILE_LOAD_Mgr.LoadSceneAnimationObjects(pd3dDevice, &m_SceneResoucres, "../Assets/Data/Map01/AnimationList.txt");
-	// 플레이어 캐릭터
+	// 플레이어 캐릭터bn
 	{
 		pMesh = new CLoadAnimatedMeshByADFile(pd3dDevice, "../Assets/Image/Objects/Skull/skeleton_0.ad", 3.5f, vcTxFileNames);
 		pTexture = new CTexture(1, 0, 0, 0);
@@ -397,6 +397,10 @@ bool CSceneInGame::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARA
 		case 'M':
 			pPlayer->PlayerKeyEventOn(wParam, this);
 			return(false);
+
+		case 'Z':
+			pPlayer->Jump();
+			return false;
 		}
 		return(false);
 

@@ -161,6 +161,44 @@ void CPlayerDominateState::Exit(CInGamePlayer * pPlayer)
 {
 	//pPlayer->StopDominate();
 }
+//////////////////////////////////////////////////////////////////////////////
+CPlayerJumpState & CPlayerJumpState::GetInstance()
+{
+	static CPlayerJumpState instance;
+	return instance;
+}
+
+void CPlayerJumpState::Enter(CInGamePlayer * pPlayer)
+{
+	mPlayerJumpState[pPlayer->GetPlayerNum()] = 550.f;
+	pPlayer->ChangeAnimationState(eANI_JUMP, true, nullptr, 0);
+}
+
+void CPlayerJumpState::Execute(CInGamePlayer * pPlayer, float fFrameTime)
+{
+	const float jumpPower = fFrameTime * 2000.f;
+	const int playerNum = pPlayer->GetPlayerNum();
+	mPlayerJumpState[playerNum] -= jumpPower;
+	if (mPlayerJumpState[playerNum] > 0.f)
+	{
+		pPlayer->SetExternalPower(XMFLOAT3(0, jumpPower, 0));
+	}
+
+	XMFLOAT3 external = pPlayer->GetExternalPower();
+	XMVECTOR power = XMLoadFloat3(&external);
+	power = XMVector3LengthSq(power);
+	
+	float length;
+	XMStoreFloat(&length, power);
+
+	if (length <= 0.0f) 
+		pPlayer->GetFSM()->ChangeState(&CPlayerIdleState::GetInstance());
+}
+
+void CPlayerJumpState::Exit(CInGamePlayer * pPlayer)
+{
+	//pPlayer->StopDominate();
+}
 
 //////////////////////////////////////////////////////////////////////////////
 CPlayerDeathState & CPlayerDeathState::GetInstance()

@@ -114,6 +114,23 @@ public:
 	virtual void Exit(CInGamePlayer * pPlayer);
 };
 
+class CPlayerJumpState : public CAIState<CInGamePlayer>
+{
+private:
+	map<int, float> mPlayerJumpState;
+
+private:
+	CPlayerJumpState() : CAIState<CInGamePlayer>() {}
+	virtual ~CPlayerJumpState() {}
+	CPlayerJumpState& operator=(const CPlayerJumpState&);
+
+public:
+	static CPlayerJumpState & GetInstance();
+	virtual void Enter(CInGamePlayer * pPlayer);
+	virtual void Execute(CInGamePlayer * pPlayer, float fFrameTime);
+	virtual void Exit(CInGamePlayer * pPlayer);
+};
+
 class CPlayerDeathState : public CAIState<CInGamePlayer>
 {
 private:
