@@ -1086,11 +1086,6 @@ void CTerrainShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRender
 	//pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
 }
 
-//CHeightMapTerrain *CTerrainShader::GetTerrain()
-//{
-//	return((CHeightMapTerrain *)m_ppObjects[0]);
-//}
-
 CWaterShader::CWaterShader() : CTexturedShader()
 {
 	m_pd3dWaterBlendState = nullptr;
@@ -1103,74 +1098,54 @@ CWaterShader::~CWaterShader()
 
 void CWaterShader::CreateShader(ID3D11Device *pd3dDevice)
 {
-	CTexturedShader::CreateShader(pd3dDevice);
+	D3D11_INPUT_ELEMENT_DESC d3dInputElements[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 2, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 3, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	};
+	UINT nElements = ARRAYSIZE(d3dInputElements);
+	CreateVertexShaderFromFile(pd3dDevice, L"fx/Effect.fx", "VSWaterGrid", "vs_5_0", &m_pd3dVertexShader, d3dInputElements, nElements, &m_pd3dVertexLayout);
+	CreatePixelShaderFromFile(pd3dDevice, L"fx/Effect.fx", "PSWaterGrid", "ps_5_0", &m_pd3dPixelShader);
 }
 
-void CWaterShader::BuildObjects(ID3D11Device *pd3dDevice, CHeightMapTerrain *pHeightMapTerrain)
+void CWaterShader::BuildObjects(ID3D11Device *pd3dDevice)
 {
-	//m_pTexture = pTexture;
-	//if (pTexture) pTexture->AddRef();
-
-	ID3D11SamplerState *pd3dSamplerState = nullptr;
-	D3D11_SAMPLER_DESC d3dSamplerDesc;
-	ZeroMemory(&d3dSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-	d3dSamplerDesc.Filter                = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	d3dSamplerDesc.AddressU              = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressV              = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.AddressW              = D3D11_TEXTURE_ADDRESS_CLAMP;
-	d3dSamplerDesc.ComparisonFunc        = D3D11_COMPARISON_NEVER;
-	d3dSamplerDesc.MinLOD                = 0;
-	d3dSamplerDesc.MaxLOD                = 0;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dSamplerState);
-
-	ID3D11SamplerState *pd3dDetailSamplerState = nullptr;
-	d3dSamplerDesc.AddressU                    = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressV                    = D3D11_TEXTURE_ADDRESS_WRAP;
-	d3dSamplerDesc.AddressW                    = D3D11_TEXTURE_ADDRESS_WRAP;
-	pd3dDevice->CreateSamplerState(&d3dSamplerDesc, &pd3dDetailSamplerState);
-
-	/////////////////////////////////////////////////
-
 	ID3D11ShaderResourceView *pd3dsrvTexture = nullptr;
-	/// 물 텍스쳐///
 
-	CTexture *pWaterTexture = new CTexture(1, 1, 0, 0);
-	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Terrain/water01.png"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	CTexture *pWaterTexture = new CTexture(4, 2, 0, 0);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Terrain/water_base.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
 	pWaterTexture->SetTexture(0, pd3dsrvTexture);
-	pWaterTexture->SetSampler(0, pd3dSamplerState);
+	pWaterTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 	pd3dsrvTexture->Release();
-	pd3dSamplerState->Release();
 
-	//ID3D11ShaderResourceView *pd3dsrvDetailTexture = nullptr;
-	//D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Terrain/Water_Detail_Texture_0.dds"), nullptr, nullptr, &pd3dsrvDetailTexture, nullptr);
-	//pWaterTexture->SetTexture(1, pd3dsrvDetailTexture);
-	//pWaterTexture->SetSampler(1, pd3dDetailSamplerState);
-	//pd3dsrvDetailTexture->Release();
-	//pd3dDetailSamplerState->Release();
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Terrain/water_detail.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	pWaterTexture->SetTexture(1, pd3dsrvTexture);
+	pWaterTexture->SetSampler(1, TXMgr.GetSamplerState("ss_linear_clamp"));
+	pd3dsrvTexture->Release();
 
-	//CCubeMeshTexturedIlluminated *pCubeMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 12.0f, 12.0f, 12.0f);
-	CSphereMeshTexturedIlluminated *pSphereMesh = new CSphereMeshTexturedIlluminated(pd3dDevice, 5.0f, 20, 20);
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Terrain/water_normal.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	pWaterTexture->SetTexture(2, pd3dsrvTexture);
+	//pWaterTexture->SetSampler(2, TXMgr.GetSamplerState("ss_linear_wrap"));
+	pd3dsrvTexture->Release();
+
+	D3DX11CreateShaderResourceViewFromFile(pd3dDevice, _T("../Assets/Image/Terrain/water_bump.jpg"), nullptr, nullptr, &pd3dsrvTexture, nullptr);
+	pWaterTexture->SetTexture(3, pd3dsrvTexture);
+	//pWaterTexture->SetSampler(2, TXMgr.GetSamplerState("ss_linear_wrap"));
+	pd3dsrvTexture->Release();
+
+	XMFLOAT3 xv3Scale(8.0f, 1.5f, 8.0f);
+	const int ImageWidth = 257;
+	const int ImageLength = 257;
 
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
-
-	CRotatingObject *pObject = nullptr;
-
-	/// 이상 스테틱 객체들
-
-	m_ppObjects[0] = new CGameObject(1);
-	CCubeMeshTexturedIlluminated * CWaterMesh = new CCubeMeshTexturedIlluminated(pd3dDevice, 2048, 100, 2048);
-	m_ppObjects[0]->SetMesh(CWaterMesh);
+	m_ppObjects[0] = new CWaterTerrain(pd3dDevice, ImageWidth, ImageLength, ImageWidth, ImageLength, xv3Scale);
+	m_ppObjects[0]->AddRef();
+	m_ppObjects[0]->SetActive(true);
 	m_ppObjects[0]->SetTexture(pWaterTexture);
-	m_ppObjects[0]->SetPosition(1024, 98, 1024);
-
-	//CMaterial *pWaterMaterial = new CMaterial();
-	//pWaterMaterial->m_Material.m_xcDiffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	//pWaterMaterial->m_Material.m_xcAmbient = XMFLOAT4(0.1f, 0.1f, 0.3f, 1.0f);
-	//pWaterMaterial->m_Material.m_xcEmissive = XMFLOAT4(1.0f, 1.0f, 1.0f, 5.0f);
-	//pWaterMaterial->m_Material.m_xcEmissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	//m_ppObjects[0]->SetMaterial(pWaterMaterial);
+	//m_ppObjects[0]->SetPosition(1024, 0, 1024);
 
 	SetBlendState(pd3dDevice);
 }
@@ -1190,20 +1165,25 @@ void CWaterShader::SetBlendState(ID3D11Device *pd3dDevice)
 	d3dBlendDesc.RenderTarget[0].SrcBlendAlpha         = D3D11_BLEND_ONE;
 	d3dBlendDesc.RenderTarget[0].DestBlendAlpha        = D3D11_BLEND_ONE;
 	d3dBlendDesc.RenderTarget[0].BlendOpAlpha          = D3D11_BLEND_OP_ADD;
-	d3dBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;	// 파란색 위주로 한다.
+	d3dBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_BLUE;// D3D11_COLOR_WRITE_ENABLE_ALL;	// 파란색 위주로 한다.
 
 	pd3dDevice->CreateBlendState(&d3dBlendDesc, &m_pd3dWaterBlendState);
 }
 
 void CWaterShader::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera)
 {
+	if (false == m_ppObjects[0]->IsActive()) return;
 	OnPrepareRender(pd3dDeviceContext, uRenderState);
 
-	float pBlendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	pd3dDeviceContext->OMSetBlendState(m_pd3dWaterBlendState, pBlendFactor, 0xffffffff);
+	static float pBlendFactor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	//pd3dDeviceContext->OMSetBlendState(m_pd3dWaterBlendState, pBlendFactor, 0xffffffff);
 
+	m_ppObjects[0]->SetVisible(true);
 	m_ppObjects[0]->Render(pd3dDeviceContext, uRenderState, pCamera);
-	pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
+	//pd3dDeviceContext->OMSetBlendState(nullptr, pBlendFactor, 0xffffffff);
+
+	static ID3D11ShaderResourceView * const srvNullArray[] = { nullptr, nullptr, nullptr, nullptr };
+	pd3dDeviceContext->PSSetShaderResources(0, 4, srvNullArray);
 }
 #pragma endregion
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

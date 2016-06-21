@@ -197,9 +197,123 @@ void CHeightMapGridMesh::Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRe
 {
 	CMesh::Render(pd3dDeviceContext, uRenderState);
 }
+/////////////////////////////////////////////////////////////////////////
+CWaterGridMesh::CWaterGridMesh(ID3D11Device * pd3dDevice, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xv3Scale, void * pContext) : CMeshSplatTexturedIlluminated(pd3dDevice)
+{
+	m_nVertices = nWidth * nLength;
+	m_d3dPrimitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
 
+	m_pxv3Positions = new XMFLOAT3[m_nVertices];
+	XMFLOAT3 *pxv3Normals = new XMFLOAT3[m_nVertices];
+	XMFLOAT2 *pxv2TexCoords = new XMFLOAT2[m_nVertices];
+	XMFLOAT2 *pxv2AlphaTexCoords = new XMFLOAT2[m_nVertices];
 
+	CHeightMap *pHeightMap = (CHeightMap *)pContext;
+	int cxHeightMap = pHeightMap->GetHeightMapWidth();
+	int czHeightMap = pHeightMap->GetHeightMapLength();
+	float fHeight = 125.0f;
+	/*xStart와 zStart는 격자의 시작 위치(x-좌표와 z-좌표)를 나타낸다. 지형을 격자들의 이차원 배열로 만들 것이기 때문에 지형에서 각 격자의 시작 위치를 나타내는 정보가 필요하다. <그림 18>은 격자의 교점(정점)을 나열하는 순서를 보여준다.*/
+	for (int i = 0, z = zStart; z < (zStart + nLength); z++)
+	{
+		for (int x = xStart; x < (xStart + nWidth); x++, i++)
+		{
+			m_pxv3Positions[i] = XMFLOAT3((x*xv3Scale.x), fHeight, (z*xv3Scale.z));
+			pxv3Normals[i] = pHeightMap->GetHeightMapNormal(x, z);
+			pxv2TexCoords[i] = XMFLOAT2(float(x) / float(xv3Scale.x * 0.5f), float(z) / float(xv3Scale.z * 0.5f));
+			pxv2AlphaTexCoords[i] = XMFLOAT2(float(x) / float(cxHeightMap - 1), float(czHeightMap - 1 - z) / float(czHeightMap - 1));
 
+			//	pxv2AlphaTexCoords[i] = XMFLOAT2(float(x) / float(cxHeightMap - 1), float(czHeightMap - 1 - z) / float(czHeightMap - 1));
+			//pxv2TexCoords[i] = XMFLOAT2(float(x) / float(xv3Scale.x * 0.25f), float(z) / float(xv3Scale.z * 0.25f));
+		}
+	}
+
+	D3D11_BUFFER_DESC d3dBufferDesc;
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA d3dBufferData;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = m_pxv3Positions;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dPositionBuffer);
+	//법선벡터
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT3)* m_nVertices;
+	d3dBufferData.pSysMem = pxv3Normals;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dNormalBuffer);
+	//텍스쳐
+	d3dBufferDesc.ByteWidth = sizeof(XMFLOAT2)* m_nVertices;
+	d3dBufferData.pSysMem = pxv2TexCoords;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dTexCoordBuffer);
+
+	d3dBufferData.pSysMem = pxv2AlphaTexCoords;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dAlphaTexCoordBuffer);
+
+	ID3D11Buffer *pd3dBuffers[4] = { m_pd3dPositionBuffer, m_pd3dNormalBuffer, m_pd3dTexCoordBuffer, m_pd3dAlphaTexCoordBuffer };
+	UINT pnBufferStrides[4] = { sizeof(XMFLOAT3), sizeof(XMFLOAT3), sizeof(XMFLOAT2), sizeof(XMFLOAT2) };
+	UINT pnBufferOffsets[4] = { 0, 0, 0, 0 };
+	AssembleToVertexBuffer(4, pd3dBuffers, pnBufferStrides, pnBufferOffsets);
+
+	if (pxv3Normals) delete[] pxv3Normals;
+	if (pxv2TexCoords) delete[] pxv2TexCoords;
+	if (pxv2AlphaTexCoords) delete[] pxv2AlphaTexCoords;
+	if (m_pxv3Positions) delete[] m_pxv3Positions;
+	m_pxv3Positions = nullptr;
+
+	m_nIndices = ((nWidth * 2)*(nLength - 1)) + ((nLength - 1) - 1);
+	m_pnIndices = new UINT[m_nIndices];
+	for (int j = 0, z = 0; z < nLength - 1; z++)
+	{
+		if ((z % 2) == 0)
+		{
+			//홀수 번째 줄이므로(z = 0, 2, 4, ...) 인덱스의 나열 순서는 왼쪽에서 오른쪽 방향이다.
+			for (int x = 0; x < nWidth; x++)
+			{
+				//첫 번째 줄을 제외하고 줄이 바뀔 때마다(x == 0) 첫 번째 인덱스를 추가한다.
+				if ((x == 0) && (z > 0)) m_pnIndices[j++] = (UINT)(x + (z * nWidth));
+				//아래, 위의 순서로 인덱스를 추가한다.
+				m_pnIndices[j++] = (UINT)(x + (z * nWidth));
+				m_pnIndices[j++] = (UINT)((x + (z * nWidth)) + nWidth);
+			}
+		}
+		else
+		{
+			//짝수 번째 줄이므로(z = 1, 3, 5, ...) 인덱스의 나열 순서는 오른쪽에서 왼쪽 방향이다.
+			for (int x = nWidth - 1; x >= 0; x--)
+			{
+				//줄이 바뀔 때마다(x == (nWidth-1)) 첫 번째 인덱스를 추가한다.
+				if (x == (nWidth - 1)) m_pnIndices[j++] = (UINT)(x + (z * nWidth));
+				//아래, 위의 순서로 인덱스를 추가한다.
+				m_pnIndices[j++] = (UINT)(x + (z * nWidth));
+				m_pnIndices[j++] = (UINT)((x + (z * nWidth)) + nWidth);
+			}
+		}
+	}
+
+	ZeroMemory(&d3dBufferDesc, sizeof(D3D11_BUFFER_DESC));
+	d3dBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	d3dBufferDesc.ByteWidth = sizeof(UINT)* m_nIndices;
+	d3dBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	d3dBufferDesc.CPUAccessFlags = 0;
+	ZeroMemory(&d3dBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
+	d3dBufferData.pSysMem = m_pnIndices;
+	pd3dDevice->CreateBuffer(&d3dBufferDesc, &d3dBufferData, &m_pd3dIndexBuffer);
+
+	m_bcBoundingCube.m_xv3Minimum = XMFLOAT3(xStart*xv3Scale.x, fHeight, zStart*xv3Scale.z);
+	m_bcBoundingCube.m_xv3Maximum = XMFLOAT3((xStart + nWidth)*xv3Scale.x, fHeight, (zStart + nLength)*xv3Scale.z);
+}
+
+CWaterGridMesh::~CWaterGridMesh()
+{
+}
+
+void CWaterGridMesh::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState)
+{
+	CMesh::Render(pd3dDeviceContext, uRenderState);
+}
+
+/////////////////////////////////////////////////////////////////////////
 CTerrainPartMesh::CTerrainPartMesh(ID3D11Device *pd3dDevice, float xStart, float zStart, int nWidth, int nLength, XMFLOAT3 xv3Scale, void *pContext) : CMesh(pd3dDevice)
 {
 	m_nVertices = 4;//nWidth * nLength;

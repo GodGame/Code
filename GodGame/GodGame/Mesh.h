@@ -35,6 +35,15 @@ public:
 	virtual XMFLOAT4 OnGetColor(int x, int z, void *pContext);
 };
 
+class CWaterGridMesh : public CMeshSplatTexturedIlluminated
+{
+public:
+	CWaterGridMesh(ID3D11Device *pd3dDevice, int xStart, int zStart, int nWidth, int nLength, XMFLOAT3 xv3Scale = XMFLOAT3(1.0f, 1.0f, 1.0f), void *pContext = nullptr);
+	virtual ~CWaterGridMesh();
+
+	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);
+};
+
 class CTerrainPartMesh : public CMesh
 {
 protected:

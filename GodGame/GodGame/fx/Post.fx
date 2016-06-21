@@ -59,7 +59,7 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 
 	float4 color = txColor;
 	float distance = 0;
-	if (diffuse.a > 0.0)
+	if (diffuse.a > 0.0f)
 	{
 		float4 StaticShadowPos = mul(float4(pos, 1.0f), gmtxStaticShadowTransform);
 		float4 DynamicShadowPos = mul(float4(pos, 1.0f), gmtxDynamicShadowTransform);
@@ -72,7 +72,10 @@ float4 PSScreen(PS_SCENE_INPUT input) : SV_Target
 #endif
 		color = Lighting(pos, normal, float4(diffuse.rgb, fShadowFactor), specular) * txColor;
 	
-		distance = length(pos - gvCameraPosition.xyz);
+		if (diffuse.a < 0.1f)
+			distance = gFogStart;
+		else
+			distance = length(pos - gvCameraPosition.xyz);
 		//color = FogLerp(color, distance);
 	}
 	else

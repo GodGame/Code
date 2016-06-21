@@ -216,9 +216,6 @@ VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT VSSplatTexturedLightingColor(VS_SPLAT_TE
 	output.texCoordBase = input.texCoordBase;
 	output.texCoordAlpha = input.texCoordAlpha;
 
-	//matrix shadowProj = mul(gmtxWorld, gmtxShadowTransform);
-	//output.shadowPos = mul(float4(input.position, 1.0f), shadowProj);
-
 	return(output);
 }
 
@@ -248,7 +245,48 @@ return output;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+// ¹° ÁöÇü
+VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT VSWaterGrid(VS_SPLAT_TEXTURED_LIGHTING_COLOR_INPUT input)
+{
+	VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT output = (VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT)0;
+	output.normalW = mul(input.normal, (float3x3)gmtxWorld);
+	output.positionW = input.position;// mul(float4(input.position, 1.0f), gmtxWorld).xyz;
+	output.position = mul(float4(output.positionW, 1.0f), gmtxViewProjection);
+	output.texCoordBase = input.texCoordBase;
+	output.texCoordAlpha = input.texCoordAlpha;
 
+	return(output);
+}
+
+PS_MRT_OUT PSWaterGrid(VS_SPLAT_TEXTURED_LIGHTING_COLOR_OUTPUT input) : SV_Target
+{
+	input.normalW = normalize(input.normalW);
+
+	float4 baseColor = gtxtTexture.Sample(gDetailSamplerState, input.texCoordAlpha);
+	float4 detailColor = gtxtDetailTexture.Sample(gSamplerState, input.texCoordBase);
+	float3 normal = gtxtGridNormalMap.Sample(gSamplerState, input.texCoordBase).rgb;
+	normal = normalize(normal);
+	float4 displace = gtxtGridDisplaceMap.Sample(gSamplerState, input.texCoordBase);
+	
+	float3 N = float3(0, 1, 0);
+	float3 T = float3(1, 0, 0);
+	float3x3 TBN = float3x3(T, cross(N, T), N);
+
+	normal = (2.0f * displace.rrr) - 1.0f; //.rgb;
+	normal = (mul(normal, TBN));
+	float3 pos = input.positionW + (normal * displace.rrr * 10.0f - 5.0f);
+
+	PS_MRT_OUT output;
+	output.vNormal  = float4(normal, input.position.w * gfDepthFar);
+	output.vPos		= float4(pos, 1.0f);
+	output.vDiffuse = float4(1.0f, 1.0f, 1.0f, 0.01);
+	output.vSpec    = float4(1.0f, 1.0f, 1.0f, 1.0f);//gMaterial.m_cSpecular;
+	output.vTxColor = detailColor + 0.3f * baseColor;
+	output.vTxColor.a = 0.5f;
+	return output;
+}
+
+//----------------------------------------------------------------------
 
 FLOAT3_POS_FLOAT2_TEX VSBezier(FLOAT3_POS_FLOAT2_TEX input)
 {

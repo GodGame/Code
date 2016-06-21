@@ -6,6 +6,10 @@ SamplerState  gDetailSamplerState    : register(s1);
 			  
 Texture2D     gtxtSlpatDetail        : register(t2);
 			  
+Texture2D     gtxtGridNormalMap       : register(t2);
+Texture2D     gtxtGridDisplaceMap     : register(t3);
+
+
 TextureCube   gtxtSkyBox             : register(t2);
 SamplerState  gssSkyBox              : register(s2);
 			  

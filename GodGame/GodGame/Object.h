@@ -287,6 +287,13 @@ public:
 	float GetPeakHeight() { return(m_bcMeshBoundingCube.m_xv3Maximum.y); }
 };
 
+class CWaterTerrain : public CGameObject
+{
+public:
+	CWaterTerrain(ID3D11Device *pd3dDevice, int nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xv3Scale);
+	virtual ~CWaterTerrain();
+};
+
 class CSkyBox : public CGameObject
 {
 public:

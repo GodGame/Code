@@ -191,6 +191,11 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_nEffectShaderNum = index;
 		m_ppShaders[index++] = pTxAni;
 
+		CWaterShader * pWaterShader = new CWaterShader();
+		pWaterShader->CreateShader(pd3dDevice);
+		pWaterShader->BuildObjects(pd3dDevice);
+		m_ppShaders[index++] = pWaterShader;
+
 		CSceneShader * pSceneShader = new CSceneShader();
 		pSceneShader->CreateShader(pd3dDevice);
 		pSceneShader->BuildObjects(pd3dDevice, SceneInfo->ppMRTSRVArray, 0, SceneInfo->pd3dBackRTV);
