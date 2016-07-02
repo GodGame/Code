@@ -156,6 +156,8 @@ private:
 	void _CreateFontUiArray();
 
 public:
+	float GetWaterHeight() { return m_fWaterHeight; }
+
 	ROUND_STATE GetRoundState() { return mRoundState; }
 
 	void SetRoundTime(float time) { m_fRoundTime = time; }
@@ -218,6 +220,7 @@ public:
 	void GameStart();
 	void RoundEnter();
 	void RoundStart();
+	void DeathMatchStart();
 	void RoundEnd();
 	void RoundClear();
 	void GameEnd();

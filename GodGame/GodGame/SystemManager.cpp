@@ -29,7 +29,7 @@ CSystemManager::CSystemManager()
 	m_pPortalGate = nullptr;
 	m_pMinimMap   = nullptr;
 
-	m_fWaterHeight = 0.f;
+	m_fWaterHeight = 70.f;
 	m_iRoundNumber = 0;
 
 	m_vcPlayerColorMaterial.reserve(TOTAL_PLAYER);
@@ -109,6 +109,10 @@ void CSystemManager::Update(float fFrameTime)
 	//m_nRoundSecond = CLIENT.GetRoundTime();
 	m_nRoundMinute = m_nRoundSecond / 60;
 	m_nRoundSecond = m_nRoundSecond % 60;
+
+	//if (mRoundState == eROUND_DEATH_MATCH) // 데스매치 상태 받으
+		m_fWaterHeight += fFrameTime;
+
 }
 
 bool CSystemManager::CheckCanDominateRange(CInGamePlayer * pPlayer)
@@ -208,6 +212,11 @@ void CSystemManager::RoundEnter()
 void CSystemManager::RoundStart()
 {
 	mRoundState = ROUND_STATE::eROUND_START;
+}
+
+void CSystemManager::DeathMatchStart()
+{
+	mRoundState = ROUND_STATE::eROUND_DEATH_MATCH;
 }
 
 void CSystemManager::RoundEnd()
@@ -343,6 +352,14 @@ void CRoundDominateFontUI::DrawFont()
 
 void CRoundDeathMatchFontUI::DrawFont()
 {
+	const static XMFLOAT2 StartInfoLocation{ XMFLOAT2(FRAME_BUFFER_WIDTH * 0.5, 60) };
+	static wchar_t wscreenFont[26];
+	static const int wssize = sizeof(wchar_t) * 26;
+
+	swprintf_s(wscreenFont, wssize, L"데스매치 진행중!!!");
+
+	FRAMEWORK.SetFont("HY견고딕");
+	FRAMEWORK.DrawFont(wscreenFont, 40, StartInfoLocation, 0xff23ff23);
 }
 
 void CRoundEndFontUI::DrawFont()

@@ -1209,6 +1209,8 @@ void CWaterShader::AnimateObjects(float fTimeElapsed)
 }
 void CWaterShader::_SetWaterCB(ID3D11DeviceContext * pd3dDeviceContext)
 {
+	mCBWaterData.fWaterDepth = SYSTEMMgr.GetWaterHeight();
+
 	D3D11_MAPPED_SUBRESOURCE d3dMappedResource;
 	pd3dDeviceContext->Map(m_pd3dcbWaterBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &d3dMappedResource);
 	CB_WATER *pcbSSAO = (CB_WATER *)d3dMappedResource.pData;

@@ -694,6 +694,11 @@ void CSceneInGame::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	case eMessage::MSG_ROUND_START:
 		SYSTEMMgr.RoundStart();
 		m_pPlayerShader->RoundStart();
+		EVENTMgr.InsertDelayMessage(10.0f, eMessage::MSG_ROUND_DEATH_MATCH, CGameEventMgr::MSG_TYPE_SCENE, this);
+		return;
+
+	case eMessage::MSG_ROUND_DEATH_MATCH:
+		SYSTEMMgr.DeathMatchStart();
 		return;
 
 	case eMessage::MSG_ROUND_END:

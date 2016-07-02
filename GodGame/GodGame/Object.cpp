@@ -702,6 +702,7 @@ CHeightMapTerrain::~CHeightMapTerrain()
 
 CWaterTerrain::CWaterTerrain(ID3D11Device * pd3dDevice, int nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xv3Scale)
 {
+	m_fDepth = 0.0f;
 	/*지형 객체는 격자 메쉬들의 배열로 만들 것이다. nBlockWidth, nBlockLength는 격자 메쉬 하나의 가로, 세로 크기이다. cxQuadsPerBlock, czQuadsPerBlock은 격자 메쉬의 가로 방향과 세로 방향 사각형의 개수이다.*/
 	int cxQuadsPerBlock = nBlockWidth - 1;
 	int czQuadsPerBlock = nBlockLength - 1;

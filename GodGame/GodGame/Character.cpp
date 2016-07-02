@@ -222,6 +222,10 @@ void CCharacter::Update(float fTimeElapsed)
 	if (m_pUpdatedContext) OnContextUpdated(fTimeElapsed);
 
 	CCharacter::CalculateFriction(fTimeElapsed);
+
+	auto pos = GetPosition();
+	float waterHeight = SYSTEMMgr.GetWaterHeight();
+	if (pos.y + 20 < waterHeight) Damaged(nullptr, 1);
 }
 
 void CCharacter::OnContextUpdated(float fTimeElapsed)

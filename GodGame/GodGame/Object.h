@@ -289,9 +289,13 @@ public:
 
 class CWaterTerrain : public CGameObject
 {
+	float m_fDepth;
 public:
 	CWaterTerrain(ID3D11Device *pd3dDevice, int nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xv3Scale);
 	virtual ~CWaterTerrain();
+
+	float GetDepth() { return m_fDepth; }
+	void SetDepth(float depth) { m_fDepth = depth; }
 };
 
 class CSkyBox : public CGameObject

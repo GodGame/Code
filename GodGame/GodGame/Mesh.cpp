@@ -210,7 +210,7 @@ CWaterGridMesh::CWaterGridMesh(ID3D11Device * pd3dDevice, int xStart, int zStart
 	CHeightMap *pHeightMap = (CHeightMap *)pContext;
 	int cxHeightMap = pHeightMap->GetHeightMapWidth();
 	int czHeightMap = pHeightMap->GetHeightMapLength();
-	float fHeight = 125.0f;
+	float fHeight = 0.0f;
 	/*xStart와 zStart는 격자의 시작 위치(x-좌표와 z-좌표)를 나타낸다. 지형을 격자들의 이차원 배열로 만들 것이기 때문에 지형에서 각 격자의 시작 위치를 나타내는 정보가 필요하다. <그림 18>은 격자의 교점(정점)을 나열하는 순서를 보여준다.*/
 	for (int i = 0, z = zStart; z < (zStart + nLength); z++)
 	{
