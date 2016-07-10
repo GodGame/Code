@@ -283,7 +283,6 @@ void CTextureMgr::BuildTextures(ID3D11Device * pd3dDevice)
 
 	ifstream in;
 	in.open("../Assets/Data/Resource/SRV.txt", ios::in);
-//	wchar_t wsdirName[128];
 
 	while (in >> name >> directory)
 	{

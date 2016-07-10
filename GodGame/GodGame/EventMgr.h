@@ -192,7 +192,8 @@ public:
 enum UIMessage
 {
 	MSG_UI_NONE = 0,
-	MSG_UI_TITLE_INSERT_INGAME
+	MSG_UI_TITLE_TO_LOBBY,
+	MSG_UI_LOBBY_TO_INGAME,
 };
 
 struct UIInfo

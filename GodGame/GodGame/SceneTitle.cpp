@@ -2,6 +2,7 @@
 #include "MyInline.h"
 #include "SceneTitle.h"
 #include "SceneInGame.h"
+#include "SceneLobby.h"
 #include "GameFramework.h"
 
 //CTitleScreenShader * pTitle = nullptr;
@@ -52,7 +53,7 @@ void CSceneTitle::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_SCENE_CHANGE:
-		FRAMEWORK.ChangeGameScene(new CSceneInGame());
+		FRAMEWORK.ChangeGameScene(new CSceneLobby());
 		return;
 	case eMessage::MSG_MOUSE_DOWN:
 	case eMessage::MSG_MOUSE_DOWN_OVER:
@@ -93,18 +94,13 @@ bool CSceneTitle::ProcessInput(HWND hWnd, float fTime, POINT & pt)
 	{
 		if (pKeyBuffer[VK_SPACE] & 0xF0)
 		{
-			FRAMEWORK.ChangeGameScene(new CSceneInGame());
+			FRAMEWORK.ChangeGameScene(new CSceneLobby());
 			return true;
 		}
 	}
 
 	return false;
 }
-
-//void CSceneTitle::AnimateObjects(float fTimeElapsed)
-//{
-//	EVENTMgr.Update(fTimeElapsed);
-//}
 
 void CSceneTitle::Render(ID3D11DeviceContext * pd3dDeviceContext, RENDER_INFO * pRenderInfo)
 {
@@ -115,10 +111,6 @@ void CSceneTitle::Render(ID3D11DeviceContext * pd3dDeviceContext, RENDER_INFO * 
 	}
 }
 
-//void CSceneTitle::UIRender(ID3D11DeviceContext * pd3dDeviceContext)
-//{
-//	pTitle->Render(pd3dDeviceContext, 0, nullptr);
-//}
 
 #ifdef PICKING
 CGameObject *CScene::PickObjectPointedByCursor(int xClient, int yClient)

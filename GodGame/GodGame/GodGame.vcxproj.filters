@@ -184,6 +184,9 @@
     <ClInclude Include="FW1FontWrapper_1_1\FW1FontWrapper.h">
       <Filter>Global\1_Common</Filter>
     </ClInclude>
+    <ClInclude Include="SceneLobby.h">
+      <Filter>Local\3_Scenes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameFramework.cpp">
@@ -287,6 +290,9 @@
     </ClCompile>
     <ClCompile Include="ClinetMgr.cpp">
       <Filter>Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneLobby.cpp">
+      <Filter>Local\3_Scenes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

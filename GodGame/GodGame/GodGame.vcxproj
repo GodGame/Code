@@ -184,6 +184,7 @@
     <ClInclude Include="PacketMgr.h" />
     <ClInclude Include="ParentShader.h" />
     <ClInclude Include="SceneInGame.h" />
+    <ClInclude Include="SceneLobby.h" />
     <ClInclude Include="SceneTitle.h" />
     <ClInclude Include="ShadowMgr.h" />
     <ClInclude Include="Mesh.h" />
@@ -231,6 +232,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneInGame.cpp" />
+    <ClCompile Include="SceneLobby.cpp" />
     <ClCompile Include="SceneTitle.cpp" />
     <ClCompile Include="ShaderEssential.cpp" />
     <ClCompile Include="ShaderList.cpp" />

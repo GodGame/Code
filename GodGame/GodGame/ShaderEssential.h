@@ -370,6 +370,16 @@ public:
 	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
 };
 
+class CLobbyScreenShader : public CUIShader
+{
+public:
+	CLobbyScreenShader();
+	virtual ~CLobbyScreenShader();
+
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene);
+	virtual void GetGameMessage(CShader * byObj, eMessage eMSG, void * extra = nullptr);
+};
+
 class CInGameUIShader : public CUIShader
 {
 	bool   mbNeedElement : 1;

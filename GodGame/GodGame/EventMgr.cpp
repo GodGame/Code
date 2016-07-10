@@ -123,8 +123,12 @@ void UIRectMgr::BuildResources()
 	UIInfo info;
 	// left, top, right, bottom
 	info.m_rect = { 210, 540, 250, 500 };
-	info.m_msgUI = UIMessage::MSG_UI_TITLE_INSERT_INGAME;
+	info.m_msgUI = UIMessage::MSG_UI_TITLE_TO_LOBBY;
 	InsertObject(info, "ui_title_start");
+
+	info.m_rect = { 210, 540, 250, 500 };
+	info.m_msgUI = UIMessage::MSG_UI_LOBBY_TO_INGAME;
+	InsertObject(info, "ui_lobby_start");
 }
 
 bool UIRectMgr::CollisionCheck(XMFLOAT3 & pos, string name)

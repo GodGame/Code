@@ -214,12 +214,6 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		CLIENT.SetPlayerShader(m_pPlayerShader);
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////
 		InitializeRecv();
-	/*	cs_packet_vector my_packet2;
-		my_packet2.size = sizeof(cs_packet_vector);
-		my_packet2.type = CS_INPUT;
-		my_packet2.LookVector = m_pPlayerShader->GetPlayer(CLIENT.GetClientID())->GetLookVector();
-		my_packet2.RightVector = m_pPlayerShader->GetPlayer(CLIENT.GetClientID())->GetRightVector();
-		CLIENT.SendPacket(reinterpret_cast<unsigned  char*>(&my_packet2));*/
 		cout << "Current Client ID : " << CLIENT.GetClientID() << endl;
 		ChangeGamePlayerID(CLIENT.GetClientID());
 		////////////// 플레이어 변경은 이 Build 끝나기 전에 해라//////////////////////////////////////

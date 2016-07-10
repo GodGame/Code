@@ -1591,7 +1591,7 @@ void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * e
 	case eMessage::MSG_COLLIDE_UI:
 		switch (msg)
 		{
-		case UIMessage::MSG_UI_TITLE_INSERT_INGAME :
+		case UIMessage::MSG_UI_TITLE_TO_LOBBY :
 			EVENTMgr.InsertDelayMessage(0.1f, eMessage::MSG_SCENE_CHANGE, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
 			m_ppObjects[1]->SetVisible(true);
 			return;
@@ -1601,6 +1601,88 @@ void CTitleScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * e
 		return;
 	}
 }
+
+CLobbyScreenShader::CLobbyScreenShader()
+{
+}
+
+CLobbyScreenShader::~CLobbyScreenShader()
+{
+}
+
+void CLobbyScreenShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTargetView * pBackRTV, CScene * pScene)
+{
+	m_nObjects = 2;
+	m_ppObjects = new CGameObject*[m_nObjects];
+	m_pBackRTV = pBackRTV;
+	//m_pBackRTV->AddRef();
+
+	m_pScene = pScene;
+
+	CPoint2DMesh * pUIMesh = nullptr;
+	CGameObject  * pObject = nullptr;
+	CTexture     * pTexture = nullptr;
+
+	XMFLOAT4 InstanceData[2] =
+	{
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f),
+		XMFLOAT4(FRAME_BUFFER_WIDTH * 0.5f, FRAME_BUFFER_HEIGHT * 0.5f, 600, 200)
+	};
+	string   UIName[2] = { { "srv_lobby_png" }, { "srv_loading.png" } };
+
+	for (int i = 0; i < m_nObjects; i++)
+	{
+		pUIMesh = new CPoint2DMesh(pd3dDevice, InstanceData[i]);
+		pObject = new CUIObject(1, UIMgr.GetObjects("ui_lobby_start"));
+		pObject->SetMesh(pUIMesh);
+
+		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		pTexture->SetTexture(0, TXMgr.GetShaderResourceView(UIName[i]));
+
+		pObject->SetTexture(pTexture);
+		pObject->SetVisible(true);
+		pObject->AddRef();
+
+		m_ppObjects[i] = pObject;
+	}
+
+	m_ppObjects[1]->SetVisible(false);
+
+	{
+		pUIMesh = new CPoint2DMesh(pd3dDevice, XMFLOAT4(0.0, 0.0, 15.0f, 20.0f));
+		pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
+		pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_mouse1.png"));
+
+		m_pMousePoint = new CGameObject(1);
+		m_pMousePoint->SetMesh(pUIMesh);
+		m_pMousePoint->SetTexture(pTexture);
+		m_pMousePoint->SetVisible(true);
+		m_pMousePoint->AddRef();
+	}
+	CUIShader::CreateUIResources(pd3dDevice);
+}
+
+void CLobbyScreenShader::GetGameMessage(CShader * byObj, eMessage eMSG, void * extra)
+{
+	UIMessage msg = *(UIMessage*)extra;
+
+	switch (eMSG)
+	{
+	case eMessage::MSG_COLLIDE_UI:
+		switch (msg)
+		{
+		case UIMessage::MSG_UI_LOBBY_TO_INGAME:
+			EVENTMgr.InsertDelayMessage(0.1f, eMessage::MSG_SCENE_CHANGE, CGameEventMgr::MSG_TYPE_SCENE, m_pScene);
+			m_ppObjects[1]->SetVisible(true);
+			return;
+		}
+		return;
+	default:
+		return;
+	}
+}
+
+
 
 CInGameUIShader::CInGameUIShader() : CUIShader()
 {
@@ -1642,8 +1724,6 @@ void CInGameUIShader::BuildObjects(ID3D11Device * pd3dDevice, ID3D11RenderTarget
 	pTexture = new CTexture(1, 0, 0, 0, SET_SHADER_PS);
 	pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_win.png"));
 	mTextureList.InsertObject(pTexture, mWinLogo);
-	////m_pTexture->SetTexture(0, TXMgr.GetShaderResourceView("srv_title_jpg"));
-	////m_pTexture->SetSampler(0, TXMgr.GetSamplerState("ss_linear_wrap"));
 
 	for (int i = 0, index = 0; i < m_nObjects; i++)
 	{
