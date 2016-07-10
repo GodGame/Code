@@ -53,7 +53,7 @@ void CSceneLobby::GetGameMessage(CScene * byObj, eMessage eMSG, void * extra)
 	switch (eMSG)
 	{
 	case eMessage::MSG_SCENE_CHANGE:
-		FRAMEWORK.ChangeGameScene(new CSceneInGame());
+		//FRAMEWORK.ChangeGameScene(new CSceneInGame(1));
 		return;
 	case eMessage::MSG_MOUSE_DOWN:
 	case eMessage::MSG_MOUSE_DOWN_OVER:
@@ -92,9 +92,14 @@ bool CSceneLobby::ProcessInput(HWND hWnd, float fTime, POINT & pt)
 
 	if (GetKeyboardState(pKeyBuffer))
 	{
-		if (pKeyBuffer[VK_SPACE] & 0xF0)
+		if (pKeyBuffer['1'] & 0xF0)
 		{
-			FRAMEWORK.ChangeGameScene(new CSceneInGame());
+			FRAMEWORK.ChangeGameScene(new CSceneInGame(1));
+			return true;
+		}
+		if (pKeyBuffer['2'] & 0xF0)
+		{
+			FRAMEWORK.ChangeGameScene(new CSceneInGame(2));
 			return true;
 		}
 	}

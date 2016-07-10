@@ -55,7 +55,7 @@ CEnviromentShader::~CEnviromentShader()
 {
 }
 
-void CEnviromentShader::BuildObjects(ID3D11Device * pd3dDevice)
+void CEnviromentShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_nShaders = 2;
 	m_ppShader = new CShader*[m_nShaders];
@@ -63,11 +63,11 @@ void CEnviromentShader::BuildObjects(ID3D11Device * pd3dDevice)
 	int index = 0;
 	m_ppShader[index] = new CSkyBoxShader();
 	m_ppShader[index]->CreateShader(pd3dDevice);
-	m_ppShader[index++]->BuildObjects(pd3dDevice);
+	m_ppShader[index++]->BuildObjects(pd3dDevice, SceneMgr);
 
 	m_ppShader[index] = new CTerrainShader();
 	m_ppShader[index]->CreateShader(pd3dDevice);
-	m_ppShader[index++]->BuildObjects(pd3dDevice);
+	m_ppShader[index++]->BuildObjects(pd3dDevice, SceneMgr);
 }
 
 void CEnviromentShader::Render(ID3D11DeviceContext * pd3dDeviceContext, UINT uRenderState, CCamera * pCamera)

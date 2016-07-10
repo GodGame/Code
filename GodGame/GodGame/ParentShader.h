@@ -30,7 +30,7 @@ public:
 	CEnviromentShader();
 	virtual ~CEnviromentShader();
 
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void Render(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState, CCamera *pCamera = nullptr);
 };
 

@@ -959,7 +959,7 @@ CTerrainShader::~CTerrainShader()
 	delete[] m_pptxLayerMap;
 }
 
-void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
+void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
@@ -1019,7 +1019,11 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice)
 	ppd3dsrvTexture = new ID3D11ShaderResourceView *[m_nLayerNumber];
 	ppd3dsrvAlphaTexture = new ID3D11ShaderResourceView *[m_nLayerNumber];
 
-	ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_8.jpg");
+	if (SceneMgr.sceneNum == 1)
+		ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_6.jpg");
+	else if (SceneMgr.sceneNum == 2)
+		ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_8.jpg");
+
 	//ppTextureName[1] = _T("../Assets/Image/Terrain/Detail_Texture_6.jpg");
 	//ppTextureName[2] = _T("../Assets/Image/Terrain/flower.jpg");
 
@@ -1253,12 +1257,12 @@ void CSkyBoxShader::CreateShader(ID3D11Device *pd3dDevice)
 #endif
 }
 
-void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice)
+void CSkyBoxShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR & SceneMgr)
 {
 	m_nObjects = 1;
 	m_ppObjects = new CGameObject*[m_nObjects];
 
-	CSkyBox *pSkyBox = new CSkyBox(pd3dDevice, 2);
+	CSkyBox *pSkyBox = new CSkyBox(pd3dDevice, SceneMgr.sceneNum);
 	m_ppObjects[0] = pSkyBox;
 	pSkyBox->AddRef();
 }

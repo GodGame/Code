@@ -44,7 +44,7 @@ CShader::~CShader()
 	//if (m_p3dComputeShader) m_p3dComputeShader->Release();
 }
 
-void CShader::BuildObjects(ID3D11Device *pd3dDevice)
+void CShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR & SceneMgr)
 {
 }
 

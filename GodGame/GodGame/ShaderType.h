@@ -40,6 +40,7 @@ class CShader
 public:
 	struct BUILD_RESOURCES_MGR
 	{
+		int           sceneNum;
 		MATERIAL_MGR  mgrMaterial;
 		TEXTURE_MGR   mgrTexture;
 		MESH_MGR      mgrMesh;
@@ -75,7 +76,7 @@ public:
 public:
 	//게임 객체들을 생성하고 애니메이션 처리를 하고 렌더링하기 위한 함수이다.
 	virtual void Reset(){}
-	virtual void BuildObjects(ID3D11Device *pd3dDevice);
+	virtual void BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR & SceneMgr);
 	virtual void ReleaseObjects();
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void OnPrepareRender(ID3D11DeviceContext *pd3dDeviceContext, UINT uRenderState);

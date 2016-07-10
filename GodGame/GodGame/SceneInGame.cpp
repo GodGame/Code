@@ -9,9 +9,20 @@ bool bIsKeyDown = false;
 
 CSceneInGame::CSceneInGame() : CScene()
 {
+	mSceneType = 0;
 	m_nEffectShaderNum = 0;
+
 	ZeroMemory(m_recvBuffer, sizeof(m_recvBuffer));
-	ZeroMemory(&m_fHeight, sizeof(m_fHeight));
+	//ZeroMemory(&m_fHeight, sizeof(m_fHeight));
+}
+
+CSceneInGame::CSceneInGame(int type)
+{
+	mSceneType = type;
+	m_nEffectShaderNum = 0;
+
+	ZeroMemory(m_recvBuffer, sizeof(m_recvBuffer));
+	//ZeroMemory(&m_fHeight, sizeof(m_fHeight));
 }
 
 CSceneInGame::~CSceneInGame()
@@ -50,7 +61,11 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 	char file[128];
 	wchar_t result[128];
 
-	FILE_LOAD_Mgr.LoadSceneResources(pd3dDevice, &m_SceneResoucres, "../Assets/Data/Map01/Resources.txt");
+	if (mSceneType == 1)
+		FILE_LOAD_Mgr.LoadSceneResources(pd3dDevice, &m_SceneResoucres, "../Assets/Data/Map00/Resources.txt");
+	else if(mSceneType == 2)
+		FILE_LOAD_Mgr.LoadSceneResources(pd3dDevice, &m_SceneResoucres, "../Assets/Data/Map01/Resources.txt");
+
 	for (int i = 0; i < 6; ++i)
 	{
 		// 스태프 1
@@ -132,6 +147,7 @@ void CSceneInGame::BuildMeshes(ID3D11Device * pd3dDevice)
 void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * pd3dDeviceContext, ShaderBuildInfo * SceneInfo)
 {
 	SYSTEMMgr.SetScene(this);
+	m_SceneResoucres.sceneNum = mSceneType;
 
 	m_nMRT     = NUM_MRT;
 	//재질을 생성한다.
@@ -150,9 +166,10 @@ void CSceneInGame::BuildObjects(ID3D11Device *pd3dDevice, ID3D11DeviceContext * 
 		m_ppShaders = new CShader*[m_nShaders];
 
 		//스카이박스와 터레인 셰이더
-		m_ppShaders[index] = new CEnviromentShader();
-		m_vcStaticShadowShaders.push_back(m_ppShaders[index]);
-		m_ppShaders[index++]->BuildObjects(pd3dDevice);
+		CEnviromentShader * enviorment = new CEnviromentShader();
+		enviorment->BuildObjects(pd3dDevice, m_SceneResoucres);
+		m_vcStaticShadowShaders.push_back(enviorment);
+		m_ppShaders[index++] = enviorment;
 
 		iCharacterShaderNum = index;
 		CCharacterShader *pCharShader = new CCharacterShader();
