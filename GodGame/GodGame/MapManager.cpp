@@ -21,7 +21,7 @@ CHeightMap::CHeightMap(LPCTSTR pFileName, int nWidth, int nLength, XMFLOAT3& xv3
 	{
 		for (int x = 0; x < m_nWidth; x++)
 		{
-			m_pHeightMapImage[x + ((m_nLength - 1 - y)*m_nWidth)] = pHeightMapImage[x + (y*m_nWidth)];
+			m_pHeightMapImage[x + ((m_nLength - 1 - y)*m_nWidth)] = max(100, pHeightMapImage[x + (y*m_nWidth)]);
 		}
 	}
 

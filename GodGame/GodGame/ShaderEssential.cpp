@@ -1019,10 +1019,27 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR 
 	ppd3dsrvTexture = new ID3D11ShaderResourceView *[m_nLayerNumber];
 	ppd3dsrvAlphaTexture = new ID3D11ShaderResourceView *[m_nLayerNumber];
 
-	if (SceneMgr.sceneNum == 1)
+	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
+	XMFLOAT3 xv3Scale(8.0f, 1.5f, 8.0f);
+	const int ImageWidth = 257;
+	const int ImageLength = 257;
+
+	/*지형을 높이 맵 이미지 파일을 사용하여 생성한다. 높이 맵 이미지의 크기는 가로x세로(257x257)이고 격자 메쉬의 크기는 가로x세로(17x17)이다.
+	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
+	//HeightMap.raw
+
+	if (SceneMgr.sceneNum == 1) {
+		xv3Scale = XMFLOAT3(8.0f, 1.5f, 8.0f);
 		ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_6.jpg");
-	else if (SceneMgr.sceneNum == 2)
+		m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/height01.raw"), ImageWidth, ImageLength, ImageWidth, ImageLength, xv3Scale);
+	}
+	else if (SceneMgr.sceneNum == 2) {
+		xv3Scale = XMFLOAT3(8.0f, 1.5f, 8.0f);
 		ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_8.jpg");
+		m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth, ImageLength, ImageWidth, ImageLength, xv3Scale);
+
+	}
+	m_ppObjects[0]->AddRef();
 
 	//ppTextureName[1] = _T("../Assets/Image/Terrain/Detail_Texture_6.jpg");
 	//ppTextureName[2] = _T("../Assets/Image/Terrain/flower.jpg");
@@ -1057,16 +1074,7 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR 
 	delete[] ppEntityTexture;
 #endif
 
-	//지형을 확대할 스케일 벡터이다. x-축과 z-축은 8배, y-축은 2배 확대한다.
-	XMFLOAT3 xv3Scale(8.0f, 1.5f, 8.0f);
-	const int ImageWidth = 257;
-	const int ImageLength = 257;
 
-	/*지형을 높이 맵 이미지 파일을 사용하여 생성한다. 높이 맵 이미지의 크기는 가로x세로(257x257)이고 격자 메쉬의 크기는 가로x세로(17x17)이다.
-	지형 전체는 가로 방향으로 16개, 세로 방향으로 16의 격자 메쉬를 가진다. 지형을 구성하는 격자 메쉬의 개수는 총 256(16x16)개가 된다.*/
-	//HeightMap.raw
-	m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth, ImageLength, ImageWidth , ImageLength, xv3Scale);
-	m_ppObjects[0]->AddRef();
 
 	XMFLOAT3 xv3Size = XMFLOAT3(ImageWidth * xv3Scale.x, 0, ImageWidth * xv3Scale.z);
 	QUADMgr.BuildQuadTree(XMFLOAT3(xv3Size.x * 0.5f, 0, xv3Size.z * 0.5f), xv3Size.x, xv3Size.z, nullptr);
