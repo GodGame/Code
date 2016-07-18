@@ -1029,12 +1029,12 @@ void CTerrainShader::BuildObjects(ID3D11Device *pd3dDevice, BUILD_RESOURCES_MGR 
 	//HeightMap.raw
 
 	if (SceneMgr.sceneNum == 1) {
-		xv3Scale = XMFLOAT3(8.0f, 1.5f, 8.0f);
+		xv3Scale = XMFLOAT3(8.0f, 1.4f, 8.0f);
 		ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_6.jpg");
 		m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/height01.raw"), ImageWidth, ImageLength, ImageWidth, ImageLength, xv3Scale);
 	}
 	else if (SceneMgr.sceneNum == 2) {
-		xv3Scale = XMFLOAT3(8.0f, 1.5f, 8.0f);
+		xv3Scale = XMFLOAT3(8.0f, 2.0f, 8.0f);
 		ppTextureName[0] = _T("../Assets/Image/Terrain/Detail_Texture_8.jpg");
 		m_ppObjects[0] = new CHeightMapTerrain(pd3dDevice, _T("../Assets/Image/Terrain/HeightMap.raw"), ImageWidth, ImageLength, ImageWidth, ImageLength, xv3Scale);
 

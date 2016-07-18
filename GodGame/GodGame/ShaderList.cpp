@@ -228,7 +228,10 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 	mVertexes.reserve(10);
 
 	FILE * file;
-	file = fopen("../Assets/Data/Map01/StaticRocks.data", "rb");
+	if (mgrScene.sceneNum == 1)
+		file = fopen("../Assets/Data/Map00/StaticRocks.data", "rb");
+	else
+		file = fopen("../Assets/Data/Map01/StaticRocks.data", "rb");
 	{
 		int index = 0;
 		while (true) {
@@ -243,6 +246,7 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 			for (int i = 0; i < nobj; ++i)
 			{
 				fread(&pos, sizeof(XMFLOAT3), 1, file);
+				pos.y = MAPMgr.GetHeight(pos);
 				mVertexes[index].push_back(pos);
 			}
 			++index;
@@ -276,7 +280,10 @@ void CStaticInstaningShader::BuildObjects(ID3D11Device *pd3dDevice, CShader::BUI
 #ifndef _LOAD_DATA
 #ifdef _SAVE_DATA
 	FILE * save;
-	save = fopen("../Assets/Data/Map01/StaticRocks.data", "wb");
+	if (mgrScene.sceneNum == 1)
+		save = fopen("../Assets/Data/Map00/StaticRocks.data", "wb");
+	else
+		save = fopen("../Assets/Data/Map01/StaticRocks.data", "wb");
 #endif
 #endif
 
