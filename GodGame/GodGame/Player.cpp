@@ -869,7 +869,8 @@ void CInGamePlayer::Death(CCharacter * pChar)
 
 void CInGamePlayer::Jump()
 {
-	GetFSM()->ChangeState(&CPlayerJumpState::GetInstance());
+	if (false == GetFSM()->isInState(CPlayerJumpState::GetInstance()))
+		GetFSM()->ChangeState(&CPlayerJumpState::GetInstance());
 }
 
 void CInGamePlayer::MagicShot()
