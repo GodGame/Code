@@ -3,6 +3,7 @@
 #include "SceneInGame.h"
 #include "SceneTitle.h"
 #include "GameFramework.h"
+#include "StatePlayer.h"
 
 bool bIsKeyDown = false;
 //bool bIsMouseDown = false;
@@ -45,7 +46,7 @@ void CSceneInGame::Reset()
 {
 	for (auto & shaders : m_vcResetShaders)
 		shaders->Reset();
-	cout << "Reset" << endl;
+	//cout << "Reset" << endl;
 //	EVENTMgr.InsertDelayMessage(SYSTEMMgr.mfLIMIT_ROUND_TIME,
 //		eMessage::MSG_ROUND_END, CGameEventMgr::MSG_TYPE_SCENE, this, nullptr, m_pCamera->GetPlayer());
 }
@@ -459,6 +460,9 @@ bool CSceneInGame::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM w
 	{
 	case WM_RBUTTONUP:
 		CInGamePlayer * pPlayer = static_cast<CInGamePlayer*>(m_pPlayerShader->GetPlayer());
+		if (pPlayer->GetFSM()->isInState(CPlayerJumpState::GetInstance())) 
+			return false;
+
 		int result = pPlayer->UseMagic();
 		if (0 < result)
 		{
