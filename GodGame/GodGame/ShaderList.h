@@ -266,6 +266,8 @@ private:
 
 private:
 	list<CParticle*> m_AbsorbSmokeList;
+	list<CParticle*> m_StarBallList;
+	list<CParticle*> m_IceBallList;
 	list<CParticle*> m_FireBallList;
 
 	CParticle    ** m_ppParticle;

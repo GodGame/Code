@@ -32,7 +32,7 @@ void CPlayer::UpdateShaderVariables(ID3D11DeviceContext *pd3dDeviceContext)
 {
 	//플레이어의 현재 카메라의 UpdateShaderVariables() 멤버 함수를 호출한다.
 	if (m_pCamera) m_pCamera->UpdateShaderVariables(pd3dDeviceContext, m_pCamera->GetViewProjectionMatrix(), m_pCamera->GetPosition());
-	printf("Player : %0.2f %0.2f %0.2f \n", m_xmf44World._41, m_xmf44World._42, m_xmf44World._43);
+	//printf("Player : %0.2f %0.2f %0.2f \n", m_xmf44World._41, m_xmf44World._42, m_xmf44World._43);
 	//cout << "player" << endl;
 	//cout << "bb max : " << m_bcMeshBoundingCube.m_xv3Maximum.x << ", " << m_bcMeshBoundingCube.m_xv3Maximum.y << ", " << m_bcMeshBoundingCube.m_xv3Maximum.z << endl;
 	//cout << "bb min : " << m_bcMeshBoundingCube.m_xv3Minimum.x << ", " << m_bcMeshBoundingCube.m_xv3Minimum.y << ", " << m_bcMeshBoundingCube.m_xv3Minimum.z << endl;
@@ -983,6 +983,8 @@ EFFECT_ON_INFO CInGamePlayer::GetCastEffectOnInfo()
 
 EFFECT_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 {
+	static EFFECT_TYPE effectArr[] = { EFFECT_STARBALL, EFFECT_ICEBALL, EFFECT_FIREBALL, EFFECT_FIREBALL};
+
 	XMMATRIX mtx = XMLoadFloat4x4(&m_xmf44World);
 	mtx = XMMatrixTranslation(0, 9.0f, 15.0f) * mtx;
 	XMFLOAT4X4 xmf44Change;
@@ -990,12 +992,14 @@ EFFECT_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 
 	float fColor = 0.f;
 	float fDamage = 10.f;
+	int nStaffLv = 0;
 
 	if (m_pChild)
 	{
 		auto staff = static_cast<CStaff*>(m_pChild);
 		fColor = staff->GetElement();
-		fDamage *= (staff->GetLevel() + 1);
+		nStaffLv = staff->GetLevel() + 1;
+		fDamage *= nStaffLv;
 	}
 	fDamage += (m_Status.GetBuffMgr().IsPlusDamage() ? 20 : 0);
 
@@ -1003,7 +1007,7 @@ EFFECT_ON_INFO CInGamePlayer::Get1HAnimShotParticleOnInfo()
 	info.m_pObject      = this;
 	info.fColor         = fColor;
 	info.fDamage		= fDamage;
-	info.eEffect        = EFFECT_FIREBALL;
+	info.eEffect        = effectArr[nStaffLv];
 	info.m_xmf3Pos      = move(XMFLOAT3(xmf44Change._41, xmf44Change._42, xmf44Change._43));
 	info.m_xmf3Velocity = move(XMFLOAT3(xmf44Change._31, xmf44Change._32, xmf44Change._33));
 	info.m_xmfAccelate  = move(XMFLOAT3(-xmf44Change._31, -xmf44Change._32, -xmf44Change._33));

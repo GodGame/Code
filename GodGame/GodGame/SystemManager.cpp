@@ -113,6 +113,7 @@ void CSystemManager::Update(float fFrameTime)
 	//if (mRoundState == eROUND_DEATH_MATCH) // 데스매치 상태 받으
 		m_fWaterHeight += fFrameTime;
 
+
 }
 
 bool CSystemManager::CheckCanDominateRange(CInGamePlayer * pPlayer)
@@ -198,6 +199,7 @@ void CSystemManager::GameStart()
 void CSystemManager::RoundEnter()
 {
 	mRoundState = ROUND_STATE::eROUND_ENTER;
+	m_fWaterHeight = 70.0f;
 
 	m_iRoundNumber = CLIENT.GetRoundNum();
 
@@ -229,6 +231,7 @@ void CSystemManager::RoundEnd()
 	}
 	m_fEndTime = m_fRoundTime;
 	m_fRoundTime = mfEND_TIME;
+
 	//EVENTMgr.InsertDelayMessage(mfEND_TIME, eMessage::MSG_ROUND_CLEAR, CGameEventMgr::MSG_TYPE_SCENE, m_pNowScene);
 }
 

@@ -9,6 +9,8 @@ enum EFFECT_TYPE
 	EFFECT_NONE = 0,
 	EFFECT_ABSORB,
 	EFFECT_CASTING,
+	EFFECT_STARBALL,
+	EFFECT_ICEBALL,
 	EFFECT_FIREBALL,
 
 	EFFECT_CIRCLE_AREA,
@@ -272,6 +274,23 @@ public:
 
 	virtual void Initialize(ID3D11Device *pd3dDevice);
 };
+
+class CStarBallParticle : public CParticle
+{
+	static const UINT m_nMaxParticlenum = 300;
+
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
+class CIceBallParticle : public CParticle
+{
+	static const UINT m_nMaxParticlenum = 500;
+
+public:
+	virtual void Initialize(ID3D11Device *pd3dDevice);
+};
+
 
 class CFireBallParticle : public CParticle
 {

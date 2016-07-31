@@ -1668,21 +1668,40 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMateri
 	CreateStates(pd3dDevice);
 	CreateShaderVariables(pd3dDevice);
 
-	m_nObjects = 24;
+	m_nObjects = 32;
 	m_ppObjects = nullptr;
 	m_ppParticle = new CParticle*[m_nObjects];
 
-	for (int i = 0; i < 20; ++i) {
+	int nSmokeBoom = 20;
+
+	for (int i = 0; i < nSmokeBoom; ++i) {
 		m_ppParticle[i] = new CSmokeBoomParticle();
 		m_ppParticle[i]->Initialize(pd3dDevice);//(pd3dDevice, cbParticle, 20.0, 800);
 		m_AbsorbSmokeList.push_back(m_ppParticle[i]);
 	}
 
-	for (int i = 20; i < 24; ++i) {
+	int nAttackNum = 4;
+	int nFireBallEndNum = (nSmokeBoom + nAttackNum);
+	for (int i = nSmokeBoom; i < nFireBallEndNum; ++i) {
 		m_ppParticle[i] = new CFireBallParticle();
 		m_ppParticle[i]->Initialize(pd3dDevice);
 		m_FireBallList.push_back(m_ppParticle[i]);
 	}
+
+	int nStarBallEndNum = nFireBallEndNum + nAttackNum;
+	for (int i = nFireBallEndNum; i < nStarBallEndNum; ++i) {
+		m_ppParticle[i] = new CStarBallParticle();
+		m_ppParticle[i]->Initialize(pd3dDevice);
+		m_StarBallList.push_back(m_ppParticle[i]);
+	}
+
+	int nIceBallEndNum = nStarBallEndNum + nAttackNum;
+	for (int i = nStarBallEndNum; i < nIceBallEndNum; ++i) {
+		m_ppParticle[i] = new CIceBallParticle();
+		m_ppParticle[i]->Initialize(pd3dDevice);
+		m_IceBallList.push_back(m_ppParticle[i]);
+	}
+	
 
 	m_pRainParticle = new CRainParticle();
 	m_pRainParticle->Initialize(pd3dDevice);
@@ -1694,7 +1713,6 @@ void CParticleShader::BuildObjects(ID3D11Device *pd3dDevice, CMaterial * pMateri
 	m_vcAbleParticleArray.reserve(m_nObjects);
 	m_vcUsingParticleArray.reserve(m_nObjects);
 }
-
 
 void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
 {
@@ -1709,6 +1727,26 @@ void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
 			m_FireBallList.push_back(fire);
 		}
 	}
+	else if (info.eEffect == EFFECT_TYPE::EFFECT_STARBALL)
+	{
+		CParticle* star = nullptr;
+		if (false == (star = m_StarBallList.front())->IsUsing())
+		{
+			pParticle = star;
+			m_StarBallList.pop_front();
+			m_StarBallList.push_back(star);
+		}
+	}
+	else if (info.eEffect == EFFECT_TYPE::EFFECT_ICEBALL)
+	{
+		CParticle* ice = nullptr;
+		if (false == (ice = m_IceBallList.front())->IsUsing())
+		{
+			pParticle = ice;
+			m_IceBallList.pop_front();
+			m_IceBallList.push_back(ice);
+		}
+	}
 	else if (info.eEffect == EFFECT_TYPE::EFFECT_ABSORB)
 	{
 		CParticle* smoke = nullptr;
@@ -1720,9 +1758,7 @@ void CParticleShader::ParticleOn(EFFECT_ON_INFO & info)
 		}
 	}
 	if (info.bUseUpdateVelocity)
-	{
 		ParticleOn(pParticle, info.m_pObject, &info.m_xmf3Pos, &info.m_xmf3Velocity, &info.m_xmfAccelate, info.fDamage, info.fColor);
-	}
 	else
 		ParticleOn(pParticle, info.m_pObject, &info.m_xmf3Pos, nullptr, nullptr, info.fDamage, info.fColor);
 }

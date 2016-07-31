@@ -754,6 +754,82 @@ void CSmokeBoomParticle::Initialize(ID3D11Device * pd3dDevice)
 	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_smoke_array"));
 }
 
+void CStarBallParticle::Initialize(ID3D11Device * pd3dDevice)
+{
+	static CB_PARTICLE cbParticle;
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+
+	cbParticle.m_fLifeTime = 1.0f;
+	cbParticle.m_vAccel = XMFLOAT3(20, 20, 20);
+	cbParticle.m_vParticleEmitPos = XMFLOAT3(0, 0, 0);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(-40, -40, -40);
+	cbParticle.m_fNewTime = 0.04f;
+	cbParticle.m_fMaxSize = 16.0f;
+	cbParticle.m_nColorNum = COLOR_WHITE;
+
+	m_uSize = 12;
+
+	MoveVelocity mov;
+	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
+	mov.xmf3Accelate = XMFLOAT3(0, 0, -10);
+	mov.fWeightSpeed = 100.0f;
+
+	CParticle::SetParticle(cbParticle, mov, 1.0f, m_nMaxParticlenum);
+
+	PARTICLE_INFO cParticle;
+	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
+
+	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_star_array")); //("srv_particle_fire_array"));
+
+	m_pcNextParticle = new CSmokeBoomParticle();
+	m_pcNextParticle->Initialize(pd3dDevice);
+	CB_PARTICLE * pParticle = m_pcNextParticle->GetCBParticle();
+	pParticle->m_fMaxSize = 8.0f;
+	pParticle->m_fNewTime = 0.001f;
+	pParticle->m_vParticleVelocity = XMFLOAT3(20, 20, 20);
+	pParticle->m_vAccel = XMFLOAT3(60, 60, 60);
+	pParticle->m_nColorNum = COLOR_GRAY;
+}
+
+void CIceBallParticle::Initialize(ID3D11Device * pd3dDevice)
+{
+	static CB_PARTICLE cbParticle;
+	ZeroMemory(&cbParticle, sizeof(CB_PARTICLE));
+
+	cbParticle.m_fLifeTime = 1.0f;
+	cbParticle.m_vAccel = XMFLOAT3(-30, 30, -30);
+	cbParticle.m_vParticleEmitPos = XMFLOAT3(0, 0, 0);
+	cbParticle.m_vParticleVelocity = XMFLOAT3(20, -20, 20);
+	cbParticle.m_fNewTime = 0.05f;
+	cbParticle.m_fMaxSize = 8.0f;
+	cbParticle.m_nColorNum = COLOR_WHITE;
+
+	m_uSize = 12;
+
+	MoveVelocity mov;
+	mov.xmf3Velocity = XMFLOAT3(0, 0, 10);
+	mov.xmf3Accelate = XMFLOAT3(0, 0, -10);
+	mov.fWeightSpeed = 100.0f;
+
+	CParticle::SetParticle(cbParticle, mov, 2.0f, m_nMaxParticlenum);
+
+	PARTICLE_INFO cParticle;
+	ZeroMemory(&cParticle, sizeof(PARTICLE_INFO));
+
+	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
+	SetShaderResourceView(TXMgr.GetShaderResourceView("srv_particle_ice_array"));
+
+	m_pcNextParticle = new CSmokeBoomParticle();
+	m_pcNextParticle->Initialize(pd3dDevice);
+	CB_PARTICLE * pParticle = m_pcNextParticle->GetCBParticle();
+	pParticle->m_fMaxSize = 8.0f;
+	pParticle->m_fNewTime = 0.0005f;
+	pParticle->m_vParticleVelocity = XMFLOAT3(20, 20, 20);
+	pParticle->m_vAccel = XMFLOAT3(40, 40, 40);
+	pParticle->m_nColorNum = COLOR_GRAY;
+}
+
 void CFireBallParticle::Initialize(ID3D11Device * pd3dDevice)
 {
 	static CB_PARTICLE cbParticle;
@@ -835,4 +911,3 @@ void CRainParticle::Initialize(ID3D11Device * pd3dDevice)
 
 	CParticle::CreateParticleBuffer(pd3dDevice, cParticle, m_nMaxParticlenum);
 }
-
